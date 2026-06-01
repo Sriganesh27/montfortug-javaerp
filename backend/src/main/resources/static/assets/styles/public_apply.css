@@ -1,0 +1,284 @@
+/* /erp/assets/styles/public_apply.css */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --success-color: #27ae60;
+    --bg-color: #f4f7f6;
+    --border-color: #dce1e6;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+}
+
+.app-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    background: transparent;
+}
+
+/* --- PERFECT HEADER UI (SIDE-BY-SIDE & 100% WIDTH) --- */
+.form-header {
+    text-align: center;
+    margin-bottom: 35px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.header-title-wrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 20px; 
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.header-logo {
+    width: 120px;
+    height: 120px;
+    object-fit: fill; 
+    flex-shrink: 0; 
+}
+
+.header-title-text {
+    text-align: left; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.header-title-text h2 {
+    color: var(--primary-color);
+    font-size: 26px;
+    margin: 0 0 5px 0;
+    line-height: 1.2;
+}
+
+.header-title-text h3 {
+    color: var(--secondary-color);
+    font-size: 18px;
+    margin: 0;
+    font-weight: 600;
+}
+
+.header-title-text p {
+    color: #7f8c8d;
+    font-size: 15px;
+    margin: 10px 0 0 0;
+    max-width: 600px;
+}
+
+.btn-track-status {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 12px 25px;
+    background: #1a365d;
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 14px;
+    transition: background 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-track-status:hover {
+    background: #122847;
+    color: #ffffff;
+    transform: translateY(-2px);
+}
+
+/* --- CARD UI --- */
+.app-card {
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+    padding: 25px;
+    margin-bottom: 25px;
+    border-top: 4px solid var(--secondary-color);
+}
+
+.app-card h3 {
+    margin-top: 0;
+    color: var(--primary-color);
+    font-size: 18px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Proper Grid System (Naturally responsive) */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 6px;
+}
+
+.app-input, .app-select, .app-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    background-color: #fafbfc;
+}
+
+.app-input:focus, .app-select:focus, .app-textarea:focus {
+    border-color: var(--secondary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    background-color: #fff;
+}
+
+.parent-section {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.parent-section h4 {
+    margin: 0 0 15px 0;
+    color: var(--primary-color);
+}
+
+/* --- TABLE UI --- */
+#subjectsContainer {
+    width: 100%;
+    overflow-x: auto; /* Allows horizontal scrolling on mobile */
+}
+
+.app-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    min-width: 500px; /* Forces table to stay readable, allowing horizontal scroll if needed */
+}
+
+.app-table th, .app-table td {
+    padding: 10px;
+    border: 1px solid var(--border-color);
+}
+
+.app-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    font-size: 13px;
+}
+
+/* --- BUTTONS --- */
+.btn-submit {
+    background: var(--success-color);
+    color: white;
+    padding: 14px 30px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: bold;
+    width: 100%;
+    transition: background 0.3s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.btn-submit:hover { 
+    background: #219653; 
+}
+
+.btn-remove { 
+    background: #e74c3c; 
+    color: white; 
+    border: none; 
+    padding: 6px 12px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+}
+
+.btn-add { 
+    background: var(--secondary-color); 
+    color: white; 
+    border: none; 
+    padding: 8px 15px; 
+    border-radius: 4px; 
+    cursor: pointer; 
+    margin-top: 10px; 
+    font-weight: 600;
+}
+
+
+/* ========================================= */
+/* --- MOBILE RESPONSIVENESS MEDIA QUERY --- */
+/* ========================================= */
+@media (max-width: 768px) {
+    body {
+        padding: 10px; /* Reduce padding to save screen space */
+    }
+
+    /* Stack Header on mobile */
+    .header-title-wrapper {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+
+    /* Center text and reduce font sizes */
+    .header-title-text {
+        text-align: center;
+    }
+    
+    .header-title-text h2 {
+        font-size: 22px;
+    }
+    
+    .header-title-text h3 {
+        font-size: 16px;
+    }
+
+    .header-title-text p {
+        margin: 10px auto 0 auto;
+        font-size: 14px;
+    }
+
+    /* Make track status button full width for easy tapping */
+    .btn-track-status {
+        width: 100%;
+        box-sizing: border-box;
+        text-align: center;
+    }
+
+    /* Reduce card padding on mobile */
+    .app-card {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+}
+
+/* Shared ERP Table Classes for subjectsContainer */
+.erp-subjects-container { margin-top: 25px; padding-top: 15px; border-top: 1px dashed #ccc; display: none; }
+.erp-subjects-label { font-weight: 600; color: #555; display: block; margin-bottom: 10px; }
+.erp-table-th-center { padding: 8px; text-align: center; width: 50px; }
+.erp-table-tfoot-cell { padding-top: 10px; }
+.erp-table-tfoot-content { display: flex; justify-content: space-between; align-items: center; }
+.erp-total-score { color: #333; }

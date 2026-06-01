@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Application Review</title>
+    
+    <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
+    <link rel="stylesheet" href="/assets/styles/print_report.css">
+    <script>
+        function displayField(val) {
+            return (val && val.trim() !== '') ? val : '-';
+        }
+
+        function displaySubjects(jsonStr) {
+            if (!jsonStr || jsonStr.trim() === '') return '<span style="font-size:13px;">No specific subjects declared.</span>';
+            try {
+                let arr = JSON.parse(jsonStr);
+                if (arr.length === 0) return '<span style="font-size:13px;">No subjects declared.</span>';
+                
+                let out = '<table style="width:100%; border-collapse:collapse; margin-top:5px; font-size:13px;">';
+                out += '<tr style="background:#e2e8f0;"><th style="border:1px solid #000; padding:6px; text-align:left;">Subject</th><th style="border:1px solid #000; padding:6px; width:100px; text-align:center;">Marks</th><th style="border:1px solid #000; padding:6px; width:100px; text-align:center;">Grade</th></tr>';
+                
+                arr.forEach(sub => {
+                    let name = sub.name || sub.subject || Object.values(sub)[0] || '';
+                    let mark = sub.mark || Object.values(sub)[1] || '-';
+                    let grade = sub.grade || Object.values(sub)[2] || '-';
+                    out += `<tr><td style='border:1px solid #000; padding:6px;'>${name}</td><td style='border:1px solid #000; padding:6px; text-align:center;'>${mark}</td><td style='border:1px solid #000; padding:6px; text-align:center;'>${grade}</td></tr>`;
+                });
+                out += '</table>';
+                return out;
+            } catch (e) {
+                return jsonStr;
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            if (id) {
+                // Fetch the application details from the Java API
+                fetch('/api/admin/applications/' + encodeURIComponent(id), {
+                    headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const app = data.data;
+                        document.title = "Application - " + app.ref_number;
+                        
+                        document.getElementById('branch_name').textContent = displayField(app.branch_name || 'General Branch');
+                        document.getElementById('ref_number').textContent = displayField(app.ref_number);
+                        document.getElementById('date_of_registration').textContent = displayField(app.date_of_registration);
+
+                        const schol = app.scholarship_status ? app.scholarship_status.trim() : '';
+                        if (schol && schol.toLowerCase() !== 'none') {
+                            document.getElementById('schol_val').textContent = schol;
+                            document.getElementById('schol_container').style.display = 'block';
+                        }
+
+                        const stat = app.status ? app.status.trim() : 'Pending';
+                        let color = '#b8860b'; 
+                        const statLower = stat.toLowerCase();
+                        if (statLower === 'admitted' || statLower === 'selected' || statLower === 'shortlisted') { color = '#2f855a'; } 
+                        else if (statLower === 'rejected') { color = '#d32f2f'; }
+                        
+                        const statusElem = document.getElementById('status_val');
+                        statusElem.textContent = stat;
+                        statusElem.style.color = color;
+
+                        // Section 1
+                        const fullName = `${app.student_name || ''} ${app.middle_name || ''} ${app.student_surname || ''}`.trim();
+                        document.getElementById('full_name').textContent = displayField(fullName);
+                        document.getElementById('gender').textContent = displayField(app.gender);
+                        document.getElementById('dob').textContent = displayField(app.dob);
+                        document.getElementById('nationality').textContent = displayField(app.nationality);
+                        document.getElementById('acad_term').textContent = `${displayField(app.academic_year)} / ${displayField(app.term)}`;
+                        
+                        const classCode = app.class_code ? `[${app.class_code}]` : '';
+                        document.getElementById('applied_class').textContent = `${displayField(app.applied_class)} ${classCode} (${displayField(app.level)})`;
+
+                        if (app.photo_path) {
+                            let photoSrc = app.photo_path;
+                            if (photoSrc.indexOf('assets/') !== -1) {
+                                photoSrc = '/' + photoSrc.substring(photoSrc.indexOf('assets/'));
+                            }
+                            document.getElementById('student_photo').src = photoSrc;
+                            document.getElementById('student_photo').style.display = 'block';
+                            document.getElementById('no_photo').style.display = 'none';
+                        }
+                        
+                        if (app.prev_marks_doc) {
+                            let docSrc = app.prev_marks_doc;
+                            if (docSrc.indexOf('assets/') !== -1) {
+                                docSrc = '/' + docSrc.substring(docSrc.indexOf('assets/'));
+                            }
+                            document.getElementById('view_doc_btn').href = docSrc;
+                            document.getElementById('view_doc_btn').style.display = 'inline-block';
+                        }
+
+                        // Section 2 - Father
+                        document.getElementById('father_name').textContent = displayField(app.father_name);
+                        document.getElementById('father_contact').textContent = displayField(app.father_contact);
+                        document.getElementById('father_email').textContent = displayField(app.father_email);
+                        document.getElementById('father_occupation').textContent = displayField(app.father_occupation);
+                        document.getElementById('father_education').textContent = displayField(app.father_education);
+                        document.getElementById('father_age').textContent = displayField(app.father_age);
+
+                        // Section 2 - Mother
+                        document.getElementById('mother_name').textContent = displayField(app.mother_name);
+                        document.getElementById('mother_contact').textContent = displayField(app.mother_contact);
+                        document.getElementById('mother_email').textContent = displayField(app.mother_email);
+                        document.getElementById('mother_occupation').textContent = displayField(app.mother_occupation);
+                        document.getElementById('mother_education').textContent = displayField(app.mother_education);
+                        document.getElementById('mother_age').textContent = displayField(app.mother_age);
+
+                        // Section 2 - Guardian
+                        document.getElementById('guardian_name').textContent = displayField(app.guardian_name);
+                        document.getElementById('guardian_relation').textContent = displayField(app.guardian_relation);
+                        document.getElementById('guardian_contact').textContent = displayField(app.guardian_contact);
+                        document.getElementById('guardian_email').textContent = displayField(app.guardian_email);
+                        document.getElementById('guardian_occupation').textContent = displayField(app.guardian_occupation);
+                        document.getElementById('guardian_edu_age').textContent = `${displayField(app.guardian_education)} | Age: ${displayField(app.guardian_age)}`;
+
+                        // Section 3
+                        document.getElementById('address_house_street').textContent = `${displayField(app.address_house)}, ${displayField(app.address_street)}`;
+                        document.getElementById('address_village_district').textContent = `${displayField(app.address_village)} / ${displayField(app.address_district)} / ${displayField(app.address_state)}`;
+                        document.getElementById('address_postal_country').textContent = `${displayField(app.address_postal)} / ${displayField(app.address_country)}`;
+
+                        // Section 4
+                        document.getElementById('former_school').textContent = displayField(app.former_school);
+                        document.getElementById('former_school_code').textContent = displayField(app.former_school_code);
+                        document.getElementById('former_school_lin').textContent = displayField(app.former_school_lin);
+                        
+                        document.getElementById('ple_ref_score').textContent = `${displayField(app.ple_ref)} / ${displayField(app.ple_score)}`;
+                        document.getElementById('uce_ref_score').textContent = `${displayField(app.uce_ref)} / ${displayField(app.uce_score)}`;
+                        
+                        document.getElementById('subject_marks').innerHTML = displaySubjects(app.subject_marks);
+                        document.getElementById('more_info').textContent = displayField(app.more_info || 'None declared.');
+                        
+                    } else {
+                        alert("Could not load application details: " + data.message);
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert("Error loading application receipt.");
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+
+    <div class="action-bar no-print">
+        <a id="view_doc_btn" href="#" target="_blank" class="btn-view-doc" style="display:none;">View Attached Document</a>
+        <button class="btn-print" onclick="window.print()">Print Form</button>
+    </div>
+
+    <div class="document-container">
+        
+        <div class="header-section">
+            <img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Logo" class="logo-placeholder" onerror="this.style.display='none'">
+            <div class="header-text">
+                <h1>Montfort Brothers of St. Gabriel</h1>
+                <h2>Application for Admission</h2>
+                <p id="branch_name">Loading...</p>
+            </div>
+            <div style="width: 100px;"></div>
+        </div>
+
+        <div class="meta-info">
+            <div>Ref No: <span id="ref_number" style="font-weight:bold; font-size:15px; color:#1a365d;">-</span></div>
+            <div>Date: <span id="date_of_registration">-</span></div>
+            
+            <div>Status: <span id="status_val" style="font-weight:bold; text-transform:uppercase;">Loading...</span></div>
+            <div id="schol_container" style="display:none;">Scholarship: <span id="schol_val" style="color:#d32f2f; font-weight:bold;"></span></div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-section-title">1. Student Details</div>
+            <div style="display: grid; grid-template-columns: 3fr 1fr;">
+                <div>
+                    <div class="grid-row full-width">
+                        <div class="grid-item full-width"><span class="label">Full Name</span><span class="value" id="full_name">-</span></div>
+                    </div>
+                    <div class="grid-row three-col">
+                        <div class="grid-item"><span class="label">Gender</span><span class="value" id="gender">-</span></div>
+                        <div class="grid-item"><span class="label">Date of Birth</span><span class="value" id="dob">-</span></div>
+                        <div class="grid-item"><span class="label">Nationality</span><span class="value" id="nationality">-</span></div>
+                    </div>
+                    <div class="grid-row">
+                        <div class="grid-item no-bottom"><span class="label">Academic Year / Term</span><span class="value" id="acad_term">-</span></div>
+                        <div class="grid-item no-bottom"><span class="label">Applied Class & Level</span><span class="value" id="applied_class">-</span></div>
+                    </div>
+                </div>
+                <div class="photo-area">
+                    <img id="student_photo" src="" class="student-photo" alt="Photo" style="display:none;">
+                    <div id="no_photo" class="no-photo">Affix Photo</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-section-title">2. Parents & Guardian Details</div>
+            <div class="grid-row three-col" style="background:#f8fafc; padding:4px 12px; border-bottom:1px solid #000;"><span class="label">FATHER'S PROFILE</span></div>
+            <div class="grid-row three-col">
+                <div class="grid-item"><span class="label">Name</span><span class="value" id="father_name">-</span></div>
+                <div class="grid-item"><span class="label">Contact Number</span><span class="value" id="father_contact">-</span></div>
+                <div class="grid-item"><span class="label">Email Address</span><span class="value" id="father_email">-</span></div>
+                <div class="grid-item no-bottom"><span class="label">Occupation</span><span class="value" id="father_occupation">-</span></div>
+                <div class="grid-item no-bottom"><span class="label">Education Level</span><span class="value" id="father_education">-</span></div>
+                <div class="grid-item no-bottom"><span class="label">Age</span><span class="value" id="father_age">-</span></div>
+            </div>
+
+            <div class="grid-row three-col" style="background:#f8fafc; padding:4px 12px; border-top:1px solid #000; border-bottom:1px solid #000;"><span class="label">MOTHER'S PROFILE</span></div>
+            <div class="grid-row three-col">
+                <div class="grid-item"><span class="label">Name</span><span class="value" id="mother_name">-</span></div>
+                <div class="grid-item"><span class="label">Contact Number</span><span class="value" id="mother_contact">-</span></div>
+                <div class="grid-item"><span class="label">Email Address</span><span class="value" id="mother_email">-</span></div>
+                <div class="grid-item no-bottom"><span class="label">Occupation</span><span class="value" id="mother_occupation">-</span></div>
+                <div class="grid-item no-bottom"><span class="label">Education Level</span><span class="value" id="mother_education">-</span></div>
+                <div class="grid-item no-bottom"><span class="label">Age</span><span class="value" id="mother_age">-</span></div>
+            </div>
+
+            <div class="grid-row three-col" style="background:#f8fafc; padding:4px 12px; border-top:1px solid #000; border-bottom:1px solid #000;"><span class="label">GUARDIAN'S PROFILE</span></div>
+            <div class="grid-row three-col">
+                <div class="grid-item"><span class="label">Name</span><span class="value" id="guardian_name">-</span></div>
+                <div class="grid-item"><span class="label">Relationship</span><span class="value" id="guardian_relation">-</span></div>
+                <div class="grid-item"><span class="label">Contact Number</span><span class="value" id="guardian_contact">-</span></div>
+                <div class="grid-item no-bottom"><span class="label">Email Address</span><span class="value" id="guardian_email">-</span></div>
+                <div class="grid-item no-bottom"><span class="label">Occupation</span><span class="value" id="guardian_occupation">-</span></div>
+                <div class="grid-item no-bottom"><span class="label">Education & Age</span><span class="value" id="guardian_edu_age">-</span></div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-section-title">3. Residential Address</div>
+            <div class="grid-row three-col">
+                <div class="grid-item no-bottom"><span class="label">House / Street</span><span class="value" id="address_house_street">-</span></div>
+                <div class="grid-item no-bottom"><span class="label">Village / District / State</span><span class="value" id="address_village_district">-</span></div>
+                <div class="grid-item no-bottom"><span class="label">Postal Code / Country</span><span class="value" id="address_postal_country">-</span></div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-section-title">4. Academic History & Additional Info</div>
+            <div class="grid-row three-col">
+                <div class="grid-item"><span class="label">Former School</span><span class="value" id="former_school">-</span></div>
+                <div class="grid-item"><span class="label">School Code</span><span class="value" id="former_school_code">-</span></div>
+                <div class="grid-item"><span class="label">LIN (Learner ID)</span><span class="value" id="former_school_lin">-</span></div>
+            </div>
+            
+            <div class="grid-row">
+                <div class="grid-item"><span class="label">PLE Index & Score</span><span class="value" id="ple_ref_score">-</span></div>
+                <div class="grid-item"><span class="label">UCE Index & Score</span><span class="value" id="uce_ref_score">-</span></div>
+            </div>
+
+            <div class="grid-item full-width">
+                <span class="label">Subject-Wise Marks Submitted</span>
+                <div id="subject_marks"></div>
+            </div>
+            <div class="grid-item full-width no-bottom">
+                <span class="label">Medical Conditions / Extra Information</span>
+                <span class="value" id="more_info">-</span>
+            </div>
+        </div>
+
+        <div class="signature-box">
+            <div class="sig-column">
+                <div class="sig-line"></div>
+                <span>Signature of Parent/Guardian</span>
+            </div>
+            <div class="date-column">
+                <div class="sig-line"></div>
+                <span>Date</span>
+            </div>
+        </div>
+
+        <div class="footer">
+            Printed from MBSG ERP System
+        </div>
+    </div>
+
+</body>
+</html>

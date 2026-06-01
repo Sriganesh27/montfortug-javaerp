@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Application Status</title>
+    
+    <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
+    
+    <style>
+        :root {
+            --primary-color: #1a365d;
+            --secondary-color: #3498db;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-color); margin: 0; padding: 40px 20px; color: var(--text-color); display: flex; justify-content: center; }
+        .tracker-container { max-width: 700px; width: 100%; background: var(--card-bg); border-radius: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); padding: 40px; border-top: 5px solid var(--secondary-color); }
+        
+        .header-section { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #000; padding-bottom: 15px; margin-bottom: 30px; }
+        .logo-placeholder { width: 100px; height: 100px; object-fit: fill; }
+        .header-text { text-align: center; flex-grow: 1; }
+        .header-text h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; }
+        .header-text p { color: #666; margin: 8px 0 0 0; font-size: 15px; }
+        
+        .search-box { display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
+        .search-box label { font-weight: 600; font-size: 14px; color: #555; }
+        .search-box input { padding: 14px; font-size: 16px; border: 2px solid #ddd; border-radius: 6px; text-transform: uppercase; outline: none; transition: border-color 0.3s; }
+        .search-box input:focus { border-color: var(--secondary-color); }
+        .btn-search { background: var(--secondary-color); color: #fff; border: none; padding: 14px; font-size: 16px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: background 0.3s; }
+        .btn-search:hover { background: #2980b9; }
+
+        .result-card { display: none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; margin-top: 20px; text-align: left; animation: fadeIn 0.4s ease; }
+        .result-card h3 { margin: 0 0 15px 0; color: var(--primary-color); border-bottom: 1px solid #ddd; padding-bottom: 10px; }
+        .result-item { margin-bottom: 12px; font-size: 15px; }
+        .result-item strong { color: #555; display: inline-block; width: 150px; }
+        
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 13px; font-weight: bold; text-transform: uppercase; }
+        .status-pending { background: #fff3cd; color: #856404; border: 1px solid #ffeeba; }
+        .status-admitted { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status-rejected { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+        .error-message { display: none; color: #721c24; background: #f8d7da; padding: 12px; border-radius: 6px; font-size: 14px; margin-top: 20px; text-align: center; border: 1px solid #f5c6cb; }
+        
+        .btn-print { display: block; text-align: center; background: var(--primary-color); color: #fff; text-decoration: none; padding: 12px; border-radius: 6px; font-weight: bold; margin-top: 20px; transition: background 0.3s; }
+        .btn-print:hover { background: #122847; }
+        .nav-links { text-align: center; margin-top: 20px; }
+        .nav-links a { color: var(--secondary-color); text-decoration: none; font-size: 14px; font-weight: bold; }
+        .nav-links a:hover { text-decoration: underline; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <div class="tracker-container">
+        
+        <div class="header-section">
+            <img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Logo" class="logo-placeholder" onerror="this.style.display='none'">
+            <div class="header-text">
+                <h1>Track Application Status</h1>
+                <p>Enter your Reference Number to check your admission status.</p>
+            </div>
+            <div style="width: 100px;"></div>
+        </div>
+
+        <form id="statusForm" class="search-box">
+            <label for="ref_number">Application Reference Number</label>
+            <input type="text" id="ref_number" name="ref_number" placeholder="e.g. U011-26-001" required>
+            <button type="submit" class="btn-search" id="searchBtn">Check Status</button>
+        </form>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <div id="resultCard" class="result-card">
+            <h3>Application Details</h3>
+            <div class="result-item"><strong>Student Name:</strong> <span id="resName"></span></div>
+            <div class="result-item"><strong>Applied Class:</strong> <span id="resClass"></span></div>
+            
+            <div class="result-item" id="scholDiv"><strong>Scholarship:</strong> <span id="resSchol" style="color: #d32f2f; font-weight: bold;"></span></div>
+            
+            <div class="result-item" style="margin-top: 15px;">
+                <strong>Admission Status:</strong> 
+                <span id="resStatus" class="status-badge"></span>
+            </div>
+            
+            <a href="#" id="printLink" target="_blank" class="btn-print">Download / Print Application Receipt</a>
+        </div>
+
+        <div class="nav-links">
+            <a href="/apply">Back to Admission Portal</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('statusForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('searchBtn');
+            const errorDiv = document.getElementById('errorMessage');
+            const resultCard = document.getElementById('resultCard');
+            const refInput = document.getElementById('ref_number').value.trim();
+            
+            btn.innerText = 'Searching...';
+            btn.disabled = true;
+            errorDiv.style.display = 'none';
+            resultCard.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('ref_number', refInput);
+
+            fetch('/api/public/applications/status', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.innerText = 'Check Status';
+                btn.disabled = false;
+
+                if(data.success) {
+                    document.getElementById('resName').innerText = data.data.student_name;
+                    document.getElementById('resClass').innerText = data.data.applied_class;
+                    
+                    const scholVal = data.data.scholarship_status ? data.data.scholarship_status.trim() : '';
+                    const scholDiv = document.getElementById('scholDiv');
+                    if(scholVal && scholVal.toLowerCase() !== 'none') {
+                        document.getElementById('resSchol').innerText = scholVal;
+                        scholDiv.style.display = 'block';
+                    } else {
+                        scholDiv.style.display = 'none';
+                    }
+                    
+                    const statusSpan = document.getElementById('resStatus');
+                    statusSpan.innerText = data.data.status;
+                    statusSpan.className = 'status-badge';
+                    
+                    let statLower = data.data.status.toLowerCase();
+                    if(statLower === 'admitted' || statLower === 'selected' || statLower === 'shortlisted') { 
+                        statusSpan.classList.add('status-admitted'); 
+                    }
+                    else if(statLower === 'rejected') { 
+                        statusSpan.classList.add('status-rejected'); 
+                    }
+                    else { 
+                        statusSpan.classList.add('status-pending'); 
+                    }
+
+                    document.getElementById('printLink').href = '/apply/print?ref=' + data.data.ref_number;
+                    
+                    resultCard.style.display = 'block';
+                } else {
+                    errorDiv.innerText = data.message;
+                    errorDiv.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                btn.innerText = 'Check Status';
+                btn.disabled = false;
+                errorDiv.innerText = "A network error occurred. Please try again.";
+                errorDiv.style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>
