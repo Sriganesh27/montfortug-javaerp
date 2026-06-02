@@ -104,13 +104,19 @@
                 
                 <div id="subjectsContainer" class="erp-subjects-container">
                     <label class="erp-subjects-label">Subject-wise Marks / Grades</label>
-                    <table class="erp-table-full" id="subjectsTable">
+                    <table class="erp-table-full" id="subjectsTable" style="table-layout: fixed; width: 100%;">
+                        <colgroup>
+                            <col style="width: 45%;">
+                            <col style="width: 25%;">
+                            <col style="width: 20%;">
+                            <col style="width: 10%;">
+                        </colgroup>
                         <thead>
                             <tr class="erp-table-header">
                                 <th class="erp-table-th">Subject Name</th>
                                 <th class="erp-table-th">Marks (Out of 100)</th>
                                 <th class="erp-table-th">Grade</th>
-                                <th class="erp-table-th-center">Action</th>
+                                <th class="erp-table-th-center" style="text-align: center;">Action</th>
                             </tr>
                         </thead>
                         <tbody id="subjectsBody">

@@ -252,7 +252,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.updateDashboardUserInfo();
 
     // 2. Fetch Branch Info
-    fetch('http://localhost:8080/api/admin/applications/branch-info', {
+    fetch('/api/admin/applications/branch-info', {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') }
     })
     .then(res => res.json())

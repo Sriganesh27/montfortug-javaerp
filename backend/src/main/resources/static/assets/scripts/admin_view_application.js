@@ -72,9 +72,10 @@ document.addEventListener("DOMContentLoaded", function() {
 
                 if (app.photo_path) {
                     let photoSrc = app.photo_path;
-                    if (photoSrc.indexOf('assets/') !== -1) {
-                        photoSrc = '/' + photoSrc.substring(photoSrc.indexOf('assets/'));
+                    if (photoSrc.includes('/assets/uploads/')) {
+                        photoSrc = photoSrc.substring(photoSrc.indexOf('/assets/uploads/'));
                     }
+                    
                     document.getElementById('student_photo').src = photoSrc;
                     document.getElementById('student_photo').style.display = 'block';
                     document.getElementById('no_photo').style.display = 'none';

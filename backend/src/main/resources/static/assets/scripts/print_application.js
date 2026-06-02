@@ -70,7 +70,13 @@ document.addEventListener("DOMContentLoaded", function() {
                 document.getElementById('applied_class').textContent = `${displayField(app.applied_class)} ${classCode} (${displayField(app.level)})`;
 
                 if (app.photo_path) {
-                    document.getElementById('student_photo').src = app.photo_path;
+                    let finalPhotoPath = app.photo_path;
+                    // Fix legacy PHP/XAMPP paths from the database
+                    if (finalPhotoPath.includes('/assets/uploads/')) {
+                        finalPhotoPath = finalPhotoPath.substring(finalPhotoPath.indexOf('/assets/uploads/'));
+                    }
+                    
+                    document.getElementById('student_photo').src = finalPhotoPath;
                     document.getElementById('student_photo').style.display = 'block';
                     document.getElementById('no_photo').style.display = 'none';
                 }

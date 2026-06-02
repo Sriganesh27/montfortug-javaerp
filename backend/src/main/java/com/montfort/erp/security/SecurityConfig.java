@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/error").permitAll()
-                .requestMatchers("/*.html", "/assets/**", "/views/**", "/favicon.ico", "/login", "/admin", "/dashboard", "/apply", "/apply/status", "/apply/print", "/admin/application/view.html").permitAll()
+                .requestMatchers("/*.html", "/assets/**", "/uploads/**", "/applications/**", "/views/**", "/favicon.ico", "/login", "/admin", "/dashboard", "/apply", "/apply/status", "/apply/print", "/admin/application/view.html").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

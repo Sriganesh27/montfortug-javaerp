@@ -38,6 +38,16 @@ public class ApplicationService {
         return jdbcTemplate.queryForList(sql, branchId);
     }
 
+    public List<Map<String, Object>> getAllBranches() {
+        String sql = "SELECT branch_id, branch_name, branch_type FROM erp_branches WHERE status = 'Active' OR status IS NULL";
+        try {
+            return jdbcTemplate.queryForList(sql);
+        } catch (Exception e) {
+            // Fallback if status column doesn't exist
+            return jdbcTemplate.queryForList("SELECT branch_id, branch_name, branch_type FROM erp_branches");
+        }
+    }
+
     public List<Map<String, Object>> fetchApplications(String status, String search, String appliedLevel, String appliedClass, String scholarship, String academicYear) {
         Long branchId = getCurrentUserBranchId();
         if (branchId == null) return List.of();
@@ -92,6 +102,24 @@ public class ApplicationService {
 
         String sql = "SELECT * FROM erp_applications WHERE app_id = ? AND branch_id = ?";
         return jdbcTemplate.queryForList(sql, id, branchId);
+    }
+
+    public Map<String, Object> fetchApplicationStatusByRef(String refNumber) {
+        String sql = "SELECT ref_number, student_name, applied_class, scholarship_status, status FROM erp_applications WHERE ref_number = ?";
+        try {
+            return jdbcTemplate.queryForMap(sql, refNumber);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            return null;
+        }
+    }
+
+    public Map<String, Object> fetchApplicationDetailsByRef(String refNumber) {
+        String sql = "SELECT a.*, b.branch_name FROM erp_applications a LEFT JOIN erp_branches b ON a.branch_id = b.branch_id WHERE a.ref_number = ?";
+        try {
+            return jdbcTemplate.queryForMap(sql, refNumber);
+        } catch (org.springframework.dao.EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     public boolean updateStatus(Long appId, String status) {
@@ -166,6 +194,9 @@ public class ApplicationService {
 
         String prevMarksPath = null;
         if (prevMarksDoc != null && !prevMarksDoc.isEmpty()) {
+            if (prevMarksDoc.getSize() > 5 * 1024 * 1024) {
+                throw new Exception("The previous marks document must be 5MB or smaller.");
+            }
             String originalFilename = prevMarksDoc.getOriginalFilename();
             String ext = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf('.')) : ".pdf";
             String fileName = refNumber + "_prev_marks" + ext;

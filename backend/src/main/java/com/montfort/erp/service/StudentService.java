@@ -117,7 +117,79 @@ public class StudentService {
 
         String linkAppIdStr = formData.get("link_app_id");
         if (linkAppIdStr != null && !linkAppIdStr.isEmpty()) {
-            jdbcTemplate.update("UPDATE erp_applications SET status = 'Admitted' WHERE app_id = ? AND branch_id = ?", Long.parseLong(linkAppIdStr), branchId);
+            Long linkAppId = Long.parseLong(linkAppIdStr);
+            jdbcTemplate.update("UPDATE erp_applications SET status = 'Admitted' WHERE app_id = ? AND branch_id = ?", linkAppId, branchId);
+
+            try {
+                // Fetch existing application data
+                Map<String, Object> appData = jdbcTemplate.queryForMap(
+                        "SELECT photo_path, prev_marks_doc FROM erp_applications WHERE app_id = ? AND branch_id = ?", 
+                        linkAppId, branchId);
+                
+                String oldPhotoPath = (String) appData.get("photo_path");
+                String oldPrevMarksDoc = (String) appData.get("prev_marks_doc");
+                
+                String safeBranchName = branchSchoolCode.replaceAll("[^A-Za-z0-9]", "_");
+                String safeStudentName = (name + "_" + surname).replaceAll("[^A-Za-z0-9]", "_");
+                String adNoFormatted = String.format("%04d", adNo);
+                
+                String baseStudentDir = System.getProperty("user.dir") + "/public/assets/uploads/students/" + adNoFormatted + "_" + safeStudentName + "/";
+                java.io.File dir = new java.io.File(baseStudentDir);
+                if (!dir.exists()) dir.mkdirs();
+
+                // Migrate Photo
+                if (oldPhotoPath != null && !oldPhotoPath.trim().isEmpty()) {
+                    String cleanOldPhoto = oldPhotoPath;
+                    if (cleanOldPhoto.contains("/assets/uploads/")) {
+                        cleanOldPhoto = cleanOldPhoto.substring(cleanOldPhoto.indexOf("/assets/uploads/"));
+                    }
+                    java.io.File sourcePhoto = new java.io.File(System.getProperty("user.dir") + "/public" + cleanOldPhoto);
+                    if (!sourcePhoto.exists()) {
+                        sourcePhoto = new java.io.File(System.getProperty("user.dir") + "/src/main/resources/static" + cleanOldPhoto);
+                    }
+                    
+                    if (sourcePhoto.exists()) {
+                        String ext = sourcePhoto.getName().contains(".") ? sourcePhoto.getName().substring(sourcePhoto.getName().lastIndexOf('.')) : ".jpg";
+                        String newPhotoName = safeStudentName + "_" + adNo + ext;
+                        java.nio.file.Files.copy(sourcePhoto.toPath(), java.nio.file.Paths.get(baseStudentDir, newPhotoName), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        
+                        String newDbPhotoPath = "/assets/uploads/students/" + adNoFormatted + "_" + safeStudentName + "/" + newPhotoName;
+                        jdbcTemplate.update("UPDATE erp_students SET PhotoPath = ? WHERE AdmissionNo = ? AND branch_id = ?", newDbPhotoPath, adNo, branchId);
+                    }
+                }
+
+                // Migrate Previous Marks Document
+                if (oldPrevMarksDoc != null && !oldPrevMarksDoc.trim().isEmpty()) {
+                    String cleanOldDoc = oldPrevMarksDoc;
+                    if (cleanOldDoc.contains("/assets/uploads/")) {
+                        cleanOldDoc = cleanOldDoc.substring(cleanOldDoc.indexOf("/assets/uploads/"));
+                    }
+                    java.io.File sourceDoc = new java.io.File(System.getProperty("user.dir") + "/public" + cleanOldDoc);
+                    if (!sourceDoc.exists()) {
+                        sourceDoc = new java.io.File(System.getProperty("user.dir") + "/src/main/resources/static" + cleanOldDoc);
+                    }
+                    
+                    if (sourceDoc.exists()) {
+                        String ext = sourceDoc.getName().contains(".") ? sourceDoc.getName().substring(sourceDoc.getName().lastIndexOf('.')) : ".pdf";
+                        String newDocName = safeStudentName + "_" + adNo + "_prev_marks" + ext;
+                        java.nio.file.Files.copy(sourceDoc.toPath(), java.nio.file.Paths.get(baseStudentDir, newDocName), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        
+                        String newDbDocPath = "/assets/uploads/students/" + adNoFormatted + "_" + safeStudentName + "/" + newDocName;
+                        try {
+                            jdbcTemplate.update("UPDATE erp_academichistory SET PreviousMarksDoc = ? WHERE AdmissionNo = ? AND branch_id = ?", newDbDocPath, adNo, branchId);
+                        } catch (Exception e) {
+                            try {
+                                jdbcTemplate.execute("ALTER TABLE erp_academichistory ADD COLUMN PreviousMarksDoc VARCHAR(255)");
+                                jdbcTemplate.update("UPDATE erp_academichistory SET PreviousMarksDoc = ? WHERE AdmissionNo = ? AND branch_id = ?", newDbDocPath, adNo, branchId);
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         return "Student Admitted Successfully!<br><strong>Adm-no: " + String.format("%04d", adNo) + "</strong><br><strong> Student ID: " + username + "</strong>";

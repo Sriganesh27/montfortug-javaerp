@@ -105,6 +105,16 @@ textarea, select {
     box-sizing: border-box;
     width: 100%; 
 }
+
+/* Hide number spinners globally */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type="number"] {
+    -moz-appearance: textfield;
+}
 .field.fetch-action{
     display: flex;
     justify-content: flex-end;
@@ -2268,11 +2278,13 @@ input:checked + .slider:before { transform: translateX(16px); }
 .erp-nin-label { color:#d35400; }
 .erp-subjects-container { margin-top: 25px; padding-top: 15px; border-top: 1px dashed #ccc; display: none; }
 .erp-subjects-label { font-weight: 600; color: #555; display: block; margin-bottom: 10px; }
-.erp-table-full { width: 100%; border-collapse: collapse; }
-.erp-table-header { background: #f4f4f4; border-bottom: 2px solid #ddd; }
-.erp-table-th { padding: 8px; text-align: left; }
-.erp-table-th-center { padding: 8px; text-align: center; width: 50px; }
-.erp-table-input { width: 100%; border: 1px solid #ccc; padding: 6px; box-sizing: border-box; border-radius: 4px; }
+.erp-table-full { width: 100%; border-collapse: collapse; table-layout: fixed; }
+.erp-table-full td { padding: 8px 4px; vertical-align: middle; }
+.erp-table-header { border-bottom: 2px solid var(--border-color, #e0e6f1); }
+.erp-table-th { padding: 10px 4px; text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted, #6c757d); text-transform: uppercase; letter-spacing: 0.5px; }
+.erp-table-th-center { padding: 10px 4px; text-align: center; font-size: 12px; font-weight: 700; color: var(--text-muted, #6c757d); text-transform: uppercase; letter-spacing: 0.5px; width: 50px; }
+.erp-table-input { width: 100%; border: 1px solid var(--border-color, #e0e6f1); padding: 10px 12px; box-sizing: border-box; border-radius: 6px; background-color: var(--card-bg, #ffffff); color: var(--text-color, #333); font-size: 1em; transition: border-color 0.3s, box-shadow 0.3s; }
+.erp-table-input:focus { border-color: var(--primary-color, #3498db); box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); outline: none; }
 .erp-table-tfoot-cell { padding-top: 10px; }
 .erp-table-tfoot-content { display: flex; justify-content: space-between; align-items: center; }
 .erp-total-score { color: #333; }

@@ -738,6 +738,27 @@ window.autoFillAdmissionForm = function(overrideAppId) {
 
     if (appId && window.location.hash === '#admission') {
         
+        // --- 1. SHOW PROCESSING ANIMATION ---
+        const overlay = document.createElement('div');
+        overlay.id = 'admission-processing-overlay';
+        overlay.innerHTML = `
+            <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(4px);">
+                <div style="background:white; padding:40px; border-radius:16px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.15); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                    <i class="bi bi-arrow-repeat" style="font-size:3rem; color:var(--primary-color); display:inline-block; animation: spin 1s linear infinite;"></i>
+                    <h3 style="margin-top:15px; color:#333; font-weight:600;">Processing Application...</h3>
+                    <p style="color:#666; margin:0;">Loading student data into admission form.</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
+
+        if (!document.getElementById('anim-style')) {
+            const style = document.createElement('style');
+            style.id = 'anim-style';
+            style.innerHTML = `@keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } } @keyframes spin { 100% { transform: rotate(360deg); } }`;
+            document.head.appendChild(style);
+        }
+
         const btn = document.querySelector('#admission-form button[type="submit"]');
         if(btn) { btn.disabled = true; btn.textContent = "Loading Application Data..."; }
 
@@ -755,9 +776,13 @@ window.autoFillAdmissionForm = function(overrideAppId) {
                     if (el && value) {
                         if (el.tagName.toLowerCase() === 'select') {
                             const match = Array.from(el.options).find(opt => opt.value.toLowerCase() === value.toString().toLowerCase());
-                            if (match) el.value = match.value;
+                            if (match) {
+                                el.value = match.value;
+                                el.dispatchEvent(new Event('change'));
+                            }
                         } else {
                             el.value = value;
+                            el.dispatchEvent(new Event('change'));
                         }
                     }
                 };
@@ -927,12 +952,40 @@ window.autoFillAdmissionForm = function(overrideAppId) {
                     if(hiddenDoc) hiddenDoc.value = '';
                 }
 
-                window.showCustomAlert('success', 'Application Loaded', 'The admission form has been securely pre-filled with the applicant\'s data.');
+                // --- 2. SHOW SUCCESS ANIMATION WITH REF ID ---
+                overlay.innerHTML = `
+                    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:9999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(4px);">
+                        <div style="background:white; padding:40px; border-radius:16px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,0.15); animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
+                            <i class="bi bi-check-circle-fill" style="font-size:3.5rem; color:#28a745; display:inline-block;"></i>
+                            <h3 style="margin-top:15px; color:#333; font-weight:600;">Data Loaded Successfully!</h3>
+                            <p style="color:#666; margin:10px 0 0 0; font-size:16px;">Reference ID: <strong style="color:var(--primary-color);">${app.ref_number || app.app_id}</strong></p>
+                        </div>
+                    </div>
+                `;
+                
+                // Hide success overlay after 2 seconds
+                setTimeout(() => {
+                    overlay.style.transition = "opacity 0.3s ease";
+                    overlay.style.opacity = "0";
+                    setTimeout(() => overlay.remove(), 300);
+                }, 2000);
+
+            } else {
+                const overlay = document.getElementById('admission-processing-overlay');
+                if(overlay) overlay.remove();
+                if(btn) { btn.disabled = false; btn.textContent = "Save Admission"; }
+                window.showCustomAlert('error', 'Error', 'Error loading application data: ' + d.message);
             }
+        })
+        .catch(error => {
+            console.error(error);
+            const overlay = document.getElementById('admission-processing-overlay');
+            if(overlay) overlay.remove();
+            if(btn) { btn.disabled = false; btn.textContent = "Save Admission"; }
+            window.showCustomAlert('error', 'Error', 'Failed to connect to the server.');
         })
         .finally(() => {
             if(btn) { btn.disabled = false; btn.textContent = "Save Student Admission"; }
-            // Erase the query string from the URL so reloading doesn't duplicate everything
             window.history.replaceState({}, document.title, window.getSystemBaseUrl() + "/admin#admission");
         });
     }
@@ -1894,6 +1947,19 @@ window.initAdmissionForm = () => {
     const resetAdmBtn = document.getElementById('admission-reset-btn'); if(resetAdmBtn) resetAdmBtn.addEventListener('click', () => { if(admissionForm) admissionForm.reset(); });
     const admLevel = document.getElementById('level'), admClass = document.getElementById('class'); if (admLevel && admClass) { admLevel.addEventListener('change', () => window.populateClassDropdown(admLevel, admClass)); }
     const photoInput = document.getElementById('photo'); if (photoInput) { photoInput.addEventListener('change', function(e) { const file = e.target.files[0], previewImg = document.getElementById('admission-photo-preview'), wrapper = document.getElementById('admission-photo-wrapper'), placeholder = document.getElementById('upload-placeholder'); if (file && previewImg) { const reader = new FileReader(); reader.onload = function(evt) { previewImg.src = evt.target.result; previewImg.style.display = 'block'; if(wrapper) wrapper.classList.add('has-file'); if(placeholder) placeholder.style.display = 'none'; }; reader.readAsDataURL(file); } }); }
+    
+    // Scholarship listener logic
+    const scholarshipDropdown = document.getElementById('scholarship');
+    const scholarshipDetailsContainer = document.getElementById('scholarship-details-container');
+    if (scholarshipDropdown && scholarshipDetailsContainer) {
+        scholarshipDropdown.addEventListener('change', (e) => {
+            if (e.target.value === 'Applied') {
+                scholarshipDetailsContainer.style.display = 'block';
+            } else {
+                scholarshipDetailsContainer.style.display = 'none';
+            }
+        });
+    }
 };
 document.addEventListener('DOMContentLoaded', () => {
     window.initAdmissionForm();
