@@ -146,7 +146,7 @@
     </li>
     <li>
         <button class="main-item" data-menu="staff">
-        <i class="bi bi-person-tie"></i>
+        <i class="bi bi-person-badge"></i>
         <span>Staff Management</span>
         </button>
         <ul class="sub-menu">
@@ -214,7 +214,7 @@
         </ul>
     </li>
     <li>
-    <a href="#" onclick="localStorage.removeItem('jwtToken'); window.location.href='/login';" style="text-decoration: none; color: inherit;">
+    <a href="#" id="logout-link" class="logout-link">
         <button class="main-item" data-menu="logout">
             <i class="bi bi-power"></i>
             <span>Log Out</span>
@@ -226,9 +226,9 @@
 
     <div class="content" id="content">
       <div id="dashboard-module" class="module">
-        <div class="dashboard-header" style="margin-bottom: 25px;">
-            <h2 style="color: var(--primary-color);">Welcome to <span class="school-name-display">Montfort School</span></h2>
-            <p style="color: #666;">Logged in as: <strong id="user-role-display">User</strong></p>
+        <div class="dashboard-header dashboard-header-spaced">
+            <h2 class="dashboard-welcome">Welcome to <span class="school-name-display">Montfort School</span></h2>
+            <p class="dashboard-user-role">Logged in as: <strong id="user-role-display">User</strong></p>
         </div>
 
         <div class="cards">
@@ -241,7 +241,7 @@
               </div>
           </div>
           
-          <div class="card"><i class="bi bi-person-tie"></i><h3>Faculty</h3><p>-</p></div>
+          <div class="card"><i class="bi bi-person-badge"></i><h3>Faculty</h3><p>-</p></div>
           <div class="card"><i class="bi bi-bus-front"></i><h3>Transport</h3><p>-</p></div>
           <div class="card"><i class="bi bi-book"></i><h3>Library</h3><p>-</p></div>
           <div class="card"><i class="bi bi-pc-display"></i><h3>IT Lab</h3><p>-</p></div>
@@ -256,7 +256,7 @@
     <div class="erp-admission-container">
         
         <div class="erp-section-header">
-            <h2 style="margin: 0; color: var(--primary-color);"><i class="bi bi-person-plus"></i> Official Student Admission</h2>
+            <h2 class="dashboard-module-title"><i class="bi bi-person-plus"></i> Official Student Admission</h2>
         </div>
         
         <form id="admission-form"> 
@@ -264,9 +264,9 @@
             
             <fieldset class="erp-fieldset">
                 <legend><i class="bi bi-person-vcard"></i> 1. Personal & Contact Details</legend>
-                <div style="display: flex; gap: 20px;">
+                <div class="erp-grid-flex">
                     <!-- Left Column: Personal Inputs -->
-                    <div class="erp-grid-row" style="flex: 1;">
+                    <div class="erp-grid-row flex-1">
                         <div class="erp-field"><label>Registration / App Ref No.</label><input type="text" id="registration_number" name="registration_number" placeholder="e.g. U011-26-001"></div>
                         <div class="erp-field"><label class="required">First Name</label><input type="text" id="name" name="name" required></div>
                         <div class="erp-field"><label>Middle Name</label><input type="text" id="middle_name" name="middle_name"></div>
@@ -284,7 +284,7 @@
                         <img id="admission-photo-preview" class="erp-photo-preview" src="https://ui-avatars.com/api/?name=New+Student&background=f0f0f0&color=aaa">
                         <input type="hidden" id="existing_photo_path" name="existing_photo_path" value="">
                         <button type="button" class="btn-primary btn-gray erp-btn-small" onclick="document.getElementById('photo').click()"><i class="bi bi-camera"></i> Change</button>
-                        <input type="file" id="photo" name="photo" accept="image/*" style="display:none;" onchange="if(this.files[0]) document.getElementById('admission-photo-preview').src = window.URL.createObjectURL(this.files[0])">
+                        <input type="file" id="photo" name="photo" accept="image/*" class="hidden-file-input">
                     </div>
                 </div>
                 
@@ -310,7 +310,7 @@
                         <select id="level" name="level" required><option value="">Select</option><option value="Nursery">Nursery</option><option value="Primary">Primary</option><option value="Secondary">Secondary</option></select>
                     </div>
                     <div class="erp-field"><label class="required">Class</label><select id="class" name="class" required><option value="">Select</option></select></div>
-                    <div class="erp-field"><label>Stream</label><select id="stream" name="stream"><option value="">Select</option></select></div>
+                    <div class="erp-field"><label>Stream</label><select id="stream" name="stream"><option value="">Select</option><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option><option value="E">E</option></select></div>
                     <div class="erp-field"><label class="required">Residence</label><select id="residence" name="residence" required><option value="Day">Day</option><option value="Boarding">Boarding</option></select></div>
                     <div class="erp-field"><label class="required">Entry Status</label><select id="entry_status" name="entry_status" required><option value="New">New</option><option value="Continuing">Continuing</option></select></div>
                 </div>
@@ -324,13 +324,13 @@
                     <div class="erp-field"><label style="color:#d35400;">Father's NIN</label><input type="text" id="father_nin" name="father_nin" placeholder="National ID"></div>
                     <div class="erp-field"><label>Father's Email</label><input type="email" id="father_email" name="father_email"></div>
                 </div>
-                <div class="erp-grid-row" style="margin-top: 15px;">
+                <div class="erp-grid-row mt-15">
                     <div class="erp-field"><label class="required">Mother's Name</label><input type="text" id="mother_name" name="mother_name" required></div>
                     <div class="erp-field"><label>Mother's Contact</label><input type="text" id="mother_contact" name="mother_contact"></div>
                     <div class="erp-field"><label style="color:#d35400;">Mother's NIN</label><input type="text" id="mother_nin" name="mother_nin" placeholder="National ID"></div>
                     <div class="erp-field"><label>Mother's Email</label><input type="email" id="mother_email" name="mother_email"></div>
                 </div>
-                <div class="erp-grid-row" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed #ccc;">
+                <div class="erp-grid-row mt-15 pt-15 border-top-dashed">
                     <div class="erp-field"><label>Guardian Name</label><input type="text" id="guardian_name" name="guardian_name"></div>
                     <div class="erp-field"><label>Guardian Contact</label><input type="text" id="guardian_contact" name="guardian_contact"></div>
                     <div class="erp-field"><label style="color:#d35400;">Guardian's NIN</label><input type="text" id="guardian_nin" name="guardian_nin" placeholder="National ID"></div>
@@ -345,7 +345,7 @@
             <fieldset class="erp-fieldset">
                 <legend><i class="bi bi-clock-history"></i> 4. Academic History</legend>
                 <div class="erp-grid-row">
-                    <div class="erp-field" style="grid-column: span 2;"><label>Former School</label><input type="text" id="former_school" name="former_school"></div>
+                    <div class="erp-field col-span-2"><label>Former School</label><input type="text" id="former_school" name="former_school"></div>
                     <div class="erp-field"><label>School Code</label><input type="text" id="former_school_code" name="former_school_code"></div>
                     <div class="erp-field"><label>Learner's LIN</label><input type="text" id="former_school_lin" name="former_school_lin"></div>
                 </div>
@@ -388,14 +388,22 @@
                       <div class="erp-field" style="display:flex; flex-direction:column; gap:10px;">
                           <div>
                               <label>Medical Conditions / Extra Information</label>
-                              <textarea id="more_info" name="more_info" rows="2" style="width:100%; border:1px solid #ccc; border-radius:4px; padding:10px;"></textarea>
+                              <textarea id="more_info" name="more_info" rows="2" class="erp-textarea-full"></textarea>
                           </div>
                           <div>
                               <label>Scholarship Applied?</label>
-                              <select id="scholarship" name="scholarship" style="width:100%; border:1px solid #ccc; border-radius:4px; padding:8px;">
-                                  <option value="No">No</option>
-                                  <option value="Yes">Yes</option>
-                              </select>
+                                <select id="scholarship" name="scholarship" class="erp-select-full">
+                                    <option value="None">None</option>
+                                    <option value="No">No</option>
+                                    <option value="Yes">Yes</option>
+                                    <option value="Applied">Applied</option>
+                                    <option value="Confirmed">Confirmed</option>
+                                    <option value="Rejected">Rejected</option>
+                                </select>
+                          </div>
+                          <div id="scholarship-details-container" style="display:none; margin-top:10px;">
+                              <label>Scholarship Details</label>
+                              <input type="text" id="scholarship_details" name="scholarship_details" class="erp-input-full" placeholder="Specify scholarship details...">
                           </div>
                       </div>
                       
@@ -410,8 +418,8 @@
             </fieldset>
 
             <div class="erp-action-bar">
-                <button type="button" id="admission-reset-btn" class="btn-primary btn-gray" style="width: auto;">Clear Form</button>
-                <button type="submit" class="btn-primary" style="width: auto; background: #27ae60;"><i class="bi bi-check-circle"></i> Save Student Admission</button>
+                <button type="button" id="admission-reset-btn" class="btn-primary btn-gray btn-auto">Clear Form</button>
+                <button type="submit" class="btn-primary btn-auto btn-success"><i class="bi bi-check-circle"></i> Save Student Admission</button>
             </div>
         </form>
     </div>
@@ -451,6 +459,16 @@
                 <label class="adv-filter-label">Class</label>
                 <select id="classFilter" class="adv-filter-select" onchange="loadApplications()">
                     <option value="All">All Classes</option>
+                </select>
+            </div>
+            <div class="adv-filter-group">
+                <label class="adv-filter-label">Year</label>
+                <select id="yearFilter" class="adv-filter-select" onchange="loadApplications()">
+                    <option value="All">All Years</option>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                    <option value="2027">2027</option>
                 </select>
             </div>
             <div class="adv-filter-group">

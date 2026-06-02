@@ -38,7 +38,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/public/**").permitAll()
                 .requestMatchers("/error").permitAll()
-                .requestMatchers("/*.html", "/assets/**", "/favicon.ico", "/login", "/admin", "/dashboard", "/apply", "/apply/status", "/apply/print", "/admin/application/view.html").permitAll()
+                .requestMatchers("/*.html", "/assets/**", "/views/**", "/favicon.ico", "/login", "/admin", "/dashboard", "/apply", "/apply/status", "/apply/print", "/admin/application/view.html").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -49,7 +49,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000")); // Vue dev server
+        configuration.setAllowedOriginPatterns(Arrays.asList("*")); // Allow any origin pattern for dev
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
         configuration.setAllowCredentials(true);

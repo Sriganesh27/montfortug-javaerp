@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface StudentAccountRepository extends JpaRepository<StudentAccount, Long> {
     Optional<StudentAccount> findByUsernameAndBranchIdAndIsActive(String username, Long branchId, Integer isActive);
+    Optional<StudentAccount> findByUsernameAndIsActive(String username, Integer isActive);
 }

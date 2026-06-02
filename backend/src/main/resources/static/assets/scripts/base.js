@@ -36,52 +36,78 @@ const FULLSCREEN_STORAGE_KEY = 'montfort_is_fullscreen';
 // =========================================================================
 // 1. SPA ROUTING LOGIC
 // =========================================================================
-function handleNavigate(targetModule) {
+const moduleRoutes = {
+    'dashboard': '/views/admin/dashboard_home.html',
+    'admission': '/views/admin/students/add_student.html',
+    'manage_applications': '/views/admin/applications/manage_applications.html'
+};
+
+async function handleNavigate(targetModule) {
     if (!targetModule) return;
     activeModule = targetModule;
 
-    const dashboard = document.getElementById('dashboard-module');
-    if (dashboard) dashboard.style.display = 'none';
-
-    document.querySelectorAll('.module').forEach(module => {
-        module.style.display = 'none';
-    });
-
-    const targetEl = document.getElementById(`${targetModule}-module`);
+    const mainContent = document.getElementById('main-content');
     
-    if (targetEl) {
-        targetEl.style.display = 'block';
+    // If not on modular dashboard yet, use legacy routing
+    if (!mainContent) {
+        const dashboard = document.getElementById('dashboard-module');
+        if (dashboard) dashboard.style.display = 'none';
+
+        document.querySelectorAll('.module').forEach(module => {
+            module.style.display = 'none';
+        });
+
+        const targetEl = document.getElementById(`${targetModule}-module`);
         
-        if (targetModule === 'list' && typeof window.loadStudentList === 'function') {
-            const listContainer = document.getElementById('student-list-results');
-            if (listContainer && !listContainer.hasChildNodes()) {
-                window.loadStudentList();
+        if (targetEl) {
+            targetEl.style.display = 'block';
+            
+            if (targetModule === 'list' && typeof window.loadStudentList === 'function') {
+                const listContainer = document.getElementById('student-list-results');
+                if (listContainer && !listContainer.hasChildNodes()) {
+                    window.loadStudentList();
+                }
+            }
+            
+            if (targetModule === 'summary' && typeof window.loadSummary === 'function') {
+                window.loadSummary();
             }
         }
-        
-        if (targetModule === 'summary' && typeof window.loadSummary === 'function') {
-            window.loadSummary();
-        }
-
-        if (targetModule === 'profile') {
-             const savedId = localStorage.getItem('currentStudentId');
-             if (savedId) {
-                 if(typeof window.loadProfileViaAjax === 'function') {
-                    window.loadProfileViaAjax(savedId);
-                 } else {
-                    setTimeout(() => {
-                        if(typeof window.loadProfileViaAjax === 'function') window.loadProfileViaAjax(savedId);
-                    }, 100);
-                 }
-             } else {
-                 handleNavigate('list');
-                 return;
-             }
-        }
-
     } else {
-        if(dashboard) dashboard.style.display = 'block';
+        // --- NEW SPA DYNAMIC LOADING ---
+        const route = moduleRoutes[targetModule];
+        if (route) {
+            try {
+                mainContent.innerHTML = '<div style="padding:40px;text-align:center;"><i class="bi bi-arrow-repeat" style="font-size:2rem;animation:spin 1s linear infinite;"></i><p>Loading module...</p></div>';
+                const response = await fetch(route);
+                if (response.ok) {
+                    const html = await response.text();
+                    mainContent.innerHTML = html;
+                    
+                    // Trigger initialization scripts for specific modules after injecting HTML
+                    if (targetModule === 'dashboard') {
+                        if (typeof window.loadSummary === 'function') window.loadSummary();
+                        if (typeof window.updateDashboardUserInfo === 'function') window.updateDashboardUserInfo();
+                    }
+                    if (targetModule === 'manage_applications' && typeof loadApplications === 'function') {
+                        loadApplications();
+                    }
+                    if (targetModule === 'admission' && typeof window.initAdmissionForm === 'function') {
+                        window.initAdmissionForm();
+                    }
+                } else {
+                    mainContent.innerHTML = `<div style="padding:40px;text-align:center;color:red;"><h2>HTTP Error ${response.status}</h2><p>Could not load the module from ${route}.</p></div>`;
+                }
+            } catch (error) {
+                mainContent.innerHTML = `<div style="padding:40px;text-align:center;color:red;"><h2>Network Error</h2><p>Could not reach the server.</p></div>`;
+            }
+        } else {
+            mainContent.innerHTML = `<div style="padding:40px;text-align:center;"><h2>Module Under Construction</h2><p>The module for '${targetModule}' has not been migrated to the new architecture yet.</p></div>`;
+        }
     }
+
+        // Note: Profile routing can be added here if needed
+
 
     if(history.pushState) {
         history.pushState(null, null, '#' + targetModule);
@@ -121,12 +147,12 @@ function toggleSidebar() {
         sidebar.classList.toggle('open', isSidebarOpen);
         if(mobileOverlay) mobileOverlay.classList.toggle('active', isSidebarOpen);
         sidebar.classList.remove('collapsed');
-        if(menuIcon) menuIcon.className = isSidebarOpen ? 'fa fa-times' : 'fa fa-bars'; 
+        if(menuIcon) menuIcon.className = isSidebarOpen ? 'bi bi-x-lg' : 'bi bi-list'; 
     }
     else {
         sidebar.classList.toggle('collapsed', !isSidebarOpen);
         if(content) content.classList.toggle('collapsed', !isSidebarOpen);
-        if(menuIcon) menuIcon.className = isSidebarOpen ? 'fa fa-chevron-left' : 'fa fa-bars';
+        if(menuIcon) menuIcon.className = isSidebarOpen ? 'bi bi-chevron-left' : 'bi bi-list';
     }
 }
 
@@ -148,13 +174,13 @@ function toggleFullscreen() {
         document.documentElement.requestFullscreen().then(() => {
             localStorage.setItem(FULLSCREEN_STORAGE_KEY, 'true');
         }).catch(err => console.error("Fullscreen error:", err));
-        fullscreenIcon.className = 'fa-solid fa-compress';
+        fullscreenIcon.className = 'bi bi-fullscreen-exit';
     } else {
         if (document.exitFullscreen) {
             document.exitFullscreen().then(() => {
                 localStorage.removeItem(FULLSCREEN_STORAGE_KEY);
             }).catch(err => console.error("Fullscreen exit error:", err));
-            fullscreenIcon.className = 'fa-solid fa-expand';
+            fullscreenIcon.className = 'bi bi-arrows-fullscreen';
         }
     }
 }
@@ -163,10 +189,10 @@ function restoreFullscreen() {
     if (localStorage.getItem(FULLSCREEN_STORAGE_KEY) === 'true') {
         setTimeout(() => {
              document.documentElement.requestFullscreen().then(() => {
-                if (fullscreenIcon) fullscreenIcon.className = 'fa-solid fa-compress';
+                if (fullscreenIcon) fullscreenIcon.className = 'bi bi-fullscreen-exit';
             }).catch(() => {
                 localStorage.removeItem(FULLSCREEN_STORAGE_KEY);
-                if (fullscreenIcon) fullscreenIcon.className = 'fa-solid fa-expand';
+                if (fullscreenIcon) fullscreenIcon.className = 'bi bi-arrows-fullscreen';
             });
         }, 100);
     }
@@ -213,6 +239,32 @@ function handleAccordion(e){
 // 3. INITIALIZATION
 // =========================================================================
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. Update Username/Role (Extracted to window function so it can be called after AJAX)
+    window.updateDashboardUserInfo = function() {
+        const role = localStorage.getItem('role') || 'User';
+        const roleDisplay = document.getElementById('user-role-display');
+        if (roleDisplay) {
+            roleDisplay.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+        }
+    };
+    
+    // Call it initially in case it's not a dynamic SPA load
+    window.updateDashboardUserInfo();
+
+    // 2. Fetch Branch Info
+    fetch('http://localhost:8080/api/admin/applications/branch-info', {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success && data.data) {
+            document.querySelectorAll('.school-name-display').forEach(el => {
+                el.textContent = data.data.branch_name;
+            });
+        }
+    })
+    .catch(err => console.error("Error fetching branch info:", err));
+
     if (menuToggle) menuToggle.addEventListener('click', toggleSidebar);
     if (mobileOverlay) mobileOverlay.addEventListener('click', toggleSidebar);
     if (settingsBtn) settingsBtn.addEventListener('click', toggleSettings);
@@ -227,12 +279,12 @@ document.addEventListener('DOMContentLoaded', () => {
             isSidebarOpen = false;
             sidebar.classList.remove('open');
             sidebar.classList.add('collapsed'); 
-            if (menuIcon) menuIcon.className = 'fa fa-bars';
+            if (menuIcon) menuIcon.className = 'bi bi-list';
         } else {
             isSidebarOpen = true;
             sidebar.classList.remove('collapsed');
             if (content) content.classList.remove('collapsed');
-            if (menuIcon) menuIcon.className = 'fa fa-chevron-left';
+            if (menuIcon) menuIcon.className = 'bi bi-chevron-left';
         }
     }
     
@@ -251,22 +303,33 @@ document.addEventListener('DOMContentLoaded', () => {
         handleNavigate(newHash);
     });
     
+    const logoutLink = document.getElementById('logout-link');
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('jwtToken');
+            window.location.href = '/login.html';
+        });
+    }
+
+    const scholarshipDropdown = document.getElementById('scholarship');
+    const scholarshipDetailsContainer = document.getElementById('scholarship-details-container');
+    if (scholarshipDropdown && scholarshipDetailsContainer) {
+        scholarshipDropdown.addEventListener('change', (e) => {
+            if (e.target.value === 'Applied') {
+                scholarshipDetailsContainer.style.display = 'block';
+            } else {
+                scholarshipDetailsContainer.style.display = 'none';
+            }
+        });
+    }
+
     // FIX: Secure Logout Routing 
     document.querySelectorAll('.main-item[data-menu="logout"]').forEach(button => {
         button.addEventListener('click', (e) => {
             e.preventDefault();
-            
-            // Generate perfect secure path to MVC router
-            const baseUrl = window.location.origin;
-            const pathname = window.location.pathname;
-            const erpPos = pathname.indexOf('/erp');
-            
-            let finalUrl = baseUrl;
-            if (erpPos !== -1) {
-                finalUrl = baseUrl + pathname.substring(0, erpPos + 4) + '/public';
-            }
-            
-            window.location.href = finalUrl + '/logout';
+            localStorage.removeItem('jwtToken');
+            window.location.href = '/login.html';
         });
     });
 });

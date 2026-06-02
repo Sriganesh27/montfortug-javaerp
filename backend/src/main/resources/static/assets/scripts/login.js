@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const messageDiv = document.getElementById('message');
 
+    // Set current year in footer
+    const currentYearEl = document.getElementById('currentYear');
+    if (currentYearEl) currentYearEl.textContent = new Date().getFullYear();
+
 
     // --- 2. Login Submission Logic ---
     loginForm.addEventListener('submit', function(e) {
@@ -37,11 +41,21 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.token) {
                 // Save JWT to local storage
                 localStorage.setItem('jwtToken', data.token);
+                localStorage.setItem('username', data.username || 'User');
+                localStorage.setItem('role', data.role || 'User');
+                
                 messageDiv.style.color = '#155724';
                 messageDiv.style.backgroundColor = '#d4edda';
                 messageDiv.textContent = "Redirecting...";
-                // Redirect logic based on role could go here
-                window.location.href = '/dashboard'; 
+                // Redirect logic based on role
+                let roleLower = (data.role || '').toLowerCase();
+                if (roleLower.includes('admin') || roleLower.includes('faculty')) {
+                    window.location.href = '/views/admin/dashboard.html';
+                } else if (roleLower.includes('parent')) {
+                    window.location.href = '/views/parents/dashboard.html';
+                } else {
+                    window.location.href = '/views/admin/dashboard.html'; // Default
+                }
             } else {
                 messageDiv.style.color = '#721c24';
                 messageDiv.style.backgroundColor = '#f8d7da';

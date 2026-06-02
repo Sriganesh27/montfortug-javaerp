@@ -564,4 +564,32 @@ a {
         right: 0;
     }
   }
+
+/* Dashboard & Form Cleanup Utilities */
+.erp-grid-flex { display: flex; gap: 20px; }
+.flex-1 { flex: 1; }
+.mt-15 { margin-top: 15px; }
+.pt-15 { padding-top: 15px; }
+.border-top-dashed { border-top: 1px dashed #ccc; }
+.col-span-2 { grid-column: span 2; }
+.erp-textarea-full, .erp-select-full, .erp-input-full { width: 100%; border: 1px solid #ccc; border-radius: 4px; padding: 10px; }
+.erp-select-full { padding: 8px; }
+.btn-auto { width: auto; }
+.btn-success { background: #27ae60; color: white; }
+.hidden-file-input { display: none; }
+.dashboard-header-spaced { margin-bottom: 25px; }
+.dashboard-welcome { color: var(--primary-color); }
+.dashboard-module-title { margin: 0; color: var(--primary-color); }
+
+/* Missing FontAwesome Utility Classes for Bootstrap Icons */
+.fa-spin {
+    animation: fa-spin 2s infinite linear;
+}
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(359deg); }
+}
+.fa-3x {
+    font-size: 3em;
+}
   

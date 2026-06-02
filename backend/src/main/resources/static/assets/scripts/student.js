@@ -141,13 +141,13 @@ window.showCustomAlert = function(type, title, message) {
     
     const colorMap = { success: 'var(--success-color)', error: 'var(--danger-color)', warning: 'var(--warning-color)', info: 'var(--info-color)' };
     let variantClass = type === 'error' ? 'error' : (type === 'warning' ? 'warning' : 'success');
-    let iconClass = type === 'error' ? 'fa-times-circle' : (type === 'warning' ? 'fa-exclamation-triangle' : 'fa-check-circle');
+    let iconClass = type === 'error' ? 'bi-x-circle' : (type === 'warning' ? 'bi-exclamation-triangle' : 'bi-check-circle');
 
     modalContainer.innerHTML = `
         <div class="modal-content confirm-modal animated-pop">
             <div class="success-header">
                 <div class="confirm-icon-circle ${variantClass}" style="color: ${colorMap[type]}; font-size: 3rem; margin-bottom: 10px; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-                    <i class="fa ${iconClass}"></i>
+                    <i class="bi ${iconClass}"></i>
                 </div>
             </div>
             <h4 class="modal-title" style="margin-bottom:10px;">${title}</h4>
@@ -172,7 +172,7 @@ window.showActionConfirm = function(title, message, confirmBtnText, confirmBtnCo
         <div class="modal-content confirm-modal animated-pop">
             <div class="success-header">
                 <div class="confirm-icon-circle warning" style="color: var(--warning-color); font-size: 3rem; margin-bottom: 10px; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
-                    <i class="fa fa-question-circle"></i>
+                    <i class="bi bi-question-circle"></i>
                 </div>
             </div>
             <h4 class="modal-title">${title}</h4>
@@ -752,7 +752,14 @@ window.autoFillAdmissionForm = function(overrideAppId) {
 
                 const safeSet = (name, value) => {
                     const el = document.querySelector(`#admission-form [name="${name}"]`);
-                    if (el && value) el.value = value;
+                    if (el && value) {
+                        if (el.tagName.toLowerCase() === 'select') {
+                            const match = Array.from(el.options).find(opt => opt.value.toLowerCase() === value.toString().toLowerCase());
+                            if (match) el.value = match.value;
+                        } else {
+                            el.value = value;
+                        }
+                    }
                 };
 
                 // Personal Details
@@ -1881,12 +1888,15 @@ window.deleteReceipt = function(id) { window.confirmAction('delete_student', id,
 // 10. EVENT LISTENERS & INIT
 // =========================================================================
 
-document.addEventListener('DOMContentLoaded', () => {
+window.initAdmissionForm = () => {
     const admissionForm = document.getElementById('admission-form');
     if (admissionForm) { admissionForm.addEventListener('submit', window.handleAdmission); admissionForm.addEventListener('reset', () => { setTimeout(() => { const previewImg = document.getElementById('admission-photo-preview'), photoWrapper = document.getElementById('admission-photo-wrapper'), placeholder = document.getElementById('upload-placeholder'); if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; } if (photoWrapper) photoWrapper.classList.remove('has-file'); if (placeholder) placeholder.style.display = 'flex'; const pInput = document.getElementById('photo'); if(pInput) pInput.value = ''; }, 50); }); }
     const resetAdmBtn = document.getElementById('admission-reset-btn'); if(resetAdmBtn) resetAdmBtn.addEventListener('click', () => { if(admissionForm) admissionForm.reset(); });
     const admLevel = document.getElementById('level'), admClass = document.getElementById('class'); if (admLevel && admClass) { admLevel.addEventListener('change', () => window.populateClassDropdown(admLevel, admClass)); }
     const photoInput = document.getElementById('photo'); if (photoInput) { photoInput.addEventListener('change', function(e) { const file = e.target.files[0], previewImg = document.getElementById('admission-photo-preview'), wrapper = document.getElementById('admission-photo-wrapper'), placeholder = document.getElementById('upload-placeholder'); if (file && previewImg) { const reader = new FileReader(); reader.onload = function(evt) { previewImg.src = evt.target.result; previewImg.style.display = 'block'; if(wrapper) wrapper.classList.add('has-file'); if(placeholder) placeholder.style.display = 'none'; }; reader.readAsDataURL(file); } }); }
+};
+document.addEventListener('DOMContentLoaded', () => {
+    window.initAdmissionForm();
     const filterForm = document.getElementById('student-filter-form'); if (filterForm) filterForm.addEventListener('submit', (e) => { e.preventDefault(); window.loadStudentList(e); });
     const filterLevel = document.getElementById('filter-level'), filterClass = document.getElementById('filter-class'), resetFilterBtn = document.getElementById('reset-filter-btn'); if (filterLevel && filterClass) { filterLevel.addEventListener('change', () => window.populateClassDropdown(filterLevel, filterClass, true)); }
     if (resetFilterBtn) { resetFilterBtn.addEventListener('click', () => { const form = document.getElementById('student-filter-form'); if(form) form.reset(); if(filterClass) filterClass.innerHTML = '<option value="">All</option>'; const container = document.getElementById('student-list-results'); if(container) container.innerHTML = `<div style="text-align:center; padding: 60px 20px; color: #777;"><i class="bi bi-search" style="font-size: 3rem; color: #ddd; margin-bottom: 15px;"></i><p>Use filters to find students.</p></div>`; }); }

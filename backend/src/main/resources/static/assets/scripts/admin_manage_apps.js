@@ -47,12 +47,14 @@ function loadApplications() {
     const lvl = document.getElementById('appLevelFilter') ? document.getElementById('appLevelFilter').value : '';
     const cls = document.getElementById('classFilter') ? document.getElementById('classFilter').value : 'All';
     const scholarship = document.getElementById('scholarshipFilter') ? document.getElementById('scholarshipFilter').value : 'All';
+    const year = document.getElementById('yearFilter') ? document.getElementById('yearFilter').value : 'All';
     
     let apiUrl = `${getSystemBaseUrl()}/api/admin/applications?status=${status}`;
     if (search.trim() !== '') apiUrl += `&search=${encodeURIComponent(search)}`;
     if (lvl !== '') apiUrl += `&appliedLevel=${encodeURIComponent(lvl)}`;
     if (cls !== 'All' && cls !== '') apiUrl += `&appliedClass=${encodeURIComponent(cls)}`;
     if (scholarship !== 'All') apiUrl += `&scholarship=${encodeURIComponent(scholarship)}`;
+    if (year !== 'All') apiUrl += `&academicYear=${encodeURIComponent(year)}`;
     
     fetch(apiUrl, {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') }
@@ -86,6 +88,7 @@ function loadApplications() {
                 const sNone = app.scholarship_status === 'None' ? 'selected' : '';
                 const sApp = app.scholarship_status === 'Applied' ? 'selected' : '';
                 const sConf = app.scholarship_status === 'Confirmed' ? 'selected' : '';
+                const sRej = app.scholarship_status === 'Rejected' ? 'selected' : '';
 
                 html += `<tr>
                     <td>${app.ref_number}</td>
@@ -97,6 +100,7 @@ function loadApplications() {
                             <option value="None" ${sNone}>No Aid</option>
                             <option value="Applied" ${sApp}>Applied</option>
                             <option value="Confirmed" ${sConf}>Confirmed</option>
+                            <option value="Rejected" ${sRej}>Rejected</option>
                         </select>
                     </td>
                     <td>${actions}</td>
@@ -138,7 +142,7 @@ function viewApplication(id) {
                         <strong>Submitted Subjects & Grades</strong>
                         <ul style="margin: 5px 0 0 20px; font-size: 14px;">`;
                     marks.forEach(m => {
-                        subjectMarksHtml += `<li>${m.subject}: Mark: <strong>${m.mark || '-'}</strong> | Grade: <strong>${m.grade || '-'}</strong></li>`;
+                        subjectMarksHtml += `<li>${m.name || m.subject || 'Unknown'}: Mark: <strong>${m.mark || '-'}</strong> | Grade: <strong>${m.grade || '-'}</strong></li>`;
                     });
                     subjectMarksHtml += `</ul></div>`;
                 } catch(e) {}
