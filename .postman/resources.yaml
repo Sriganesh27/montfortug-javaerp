@@ -1,0 +1,12 @@
+workspace:
+  id: 7d6b16f3-5924-46c5-8e6c-6cd9c7d276e2
+localResources:
+  collections:
+    - ../postman/collections/montfortug-javaerp
+  environments:
+    - ../postman/environments/New Environment.environment.yaml
+cloudResources:
+  collections:
+    ../postman/collections/montfortug-javaerp: 55107954-8796d1f3-cd93-45e6-b5a5-1a973af3d19c
+  environments:
+    ../postman/environments/New Environment.environment.yaml: 55107954-1acb98ea-970f-4c03-9b92-578e32e53ccf

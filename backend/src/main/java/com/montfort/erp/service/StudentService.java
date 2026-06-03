@@ -94,8 +94,9 @@ public class StudentService {
         ObjectMapper mapper = new ObjectMapper();
         String subjectMarksJson = mapper.writeValueAsString(subjects);
 
+        // Insert into erp_academichistory
         jdbcTemplate.update(
-            "INSERT INTO erp_academichistory (AdmissionNo, branch_id, FormerSchool, FormerSchoolCode, FormerSchoolLIN, PLEIndexNumber, PLEAggregate, UCEIndexNumber, UCEResult, SubjectMarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO erp_academichistory (AdmissionNo, branch_id, FormerSchool, FormerSchoolCode, LIN, PLEIndexNumber, PLEAggregate, UCEIndexNumber, UCEResult, SubjectMarks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             adNo, branchId, formData.get("former_school"), formData.get("former_school_code"), formData.get("former_school_lin"), formData.get("ple_index"), formData.get("ple_agg"), formData.get("uce_index"), formData.get("uce_result"), subjectMarksJson
         );
 

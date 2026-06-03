@@ -265,6 +265,19 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(err => console.error("Error fetching branch info:", err));
 
+    // 3. Fetch Dashboard Stats
+    fetch('/api/admin/dashboard/stats', {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success && data.data) {
+            const countEl = document.getElementById('total-students-count');
+            if (countEl) countEl.textContent = data.data.total_students;
+        }
+    })
+    .catch(err => console.error("Error fetching dashboard stats:", err));
+
     if (menuToggle) menuToggle.addEventListener('click', toggleSidebar);
     if (mobileOverlay) mobileOverlay.addEventListener('click', toggleSidebar);
     if (settingsBtn) settingsBtn.addEventListener('click', toggleSettings);

@@ -1,0 +1,13 @@
+$kind: http-request
+name: "Test Case 8: Admit a Student and Migrate Files"
+url: http://localhost:8080/api/admin/applications/scholarship
+method: POST
+headers:
+  Authorization: " Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdF9raXppdG9fYWRtaW4iLCJpYXQiOjE3ODA0NjY5MTMsImV4cCI6MTc4MDU1MzMxM30.2Md21qJG3P645ia05GJvceY_p0jqiC6DoTzHa8PftFc"
+body:
+  type: urlencoded
+auth:
+  type: bearer
+  credentials:
+    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdF9raXppdG9fYWRtaW4iLCJpYXQiOjE3ODA0NjY5MTMsImV4cCI6MTc4MDU1MzMxM30.2Md21qJG3P645ia05GJvceY_p0jqiC6DoTzHa8PftFc
+order: 4169040245860802

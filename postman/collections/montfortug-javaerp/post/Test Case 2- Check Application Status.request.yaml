@@ -1,0 +1,9 @@
+$kind: http-request
+name: "Test Case 2: Check Application Status"
+url: http://localhost:8080/api/public/applications/status
+method: POST
+body:
+  type: urlencoded
+  content:
+    ref_number: U011-26-002
+order: 1000
