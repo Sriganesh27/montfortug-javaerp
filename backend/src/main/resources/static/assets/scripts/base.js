@@ -36,13 +36,36 @@ const FULLSCREEN_STORAGE_KEY = 'montfort_is_fullscreen';
 // =========================================================================
 // 1. SPA ROUTING LOGIC
 // =========================================================================
+const moduleCategoryMap = {
+    'dashboard': '',
+    'manage_applications': 'student',
+    'admission': 'student',
+    'list': 'student',
+    'summary': 'student',
+    'migrate': 'student',
+    'quickedit': 'student',
+    'academicedit': 'student',
+    'searchstudent': 'student',
+    'marks': 'student',
+    'studentphotos': 'student',
+    'studentaccounts': 'student',
+    'oldstudentdebt': 'student',
+    'oldstudentrec': 'student',
+    'studentcomments': 'student',
+    'projectevaluation': 'student',
+    'NCDCreportcard': 'student',
+    'reportcomments': 'student',
+    'profile': 'student'
+};
+
 const moduleRoutes = {
     'dashboard': '/views/admin/dashboard_home.html',
     'admission': '/views/admin/students/add_student.html',
+    'list': '/views/admin/students/list_students.html',
     'manage_applications': '/views/admin/applications/manage_applications.html'
 };
 
-async function handleNavigate(targetModule) {
+async function handleNavigate(targetModule, pushState = true) {
     if (!targetModule) return;
     activeModule = targetModule;
 
@@ -95,6 +118,9 @@ async function handleNavigate(targetModule) {
                     if (targetModule === 'admission' && typeof window.initAdmissionForm === 'function') {
                         window.initAdmissionForm();
                     }
+                    if (targetModule === 'list' && typeof window.initStudentListForm === 'function') {
+                        window.initStudentListForm();
+                    }
                 } else {
                     mainContent.innerHTML = `<div style="padding:40px;text-align:center;color:red;"><h2>HTTP Error ${response.status}</h2><p>Could not load the module from ${route}.</p></div>`;
                 }
@@ -109,10 +135,10 @@ async function handleNavigate(targetModule) {
         // Note: Profile routing can be added here if needed
 
 
-    if(history.pushState) {
-        history.pushState(null, null, '#' + targetModule);
-    } else {
-        window.location.hash = targetModule;
+    if(pushState && history.pushState) {
+        let category = moduleCategoryMap[targetModule];
+        let path = category ? '/admin/' + category + '/' + targetModule : '/admin/' + targetModule;
+        history.pushState({ module: targetModule }, null, path);
     }
 
     navLinks.forEach(link => {
@@ -222,15 +248,14 @@ function handleAccordion(e){
         
     } else {
         // If it's just a normal link, route it!
-        if (item.dataset.menu) {
-            e.preventDefault();
-            handleNavigate(item.dataset.menu);
-        } else if (item.hasAttribute('href')) {
+        e.preventDefault();
+        let target = item.dataset.menu;
+        if (!target) {
             const href = item.getAttribute('href');
-            if (href && href.startsWith('#')) {
-                e.preventDefault();
-                handleNavigate(href.substring(1));
-            }
+            if (href && href.startsWith('#')) target = href.substring(1);
+        }
+        if (target && target !== '#') {
+            handleNavigate(target);
         }
     }
 }
@@ -258,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(res => res.json())
     .then(data => {
         if(data.success && data.data) {
+            window.currentBranchType = data.data.branch_type;
             document.querySelectorAll('.school-name-display').forEach(el => {
                 el.textContent = data.data.branch_name;
             });
@@ -303,18 +329,26 @@ document.addEventListener('DOMContentLoaded', () => {
     
     restoreFullscreen();
 
-    const hash = window.location.hash.substring(1);
-    if (hash && hash !== 'dashboard') {
-        const dash = document.getElementById('dashboard-module');
-        if(dash) dash.style.display = 'none';
+    // Determine the current module based on the URL path
+    let pathParts = window.location.pathname.split('/').filter(Boolean);
+    let initialModule = pathParts.length > 0 ? pathParts[pathParts.length - 1] : '';
+    
+    // Default to dashboard if we're at root, /admin, or /views/admin/dashboard.html
+    if (!initialModule || initialModule === 'admin' || initialModule === 'dashboard.html' || initialModule === 'index.html') {
+        initialModule = 'dashboard';
     }
 
-    handleNavigate(hash || 'dashboard');
-
-    window.addEventListener('hashchange', () => {
-        const newHash = window.location.hash.substring(1);
-        handleNavigate(newHash);
-    });
+    // Support legacy bookmarks with hashes (convert them to path)
+    if (window.location.hash) {
+        initialModule = window.location.hash.replace('#', '');
+        if (history.replaceState) {
+            let category = moduleCategoryMap[initialModule];
+            let path = category ? '/admin/' + category + '/' + initialModule : '/admin/' + initialModule;
+            history.replaceState({ module: initialModule }, null, path);
+        }
+    }
+    
+    handleNavigate(initialModule, false);
     
     const logoutLink = document.getElementById('logout-link');
     if (logoutLink) {
@@ -345,4 +379,15 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = '/login.html';
         });
     });
+});
+
+window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.module) {
+        handleNavigate(e.state.module, false);
+    } else {
+        let pathParts = window.location.pathname.split('/').filter(Boolean);
+        let module = pathParts.length > 0 ? pathParts[pathParts.length - 1] : '';
+        if (!module || module === 'admin' || module === 'dashboard.html') module = 'dashboard';
+        handleNavigate(module, false);
+    }
 });

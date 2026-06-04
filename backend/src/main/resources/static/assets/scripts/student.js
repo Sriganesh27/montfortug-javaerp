@@ -36,8 +36,31 @@ window.getCleanMediaUrl = function(dbPath) {
 // =========================================================================
 const classesMap = {
     'nursery': [{val: 'N1', label: 'Baby Class (N1)'}, {val: 'N2', label: 'Middle Class (N2)'}, {val: 'N3', label: 'Top Class (N3)'}],
+    'pre-primary': [{val: 'N1', label: 'Baby Class (N1)'}, {val: 'N2', label: 'Middle Class (N2)'}, {val: 'N3', label: 'Top Class (N3)'}],
     'primary': ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7'].map(c => ({val: c, label: c})),
     'secondary': ['S1', 'S2', 'S3', 'S4', 'S5', 'S6'].map(c => ({val: c, label: c}))
+};
+
+window.populateLevelDropdown = async function(levelEl, includeAll = false) {
+    if (!levelEl) return;
+    levelEl.innerHTML = includeAll ? '<option value="">All</option>' : '<option value="">Select Level</option>';
+    
+    let branchType = window.currentBranchType;
+    if (!branchType) {
+        try {
+            const res = await fetch('/api/admin/applications/branch-info', { headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') } });
+            const data = await res.json();
+            if(data.success && data.data) {
+                branchType = data.data.branch_type;
+                window.currentBranchType = branchType;
+            }
+        } catch (e) { console.error("Error fetching branch info for levels", e); }
+    }
+    branchType = branchType || 'Nursery / Primary / Secondary';
+    let levels = branchType.split('/').map(l => l.trim());
+    levels.forEach(l => {
+        levelEl.innerHTML += `<option value="${l}">${l}</option>`;
+    });
 };
 
 window.populateClassDropdown = function(levelEl, classEl, includeAll = false) {
@@ -97,13 +120,17 @@ window.populateClassDropdown = function(levelEl, classEl, includeAll = false) {
     }
 };
 
-window.populateStreamDropdown = function(classEl, streamEl) {
+window.populateStreamDropdown = function(classEl, streamEl, includeAll = false) {
     if (!classEl || !streamEl) return;
     
     let targetStream = streamEl.getAttribute('data-initial-value');
     if (!targetStream) targetStream = streamEl.value;
 
-    streamEl.innerHTML = '<option value="">Select Stream</option>';
+    if (includeAll) {
+        streamEl.innerHTML = '<option value="">All</option>';
+    } else {
+        streamEl.innerHTML = '<option value="">Select Stream</option>';
+    }
     const cVal = (classEl.value || '').trim().toUpperCase();
     if (!cVal) return;
     
@@ -221,7 +248,34 @@ window.loadStudentList = function(e) {
     if (!hasFilter) { container.innerHTML = '<div style="text-align:center; padding: 60px 20px; color: #777;"><i class="bi bi-search" style="font-size: 3rem; color: #ddd; margin-bottom: 15px;"></i><p>Please select a filter.</p></div>'; return; }
     let params = new URLSearchParams(formData).toString();
     container.innerHTML = '<div style="text-align:center;padding:40px;"><i class="bi bi-arrow-repeat fa-spin fa-3x" style="color:var(--primary-color);"></i><p>Searching...</p></div>';
-    fetch(`${getApiPrefix()}modules/students/partial/viewstudents.php?${params}`).then(r => r.text()).then(html => container.innerHTML = html);
+    fetch(`${getApiPrefix()}api/admin/students/quick-edit?${params}`, {
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') }
+    }).then(r => r.json()).then(data => {
+        if (!data.success || !data.data || data.data.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding: 60px 20px; color: #777;">No records found.</div>';
+            return;
+        }
+        let html = '<div class="table-container"><table class="data-table"><thead><tr><th>Photo</th><th>Student</th><th>Class Info</th><th>Residence</th><th>Actions</th></tr></thead><tbody>';
+        data.data.forEach(student => {
+            const photo = student.PhotoPath ? window.getCleanMediaUrl(student.PhotoPath) : 'static/images/default_profile.png';
+            html += `<tr>
+                <td><img src="${photo}" class="student-photo-thumb" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(student.Name + ' ' + student.Surname)}&background=random&color=fff'"></td>
+                <td><strong>${student.Name} ${student.Surname}</strong><br><small>Stu-Id: ${student.StudentID || student.AdmissionNo} | ${student.Gender || '-'}</small></td>
+                <td>${student.Class} ${student.Stream ? '<span class="badge">'+student.Stream+'</span>' : ''}<br><small>${student.AcademicYear || '-'}</small></td>
+                <td>${student.Residence || '-'}<br><small>${student.Term || '-'}</small></td>
+                <td>
+                    <div style="display:flex; gap:5px; justify-content:center; align-items:center;">
+                        <button class="btn-action view-btn" onclick="loadProfileViaAjax(${student.AdmissionNo})"><i class="fa fa-user" style="padding: 2px;"></i> Profile</button>
+                        <button class="btn-action delete-btn" onclick="executeDelete(${student.AdmissionNo})"><i class="fa fa-trash"></i>Delete</button>
+                    </div>
+                </td>
+            </tr>`;
+        });
+        html += '</tbody></table></div>';
+        container.innerHTML = html;
+    }).catch(err => {
+        container.innerHTML = '<div style="text-align:center; padding: 40px; color: red;">Failed to fetch students.</div>';
+    });
 };
 
 window.loadSummary = function(e) {
@@ -256,7 +310,14 @@ window.initSummaryTabs = function(context) {
 };
 
 window.executeDelete = function(admissionNo) {
-    fetch(`${getApiPrefix()}api/students/deletestudent.php?id=${admissionNo}`)
+    fetch(`${getApiPrefix()}api/admin/students/delete`, { 
+        method: 'POST', 
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': 'Bearer ' + localStorage.getItem('jwtToken')
+        }, 
+        body: `id=${admissionNo}` 
+    })
     .then(r => r.json())
     .then(data => {
         const modal = document.getElementById('action-confirm-modal');
@@ -350,7 +411,7 @@ window.loadQuickEditData = function(page) {
     const params = new URLSearchParams(new FormData(form));
     params.append('page', page); params.append('limit', limit);
     tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px;"><i class="bi bi-arrow-repeat fa-spin"></i> Loading...</td></tr>';
-    fetch(`${getApiPrefix()}api/students/fetch_quick_edit.php?${params.toString()}`).then(r => r.json()).then(data => {
+    fetch(`${getApiPrefix()}api/admin/students/quick-edit?${params.toString()}`).then(r => r.json()).then(data => {
         if (data.success) { renderQuickEditTable(data); updateQuickEditPagination(data); } else { tbody.innerHTML = `<tr><td colspan="10" class="text-center" style="color:red;">Error: ${data.message}</td></tr>`; }
     }).catch(err => { console.error(err); tbody.innerHTML = '<tr><td colspan="10" class="text-center" style="color:red;">Connection Error</td></tr>'; });
 };
@@ -556,13 +617,56 @@ window.saveAcademicRow = function(id) {
         if(resp.success) {
             const oldData = JSON.parse(row.dataset.original);
             const newData = { ...oldData }; for(let [k,v] of payload.entries()) if(k!=='AdmissionNo') newData[k]=v;
-            row.dataset.original = JSON.stringify(newData); cancelAcademicRow(id); window.showCustomAlert('success', 'Saved', 'Academic details updated.');
+        row.dataset.original = JSON.stringify(newData); cancelAcademicRow(id); window.showCustomAlert('success', 'Saved', 'Academic details updated.');
         } else { window.showCustomAlert('error', 'Error', resp.message); cancelAcademicRow(id); }
     }).catch(err => { console.error(err); window.showCustomAlert('error', 'Error', 'Connection failed.'); row.querySelector('.action-cell').innerHTML = `<button class="btn-action view-btn" onclick="editAcademicRow(${id})"><i class="bi bi-pencil"></i> Edit</button>`; });
 };
 
 // =========================================================================
-// 5. PROFILE & ADMISSION LOGIC
+// 5. BULK SELECTION & INLINE EDITING LOGIC
+// =========================================================================
+
+window.toggleAllStudents = function(masterCheckbox) {
+    const checkboxes = document.querySelectorAll('.student-row-checkbox');
+    checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
+    window.updateBulkSelection();
+};
+
+window.updateBulkSelection = function() {
+    const checkboxes = document.querySelectorAll('.student-row-checkbox:checked');
+    const bulkBar = document.getElementById('bulk-actions-bar');
+    const countSpan = document.getElementById('selected-count');
+    if (!bulkBar || !countSpan) return;
+    
+    if (checkboxes.length > 0) {
+        bulkBar.style.display = 'flex';
+        countSpan.innerText = `${checkboxes.length} selected`;
+    } else {
+        bulkBar.style.display = 'none';
+        countSpan.innerText = '0 selected';
+    }
+};
+
+window.openBulkMigrate = function() {
+    const selectedIds = Array.from(document.querySelectorAll('.student-row-checkbox:checked')).map(cb => cb.value);
+    if (selectedIds.length === 0) {
+        window.showCustomAlert('error', 'Selection Required', 'Please select at least one student to migrate.');
+        return;
+    }
+    // Switch to migrate module and pass selected IDs
+    window.showCustomAlert('info', 'Migrate', `Opening migration UI for ${selectedIds.length} students... (UI under construction)`);
+};
+
+window.bulkArchive = function() {
+    const selectedIds = Array.from(document.querySelectorAll('.student-row-checkbox:checked')).map(cb => cb.value);
+    if (selectedIds.length === 0) return;
+    
+    window.confirmAction('bulk_archive', null, `${selectedIds.length} students`);
+    // Note: executeBulkArchive needs to be implemented in base.js or here
+};
+
+// =========================================================================
+// 6. PROFILE & ADMISSION LOGIC
 // =========================================================================
 
 window.initEditProfileDropdowns = function() {
@@ -574,11 +678,13 @@ window.loadProfileViaAjax = function(admissionNo) {
     localStorage.setItem('currentStudentId', admissionNo); 
     const pMod = document.getElementById('profile-module');
     if (pMod) {
-        if (window.location.hash !== '#profile') { window.location.hash = 'profile'; return; }
+        if (typeof handleNavigate === 'function' && window.activeModule !== 'profile') {
+            handleNavigate('profile');
+        }
         pMod.style.display = 'block'; document.querySelectorAll('.module').forEach(m => { if(m.id !== 'profile-module') m.style.display = 'none'; });
         pMod.innerHTML = '<div style="text-align:center;padding:50px;"><i class="bi bi-arrow-repeat fa-spin fa-3x" style="color:var(--primary-color);"></i><br>Loading Profile...</div>';
         fetch(`${getApiPrefix()}api/students/get_student_profile.php?id=${admissionNo}`).then(r => r.text()).then(html => { pMod.innerHTML = html; if (typeof window.initEditProfileDropdowns === 'function') { window.initEditProfileDropdowns(); } }).catch(err => { console.error(err); pMod.innerHTML = '<div style="text-align:center; color:red; padding:30px;">Failed to load profile data.</div>'; });
-    } else { window.location.href = `modules/students/studentprofile.php?ad_no=${admissionNo}`; }
+    }
 };
 
 window.togglePageEditMode = function(mode) {
@@ -735,8 +841,8 @@ window.calcTotalSubjectScore = function() {
 window.autoFillAdmissionForm = function(overrideAppId) {
     const urlParams = new URLSearchParams(window.location.search);
     const appId = overrideAppId || urlParams.get('prefill_app_id');
-
-    if (appId && window.location.hash === '#admission') {
+    
+    if (appId && window.activeModule === 'admission') {
         
         // --- 1. SHOW PROCESSING ANIMATION ---
         const overlay = document.createElement('div');
@@ -1019,7 +1125,7 @@ function initSearchModule() {
 
 function performGlobalSearch(query, container) {
     container.innerHTML = `<div class="search-loading-state"><i class="bi bi-arrow-repeat fa-spin search-loading-icon"></i></div>`;
-    fetch(`${getApiPrefix()}api/students/search_global.php?query=${encodeURIComponent(query)}`)
+    fetch(`${getApiPrefix()}api/admin/students/search?query=${encodeURIComponent(query)}`)
     .then(r => r.json())
     .then(data => {
         container.innerHTML = '';
@@ -1945,7 +2051,19 @@ window.initAdmissionForm = () => {
     const admissionForm = document.getElementById('admission-form');
     if (admissionForm) { admissionForm.addEventListener('submit', window.handleAdmission); admissionForm.addEventListener('reset', () => { setTimeout(() => { const previewImg = document.getElementById('admission-photo-preview'), photoWrapper = document.getElementById('admission-photo-wrapper'), placeholder = document.getElementById('upload-placeholder'); if (previewImg) { previewImg.src = ''; previewImg.style.display = 'none'; } if (photoWrapper) photoWrapper.classList.remove('has-file'); if (placeholder) placeholder.style.display = 'flex'; const pInput = document.getElementById('photo'); if(pInput) pInput.value = ''; }, 50); }); }
     const resetAdmBtn = document.getElementById('admission-reset-btn'); if(resetAdmBtn) resetAdmBtn.addEventListener('click', () => { if(admissionForm) admissionForm.reset(); });
-    const admLevel = document.getElementById('level'), admClass = document.getElementById('class'); if (admLevel && admClass) { admLevel.addEventListener('change', () => window.populateClassDropdown(admLevel, admClass)); }
+    const admLevel = document.getElementById('level'), admClass = document.getElementById('class'), admStream = document.getElementById('stream'); 
+    if (admLevel) {
+        window.populateLevelDropdown(admLevel, false).then(() => {
+            if (admClass) window.populateClassDropdown(admLevel, admClass);
+        });
+        admLevel.addEventListener('change', () => { 
+            if (admClass) window.populateClassDropdown(admLevel, admClass);
+            if (admStream) window.populateStreamDropdown(admClass, admStream, false);
+        });
+    }
+    if (admClass && admStream) {
+        admClass.addEventListener('change', () => window.populateStreamDropdown(admClass, admStream, false));
+    }
     const photoInput = document.getElementById('photo'); if (photoInput) { photoInput.addEventListener('change', function(e) { const file = e.target.files[0], previewImg = document.getElementById('admission-photo-preview'), wrapper = document.getElementById('admission-photo-wrapper'), placeholder = document.getElementById('upload-placeholder'); if (file && previewImg) { const reader = new FileReader(); reader.onload = function(evt) { previewImg.src = evt.target.result; previewImg.style.display = 'block'; if(wrapper) wrapper.classList.add('has-file'); if(placeholder) placeholder.style.display = 'none'; }; reader.readAsDataURL(file); } }); }
     
     // Scholarship listener logic
@@ -1961,11 +2079,45 @@ window.initAdmissionForm = () => {
         });
     }
 };
+window.initStudentListForm = function() {
+    const filterForm = document.getElementById('student-filter-form'); 
+    if (filterForm) filterForm.addEventListener('submit', (e) => { e.preventDefault(); window.loadStudentList(e); });
+    
+    const filterLevel = document.getElementById('filter-level');
+    const filterClass = document.getElementById('filter-class');
+    const filterStream = document.getElementById('filter-stream');
+    const resetFilterBtn = document.getElementById('reset-filter-btn'); 
+    
+    if (filterLevel && filterClass) { 
+        window.populateLevelDropdown(filterLevel, true).then(() => {
+            window.populateClassDropdown(filterLevel, filterClass, true);
+        });
+        filterLevel.addEventListener('change', () => {
+            window.populateClassDropdown(filterLevel, filterClass, true);
+            if (filterStream) window.populateStreamDropdown(filterClass, filterStream, true);
+        }); 
+    }
+    
+    if (filterClass && filterStream) {
+        filterClass.addEventListener('change', () => {
+            window.populateStreamDropdown(filterClass, filterStream, true);
+        });
+    }
+
+    if (resetFilterBtn) { 
+        resetFilterBtn.addEventListener('click', () => { 
+            if(filterForm) filterForm.reset(); 
+            if(filterClass) filterClass.innerHTML = '<option value="">All</option>'; 
+            if(filterStream) filterStream.innerHTML = '<option value="">All</option>'; 
+            const container = document.getElementById('student-list-results'); 
+            if(container) container.innerHTML = `<div style="text-align:center; padding: 60px 20px; color: #777;"><i class="bi bi-search" style="font-size: 3rem; color: #ddd; margin-bottom: 15px;"></i><p>Use filters to find students.</p></div>`; 
+        }); 
+    }
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     window.initAdmissionForm();
-    const filterForm = document.getElementById('student-filter-form'); if (filterForm) filterForm.addEventListener('submit', (e) => { e.preventDefault(); window.loadStudentList(e); });
-    const filterLevel = document.getElementById('filter-level'), filterClass = document.getElementById('filter-class'), resetFilterBtn = document.getElementById('reset-filter-btn'); if (filterLevel && filterClass) { filterLevel.addEventListener('change', () => window.populateClassDropdown(filterLevel, filterClass, true)); }
-    if (resetFilterBtn) { resetFilterBtn.addEventListener('click', () => { const form = document.getElementById('student-filter-form'); if(form) form.reset(); if(filterClass) filterClass.innerHTML = '<option value="">All</option>'; const container = document.getElementById('student-list-results'); if(container) container.innerHTML = `<div style="text-align:center; padding: 60px 20px; color: #777;"><i class="bi bi-search" style="font-size: 3rem; color: #ddd; margin-bottom: 15px;"></i><p>Use filters to find students.</p></div>`; }); }
+    window.initStudentListForm();
 
     document.addEventListener('change', function(e) {
         if (e.target && e.target.id === 'edit-photo-input') { 

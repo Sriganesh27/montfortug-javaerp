@@ -3,7 +3,7 @@ name: "Test Case 7: Toggle Scholarship Status"
 url: http://localhost:8080/api/admin/applications/scholarship
 method: POST
 headers:
-  Authorization: " Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdF9raXppdG9fYWRtaW4iLCJpYXQiOjE3ODA0NjY5MTMsImV4cCI6MTc4MDU1MzMxM30.2Md21qJG3P645ia05GJvceY_p0jqiC6DoTzHa8PftFc"
+  Authorization: " Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdF9raXppdG9fYWRtaW4iLCJpYXQiOjE3ODA1NTM4NjIsImV4cCI6MTc4MDY0MDI2Mn0.mUmj6-yuTD-MPPMKR-UjkKi65mBIPjP3QXTymLqQ6KI"
 body:
   type: urlencoded
   content:
@@ -12,5 +12,5 @@ body:
 auth:
   type: bearer
   credentials:
-    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdF9raXppdG9fYWRtaW4iLCJpYXQiOjE3ODA0NjY5MTMsImV4cCI6MTc4MDU1MzMxM30.2Md21qJG3P645ia05GJvceY_p0jqiC6DoTzHa8PftFc
+    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJzdF9raXppdG9fYWRtaW4iLCJpYXQiOjE3ODA1NTM4NjIsImV4cCI6MTc4MDY0MDI2Mn0.mUmj6-yuTD-MPPMKR-UjkKi65mBIPjP3QXTymLqQ6KI
 order: 4017850398426267
