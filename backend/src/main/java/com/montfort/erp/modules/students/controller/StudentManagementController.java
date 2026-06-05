@@ -27,7 +27,7 @@ public class StudentManagementController {
     }
 
     @PostMapping("/delete")
-    public ResponseEntity<?> deleteStudent(@RequestParam("id") Long admissionNo) {
-        return ResponseEntity.ok(studentManagementService.deleteStudent(admissionNo));
+    public ResponseEntity<?> deleteStudent(@RequestParam("id") Long admissionNo, @RequestParam(value = "exitReason", defaultValue = "Archived") String exitReason) {
+        return ResponseEntity.ok(studentManagementService.deleteStudent(admissionNo, exitReason));
     }
 }

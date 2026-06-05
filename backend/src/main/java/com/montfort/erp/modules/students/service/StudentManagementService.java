@@ -160,21 +160,15 @@ public class StudentManagementService {
         return Map.of("success", true, "data", data);
     }
 
-    // 3. Delete Student (Safe Deletion)
-    public Map<String, Object> deleteStudent(Long admissionNo) {
+    // 3. Archive Student (Safe Archiving)
+    public Map<String, Object> deleteStudent(Long admissionNo, String exitReason) {
         Long branchId = getCurrentUserBranchId();
         
-        // First delete from child tables to prevent foreign key constraint issues
-        jdbcTemplate.update("DELETE FROM erp_academichistory WHERE AdmissionNo = ? AND branch_id = ?", admissionNo, branchId);
-        jdbcTemplate.update("DELETE FROM erp_parents WHERE AdmissionNo = ? AND branch_id = ?", admissionNo, branchId);
-        jdbcTemplate.update("DELETE FROM erp_enrollment WHERE AdmissionNo = ? AND branch_id = ?", admissionNo, branchId);
-        jdbcTemplate.update("DELETE FROM erp_student_accounts WHERE AdmissionNo = ? AND branch_id = ?", admissionNo, branchId);
-        
-        // Finally delete the main record
-        int rows = jdbcTemplate.update("DELETE FROM erp_students WHERE AdmissionNo = ? AND branch_id = ?", admissionNo, branchId);
+        // Instead of hard-deleting, we update the EntryStatus
+        int rows = jdbcTemplate.update("UPDATE erp_enrollment SET EntryStatus = ? WHERE AdmissionNo = ? AND branch_id = ?", exitReason, admissionNo, branchId);
         
         if (rows > 0) {
-            return Map.of("success", true, "message", "Student deleted successfully!");
+            return Map.of("success", true, "message", "Student securely archived as: " + exitReason);
         } else {
             return Map.of("success", false, "message", "Student not found or unauthorized.");
         }

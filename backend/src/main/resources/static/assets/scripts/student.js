@@ -266,7 +266,7 @@ window.loadStudentList = function(e) {
                 <td>
                     <div style="display:flex; gap:5px; justify-content:center; align-items:center;">
                         <button class="btn-action view-btn" onclick="loadProfileViaAjax(${student.AdmissionNo})"><i class="fa fa-user" style="padding: 2px;"></i> Profile</button>
-                        <button class="btn-action delete-btn" onclick="executeDelete(${student.AdmissionNo})"><i class="fa fa-trash"></i>Delete</button>
+                        <button class="btn-action delete-btn" onclick="window.showArchiveModal(${student.AdmissionNo}, '${(student.Name + ' ' + student.Surname).replace(/'/g, "\\'")}')"><i class="fa fa-archive"></i> Archive</button>
                     </div>
                 </td>
             </tr>`;
@@ -309,14 +309,38 @@ window.initSummaryTabs = function(context) {
     }
 };
 
-window.executeDelete = function(admissionNo) {
+window.showArchiveModal = function(admissionNo, name) {
+    const html = `
+        <div id="archive-modal-overlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; display:flex; justify-content:center; align-items:center;">
+            <div style="background:white; padding:20px; border-radius:8px; width:400px; max-width:90%; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+                <h3 style="color:var(--danger-color); margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;"><i class="fa fa-archive"></i> Archive Student</h3>
+                <p style="margin: 15px 0;">Are you sure you want to archive <strong style="color:var(--primary-color);">${name}</strong>?</p>
+                <div style="margin-bottom:20px;">
+                    <label style="display:block; font-weight:bold; margin-bottom:5px; color:#555;">Reason for leaving:</label>
+                    <select id="archive-reason" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:4px; font-size:1em;">
+                        <option value="Graduated / Alumni">Graduated / Alumni</option>
+                        <option value="Transferred">Transferred</option>
+                        <option value="Dropped Out">Dropped Out</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button class="btn-primary" style="background:#6c757d;" onclick="document.getElementById('archive-modal-overlay').remove()">Cancel</button>
+                    <button class="btn-primary" style="background:var(--danger-color);" onclick="executeDelete(${admissionNo}, document.getElementById('archive-reason').value); document.getElementById('archive-modal-overlay').remove()">Confirm Archive</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+};
+
+window.executeDelete = function(admissionNo, exitReason = "Archived") {
     fetch(`${getApiPrefix()}api/admin/students/delete`, { 
         method: 'POST', 
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
             'Authorization': 'Bearer ' + localStorage.getItem('jwtToken')
         }, 
-        body: `id=${admissionNo}` 
+        body: `id=${admissionNo}&exitReason=${encodeURIComponent(exitReason)}` 
     })
     .then(r => r.json())
     .then(data => {
@@ -324,7 +348,7 @@ window.executeDelete = function(admissionNo) {
         if(modal) modal.classList.remove('show'); 
         
         if(data.success) {
-            window.showCustomAlert('success', 'Deleted', 'Record deleted successfully.');
+            window.showCustomAlert('success', 'Archived', data.message || 'Student archived successfully.');
             setTimeout(() => {
                 const isSpaProfile = window.location.hash === '#profile';
                 const isStandaloneProfile = window.location.href.indexOf('studentprofile.php') > -1;
