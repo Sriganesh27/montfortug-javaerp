@@ -230,8 +230,8 @@ public class ApplicationService {
                 "guardian_name, guardian_relation, guardian_age, guardian_contact, guardian_email, guardian_occupation, guardian_education, " +
                 "level, applied_class, class_code, " +
                 "former_school, former_school_code, former_school_lin, prev_marks_doc, " +
-                "ple_score, ple_ref, uce_score, uce_ref, subject_marks, more_info, photo_path, scholarship_status) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "ple_score, ple_ref, uce_score, uce_ref, subject_marks, more_info, photo_path, scholarship_status, status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
         jdbcTemplate.update(sql,
                 refNumber, branchId, year, formData.get("term"), formData.get("reg_date"),
@@ -242,7 +242,7 @@ public class ApplicationService {
                 formData.get("g_name"), formData.get("g_rel"), parseInteger(formData.get("g_age")), formData.get("g_con"), formData.get("g_email"), formData.get("g_occ"), formData.get("g_edu"),
                 formData.get("level"), className, classCode,
                 formData.get("former_school"), formData.get("former_school_code"), formData.get("former_school_lin"), prevMarksPath,
-                formData.get("ple_score"), formData.get("ple_ref"), formData.get("uce_score"), formData.get("uce_ref"), subjectMarksJson, formData.get("more_info"), photoPath, formData.getOrDefault("scholarship_status", "No")
+                formData.get("ple_score"), formData.get("ple_ref"), formData.get("uce_score"), formData.get("uce_ref"), subjectMarksJson, formData.get("more_info"), photoPath, formData.getOrDefault("scholarship_status", "No"), "Pending"
         );
 
         return refNumber;

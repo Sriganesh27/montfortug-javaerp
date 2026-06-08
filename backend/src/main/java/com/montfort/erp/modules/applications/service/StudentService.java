@@ -55,11 +55,30 @@ public class StudentService {
 
         String classGrade = rawClass.replace(" ", "").replace(".", "").replace("PP", "N").toUpperCase();
 
-        jdbcTemplate.update(
-            "INSERT INTO erp_students (AdmissionNo, branch_id, AdmissionYear, Name, MiddleName, Surname, DateOfBirth, Gender, Nationality, HouseNo, Street, Village, Town, District, State, Country, PostalCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            adNo, branchId, admissionYear, name, formData.get("middle_name"), surname, dob, gender, formData.getOrDefault("nationality", "Ugandan"),
-            formData.get("house_no"), formData.get("street"), formData.get("village"), formData.get("town"), formData.get("district"), formData.get("state"), formData.getOrDefault("country", "Uganda"), formData.get("postal_code")
-        );
+        // Generate StudentID (Username format: U011-26-P2-0008)
+        String branchSchoolCode = jdbcTemplate.queryForObject("SELECT school_code FROM erp_branches WHERE branch_id = ?", String.class, branchId);
+        if (branchSchoolCode == null) branchSchoolCode = "U011";
+        String yearShort = admissionYearStr.length() >= 2 ? admissionYearStr.substring(admissionYearStr.length() - 2) : admissionYearStr;
+        String studentId = branchSchoolCode + "-" + yearShort + "-" + classGrade + "-" + String.format("%04d", adNo);
+
+        String linkAppIdStr = formData.get("link_app_id");
+        Long applicationRefId = (linkAppIdStr != null && !linkAppIdStr.isEmpty()) ? Long.parseLong(linkAppIdStr) : null;
+
+        try {
+            jdbcTemplate.update(
+                "INSERT INTO erp_students (AdmissionNo, StudentID, application_id, branch_id, AdmissionYear, Name, MiddleName, Surname, DateOfBirth, Gender, Nationality, HouseNo, Street, Village, Town, District, State, Country, PostalCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                adNo, studentId, applicationRefId, branchId, admissionYear, name, formData.get("middle_name"), surname, dob, gender, formData.getOrDefault("nationality", "Ugandan"),
+                formData.get("house_no"), formData.get("street"), formData.get("village"), formData.get("town"), formData.get("district"), formData.get("state"), formData.getOrDefault("country", "Uganda"), formData.get("postal_code")
+            );
+        } catch (Exception e) {
+            // Fallback in case application_id column hasn't been created yet
+            jdbcTemplate.execute("ALTER TABLE erp_students ADD COLUMN application_id BIGINT");
+            jdbcTemplate.update(
+                "INSERT INTO erp_students (AdmissionNo, StudentID, application_id, branch_id, AdmissionYear, Name, MiddleName, Surname, DateOfBirth, Gender, Nationality, HouseNo, Street, Village, Town, District, State, Country, PostalCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                adNo, studentId, applicationRefId, branchId, admissionYear, name, formData.get("middle_name"), surname, dob, gender, formData.getOrDefault("nationality", "Ugandan"),
+                formData.get("house_no"), formData.get("street"), formData.get("village"), formData.get("town"), formData.get("district"), formData.get("state"), formData.getOrDefault("country", "Uganda"), formData.get("postal_code")
+            );
+        }
 
         String moreInfo = formData.get("more_info");
         if (moreInfo == null) moreInfo = "";
@@ -105,10 +124,7 @@ public class StudentService {
             adNo, branchId, academicYear, term, classGrade, level, formData.getOrDefault("stream", "A"), formData.get("residence"), formData.get("entry_status")
         );
 
-        String branchSchoolCode = jdbcTemplate.queryForObject("SELECT school_code FROM erp_branches WHERE branch_id = ?", String.class, branchId);
-        if (branchSchoolCode == null) branchSchoolCode = "U011";
-        String yearShort = admissionYearStr.length() >= 2 ? admissionYearStr.substring(admissionYearStr.length() - 2) : admissionYearStr;
-        String username = branchSchoolCode + "-" + yearShort + "-" + classGrade + "-" + String.format("%04d", adNo);
+        String username = studentId; // Reusing the studentId generated above for the account username
         String pwdHash = passwordEncoder.encode(surname + admissionYearStr);
 
         jdbcTemplate.update(
@@ -122,16 +138,14 @@ public class StudentService {
             System.err.println("Could not update StudentID (column might not exist yet): " + e.getMessage());
         }
 
-        String linkAppIdStr = formData.get("link_app_id");
-        if (linkAppIdStr != null && !linkAppIdStr.isEmpty()) {
-            Long linkAppId = Long.parseLong(linkAppIdStr);
-            jdbcTemplate.update("UPDATE erp_applications SET status = 'Admitted' WHERE app_id = ? AND branch_id = ?", linkAppId, branchId);
+        if (applicationRefId != null) {
+            jdbcTemplate.update("UPDATE erp_applications SET status = 'Admitted' WHERE app_id = ? AND branch_id = ?", applicationRefId, branchId);
 
             try {
                 // Fetch existing application data
                 Map<String, Object> appData = jdbcTemplate.queryForMap(
                         "SELECT photo_path, prev_marks_doc FROM erp_applications WHERE app_id = ? AND branch_id = ?", 
-                        linkAppId, branchId);
+                        applicationRefId, branchId);
                 
                 String oldPhotoPath = (String) appData.get("photo_path");
                 String oldPrevMarksDoc = (String) appData.get("prev_marks_doc");
