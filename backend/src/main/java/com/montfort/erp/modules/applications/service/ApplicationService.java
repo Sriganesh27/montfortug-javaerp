@@ -12,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import org.springframework.transaction.annotation.Transactional;
+import com.montfort.erp.core.security.JwtUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,13 +24,27 @@ public class ApplicationService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    // Helper to get branch ID (mocked for now)
+    @Autowired
+    private HttpServletRequest request;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
     public Long getCurrentUserBranchId() {
         try {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String jwt = authHeader.substring(7);
+                Long jwtBranchId = jwtUtil.extractBranchId(jwt);
+                if (jwtBranchId != null) return jwtBranchId;
+            }
+        } catch (Exception e) {}
+        
+        try {
             Long branchId = jdbcTemplate.queryForObject("SELECT MIN(branch_id) FROM erp_branches", Long.class);
-            return branchId != null ? branchId : 1L;
+            return branchId;
         } catch (Exception e) {
-            return 1L;
+            return null;
         }
     }
 
@@ -149,6 +165,7 @@ public class ApplicationService {
         return null;
     }
 
+    @Transactional(rollbackFor = Exception.class)
     public String submitApplication(Map<String, String> formData, MultipartFile photo, MultipartFile prevMarksDoc, HttpServletRequest request) throws Exception {
         int branchId = Integer.parseInt(formData.getOrDefault("branch_id", "0"));
         String year = formData.getOrDefault("admission_year", String.valueOf(java.time.Year.now().getValue()));
@@ -163,46 +180,48 @@ public class ApplicationService {
         if (schoolCode == null) schoolCode = "U000";
         
         String prefix = schoolCode + "-" + year.substring(Math.max(0, year.length() - 2)) + "-";
-        Integer total = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) as total FROM erp_applications WHERE branch_id = ? AND academic_year = ?", 
-                Integer.class, branchId, year);
-        if (total == null) total = 0;
-        String sequence = String.format("%03d", total + 1);
-        String refNumber = prefix + sequence;
 
         String safeBranchName = jdbcTemplate.queryForObject(
                 "SELECT branch_name FROM erp_branches WHERE branch_id = ?", String.class, branchId);
         if (safeBranchName == null) safeBranchName = "General_School";
         safeBranchName = safeBranchName.replaceAll("[^A-Za-z0-9]", "_");
 
-        String baseDir = System.getProperty("user.dir") + "/public/assets/uploads/applications/" + safeBranchName + "/" + classCode + "/" + refNumber;
+        // Temporary unique ID for folder creation so files can be uploaded outside the synchronized block
+        String tempId = java.util.UUID.randomUUID().toString().substring(0, 8);
+        String baseDir = System.getProperty("user.dir") + "/public/assets/uploads/applications/" + safeBranchName + "/" + classCode + "/temp_" + tempId;
         File dir = new File(baseDir);
         if (!dir.exists()) dir.mkdirs();
 
         String photoPath = null;
+        String photoFileName = null;
         if (photo != null && !photo.isEmpty()) {
             if (photo.getSize() > 51200) {
                 throw new Exception("The student photograph must be 50KB or smaller.");
             }
             String originalFilename = photo.getOriginalFilename();
-            String ext = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf('.')) : ".jpg";
-            String fileName = refNumber + ext;
-            Path path = Paths.get(baseDir, fileName);
+            String ext = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf('.')).toLowerCase() : ".jpg";
+            if (!ext.equals(".jpg") && !ext.equals(".jpeg") && !ext.equals(".png")) {
+                throw new Exception("Only JPG, JPEG, and PNG images are allowed.");
+            }
+            photoFileName = "photo" + ext;
+            Path path = Paths.get(baseDir, photoFileName);
             Files.copy(photo.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            photoPath = "/assets/uploads/applications/" + safeBranchName + "/" + classCode + "/" + refNumber + "/" + fileName;
         }
 
         String prevMarksPath = null;
+        String prevMarksFileName = null;
         if (prevMarksDoc != null && !prevMarksDoc.isEmpty()) {
             if (prevMarksDoc.getSize() > 5 * 1024 * 1024) {
                 throw new Exception("The previous marks document must be 5MB or smaller.");
             }
             String originalFilename = prevMarksDoc.getOriginalFilename();
-            String ext = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf('.')) : ".pdf";
-            String fileName = refNumber + "_prev_marks" + ext;
-            Path path = Paths.get(baseDir, fileName);
+            String ext = originalFilename != null ? originalFilename.substring(originalFilename.lastIndexOf('.')).toLowerCase() : ".pdf";
+            if (!ext.equals(".pdf") && !ext.equals(".jpg") && !ext.equals(".jpeg") && !ext.equals(".png")) {
+                throw new Exception("Only PDF and image files are allowed for documents.");
+            }
+            prevMarksFileName = "prev_marks" + ext;
+            Path path = Paths.get(baseDir, prevMarksFileName);
             Files.copy(prevMarksDoc.getInputStream(), path, StandardCopyOption.REPLACE_EXISTING);
-            prevMarksPath = "/assets/uploads/applications/" + safeBranchName + "/" + classCode + "/" + refNumber + "/" + fileName;
         }
 
         String[] subjectNames = request.getParameterValues("subject_name[]");
@@ -221,29 +240,53 @@ public class ApplicationService {
         ObjectMapper mapper = new ObjectMapper();
         String subjectMarksJson = mapper.writeValueAsString(subjects);
 
-        String sql = "INSERT INTO erp_applications (" +
-                "ref_number, branch_id, academic_year, term, date_of_registration, " +
-                "student_name, middle_name, student_surname, gender, dob, nationality, " +
-                "address_postal, address_house, address_street, address_village, address_district, address_state, address_country, " +
-                "father_name, father_age, father_contact, father_email, father_occupation, father_education, " +
-                "mother_name, mother_age, mother_contact, mother_email, mother_occupation, mother_education, " +
-                "guardian_name, guardian_relation, guardian_age, guardian_contact, guardian_email, guardian_occupation, guardian_education, " +
-                "level, applied_class, class_code, " +
-                "former_school, former_school_code, former_school_lin, prev_marks_doc, " +
-                "ple_score, ple_ref, uce_score, uce_ref, subject_marks, more_info, photo_path, scholarship_status, status) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String refNumber;
+        synchronized(this) {
+            Integer total = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) as total FROM erp_applications WHERE branch_id = ? AND academic_year = ?", 
+                    Integer.class, branchId, year);
+            if (total == null) total = 0;
+            String sequence = String.format("%03d", total + 1);
+            refNumber = prefix + sequence;
+            
+            // Rename the temp directory to the final refNumber directory
+            String finalDir = System.getProperty("user.dir") + "/public/assets/uploads/applications/" + safeBranchName + "/" + classCode + "/" + refNumber;
+            File finalDirFile = new File(finalDir);
+            if (dir.exists()) {
+                dir.renameTo(finalDirFile);
+            }
+            
+            if (photoFileName != null) {
+                photoPath = "/assets/uploads/applications/" + safeBranchName + "/" + classCode + "/" + refNumber + "/" + photoFileName;
+            }
+            if (prevMarksFileName != null) {
+                prevMarksPath = "/assets/uploads/applications/" + safeBranchName + "/" + classCode + "/" + refNumber + "/" + prevMarksFileName;
+            }
 
-        jdbcTemplate.update(sql,
-                refNumber, branchId, year, formData.get("term"), formData.get("reg_date"),
-                formData.get("name"), formData.get("middle_name"), formData.get("surname"), formData.get("gender"), formData.get("dob"), formData.get("nationality"),
-                formData.get("postal"), formData.get("house"), formData.get("street"), formData.get("village"), formData.get("district"), formData.get("state"), "Uganda",
-                formData.get("f_name"), parseInteger(formData.get("f_age")), formData.get("f_con"), formData.get("f_email"), formData.get("f_occ"), formData.get("f_edu"),
-                formData.get("m_name"), parseInteger(formData.get("m_age")), formData.get("m_con"), formData.get("m_email"), formData.get("m_occ"), formData.get("m_edu"),
-                formData.get("g_name"), formData.get("g_rel"), parseInteger(formData.get("g_age")), formData.get("g_con"), formData.get("g_email"), formData.get("g_occ"), formData.get("g_edu"),
-                formData.get("level"), className, classCode,
-                formData.get("former_school"), formData.get("former_school_code"), formData.get("former_school_lin"), prevMarksPath,
-                formData.get("ple_score"), formData.get("ple_ref"), formData.get("uce_score"), formData.get("uce_ref"), subjectMarksJson, formData.get("more_info"), photoPath, formData.getOrDefault("scholarship_status", "No"), "Pending"
-        );
+            String sql = "INSERT INTO erp_applications (" +
+                    "ref_number, branch_id, academic_year, term, date_of_registration, " +
+                    "student_name, middle_name, student_surname, gender, dob, nationality, " +
+                    "address_postal, address_house, address_street, address_village, address_district, address_state, address_country, " +
+                    "father_name, father_age, father_contact, father_email, father_occupation, father_education, " +
+                    "mother_name, mother_age, mother_contact, mother_email, mother_occupation, mother_education, " +
+                    "guardian_name, guardian_relation, guardian_age, guardian_contact, guardian_email, guardian_occupation, guardian_education, " +
+                    "level, applied_class, class_code, " +
+                    "former_school, former_school_code, former_school_lin, prev_marks_doc, " +
+                    "ple_score, ple_ref, uce_score, uce_ref, subject_marks, more_info, photo_path, scholarship_status, status) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+            jdbcTemplate.update(sql,
+                    refNumber, branchId, year, formData.get("term"), formData.get("reg_date"),
+                    formData.get("name"), formData.get("middle_name"), formData.get("surname"), formData.get("gender"), formData.get("dob"), formData.get("nationality"),
+                    formData.get("postal"), formData.get("house"), formData.get("street"), formData.get("village"), formData.get("district"), formData.get("state"), "Uganda",
+                    formData.get("f_name"), parseInteger(formData.get("f_age")), formData.get("f_con"), formData.get("f_email"), formData.get("f_occ"), formData.get("f_edu"),
+                    formData.get("m_name"), parseInteger(formData.get("m_age")), formData.get("m_con"), formData.get("m_email"), formData.get("m_occ"), formData.get("m_edu"),
+                    formData.get("g_name"), formData.get("g_rel"), parseInteger(formData.get("g_age")), formData.get("g_con"), formData.get("g_email"), formData.get("g_occ"), formData.get("g_edu"),
+                    formData.get("level"), className, classCode,
+                    formData.get("former_school"), formData.get("former_school_code"), formData.get("former_school_lin"), prevMarksPath,
+                    formData.get("ple_score"), formData.get("ple_ref"), formData.get("uce_score"), formData.get("uce_ref"), subjectMarksJson, formData.get("more_info"), photoPath, formData.getOrDefault("scholarship_status", "No"), "Pending"
+            );
+        }
 
         return refNumber;
     }

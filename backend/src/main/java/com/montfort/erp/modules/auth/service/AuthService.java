@@ -38,6 +38,8 @@ public class AuthService {
         String actualRole = null;
         String username = null;
         
+        Long branchId = null;
+        
         if ("Parents".equalsIgnoreCase(reqRole)) {
             StudentAccount account = studentAccountRepository.findByUsernameAndIsActive(request.getUsername(), 1)
                     .orElseThrow(() -> new UsernameNotFoundException("Parent account not found"));
@@ -50,6 +52,7 @@ public class AuthService {
             passwordHash = account.getPassword();
             actualRole = account.getRole();
             username = account.getUsername();
+            branchId = account.getBranchId();
         } else {
             User user = userRepository.findByUsernameAndIsActive(request.getUsername(), 1)
                     .orElseThrow(() -> new UsernameNotFoundException("User not found"));
@@ -61,12 +64,18 @@ public class AuthService {
             passwordHash = user.getPassword();
             actualRole = user.getRole();
             username = user.getUsername();
+            
+            if (request.getBranch_id() != null && !request.getBranch_id().isEmpty()) {
+                branchId = Long.parseLong(request.getBranch_id());
+            } else {
+                branchId = 1L; // Fallback for Super Admin
+            }
         }
         
         // Check password (assuming bcrypt)
         if (passwordEncoder.matches(request.getPassword(), passwordHash)) {
             UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
-            String token = jwtUtil.generateToken(userDetails);
+            String token = jwtUtil.generateToken(userDetails, branchId);
             return new AuthResponse(token, username, actualRole);
         } else {
             throw new Exception("Invalid credentials");

@@ -1,7 +1,7 @@
 // erp/public/assets/scripts/admin_manage_apps.js
 
 function getSystemBaseUrl() {
-    return 'http://localhost:8080';
+    return window.location.origin;
 }
 
 // 2. SMART MEDIA URL CLEANER
@@ -61,7 +61,9 @@ function loadApplications() {
     })
     .then(r => {
         if (r.status === 401 || r.status === 403) {
-            console.error("Auth Error 401/403. Not redirecting to let you debug.");
+            console.error("Auth Error 401/403. Redirecting to login.");
+            localStorage.removeItem('jwtToken');
+            window.location.replace('/login.html');
             return { success: false, data: [] };
         }
         return r.json();

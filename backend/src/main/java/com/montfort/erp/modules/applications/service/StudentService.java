@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
+import com.montfort.erp.core.security.JwtUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,19 @@ public class StudentService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    private Long getCurrentUserBranchId() {
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    private Long getCurrentUserBranchId(HttpServletRequest request) {
+        try {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                String jwt = authHeader.substring(7);
+                Long jwtBranchId = jwtUtil.extractBranchId(jwt);
+                if (jwtBranchId != null) return jwtBranchId;
+            }
+        } catch (Exception e) {}
+        
         try {
             Long branchId = jdbcTemplate.queryForObject("SELECT MIN(branch_id) FROM erp_branches", Long.class);
             return branchId != null ? branchId : 1L;
@@ -32,7 +45,7 @@ public class StudentService {
 
     @Transactional
     public String admitStudent(HttpServletRequest request, Map<String, String> formData) throws Exception {
-        Long branchId = getCurrentUserBranchId();
+        Long branchId = getCurrentUserBranchId(request);
         if (branchId == null) throw new Exception("Unauthorized: Branch ID not found");
 
         String name = formData.get("name");
@@ -47,37 +60,46 @@ public class StudentService {
             throw new Exception("Name, Surname, and Class are required.");
         }
 
-        Long adNo = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(AdmissionNo), 0) + 1 FROM erp_students WHERE branch_id = ?", Long.class, branchId);
-        
+        Long adNo;
+        String studentId;
         String admissionYearStr = formData.getOrDefault("admission_year", String.valueOf(java.time.Year.now().getValue()));
         int admissionYear = Integer.parseInt(admissionYearStr);
         String academicYear = admissionYear + "/" + (admissionYear + 1);
 
         String classGrade = rawClass.replace(" ", "").replace(".", "").replace("PP", "N").toUpperCase();
 
-        // Generate StudentID (Username format: U011-26-P2-0008)
         String branchSchoolCode = jdbcTemplate.queryForObject("SELECT school_code FROM erp_branches WHERE branch_id = ?", String.class, branchId);
         if (branchSchoolCode == null) branchSchoolCode = "U011";
         String yearShort = admissionYearStr.length() >= 2 ? admissionYearStr.substring(admissionYearStr.length() - 2) : admissionYearStr;
-        String studentId = branchSchoolCode + "-" + yearShort + "-" + classGrade + "-" + String.format("%04d", adNo);
 
         String linkAppIdStr = formData.get("link_app_id");
         Long applicationRefId = (linkAppIdStr != null && !linkAppIdStr.isEmpty()) ? Long.parseLong(linkAppIdStr) : null;
 
-        try {
-            jdbcTemplate.update(
-                "INSERT INTO erp_students (AdmissionNo, StudentID, application_id, branch_id, AdmissionYear, Name, MiddleName, Surname, DateOfBirth, Gender, Nationality, HouseNo, Street, Village, Town, District, State, Country, PostalCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                adNo, studentId, applicationRefId, branchId, admissionYear, name, formData.get("middle_name"), surname, dob, gender, formData.getOrDefault("nationality", "Ugandan"),
-                formData.get("house_no"), formData.get("street"), formData.get("village"), formData.get("town"), formData.get("district"), formData.get("state"), formData.getOrDefault("country", "Uganda"), formData.get("postal_code")
-            );
-        } catch (Exception e) {
-            // Fallback in case application_id column hasn't been created yet
-            jdbcTemplate.execute("ALTER TABLE erp_students ADD COLUMN application_id BIGINT");
-            jdbcTemplate.update(
-                "INSERT INTO erp_students (AdmissionNo, StudentID, application_id, branch_id, AdmissionYear, Name, MiddleName, Surname, DateOfBirth, Gender, Nationality, HouseNo, Street, Village, Town, District, State, Country, PostalCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                adNo, studentId, applicationRefId, branchId, admissionYear, name, formData.get("middle_name"), surname, dob, gender, formData.getOrDefault("nationality", "Ugandan"),
-                formData.get("house_no"), formData.get("street"), formData.get("village"), formData.get("town"), formData.get("district"), formData.get("state"), formData.getOrDefault("country", "Uganda"), formData.get("postal_code")
-            );
+        synchronized(this) {
+            if (applicationRefId != null) {
+                Integer existingCount = jdbcTemplate.queryForObject("SELECT COUNT(*) FROM erp_students WHERE application_id = ? AND branch_id = ?", Integer.class, applicationRefId, branchId);
+                if (existingCount != null && existingCount > 0) {
+                    throw new Exception("This application has already been admitted!");
+                }
+            }
+            adNo = jdbcTemplate.queryForObject("SELECT COALESCE(MAX(AdmissionNo), 0) + 1 FROM erp_students WHERE branch_id = ?", Long.class, branchId);
+            studentId = branchSchoolCode + "-" + yearShort + "-" + classGrade + "-" + String.format("%04d", adNo);
+
+            try {
+                jdbcTemplate.update(
+                    "INSERT INTO erp_students (AdmissionNo, StudentID, application_id, branch_id, AdmissionYear, Name, MiddleName, Surname, DateOfBirth, Gender, Nationality, HouseNo, Street, Village, Town, District, State, Country, PostalCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    adNo, studentId, applicationRefId, branchId, admissionYear, name, formData.get("middle_name"), surname, dob, gender, formData.getOrDefault("nationality", "Ugandan"),
+                    formData.get("house_no"), formData.get("street"), formData.get("village"), formData.get("town"), formData.get("district"), formData.get("state"), formData.getOrDefault("country", "Uganda"), formData.get("postal_code")
+                );
+            } catch (Exception e) {
+                // Fallback in case application_id column hasn't been created yet
+                jdbcTemplate.execute("ALTER TABLE erp_students ADD COLUMN application_id BIGINT");
+                jdbcTemplate.update(
+                    "INSERT INTO erp_students (AdmissionNo, StudentID, application_id, branch_id, AdmissionYear, Name, MiddleName, Surname, DateOfBirth, Gender, Nationality, HouseNo, Street, Village, Town, District, State, Country, PostalCode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    adNo, studentId, applicationRefId, branchId, admissionYear, name, formData.get("middle_name"), surname, dob, gender, formData.getOrDefault("nationality", "Ugandan"),
+                    formData.get("house_no"), formData.get("street"), formData.get("village"), formData.get("town"), formData.get("district"), formData.get("state"), formData.getOrDefault("country", "Uganda"), formData.get("postal_code")
+                );
+            }
         }
 
         String moreInfo = formData.get("more_info");
@@ -125,7 +147,16 @@ public class StudentService {
         );
 
         String username = studentId; // Reusing the studentId generated above for the account username
-        String pwdHash = passwordEncoder.encode(surname + admissionYearStr);
+        
+        // Generate a strong random 8 character password
+        String allowedChars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%&*";
+        StringBuilder sb = new StringBuilder(8);
+        java.util.Random rnd = new java.util.Random();
+        for (int i = 0; i < 8; i++) {
+            sb.append(allowedChars.charAt(rnd.nextInt(allowedChars.length())));
+        }
+        String plainPassword = sb.toString();
+        String pwdHash = passwordEncoder.encode(plainPassword);
 
         jdbcTemplate.update(
             "INSERT INTO erp_student_accounts (AdmissionNo, branch_id, username, password, is_active) VALUES (?, ?, ?, ?, ?)",
@@ -213,7 +244,7 @@ public class StudentService {
             }
         }
 
-        return "Student Admitted Successfully!<br><strong>Adm-no: " + String.format("%04d", adNo) + "</strong><br><strong> Student ID: " + username + "</strong>";
+        return "Student Admitted Successfully!<br><strong>Adm-no: " + String.format("%04d", adNo) + "</strong><br><strong> Student ID: " + username + "</strong><br><br><div style='background:#f8f9fa; border-left:4px solid #28a745; padding:10px;'><strong>Default Password:</strong> <code style='font-size:18px; color:#d9534f;'>" + plainPassword + "</code><br><small>Please share this password with the student. They should change it upon first login.</small></div>";
     }
 }
 

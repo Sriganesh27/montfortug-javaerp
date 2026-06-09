@@ -1,5 +1,10 @@
 // erp/public/assets/scripts/base.js
 
+// --- AUTHENTICATION GUARD ---
+if (!localStorage.getItem('jwtToken')) {
+    window.location.href = '/login.html';
+}
+
 let isSidebarOpen = true;
 let currentTheme = 'light';
 let activeModule = 'dashboard';
@@ -280,7 +285,14 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('/api/admin/applications/branch-info', {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') }
     })
-    .then(res => res.json())
+    .then(res => {
+        if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem('jwtToken');
+            window.location.replace('/login.html');
+            throw new Error('Unauthorized');
+        }
+        return res.json();
+    })
     .then(data => {
         if(data.success && data.data) {
             window.currentBranchType = data.data.branch_type;
@@ -295,7 +307,14 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('/api/admin/dashboard/stats', {
         headers: { 'Authorization': 'Bearer ' + localStorage.getItem('jwtToken') }
     })
-    .then(res => res.json())
+    .then(res => {
+        if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem('jwtToken');
+            window.location.replace('/login.html');
+            throw new Error('Unauthorized');
+        }
+        return res.json();
+    })
     .then(data => {
         if(data.success && data.data) {
             const countEl = document.getElementById('total-students-count');

@@ -32,6 +32,14 @@ public class JwtUtil {
         return extractClaim(token, Claims::getSubject);
     }
 
+    public Long extractBranchId(String token) {
+        Object branchIdObj = extractClaim(token, claims -> claims.get("branch_id"));
+        if (branchIdObj instanceof Number) {
+            return ((Number) branchIdObj).longValue();
+        }
+        return null;
+    }
+
     public Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
     }
@@ -49,9 +57,11 @@ public class JwtUtil {
         return extractExpiration(token).before(new Date());
     }
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, Long branchId) {
         Map<String, Object> claims = new HashMap<>();
-        // Add roles or other claims here if needed
+        if (branchId != null) {
+            claims.put("branch_id", branchId);
+        }
         return createToken(claims, userDetails.getUsername());
     }
 

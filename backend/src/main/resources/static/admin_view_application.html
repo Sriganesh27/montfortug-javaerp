@@ -6,6 +6,9 @@
     
     <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
     <link rel="stylesheet" href="/assets/styles/print_report.css">
+    <script>
+        if (!localStorage.getItem('jwtToken')) window.location.href = '/login.html';
+    </script>
     <script src="/assets/scripts/admin_view_application.js"></script>
 </head>
 <body>
