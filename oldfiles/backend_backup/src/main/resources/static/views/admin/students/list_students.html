@@ -1,0 +1,56 @@
+<script>if (!localStorage.getItem('jwtToken')) window.location.href = '/login.html';</script>
+<div class="viewer-container">
+    <h2>View students</h2>
+    <form id="student-filter-form" class="filter-form">
+        <input type="hidden" name="module" value="list"> 
+        
+        <div class="field-group"><label for="search-id">Stu-Id</label><input type="text" id="search-id" name="search_id" placeholder="Stu-Id..."></div>
+        <div class="field-group"><label for="search-name">Name</label><input type="text" id="search-name" name="search_name" placeholder="Name..."></div>
+        
+        <div class="field-group">
+            <label for="filter-level">Level</label>
+            <select id="filter-level" name="level">
+                <option value="">All</option>
+            </select>
+        </div>
+        <div class="field-group">
+            <label for="filter-class">Class</label>
+            <select id="filter-class" name="class">
+                <option value="">All</option>
+            </select>
+        </div>
+        
+        <div class="field-group">
+            <label for="filter-stream">Stream</label>
+            <select id="filter-stream" name="stream">
+                <option value="">All</option>
+            </select>
+        </div>
+        <div class="field-group">
+            <label for="filter-gender">Gender</label>
+            <select id="filter-gender" name="gender">
+                <option value="">All</option>
+                <option value="Male">Male</option><option value="Female">Female</option>
+            </select>
+        </div>
+        <div class="field-group">
+            <label for="filter-residence">Residence</label>
+            <select id="filter-residence" name="residence">
+                <option value="">All</option>
+                <option value="Day">Day</option><option value="Boarding">Boarding</option>
+            </select>
+        </div>
+
+        <div class="field-group"><label for="filter-term">Term</label><select id="filter-term" name="term"><option value="">All</option><option value="Term 1">Term 1</option><option value="Term 2">Term 2</option><option value="Term 3">Term 3</option></select></div>
+        <div class="field-group"><label for="filter-year">Year</label><select id="filter-year" name="admission_year"><option value="">All</option><option value="2025">2025</option><option value="2024">2024</option></select></div>
+        
+        <div class="button-wrapper align-self-end">
+            <button type="submit" class="btn-primary">Search</button>
+            <button type="button" id="reset-filter-btn" class="btn-primary btn-gray">Reset</button>
+        </div>
+    </form>
+
+    <div id="student-list-results">
+        <p style='text-align:center; padding: 40px; font-size: 1.1em; color: #555;'>Use the search options above to find students.</p>
+    </div>
+</div>

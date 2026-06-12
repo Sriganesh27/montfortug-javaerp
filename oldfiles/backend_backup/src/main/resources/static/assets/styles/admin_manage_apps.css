@@ -1,0 +1,115 @@
+.manage-apps-container { padding: 20px; font-family: Arial, sans-serif; }
+.manage-apps-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+.manage-apps-table th, .manage-apps-table td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+.manage-apps-table th { background-color: #f4f4f4; }
+.filter-select { padding: 8px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; }
+.btn-action { padding: 6px 12px; border: none; cursor: pointer; border-radius: 3px; margin-right: 5px; }
+.btn-shortlist { background-color: #17a2b8; color: white; }
+.btn-select { background-color: #007bff; color: white; }
+.btn-admit { background-color: #28a745; color: white; font-weight: bold; }
+.btn-reject { background-color: #dc3545; color: white; }
+.schol-select { padding: 5px; border-radius: 3px; }
+/* Application Review Modal Styles */
+/* Application Review Modal Styles */
+.app-modal {
+    position: fixed; 
+    z-index: 99999; /* Forces modal above EVERYTHING including sidebar/navbar */
+    left: 0; 
+    top: 0; 
+    width: 100vw; 
+    height: 100vh; 
+    background-color: rgba(0,0,0,0.6);
+    backdrop-filter: blur(3px); /* Modern blurred background effect */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-modal-content {
+    background-color: #fefefe;
+    padding: 30px;
+    border: 1px solid #888;
+    width: 75%;
+    max-width: 1000px; /* Prevents it from getting too wide on huge screens */
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    max-height: 85vh; 
+    overflow-y: auto; 
+    position: relative;
+    /* Note: Removed "margin: 5% auto" because Flexbox handles centering perfectly now */
+}
+
+.app-close {
+    color: #aaa; 
+    position: absolute; /* Pins the close button to the top right corner */
+    top: 15px;
+    right: 20px;
+    font-size: 28px; 
+    font-weight: bold; 
+    cursor: pointer;
+}
+
+.app-close:hover { 
+    color: #e74c3c; /* Turns red on hover */
+}
+
+/* Filter Bar Styles */
+.adv-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 20px;
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    align-items: flex-end;
+}
+.adv-filter-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 140px;
+}
+.adv-filter-group.search-group {
+    flex: 2;
+    min-width: 200px;
+}
+.adv-filter-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #475569;
+    font-weight: 600;
+    font-size: 14px;
+    line-height: 1.5;
+}
+.adv-filter-label.dummy {
+    color: transparent;
+    user-select: none;
+    pointer-events: none;
+}
+.adv-filter-input, .adv-filter-select {
+    width: 100%;
+    padding: 0 12px;
+    border-radius: 6px;
+    border: 1px solid #cbd5e1;
+    box-sizing: border-box;
+    height: 38px;
+    font-family: inherit;
+    font-size: 14px;
+}
+.adv-filter-btn {
+    padding: 0 20px;
+    height: 38px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    width: 100%;
+    font-weight: 600;
+    box-sizing: border-box;
+}

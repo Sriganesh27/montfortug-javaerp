@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    if (!localStorage.getItem('jwtToken') || localStorage.getItem('role') !== 'Super User') {
+        window.location.replace('/login');
+    }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/assets/Images/logo_MBSG_UG_8.webp">
+  <title>Super Admin Command Center | ERP</title>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Premium ERP Styles -->
+  <link rel="stylesheet" href="/assets/styles/base.css">
+  <link rel="stylesheet" href="/assets/styles/student.css">
+  
+  <!-- Add full bootstrap for modals and cards -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/assets/styles/superadmin.css">
+</head>
+<body class="layout-wrapper light-theme">
+  
+<!-- Navbar -->
+<div class="navbar">
+    <div class="left">
+        <button id="menu-toggle" aria-label="Toggle menu"><i class="bi bi-list"></i></button>
+        <button id="profile" aria-label="User profile"><i class="bi bi-person"></i></button>
+    </div>
+    <div class="middle">
+        <a href="#">
+            <h1 class="school-name-display"><i class="bi bi-shield-lock"></i> Global Command Center</h1>
+        </a>
+    </div>
+    <div class="right">
+        <button id="fullscreen-btn" aria-label="Toggle fullscreen" class="navbar-btn"><i class="bi bi-arrows-fullscreen"></i></button>
+        <button id="settings-btn" aria-label="Toggle settings" class="navbar-btn"><i class="bi bi-gear"></i></button>
+    </div>
+</div>
+
+<div class="layout">
+    
+<!-- Super Admin Sidebar -->
+<div class="sidebar" id="sidebar">
+    <ul>
+    <li>
+        <button class="main-item active" data-menu="dashboard">
+        <i class="bi bi-globe"></i>
+        <span>Global Analytics</span></button>
+    </li>
+    <li>
+        <button class="main-item" data-menu="schools">
+        <i class="bi bi-buildings"></i>
+        <span>Manage Schools</span>
+        </button>
+    </li>
+    <li>
+        <button class="main-item" data-menu="admins">
+        <i class="bi bi-shield-check"></i>
+        <span>System Admins</span>
+        </button>
+    </li>
+    <li>
+        <button class="main-item" data-menu="settings">
+        <i class="bi bi-gear"></i>
+        <span>Global Settings</span>
+        </button>
+    </li>
+    <li>
+        <a href="#" onclick="logout()" class="logout-link">
+        <button class="main-item" data-menu="logout">
+            <i class="bi bi-power"></i>
+            <span>Log Out</span>
+        </button>
+        </a>
+    </li>
+    </ul>
+</div>
+
+    <div class="content" id="content">
+      <div id="dashboard-module" class="module p-4" style="display: block;">
+          
+        <h2 class="mb-4">Network Overview</h2>
+        
+        <!-- Global Stats -->
+        <div class="row mb-4">
+            <div class="col-md-6 mb-3">
+                <div class="super-card">
+                    <h3 id="totalBranches">0</h3>
+                    <p>Total Connected Schools</p>
+                </div>
+            </div>
+            <div class="col-md-6 mb-3">
+                <div class="super-card">
+                    <h3 id="totalUsers">0</h3>
+                    <p>Active Administrators</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Branches Section -->
+        <div class="section-header">
+            <h4><i class="bi bi-buildings"></i> School Branches</h4>
+            <button class="action-btn" data-bs-toggle="modal" data-bs-target="#branchModal"><i class="bi bi-plus"></i> Add New Branch</button>
+        </div>
+        <div class="table-wrapper">
+            <table class="super-table">
+                <thead><tr><th>ID</th><th>Branch Name</th><th>School Code</th><th>Location</th></tr></thead>
+                <tbody id="branchesTableBody">
+                    <tr><td colspan="4" class="text-center">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Users Section -->
+        <div class="section-header">
+            <h4><i class="bi bi-shield-check"></i> System Administrators</h4>
+            <button class="action-btn" data-bs-toggle="modal" data-bs-target="#userModal"><i class="bi bi-plus"></i> Create New Admin</button>
+        </div>
+        <div class="table-wrapper">
+            <table class="super-table">
+                <thead><tr><th>ID</th><th>Username</th><th>Role</th><th>Assigned Branch</th><th>Status</th></tr></thead>
+                <tbody id="usersTableBody">
+                    <tr><td colspan="5" class="text-center">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+      </div>
+    </div> 
+    
+    <div class="overlay" id="overlay"></div>
+    
+</div>
+
+<!-- Add Branch Modal -->
+<div class="modal fade" id="branchModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New School Branch</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addBranchForm">
+            <div class="mb-3">
+                <label>Branch Name</label>
+                <input type="text" class="form-control" name="branchName" required placeholder="e.g. St. Kizito">
+            </div>
+            <div class="mb-3">
+                <label>School Code</label>
+                <input type="text" class="form-control" name="schoolCode" placeholder="e.g. KIZ">
+            </div>
+            <div class="mb-3">
+                <label>Location</label>
+                <input type="text" class="form-control" name="branchLocation" placeholder="e.g. Kyebando">
+            </div>
+            <div class="mb-3">
+                <label>Type</label>
+                <input type="text" class="form-control" name="branchType" placeholder="e.g. Primary">
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Save Branch</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="userModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Create System Administrator</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addUserForm">
+            <div class="mb-3">
+                <label>Username</label>
+                <input type="text" class="form-control" name="username" required>
+            </div>
+            <div class="mb-3">
+                <label>Password</label>
+                <input type="password" class="form-control" name="password" required>
+            </div>
+            <div class="mb-3">
+                <label>Role</label>
+                <select class="form-select" name="role">
+                    <option value="Branch Admin">Branch Admin</option>
+                    <option value="Super User">Super User</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label>Assign to Branch</label>
+                <select class="form-select" name="assignedBranch" id="assignBranchSelect">
+                    <option value="">Global (No Branch)</option>
+                    <!-- Populated via JS -->
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Create Administrator</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.css"></script>
+<script src="/assets/scripts/superadmin.js"></script>
+</body>
+</html>

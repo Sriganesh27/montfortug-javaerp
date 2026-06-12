@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/Images/logo_MBSG_UG_8.webp">
+    <title>ERP Login | Montfort Brothers of St. Gabriel:Uganda</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="/assets/styles/login.css">
+</head>
+<body>
+    <div class="bg-glow glow-1"></div>
+    <div class="bg-glow glow-2"></div>
+
+    <div class="login-container">
+        <div class="login-header">
+            <h2>Montfort Brothers of St. Gabriel:Uganda ERP</h2>
+            <p>Institutional Login Portal</p>
+        </div>
+        
+        <div id="message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>Campus Location</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-buildings"></i>
+                    <select name="branch_id" id="branchSelect">
+                        <option value="1">St. Kizito (Kyebando)</option>
+                        <option value="2">St. Montfort (Mpala)</option>
+                        <option value="3">Pere Achte (Isunga)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Account Role</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-shield-lock"></i>
+                    <select name="role" id="roleSelect" required>
+                        <option value="Parents">Parents</option>
+                        <option value="Faculty">Faculty</option>
+                        <option value="Branch Admin">Branch Admin</option>
+                        <option value="Super User">Super User</option>     
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Credentials</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-person"></i>
+                    <input type="text" name="username" placeholder="Username / Email" autocomplete="username" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Security</label>
+                <div class="input-wrapper">
+                    <i class="bi bi-lock"></i>
+                    <input type="password" name="password" placeholder="Password" autocomplete="current-password" required>
+                </div>
+            </div>
+            <button type="submit" class="login-btn">Secure Login</button>
+        </form>
+
+        <div class="footer-text mt-20">
+            &copy; <span id="currentYear"></span> Montfort Brothers
+        </div>
+    </div>
+
+    <script src="/assets/scripts/login.js"></script>
+</body>
+</html>

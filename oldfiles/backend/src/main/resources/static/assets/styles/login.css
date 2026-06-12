@@ -1,0 +1,59 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #3b82f6 100%);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+    padding: 20px;
+}
+
+.bg-glow {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0) 70%);
+    border-radius: 50%;
+    z-index: 1;
+}
+.glow-1 { top: -100px; left: -100px; }
+.glow-2 { bottom: -100px; right: -100px; }
+
+.login-container {
+    position: relative;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 100%;
+    max-width: 420px; 
+    padding: 40px 30px;
+    border-radius: 24px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    text-align: center;
+    color: white;
+    box-sizing: border-box;
+}
+select option {
+    background: #1e3a8a;
+    color: white;
+}
+.login-header h2 { font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; font-size: 1.4rem; }
+.login-header p { font-size: 0.85rem; opacity: 0.8; margin-bottom: 30px; }
+.form-group { text-align: left; margin-bottom: 20px; }
+.form-group label { display: block; font-size: 0.7rem; font-weight: 600; margin-bottom: 6px; color: rgba(255, 255, 255, 0.9); text-transform: uppercase; }
+.input-wrapper { position: relative; }
+.input-wrapper i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1rem; color: #3b82f6; }
+.form-group input, .form-group select { width: 100%; padding: 12px 15px 12px 45px; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-size: 0.9rem; box-sizing: border-box; }
+.login-btn { width: 100%; padding: 14px; background: #3b82f6; border: none; border-radius: 12px; color: white; font-size: 1rem; font-weight: 600; cursor: pointer; margin-top: 10px; }
+#message { display: none; padding: 10px; margin-bottom: 15px; border-radius: 8px; font-size: 0.9rem; }
+
+.mt-20 {
+    margin-top: 20px;
+}
+.footer-text {
+    font-size: 0.8rem;
+    opacity: 0.7;
+}

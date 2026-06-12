@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track Application Status</title>
+    
+    <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
+    
+    <link rel="stylesheet" href="/assets/styles/status.css">
+</head>
+<body>
+
+    <div class="tracker-container">
+        
+        <div class="header-section">
+            <img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Logo" class="logo-placeholder" onerror="this.style.display='none'">
+            <div class="header-text">
+                <h1>Track Application Status</h1>
+                <p>Enter your Reference Number to check your admission status.</p>
+            </div>
+            <div style="width: 100px;"></div>
+        </div>
+
+        <form id="statusForm" class="search-box">
+            <label for="ref_number">Application Reference Number</label>
+            <input type="text" id="ref_number" name="ref_number" placeholder="e.g. U011-26-001" required>
+            <button type="submit" class="btn-search" id="searchBtn">Check Status</button>
+        </form>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <div id="resultCard" class="result-card">
+            <h3>Application Details</h3>
+            <div class="result-item"><strong>Student Name:</strong> <span id="resName"></span></div>
+            <div class="result-item"><strong>Applied Class:</strong> <span id="resClass"></span></div>
+            
+            <div class="result-item" id="scholDiv"><strong>Scholarship:</strong> <span id="resSchol" style="color: #d32f2f; font-weight: bold;"></span></div>
+            
+            <div class="result-item" style="margin-top: 15px;">
+                <strong>Admission Status:</strong> 
+                <span id="resStatus" class="status-badge"></span>
+            </div>
+            
+            <a href="#" id="printLink" target="_blank" class="btn-print">Download / Print Application Receipt</a>
+        </div>
+
+        <div class="nav-links">
+            <a href="/apply">Back to Admission Portal</a>
+        </div>
+    </div>
+
+    <script src="/assets/scripts/status.js"></script>
+</body>
+</html>

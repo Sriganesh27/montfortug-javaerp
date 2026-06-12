@@ -1,0 +1,88 @@
+/* --- ERP Print Report Styles --- */
+body { font-family: 'Times New Roman', Times, serif; background: #f4f6f9; margin: 0; padding: 20px; color: #000; }
+.document-container { max-width: 1000px; width: 100%; margin: 0 auto; background: #fff; padding: 40px; box-sizing: border-box; box-shadow: 0 4px 20px rgba(0,0,0,0.1); border-top: 5px solid #1a365d; }
+
+.action-bar { max-width: 1000px; width: 100%; margin: 0 auto 15px auto; text-align: right; }
+.btn-print { background: #1a365d; color: #fff; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; cursor: pointer; border-radius: 4px; }
+.btn-view-doc { background: #2f855a; color: #fff; border: none; padding: 10px 20px; font-size: 14px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; margin-right: 10px; }
+
+.header-section { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px double #000; padding-bottom: 15px; margin-bottom: 20px; }
+.logo-placeholder { width: 100px; height: 100px; object-fit: fill; }
+.header-text { text-align: center; flex-grow: 1; }
+.header-text h1 { margin: 0; font-size: 24px; text-transform: uppercase; letter-spacing: 0.5px; color: #000; }
+.header-text h2 { margin: 5px 0 0; font-size: 18px; color: #333; }
+.header-text p { margin: 5px 0 0; font-size: 14px; font-weight: bold; color: #555; }
+
+.meta-info { display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 14px; background: #f8fafc; padding: 10px; border: 1px solid #000; }
+.form-section { margin-bottom: 20px; border: 1px solid #000; border-radius: 2px; }
+.form-section-title { background: #e2e8f0; color: #000; font-size: 15px; font-weight: bold; padding: 6px 12px; border-bottom: 1px solid #000; text-transform: uppercase; }
+
+.grid-row { display: grid; grid-template-columns: repeat(2, 1fr); }
+.grid-row.three-col { grid-template-columns: repeat(3, 1fr); }
+.grid-item { padding: 6px 12px; border-bottom: 1px solid #000; border-right: 1px solid #000; }
+.grid-item:last-child { border-right: none; }
+.grid-item.no-bottom { border-bottom: none; }
+.grid-item.full-width { grid-column: 1 / -1; }
+
+.label { display: block; font-size: 11px; color: #444; text-transform: uppercase; font-weight: bold; margin-bottom: 3px; }
+.value { display: block; font-size: 14px; font-weight: 500; color: #000; }
+
+.photo-area { display: flex; justify-content: center; align-items: center; padding: 10px; border-left: 1px solid #000; }
+.student-photo { width: 120px; height: 120px; object-fit: cover; border: 1px solid #000; padding: 3px; }
+.no-photo { width: 120px; height: 120px; border: 1px dashed #000; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #000; }
+
+.footer { margin-top: 30px; font-size: 12px; text-align: center; border-top: 1px solid #000; padding-top: 10px; color: #000; }
+.signature-box { display: flex; justify-content: space-between; margin-top: 40px; padding: 0 40px; }
+.sig-column { text-align: center; width: 35%; }
+.date-column { text-align: center; width: 25%; }
+.sig-line { border-bottom: 1px solid #000; height: 25px; margin-bottom: 5px; }
+/* Print Settings */
+/* --- Print Settings --- */
+@media print {
+    body { 
+        background: #fff; 
+        padding: 0; 
+    }
+    
+    .action-bar, .no-print { 
+        display: none !important; 
+    }
+    
+    .document-container { 
+        max-width: none; 
+        width: 100%; 
+        margin: 0; 
+        padding: 0; 
+        /* CRITICAL: Add padding to the bottom so regular text doesn't hide behind the footer */
+        padding-bottom: 50px; 
+        box-shadow: none; 
+        border: none; 
+    }
+    
+    .form-section { 
+        break-inside: avoid; 
+        page-break-inside: avoid; 
+    }
+    
+    .form-section-title { 
+        background: #e2e8f0 !important; 
+        -webkit-print-color-adjust: exact; 
+        print-color-adjust: exact; 
+    }
+
+    /* THIS MAKES THE FOOTER REPEAT ON EVERY SINGLE PAGE */
+    .footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        background: #fff;
+        text-align: center;
+        padding: 10px 0;
+        font-size: 12px;
+        border-top: 1px solid #000;
+        margin-top: 0;
+        z-index: 1000;
+    }
+}

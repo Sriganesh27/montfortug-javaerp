@@ -1,0 +1,85 @@
+<script>if (!localStorage.getItem('jwtToken')) window.location.href = '/login.html';</script>
+<div class="manage-apps-container" style="padding: 20px;">
+    <h2>Manage Applications</h2>
+    
+    <div class="adv-filter-bar">
+        <div class="adv-filter-group search-group">
+            <label class="adv-filter-label">Search</label>
+            <input type="text" id="searchFilter" class="adv-filter-input" placeholder="Name or Ref No..." onkeyup="if(event.key === 'Enter') loadApplications()">
+        </div>
+        <div class="adv-filter-group">
+            <label class="adv-filter-label">Status</label>
+            <select id="statusFilter" class="adv-filter-select" onchange="loadApplications()">
+                <option value="All">All Applications</option>
+                <option value="Pending">Pending</option>
+                <option value="Shortlisted">Shortlisted</option>
+                <option value="Selected">Selected</option>
+                <option value="Admitted">Admitted</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+        </div>
+        <div class="adv-filter-group">
+            <label class="adv-filter-label">Level</label>
+            <select id="appLevelFilter" class="adv-filter-select" onchange="window.populateClassDropdown(this, document.getElementById('classFilter'), true); loadApplications()">
+                <option value="">All Levels</option>
+                <option value="Nursery">Nursery</option>
+                <option value="Primary">Primary</option>
+                <option value="Secondary">Secondary</option>
+            </select>
+        </div>
+        <div class="adv-filter-group">
+            <label class="adv-filter-label">Class</label>
+            <select id="classFilter" class="adv-filter-select" onchange="loadApplications()">
+                <option value="All">All Classes</option>
+            </select>
+        </div>
+        <div class="adv-filter-group">
+            <label class="adv-filter-label">Year</label>
+            <select id="yearFilter" class="adv-filter-select" onchange="loadApplications()">
+                <option value="All">All Years</option>
+                <option value="2024">2024</option>
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+            </select>
+        </div>
+        <div class="adv-filter-group">
+            <label class="adv-filter-label">Scholarship</label>
+            <select id="scholarshipFilter" class="adv-filter-select" onchange="loadApplications()">
+                <option value="All">Any Status</option>
+                <option value="None">None</option>
+                <option value="Applied">Applied</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+        </div>
+        <div class="adv-filter-group">
+            <label class="adv-filter-label dummy">&nbsp;</label>
+            <button onclick="loadApplications()" class="btn-primary adv-filter-btn"><i class="bi bi-search"></i> Search</button>
+        </div>
+    </div>
+    
+    <table class="manage-apps-table">
+        <thead>
+            <tr>
+                <th>Ref Number</th>
+                <th>Applicant Name</th>
+                <th>Class</th>
+                <th>Status</th>
+                <th>Scholarship</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="appBody">
+        </tbody>
+    </table>
+</div>
+
+<div id="appReviewModal" class="app-modal" style="display:none;">
+    <div class="app-modal-content">
+        <span class="app-close" onclick="document.getElementById('appReviewModal').style.display='none'">&times;</span>
+        <h2>Application Details</h2>
+        <div id="appModalBody">
+        </div>
+    </div>
+</div>

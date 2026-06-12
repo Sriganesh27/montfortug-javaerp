@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Montfort Brothers of St. Gabriel:Uganda - Admission</title>
+    
+    <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
+    <link rel="apple-touch-icon" href="/assets/Images/logo_MBSG_UG_8.webp">
+    
+    <link rel="stylesheet" href="/assets/styles/public_apply.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/assets/scripts/jspdf.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        
+        <div class="form-header">
+            <div class="header-title-wrapper">
+                
+                <img src="/assets/Images/logo_MBSG_UG_8.webp" alt="School Logo" class="header-logo"> 
+                
+                <div class="header-title-text">
+                    <h2>Montfort Brothers of St. Gabriel: Uganda</h2>
+                    <h3>School Admission Portal</h3>
+                    <p>Please fill in the application form accurately. All fields marked with * are required.</p>
+                </div>
+
+            </div> 
+            
+            <a href="/apply/status" class="btn-track-status">
+                Track Existing Application Status
+            </a>
+        </div>
+
+        <form id="publicAppForm" enctype="multipart/form-data">
+            <input type="hidden" name="action" value="submit_application">
+            
+            <input type="hidden" id="systemBaseUrl" value="">
+            
+            <div class="app-card">
+                <h3>1. Enrollment Details</h3>
+                <div class="form-grid">
+                    <div class="form-group"><label>School Branch *</label><select class="app-select" name="branch_id" id="branchSelect" required><option value="">Loading Schools...</option></select></div>
+                    <div class="form-group"><label>Admission Year *</label><input class="app-input" type="number" name="admission_year" value="2026" required></div>
+                    
+                    <div class="form-group">
+                        <label>Term *</label>
+                        <select class="app-select" name="term" required>
+                            <option value="Term I">Term I</option>
+                            <option value="Term II">Term II</option>
+                            <option value="Term III">Term III</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group"><label>Date of Registration *</label><input class="app-input" type="date" name="reg_date" required></div>
+                    <div class="form-group"><label>Level *</label><select class="app-select" name="level" id="levelSelect" required><option value="">Select School</option></select></div>
+                    <div class="form-group"><label>Class *</label><select class="app-select" name="class_selection" id="classSelect" required><option value="">Select Level</option></select></div>
+                </div>
+            </div>
+
+            <div class="app-card">
+                <h3>2. Student Personal Information</h3>
+                <div class="form-grid">
+                    <div class="form-group"><label>First Name *</label><input class="app-input" type="text" name="name" id="stuName" required></div>
+                    <div class="form-group"><label>Middle Name</label><input class="app-input" type="text" name="middle_name"></div>
+                    <div class="form-group"><label>Last Name / Surname *</label><input class="app-input" type="text" name="surname" id="stuSurname" required></div>
+                    <div class="form-group"><label>Gender *</label><select class="app-select" name="gender" required><option value="Male">Male</option><option value="Female">Female</option></select></div>
+                    <div class="form-group"><label>Date of Birth *</label><input class="app-input" type="date" name="dob" required></div>
+                    
+                    <div class="form-group"><label>Nationality *</label><input class="app-input" type="text" name="nationality" value="Uganda" required></div>
+                </div>
+                <h4 style="color:#555; margin-top: 25px; border-bottom: 1px solid #eee; padding-bottom:5px;">Residential Address</h4>
+                <div class="form-grid">
+                    <div class="form-group"><label>Postal Code</label><input class="app-input" type="text" name="postal"></div>
+                    <div class="form-group"><label>House No / Block</label><input class="app-input" type="text" name="house"></div>
+                    <div class="form-group"><label>Street / Zone</label><input class="app-input" type="text" name="street"></div>
+                    <div class="form-group"><label>Village / Town</label><input class="app-input" type="text" name="village"></div>
+                    <div class="form-group"><label>District</label><input class="app-input" type="text" name="district"></div>
+                </div>
+            </div>
+
+            <div class="app-card">
+                <h3>3. Parents & Guardian Details</h3>
+                <div class="parent-section" style="margin-bottom: 20px;">
+                    <h4>Father's Details</h4>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Full Name</label><input class="app-input" type="text" name="f_name"></div>
+                        <div class="form-group"><label>Age</label><input class="app-input" type="number" name="f_age"></div>
+                        <div class="form-group"><label>Contact Number</label><input class="app-input" type="text" name="f_con"></div>
+                        <div class="form-group"><label>Email Address</label><input class="app-input" type="email" name="f_email"></div>
+                        <div class="form-group"><label>Occupation</label><input class="app-input" type="text" name="f_occ"></div>
+                        <div class="form-group"><label>Highest Education</label><input class="app-input" type="text" name="f_edu"></div>
+                    </div>
+                </div>
+                <div class="parent-section" style="margin-bottom: 20px;">
+                    <h4>Mother's Details</h4>
+                    <div class="form-grid">
+                        <div class="form-group"><label>Full Name</label><input class="app-input" type="text" name="m_name"></div>
+                        <div class="form-group"><label>Age</label><input class="app-input" type="number" name="m_age"></div>
+                        <div class="form-group"><label>Contact Number</label><input class="app-input" type="text" name="m_con"></div>
+                        <div class="form-group"><label>Email Address</label><input class="app-input" type="email" name="m_email"></div>
+                        <div class="form-group"><label>Occupation</label><input class="app-input" type="text" name="m_occ"></div>
+                        <div class="form-group"><label>Highest Education</label><input class="app-input" type="text" name="m_edu"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-card">
+                <h3>4. Academic History</h3>
+                <div class="form-grid">
+                    <div class="form-group"><label>Former School Name</label><input class="app-input" type="text" name="former_school"></div>
+                    <div class="form-group"><label>Former School Code</label><input class="app-input" type="text" name="former_school_code"></div>
+                    <div class="form-group"><label>Former School LIN</label><input class="app-input" type="text" name="former_school_lin"></div>
+                </div>
+                                <div id="examContainer" class="erp-exam-container" style="display:none;"></div>
+                  
+                  <div id="subjectsContainer" class="erp-subjects-container">
+                      <label class="erp-subjects-label">Enter Relevant Subjects & Grades</label>
+                      <table class="app-table" id="subjectsTable">
+                          <thead>
+                              <tr>
+                                  <th>Subject Name</th>
+                                  <th>Marks (Out of 100)</th>
+                                  <th>Grade</th>
+                                  <th class="erp-table-th-center">Action</th>
+                              </tr>
+                          </thead>
+                          <tbody id="subjectsBody">
+                              <tr>
+                                  <td><input class="app-input" type="text" name="subject_name[]" placeholder="e.g. Mathematics"></td>
+                                  <td><input class="app-input" type="number" name="subject_mark[]" placeholder="Marks" max="100" oninput="window.calcTotalSubjectScore()"></td>
+                                  <td><input class="app-input" type="text" name="subject_grade[]" placeholder="Grade"></td>
+                                  <td class="erp-table-th-center"><button type="button" class="btn-remove" onclick="this.closest('tr').remove(); window.calcTotalSubjectScore()">X</button></td>
+                              </tr>
+                          </tbody>
+                          <tfoot>
+                              <tr>
+                                  <td colspan="4" class="erp-table-tfoot-cell">
+                                      <div class="erp-table-tfoot-content">
+                                          <button type="button" class="btn-add" id="addSubjectBtn">+ Add Subject Row</button>
+                                          <strong class="erp-total-score">Total Score: <span id="totalSubjectScore">0</span></strong>
+                                      </div>
+                                  </td>
+                              </tr>
+                          </tfoot>
+                      </table>
+                  </div>
+            </div>
+
+            <div class="app-card">
+                <h3>5. Photo & Additional Information</h3>
+                
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label style="color: #d35400; font-weight: bold;">Student Photograph (Strict Max: 50KB) *</label>
+                    <input class="app-input" type="file" name="photo" accept="image/png, image/jpeg" required>
+                </div>
+                
+                <div class="form-group"><label>Medical Conditions or Additional Information</label><textarea class="app-textarea" name="more_info" placeholder="Please specify any important details..." rows="3"></textarea></div>
+                
+                <div class="form-group">
+                    <label>Are you applying for a scholarship?</label>
+                    <select class="app-input" name="scholarship_status" id="scholarship_status">
+                        <option value="No">No</option>
+                        <option value="Yes">Yes</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">Submit Application form</button>
+        </form>
+    </div>
+
+    <script src="/assets/scripts/public_apply.js"></script>
+</body>
+</html>
