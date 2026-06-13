@@ -22,7 +22,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Enforce Role-Based Visibility in Sidebar (Uses Pure CSS Class)
         document.querySelectorAll('#sidebarMenu li').forEach(li => {
             const requiredRole = li.getAttribute('data-role');
-            if (requiredRole !== 'ALL' && requiredRole !== userRole) {
+
+            // Hide "ALL" generic dashboard if they are a SUPER_ADMIN
+            if (requiredRole === 'ALL' && userRole === 'SUPER_ADMIN') {
+                li.classList.add('hidden');
+            }
+            // Hide if the role doesn't match
+            else if (requiredRole !== 'ALL' && requiredRole !== userRole) {
                 li.classList.add('hidden');
             }
         });
@@ -30,7 +36,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Set User Profile Name (Strictly no HTML strings, pure text injection!)
         const userNameElement = document.getElementById('userNameText');
         if (userNameElement) {
-            userNameElement.textContent = userRole;
+            // Read the username we saved during login.
+            // If it's missing for some reason, fallback to their Role.
+            const savedName = localStorage.getItem('username') || userRole;
+            userNameElement.textContent = savedName;
         }
 
         // Secure Logout Function
@@ -77,9 +86,18 @@ function setupRouter(urlRole) {
                 viewName = 'home';
             }
 
+            // Update Header Title dynamically
+            const newTitle = this.textContent.trim();
+            const pageTitleElement = document.getElementById('pageTitle');
+            if (pageTitleElement) pageTitleElement.textContent = newTitle;
+
+            // Move the 'active' highlight to the clicked link
+            document.querySelectorAll('.sidebar-nav a').forEach(nav => nav.classList.remove('active'));
+            this.classList.add('active');
+
             // Update URL using HTML5 History API for copy-paste sharing
             const newUrl = `/${urlRole}/${viewName}`;
-            window.history.pushState({ view: viewName }, "", newUrl);
+            window.history.pushState({ view: viewName, title: newTitle }, "", newUrl);
 
             // Fetch and render the view
             await loadView(urlRole, viewName, mainContent);
@@ -89,13 +107,25 @@ function setupRouter(urlRole) {
     // Handle Browser Back/Forward buttons
     window.addEventListener('popstate', async function(event) {
         const viewName = event.state ? event.state.view : 'home';
+        const title = event.state && event.state.title ? event.state.title : 'Dashboard';
+
+        const pageTitleElement = document.getElementById('pageTitle');
+        if (pageTitleElement) pageTitleElement.textContent = title;
+
         await loadView(urlRole, viewName, mainContent);
     });
 
     // Initial Load Logic (Reads the current URL on first page load)
     let initialView = window.location.pathname.split('/').pop();
-    if (initialView === urlRole || initialView === 'dashboard') {
+    if (initialView === urlRole || initialView === 'dashboard' || initialView === '') {
         initialView = 'home';
+    }
+
+    // Set initial title based on the active hardcoded link (if any)
+    const activeLink = document.querySelector('.sidebar-nav a.active');
+    if(activeLink) {
+        const pageTitleElement = document.getElementById('pageTitle');
+        if (pageTitleElement) pageTitleElement.textContent = activeLink.textContent.trim();
     }
 
     loadView(urlRole, initialView, mainContent);
@@ -116,6 +146,13 @@ async function loadView(urlRole, viewName, container) {
 
         if (response.ok) {
             container.innerHTML = await response.text();
+
+            // Broadcast an event so our page-specific JS knows to run!
+            const event = new CustomEvent('viewLoaded', {
+                detail: { role: urlRole, view: viewName }
+            });
+            document.dispatchEvent(event);
+
         } else {
             // 3. Get the 404 error template
             const errorView = document.getElementById('errorTemplate').content.cloneNode(true);

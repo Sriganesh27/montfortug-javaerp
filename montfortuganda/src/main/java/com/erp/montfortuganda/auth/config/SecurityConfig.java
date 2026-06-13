@@ -28,28 +28,21 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable()) // Disable CSRF for REST APIs
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/api/auth/login",
-                                "/api/auth/register",
-                                "/",
-                                "/login",
-                                "/*.html",
-                                "/css/**",
-                                "/js/**",
-                                "/assets/**",
-                                "/components/**",
-                                "/views/**",
-                                "/error",
-                                "/superadmin",
-                                "/dashboard"
-                        ).permitAll()
-                        .anyRequest().authenticated() // Everything else requires a token
+                        // 1. Authentication APIs are public
+                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // 2. ALL other data APIs require a valid JWT token
+                        .requestMatchers("/api/**").authenticated()
+
+                        // 3. The SPA Frontend (HTML, CSS, JS, URL Routes) is entirely public.
+                        // Our layout.js handles the client-side kickout, and the APIs protect the actual data.
+                        .anyRequest().permitAll()
                 )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // No sessions, purely JWT
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -64,7 +57,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
     }
 

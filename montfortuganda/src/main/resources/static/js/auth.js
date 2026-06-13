@@ -9,16 +9,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const campusSelect = document.getElementById('branchId');
     const campusGroup = document.getElementById('campusGroup');
 
-    // Hide Campus Selection for Super Admin
+    // Hide Campus Selection for Super Admin (Pure JS, no inline CSS)
     if (roleSelect && campusSelect && campusGroup) {
         roleSelect.addEventListener('change', function() {
-            // Check if Super Admin is selected
             if (this.value === 'SUPER_ADMIN' || this.value === 'ROLE_SUPER_ADMIN') {
-                campusGroup.style.display = 'none';
+                campusGroup.classList.add('hidden');
                 campusSelect.removeAttribute('required');
-                campusSelect.value = ''; // clear selection
+                campusSelect.value = '';
             } else {
-                campusGroup.style.display = 'block';
+                campusGroup.classList.remove('hidden');
                 campusSelect.setAttribute('required', 'required');
             }
         });
@@ -29,15 +28,15 @@ document.addEventListener('DOMContentLoaded', function() {
         loginForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // Clear previous alerts
+            // Clear previous alerts (Pure JS)
             if (errorMessage) {
-                errorMessage.style.display = 'none';
+                errorMessage.className = 'error-box hidden';
                 errorMessage.textContent = '';
             }
 
-            // Button loading state
-            const originalText = btnText ? btnText.innerHTML : 'Login';
-            if (btnText) btnText.innerHTML = 'Authenticating...';
+            // Button loading state (Pure text injection)
+            const originalText = btnText ? btnText.textContent : 'Login';
+            if (btnText) btnText.textContent = 'Authenticating...';
             loginBtn.disabled = true;
 
             const role = roleSelect.value;
@@ -45,10 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const username = document.getElementById('username').value;
             const password = passwordInput.value;
 
-            // Ensure the backend receives the 'ROLE_' prefix it expects
             const finalRole = role.startsWith('ROLE_') ? role : 'ROLE_' + role;
-
-            // Parse branchId to integer, or send null if it's a Super Admin
             const finalBranchId = branchId ? parseInt(branchId) : null;
 
             try {
@@ -68,33 +64,25 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
 
                 if (response.ok && data.token) {
-
-                    // --- THE FIX: NORMALIZE THE ROLE ---
-                    // If the database says "Super User", we force it to be "SUPER_ADMIN"
-                    // so the rest of our application doesn't get confused!
                     let finalRoleString = data.role;
                     if (finalRoleString === 'Super User' || finalRoleString === 'ROLE_SUPER_ADMIN') {
                         finalRoleString = 'SUPER_ADMIN';
                     }
 
-                    // Success! Save token and our normalized role to LocalStorage
                     localStorage.setItem('jwt_token', data.token);
                     localStorage.setItem('user_role', finalRoleString);
+                    localStorage.setItem('username', username);
 
                     if (data.branchId) {
                         localStorage.setItem('user_branch', data.branchId);
                     }
 
+                    // Success Alert (Pure CSS Classes)
                     if (errorMessage) {
-                        errorMessage.style.display = 'block';
-                        errorMessage.style.backgroundColor = 'rgba(34, 197, 94, 0.2)'; // success green
-                        errorMessage.style.color = '#fff';
-                        errorMessage.style.border = '1px solid #22c55e';
-                        errorMessage.style.padding = '10px';
+                        errorMessage.className = 'error-box alert-success';
                         errorMessage.textContent = 'Login successful! Redirecting...';
                     }
 
-                    // Redirect based on our normalized role
                     setTimeout(() => {
                         if (finalRoleString === 'SUPER_ADMIN') {
                             window.location.href = '/superadmin';
@@ -104,29 +92,22 @@ document.addEventListener('DOMContentLoaded', function() {
                     }, 1000);
 
                 } else {
-                    // Show API error message
+                    // API Error Alert (Pure CSS Classes)
                     if (errorMessage) {
-                        errorMessage.style.display = 'block';
-                        errorMessage.style.backgroundColor = 'rgba(239, 68, 68, 0.2)'; // error red
-                        errorMessage.style.color = '#fff';
-                        errorMessage.style.border = '1px solid #ef4444';
-                        errorMessage.style.padding = '10px';
+                        errorMessage.className = 'error-box alert-error';
                         errorMessage.textContent = data.message || 'Invalid credentials. Please try again.';
                     }
                 }
             } catch (error) {
                 console.error('Login error:', error);
+                // System Error Alert (Pure CSS Classes)
                 if (errorMessage) {
-                    errorMessage.style.display = 'block';
-                    errorMessage.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
-                    errorMessage.style.color = '#fff';
-                    errorMessage.style.border = '1px solid #ef4444';
-                    errorMessage.style.padding = '10px';
+                    errorMessage.className = 'error-box alert-error';
                     errorMessage.textContent = 'Unable to connect to the server. Please check your connection.';
                 }
             } finally {
                 // Restore button state
-                if (btnText) btnText.innerHTML = originalText;
+                if (btnText) btnText.textContent = originalText;
                 loginBtn.disabled = false;
             }
         });

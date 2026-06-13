@@ -1,104 +1,200 @@
+/* --- Global Styles --- */
 body {
     font-family: 'Poppins', sans-serif;
-    background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 50%, #3b82f6 100%);
-    min-height: 100vh;
     margin: 0;
+    overflow: hidden; /* Disables global scroll. The right panel handles its own scrolling! */
+}
+
+/* ========================================= */
+/* --- SPLIT-SCREEN LOGIN STYLES --- */
+/* ========================================= */
+
+#login-view.split-layout {
     display: flex;
-    justify-content: center;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* --- Left Side (Premium Branding) --- */
+#login-view .login-left {
+    flex: 1; /* Takes up all remaining space on the left */
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); /* Matches ERP Sidebar */
+    position: relative;
+    display: flex;
     align-items: center;
-    overflow-x: hidden;
-    padding: 20px;
+    justify-content: center;
+    overflow: hidden;
 }
 
-.login-logo {
-    width: 70px;
-    height: 70px;
-    object-fit: fill;
-    margin-bottom: 4px;
-}
-
-.bg-glow {
-    position: absolute;
-    width: 400px;
-    height: 400px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0) 70%);
+#login-view .bg-glow {
+    position: absolute; /* Safe here because overflow is hidden on the left panel! */
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0) 70%);
     border-radius: 50%;
     z-index: 1;
+    pointer-events: none;
 }
-.glow-1 { top: -100px; left: -100px; }
-.glow-2 { bottom: -100px; right: -100px; }
+#login-view .glow-1 { top: -150px; left: -150px; }
+#login-view .glow-2 { bottom: -150px; right: -150px; }
 
-.login-container {
+#login-view .branding-content {
     position: relative;
     z-index: 10;
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    width: 100%;
-    max-width: 480px;
-    padding: 40px 30px;
-    border-radius: 24px;
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
     text-align: center;
     color: white;
-    box-sizing: border-box;
+    padding: 40px;
+    max-width: 600px;
 }
 
-select option {
-    background: #1e3a8a;
-    color: white;
+#login-view .huge-logo {
+    width: 130px;
+    height: 130px;
+    margin-bottom: 25px;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
 }
 
-.login-header h2 { font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; font-size: 1.5rem; }
-.login-header p { font-size: 1.1rem; opacity: 0.8; margin-bottom: 30px; }
-.form-group { text-align: left; margin-bottom: 20px; }
-.form-group label { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 6px; color: rgba(255, 255, 255, 0.9); text-transform: uppercase; }
+#login-view .branding-content h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+    color: #ffffff;
+    line-height: 1.2;
+}
 
-.input-wrapper { position: relative; }
-.input-wrapper i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #3b82f6; }
+#login-view .branding-content h2 {
+    font-size: 1.4rem;
+    font-weight: 400;
+    margin: 10px 0 20px 0;
+    color: #d4af37; /* ERP Gold */
+    letter-spacing: 2px;
+}
 
-.form-group input, .form-group select {
+#login-view .branding-content p {
+    font-size: 1.1rem;
+    opacity: 0.7;
+}
+
+/* --- Right Side (Action Panel) --- */
+#login-view .login-right {
     width: 100%;
-    padding: 12px 15px 12px 45px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    max-width: 550px; /* Locks the width of the white panel */
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto; /* Independent Scrolling! */
+    box-shadow: -10px 0 40px rgba(0,0,0,0.15); /* Rich shadow cast over the left side */
+    z-index: 20;
+}
+
+#login-view .form-container {
+    padding: 60px 50px;
+    margin: auto 0; /* Perfectly centers vertically */
+}
+
+#login-view .form-header h2 { font-size: 1.8rem; color: #0f172a; margin: 0 0 5px 0; font-weight: 700; }
+#login-view .form-header p { color: #64748b; margin: 0 0 30px 0; font-size: 0.95rem; }
+
+#login-view .form-group { text-align: left; margin-bottom: 20px; }
+#login-view .form-group label { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; color: #334155; text-transform: uppercase; }
+
+#login-view .input-wrapper { position: relative; }
+#login-view .input-wrapper i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #d4af37; /* Gold Icons */ }
+
+#login-view .form-group input,
+#login-view .form-group select {
+    width: 100%;
+    padding: 14px 15px 14px 48px;
+    background: #f8fafc; /* Crisp, light grey input boxes */
+    border: 1px solid #e2e8f0;
     border-radius: 12px;
-    color: white;
+    color: #0f172a;
     font-size: 0.95rem;
     box-sizing: border-box;
     outline: none;
+    transition: all 0.3s ease;
 }
 
-.form-group input:focus, .form-group select:focus {
-    border-color: #3b82f6;
+#login-view .form-group input:focus,
+#login-view .form-group select:focus {
+    background: #ffffff;
+    border-color: #d4af37; /* Gold focus outline */
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
 }
 
-.login-btn {
+#login-view .form-group select option {
+    background: #ffffff;
+    color: #0f172a;
+}
+
+#login-view .login-btn {
     width: 100%;
-    padding: 14px;
-    background: #3b82f6;
+    padding: 16px;
+    background: #0f172a; /* Slate Black Button */
     border: none;
     border-radius: 12px;
-    color: white;
-    font-size: 1rem;
+    color: #ffffff;
+    font-size: 1.05rem;
     font-weight: 600;
     cursor: pointer;
-    margin-top: 10px;
-    transition: background 0.3s;
+    margin-top: 15px;
+    transition: transform 0.2s, background 0.3s;
 }
 
-.login-btn:hover { background: #2563eb; }
+#login-view .login-btn:hover {
+    background: #1e293b;
+    transform: translateY(-2px);
+}
 
-.error-box {
+#login-view .error-box {
     display: none;
-    padding: 12px;
-    margin-bottom: 20px;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    background: rgba(220, 38, 38, 0.2);
-    border: 1px solid rgba(220, 38, 38, 0.4);
-    color: #fca5a5;
+    padding: 14px;
+    margin-bottom: 25px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    background: rgba(220, 38, 38, 0.1); /* Default Red Background */
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    color: #ef4444; /* Default Red Text */
+}
+/* --- ADD THIS NEW BLOCK RIGHT HERE --- */
+/* This forces the box to turn Green on successful login! */
+#login-view .error-box.alert-success {
+    display: block;
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    color: #16a34a; /* Green text! */
 }
 
-.mt-20 { margin-top: 20px; }
-.footer-text { font-size: 0.8rem; opacity: 0.7; }
+#login-view .footer-text {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 40px;
+}
+
+/* --- Utility Classes for Pure JS Toggling --- */
+.hidden { display: none !important; }
+.alert-success { display: block !important; background: rgba(34, 197, 94, 0.1); color: #16a34a; border: 1px solid rgba(34, 197, 94, 0.3); padding: 12px; border-radius: 10px; }
+.alert-error { display: block !important; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px; border-radius: 10px; }
+
+/* ========================================= */
+/* --- MOBILE RESPONSIVENESS --- */
+/* ========================================= */
+@media (max-width: 900px) {
+    #login-view.split-layout {
+        flex-direction: column;
+    }
+    #login-view .login-left {
+        flex: none;
+        padding: 40px 20px;
+        height: auto; /* Shrinks to fit content on mobile */
+    }
+    #login-view .login-right {
+        max-width: 100%;
+        flex: 1; /* Takes up remaining height */
+    }
+    #login-view .huge-logo { width: 80px; height: 80px; margin-bottom: 15px; }
+    #login-view .branding-content h1 { font-size: 1.5rem; }
+    #login-view .branding-content h2 { font-size: 1.1rem; }
+    #login-view .form-container { padding: 40px 30px; }
+}
