@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Privacy and Indexing -->
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+
+    <!-- Theme -->
+    <meta name="theme-color" content="#0f172a">
+    <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
+
+    <!-- Strict CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:;">
+
+    <title>ERP Dashboard | MBSG</title>
+
+    <!-- Fonts and Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Our Clean Stylesheets -->
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/layout.css">
+</head>
+<body>
+
+<!-- Layout.js will automatically fetch and inject the Sidebar and Header here -->
+<div id="sidebar-container"></div>
+<div id="header-container"></div>
+
+<!-- Layout.js will automatically fetch and inject all your views here! -->
+<main class="main-content" id="main-content-area">
+    <!-- This area stays empty in the HTML file -->
+</main>
+
+<!-- PERFECT: Template tags must go inside the body -->
+<template id="loaderTemplate">
+    <div class="loader-container">
+        <div class="spinner-border"></div>
+        <p>Loading...</p>
+    </div>
+</template>
+
+<template id="errorTemplate">
+    <div class="error-container">
+        <h2>404 - View Not Found</h2>
+        <p>The requested module does not exist.</p>
+    </div>
+</template>
+
+<template id="systemErrorTemplate">
+    <div class="error-container">
+        <h2>System Error</h2>
+        <p>Failed to communicate with the server.</p>
+    </div>
+</template>
+
+<!-- Load the Javascript AJAX Router -->
+<script src="/js/layout.js"></script>
+</body>
+</html>

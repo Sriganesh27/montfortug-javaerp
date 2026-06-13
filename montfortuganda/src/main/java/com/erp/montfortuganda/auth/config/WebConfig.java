@@ -8,13 +8,26 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        // Loads login page when visiting http://localhost:8080/
+        // Core Pages
         registry.addViewController("/").setViewName("forward:/login.html");
-
-        // Loads login page when visiting http://localhost:8080/login
         registry.addViewController("/login").setViewName("forward:/login.html");
+        registry.addViewController("/dashboard").setViewName("forward:/dashboard.html");
 
-        // Loads dashboard when visiting http://localhost:8080/superadmin
-        registry.addViewController("/superadmin").setViewName("forward:/superadmin.html");
+        // --- SECURE SPA ROUTING ---
+        // We explicitly map our roles so we don't accidentally intercept the /css/ or /js/ folders!
+        String[] spaRoutes = {
+                "/superadmin/**",
+                "/parent/**",
+                "/schooladmin/**",
+                "/academiccoordinator/**",
+                "/admissionstaff/**",
+                "/feeofficer/**",
+                "/teacher/**",
+                "/auditor/**"
+        };
+
+        for (String route : spaRoutes) {
+            registry.addViewController(route).setViewName("forward:/dashboard.html");
+        }
     }
 }

@@ -68,9 +68,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 const data = await response.json();
 
                 if (response.ok && data.token) {
-                    // Success! Save token and role to LocalStorage
+
+                    // --- THE FIX: NORMALIZE THE ROLE ---
+                    // If the database says "Super User", we force it to be "SUPER_ADMIN"
+                    // so the rest of our application doesn't get confused!
+                    let finalRoleString = data.role;
+                    if (finalRoleString === 'Super User' || finalRoleString === 'ROLE_SUPER_ADMIN') {
+                        finalRoleString = 'SUPER_ADMIN';
+                    }
+
+                    // Success! Save token and our normalized role to LocalStorage
                     localStorage.setItem('jwt_token', data.token);
-                    localStorage.setItem('user_role', data.role);
+                    localStorage.setItem('user_role', finalRoleString);
+
                     if (data.branchId) {
                         localStorage.setItem('user_branch', data.branchId);
                     }
@@ -84,12 +94,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         errorMessage.textContent = 'Login successful! Redirecting...';
                     }
 
-                    // Redirect based on role
+                    // Redirect based on our normalized role
                     setTimeout(() => {
-                        if (data.role === 'ROLE_SUPER_ADMIN') {
-                            window.location.href = '/superadmin.html';
+                        if (finalRoleString === 'SUPER_ADMIN') {
+                            window.location.href = '/superadmin';
                         } else {
-                            window.location.href = '/dashboard.html';
+                            window.location.href = '/dashboard';
                         }
                     }, 1000);
 

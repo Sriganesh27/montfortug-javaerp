@@ -33,15 +33,20 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable()) // Disable CSRF for REST APIs
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/auth/login", 
+                                "/api/auth/login",
                                 "/api/auth/register",
                                 "/",
                                 "/login",
                                 "/*.html",
                                 "/css/**",
                                 "/js/**",
-                                "/assets/**"
-                        ).permitAll() // Open to everyone
+                                "/assets/**",
+                                "/components/**",
+                                "/views/**",
+                                "/error",
+                                "/superadmin",
+                                "/dashboard"
+                        ).permitAll()
                         .anyRequest().authenticated() // Everything else requires a token
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // No sessions, purely JWT
