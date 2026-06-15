@@ -1,0 +1,32 @@
+$kind: http-example
+request:
+  url: http://localhost:8080/api/superadmin/users
+  method: GET
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    x-content-type-options: nosniff
+    x-xss-protection: "0"
+    cache-control: no-cache, no-store, max-age=0, must-revalidate
+    pragma: no-cache
+    expires: "0"
+    x-frame-options: DENY
+    content-type: application/json
+    content-length: "88"
+    date: Mon, 15 Jun 2026 05:55:22 GMT
+    keep-alive: timeout=60
+    connection: keep-alive
+  body:
+    type: json
+    content: |-
+      [
+        {
+          "id": 1,
+          "username": "erpsadmin",
+          "role": "Super User",
+          "assignedBranch": null,
+          "isActive": 1
+        }
+      ]
+order: 1781502934703

@@ -28,4 +28,7 @@ public class Branch {
 
     @Column(name = "branch_location")
     private String branchLocation;
+
+    @Column(name = "is_active", columnDefinition = "integer default 1")
+    private Integer isActive = 1;
 }

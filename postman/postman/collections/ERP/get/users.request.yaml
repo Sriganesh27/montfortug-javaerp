@@ -1,0 +1,10 @@
+$kind: http-request
+name: users
+url: http://localhost:8080/api/superadmin/users
+method: GET
+auth:
+  type: bearer
+  credentials:
+    token: "{{supabase_service_role_api_key_115n}}"
+examples: .resources/users.resources/examples
+order: 4316109723771941

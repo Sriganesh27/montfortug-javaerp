@@ -1,2 +1,15 @@
 $kind: collection
 name: ERP
+variables:
+  - key: auth_secret_0y1w
+    secret: true
+  - key: auth_secret_0356
+    secret: true
+  - key: auth_secret_10wj
+    secret: true
+  - key: supabase_service_role_api_key_11gw
+    secret: true
+  - key: supabase_service_role_api_key_115n
+    secret: true
+  - key: json_web_token_115n
+    secret: true

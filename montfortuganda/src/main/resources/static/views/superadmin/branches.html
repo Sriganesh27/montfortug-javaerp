@@ -1,0 +1,69 @@
+<div id="superadmin-branches-view">
+  <div class="view-header">
+    <h2>Manage Branches</h2>
+    <button id="sa-addBranchBtn" class="btn-primary">
+      <i class="bi bi-plus-circle"></i> Add New Branch
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="data-table" id="sa-branchesTable">
+        <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Code</th>
+          <th>Type</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="sa-branchesTableBody">
+        <tr><td colspan="7" class="text-center">Loading branches...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add / Edit Branch Modal -->
+  <div id="sa-branchModal" class="branch-modal hidden">
+    <div class="modal-content">
+      <h3 id="sa-modalTitle">Add New Branch</h3>
+      <hr class="modal-divider">
+      <form id="sa-branchForm">
+        <input type="hidden" id="sa-branchId">
+
+        <div class="form-group">
+          <label for="sa-branchName">Branch Name</label>
+          <input type="text" id="sa-branchName" required>
+        </div>
+
+        <div class="form-group">
+          <label for="sa-schoolCode">School Code</label>
+          <input type="text" id="sa-schoolCode" required>
+        </div>
+
+        <div class="form-group">
+          <label for="sa-branchType">Branch Type</label>
+          <select id="sa-branchType" required>
+            <option value="Primary">Primary</option>
+            <option value="Secondary">Secondary</option>
+            <option value="University">University</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="sa-branchLocation">Location</label>
+          <input type="text" id="sa-branchLocation" required>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="sa-closeModalBtn" class="btn-cancel">Cancel</button>
+          <button type="submit" class="btn-save">Save Branch</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

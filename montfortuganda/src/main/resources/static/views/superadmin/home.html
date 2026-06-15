@@ -1,10 +1,43 @@
-<div class="view-container">
-    <h2 class="view-title">Welcome to the Super Admin Portal</h2>
-    <p class="view-subtitle">This is your global command center. This view was loaded instantly using AJAX!</p>
+<div id="superadmin-home-view">
+    <div class="view-header">
+        <h2>Dashboard Overview</h2>
+        <p class="text-subtitle">Welcome back! Here is your live system summary.</p>
+    </div>
 
-    <div class="status-card">
-        <h4>System Status</h4>
-        <p>Database: <span class="status-success">Connected</span></p>
-        <p>Authentication: <span class="status-success">Secured</span></p>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon icon-blue"><i class="bi bi-buildings"></i></div>
+            <div class="stat-details">
+                <h3>Total Branches</h3>
+                <h1 id="sa-statTotalBranches">--</h1>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-green"><i class="bi bi-people"></i></div>
+            <div class="stat-details">
+                <h3>System Users</h3>
+                <h1 id="sa-statTotalUsers">--</h1>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-orange"><i class="bi bi-gear"></i></div>
+            <div class="stat-details">
+                <h3>Active Settings</h3>
+                <h1 id="sa-statTotalSettings">--</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="quick-links-card">
+        <h3>Quick Actions</h3>
+        <hr class="modal-divider">
+        <div class="quick-links-grid">
+            <button id="sa-btnLinkBranches" class="btn-primary">
+                <i class="bi bi-buildings"></i> Manage Branches
+            </button>
+            <button id="sa-btnLinkUsers" class="btn-primary">
+                <i class="bi bi-people"></i> Manage Users
+            </button>
+        </div>
     </div>
 </div>

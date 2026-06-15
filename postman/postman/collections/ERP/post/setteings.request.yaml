@@ -1,0 +1,20 @@
+$kind: http-request
+name: setteings
+url: http://localhost:8080/api/superadmin/settings
+method: POST
+headers:
+  Content-Type: " application/json"
+body:
+  type: json
+  content: "{\r
+
+    \    \"settingKey\": \"academic_year\",\r
+
+    \    \"settingValue\": \"2026-2027\"\r
+
+    }"
+auth:
+  type: bearer
+  credentials:
+    token: "{{json_web_token_115n}}"
+order: 1512593425945679
