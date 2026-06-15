@@ -1,18 +1,19 @@
 package com.erp.montfortuganda.superadmin;
 
+import com.erp.montfortuganda.dto.ApiResponse;
+import com.erp.montfortuganda.school.dto.BranchDTO;
+import com.erp.montfortuganda.school.service.BranchService;
 import com.erp.montfortuganda.auth.User;
 import com.erp.montfortuganda.auth.UserRepository;
-import com.erp.montfortuganda.school.Branch;
-import com.erp.montfortuganda.school.BranchRepository;
 import com.erp.montfortuganda.settings.SiteSetting;
 import com.erp.montfortuganda.settings.SiteSettingRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
-
 import java.util.List;
 
 @RestController
@@ -21,7 +22,7 @@ import java.util.List;
 public class SuperAdminApiController {
 
     @Autowired
-    private BranchRepository branchRepository;
+    private BranchService branchService;
 
     @Autowired
     private UserRepository userRepository;
@@ -32,49 +33,39 @@ public class SuperAdminApiController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
-    // ===========================
-    // BRANCH (CAMPUS) MANAGEMENT
-    // ===========================
+    // ==========================================
+    // SECURED BRANCH LOGIC (VIA SERVICE & DTO)
+    // ==========================================
 
     @GetMapping("/branches")
-    public List<Branch> getAllBranches() {
-        return branchRepository.findAll();
+    public ResponseEntity<ApiResponse<List<BranchDTO>>> getAllBranches() {
+        List<BranchDTO> branches = branchService.getAllBranches();
+        return ResponseEntity.ok(ApiResponse.success("Branches fetched successfully", branches));
     }
 
     @PostMapping("/branches")
-    public Branch createBranch(@RequestBody Branch branch) {
-        branch.setIsActive(1); // Default to active on creation
-        return branchRepository.save(branch);
+    public ResponseEntity<ApiResponse<BranchDTO>> createBranch(@Valid @RequestBody BranchDTO branchDTO) {
+        BranchDTO createdBranch = branchService.createBranch(branchDTO);
+        return ResponseEntity.ok(ApiResponse.success("Branch created successfully", createdBranch));
     }
 
     @PutMapping("/branches/{id}")
-    public ResponseEntity<Branch> updateBranch(@PathVariable Integer id, @RequestBody Branch updatedBranch) {
-        return branchRepository.findById(id).map(branch -> {
-            branch.setBranchName(updatedBranch.getBranchName());
-            branch.setSchoolCode(updatedBranch.getSchoolCode());
-            branch.setBranchType(updatedBranch.getBranchType());
-            branch.setBranchLocation(updatedBranch.getBranchLocation());
-            return ResponseEntity.ok(branchRepository.save(branch));
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ApiResponse<BranchDTO>> updateBranch(@PathVariable Integer id, @Valid @RequestBody BranchDTO branchDTO) {
+        BranchDTO updatedBranch = branchService.updateBranch(id, branchDTO);
+        return ResponseEntity.ok(ApiResponse.success("Branch updated successfully", updatedBranch));
     }
 
     @DeleteMapping("/branches/{id}")
-    public ResponseEntity<?> softDeleteBranch(@PathVariable Integer id) {
-        return branchRepository.findById(id).map(branch -> {
-            branch.setIsActive(0); // Soft delete
-            branchRepository.save(branch);
-            return ResponseEntity.ok("Campus successfully deactivated.");
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ApiResponse<String>> softDeleteBranch(@PathVariable Integer id) {
+        branchService.softDeleteBranch(id);
+        return ResponseEntity.ok(ApiResponse.success("Branch successfully deactivated", null));
     }
 
     // ===========================
     // USER MANAGEMENT
     // ===========================
-
     @GetMapping("/users")
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
+    public List<User> getAllUsers() { return userRepository.findAll(); }
 
     @PostMapping("/users")
     public ResponseEntity<?> createUser(@RequestBody User user) {
@@ -101,7 +92,7 @@ public class SuperAdminApiController {
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> softDeleteUser(@PathVariable Integer id) {
         return userRepository.findById(id).map(user -> {
-            user.setIsActive(0); // Soft delete
+            user.setIsActive(0);
             userRepository.save(user);
             return ResponseEntity.ok("User successfully deactivated.");
         }).orElse(ResponseEntity.notFound().build());
@@ -110,11 +101,8 @@ public class SuperAdminApiController {
     // ===========================
     // SITE SETTINGS MANAGEMENT
     // ===========================
-
     @GetMapping("/settings")
-    public List<SiteSetting> getAllSettings() {
-        return siteSettingRepository.findAll();
-    }
+    public List<SiteSetting> getAllSettings() { return siteSettingRepository.findAll(); }
 
     @PostMapping("/settings")
     public SiteSetting saveSetting(@RequestBody SiteSetting setting) {
@@ -122,7 +110,6 @@ public class SuperAdminApiController {
                 .map(existing -> {
                     existing.setSettingValue(setting.getSettingValue());
                     return siteSettingRepository.save(existing);
-                })
-                .orElseGet(() -> siteSettingRepository.save(setting));
+                }).orElseGet(() -> siteSettingRepository.save(setting));
     }
 }

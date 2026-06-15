@@ -1,16 +1,19 @@
 package com.erp.montfortuganda.school;
 
+import com.erp.montfortuganda.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "erp_branches")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class Branch {
+public class Branch extends AuditableEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
