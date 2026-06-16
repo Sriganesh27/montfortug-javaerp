@@ -1,0 +1,14 @@
+$kind: http-request
+url: http://localhost:8080/api/superadmin/users/1
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "username": "updateduser",
+        "role": "ROLE_SCHOOL_ADMIN",
+        "branchId": 1
+    }
+order: 3000

@@ -1,0 +1,15 @@
+$kind: http-request
+url: http://localhost:8080/api/users
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "username": "teacher1",
+        "password": "pass123",
+        "role": "ROLE_TEACHER",
+        "branchId": 1
+    }
+order: 3000

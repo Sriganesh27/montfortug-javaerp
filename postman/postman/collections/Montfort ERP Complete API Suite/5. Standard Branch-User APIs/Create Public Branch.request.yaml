@@ -1,0 +1,13 @@
+$kind: http-request
+url: http://localhost:8080/api/branches
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "branchName": "New Public Branch",
+        "branchCode": "PB001"
+    }
+order: 2000

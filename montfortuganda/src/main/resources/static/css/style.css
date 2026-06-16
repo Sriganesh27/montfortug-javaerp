@@ -2,7 +2,7 @@
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
-    overflow: hidden; /* Disables global scroll. The right panel handles its own scrolling! */
+    overflow: auto; /* Disables global scroll. The right panel handles its own scrolling! */
 }
 
 /* ========================================= */

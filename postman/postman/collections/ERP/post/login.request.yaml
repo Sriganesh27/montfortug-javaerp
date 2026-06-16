@@ -2,13 +2,19 @@ $kind: http-request
 name: login
 url: http://localhost:8080/api/auth/login
 method: POST
+headers:
+  Content-Type: " application/json"
 body:
   type: json
   content: "{\r
 
     \    \"username\": \"erpsadmin\",\r
 
-    \    \"password\": \"montfort@uganda2022\"\r
+    \    \"password\": \"montfort@uganda2022\",\r
+
+    \    \"role\": \"SUPER_ADMIN\"\r
 
     }"
+settings:
+  disableCookies: true
 order: 1387374183071030

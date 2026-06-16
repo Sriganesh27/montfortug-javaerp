@@ -16,5 +16,5 @@ body:
 auth:
   type: bearer
   credentials:
-    token: "{{json_web_token_115n}}"
+    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlcnBzYWRtaW4iLCJpYXQiOjE3ODE1ODg4NjYsImV4cCI6MTc4MTY3NTI2Nn0.Xi1Tzmh2MffPjnSx1gmEcn8irIzq2UhH2DSnx6d3KvA
 order: 1512593425945679

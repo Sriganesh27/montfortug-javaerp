@@ -1,0 +1,4 @@
+$kind: http-request
+url: http://localhost:8080/api/superadmin/branches/1/toggle
+method: PUT
+order: 4000

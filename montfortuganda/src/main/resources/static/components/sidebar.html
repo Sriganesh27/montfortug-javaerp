@@ -1,22 +1,37 @@
-<nav class="sidebar" id="sidebar">
+<nav class="sidebar" id="sidebar-container">
     <ul class="sidebar-nav" id="sidebarMenu">
+
         <li data-role="SUPER_ADMIN">
             <a href="/superadmin.html" class="active" data-tooltip="Super Admin">
                 <i class="bi bi-shield-lock"></i> <span>Super Admin Portal</span>
             </a>
         </li>
 
-        <!-- Updated from Campuses to Branches -->
-        <li data-role="SUPER_ADMIN">
-            <a href="/branches.html" data-tooltip="Branches">
-                <i class="bi bi-buildings"></i> <span>Manage Branches</span>
+        <!-- BRANCHES -->
+        <li data-role="SUPER_ADMIN" class="has-dropdown">
+            <a href="#" class="dropdown-toggle" data-tooltip="Branches">
+                <div class="dropdown-label">
+                    <i class="bi bi-buildings"></i> <span>Manage Branches</span>
+                </div>
             </a>
+            <ul class="sidebar-dropdown">
+                <li data-role="SUPER_ADMIN"><a href="/branches.html">View / Edit Branches</a></li>
+                <li data-role="SUPER_ADMIN"><a href="/add-branch.html">Add New Branch</a></li>
+            </ul>
         </li>
 
-        <li data-role="SUPER_ADMIN">
-            <a href="/users.html" data-tooltip="Users">
-                <i class="bi bi-people"></i> <span>Manage Users</span>
+        <!-- USERS -->
+        <li data-role="SUPER_ADMIN" class="has-dropdown">
+            <a href="#" class="dropdown-toggle" data-tooltip="Users">
+                <div class="dropdown-label">
+                    <i class="bi bi-people"></i> <span>Manage Users</span>
+                </div>
             </a>
+            <ul class="sidebar-dropdown">
+                <li data-role="SUPER_ADMIN"><a href="/users.html">View / Edit Users</a></li>
+                <li data-role="SUPER_ADMIN"><a href="/add-user.html">Add New User</a></li>
+            </ul>
         </li>
+
     </ul>
 </nav>

@@ -20,8 +20,14 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secret;
 
+    // 1. The @Value annotation MUST sit right above the variable!
     @Value("${jwt.expiration}")
     private Long jwtExpirationInMs;
+
+    // 2. The getter method sits below, with NO annotations!
+    public Long getJwtExpirationInMs() {
+        return jwtExpirationInMs;
+    }
 
     private Key getSigningKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());

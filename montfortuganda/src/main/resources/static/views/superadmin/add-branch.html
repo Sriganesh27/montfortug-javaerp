@@ -1,0 +1,81 @@
+<div id="superadmin-add-branch-view">
+    <div class="view-header">
+        <h2>Add New Branch</h2>
+        <button id="backToBranchesBtn" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Branches</button>
+    </div>
+
+    <!-- Restored the original form exactly as you had it -->
+    <form id="add-branch-full-form" enctype="multipart/form-data">
+
+        <div class="card add-branch-card">
+            <h3 class="card-header">General Information</h3>
+            <div class="detail-grid">
+                <div class="form-group"><label>School Name</label><input type="text" id="add-schoolName" required /></div>
+                <div class="form-group"><label>School Code</label><input type="text" id="add-schoolCode" placeholder="e.g. U011" required /></div>
+                <div class="form-group"><label>Foundation Date</label><input type="date" id="add-foundationDate" required /></div>
+                <div class="form-group"><label>Location</label><input type="text" id="add-location" required /></div>
+                <div class="form-group"><label>Contact Details</label><input type="text" id="add-contact" required /></div>
+                <div class="form-group">
+                    <label>Branch Type</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" value="Nursery" class="type-cb"> Nursery</label>
+                        <label><input type="checkbox" value="Primary" class="type-cb"> Primary</label>
+                        <label><input type="checkbox" value="Secondary" class="type-cb"> Secondary</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card add-branch-card">
+            <h3 class="card-header">Incharge Details</h3>
+            <div class="table-responsive">
+                <table class="data-table" id="incharge-table">
+                    <thead>
+                    <tr>
+                        <th>Full Name</th>
+                        <th>Role / Position</th>
+                        <th>Phone Number</th>
+                        <th class="col-action">Remove</th>
+                    </tr>
+                    </thead>
+                    <tbody id="incharge-tbody">
+                    <tr>
+                        <!-- Restored the crucial 'incharge-input' classes! -->
+                        <td><input type="text" class="incharge-input incharge-name" placeholder="e.g. John Doe"></td>
+                        <td><input type="text" class="incharge-input incharge-role" placeholder="e.g. Principal"></td>
+                        <td><input type="text" class="incharge-input incharge-phone" placeholder="+256..."></td>
+                        <td><button type="button" class="action-btn delete-btn remove-incharge-btn"><i class="bi bi-trash"></i></button></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" id="addInchargeRowBtn" class="btn-outline-primary"><i class="bi bi-plus-circle"></i> Add Another Person</button>
+        </div>
+
+        <div class="card add-branch-card">
+            <h3 class="card-header">Documents & Media</h3>
+            <div class="detail-grid">
+                <div class="form-group"><label>School Photo (JPG/PNG < 100KB)</label><input type="file" id="add-photo" accept="image/png, image/jpeg" /></div>
+                <div class="form-group">
+                    <label>Government Document (JPG/PNG < 100KB, PDF < 2MB)</label>
+                    <input type="file" id="add-doc" accept="image/png, image/jpeg, application/pdf" multiple />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-actions add-branch-actions">
+            <button type="submit" class="btn-primary btn-large"><i class="bi bi-save"></i> Save New Branch</button>
+        </div>
+    </form>
+
+    <!-- Hidden Template for New Rows -->
+    <template id="incharge-row-template">
+        <tr>
+            <!-- Restored the crucial 'incharge-input' classes here too! -->
+            <td><input type="text" class="incharge-input incharge-name" placeholder="Name"></td>
+            <td><input type="text" class="incharge-input incharge-role" placeholder="Role"></td>
+            <td><input type="text" class="incharge-input incharge-phone" placeholder="Phone"></td>
+            <td><button type="button" class="action-btn delete-btn remove-incharge-btn"><i class="bi bi-trash"></i></button></td>
+        </tr>
+    </template>
+</div>

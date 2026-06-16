@@ -13,6 +13,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
+import java.util.Map;
+
 
 @RestController
 @RequestMapping("/api/auth")
@@ -33,24 +37,56 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
         try {
-            // 1. Verify the username and password with the Database
+            // 1. Verify credentials
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
 
-            // 2. If correct, load the user details
+            // 2. Load User
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             User dbUser = userRepository.findByUsername(userDetails.getUsername()).get();
 
-            // 3. Generate the JWT Token (This uses the code that had the yellow warning!)
+            // 3. Generate JWT
             String token = jwtUtil.generateToken(userDetails);
 
-            // 4. Return the Token, Role, and Branch ID to the Frontend
+            // 4. CREATE THE HTTP-ONLY SECURE COOKIE
+            ResponseCookie jwtCookie = ResponseCookie.from("jwt_token", token)
+                    .httpOnly(true)
+                    .secure(false) // Set to true in Production with HTTPS!
+                    .path("/")
+                    .maxAge(jwtUtil.getJwtExpirationInMs() / 1000)
+                    .sameSite("Strict") // Blocks CSRF attacks
+                    .build();
+
             Integer branchId = dbUser.getAssignedBranch() != null ? dbUser.getAssignedBranch().getBranchId() : null;
-            return ResponseEntity.ok(new AuthResponse(token, dbUser.getRole(), branchId));
+
+            // 5. Return the Response (We NO LONGER send the token in the JSON body!)
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                    .body(new AuthResponse(null, dbUser.getRole(), branchId));
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
-        }
+        // 1. Print the exact error to your Spring Boot console!
+        e.printStackTrace();
+
+        // 2. Return a proper JSON object so the frontend doesn't crash!
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Invalid username or password"));
+    }
+    }
+
+    // --- NEW ENDPOINT: Securely destroy the cookie on logout! ---
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        ResponseCookie cookie = ResponseCookie.from("jwt_token", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0) // 0 instantly destroys the cookie
+                .sameSite("Strict")
+                .build();
+
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body("Logged out successfully");
     }
 }

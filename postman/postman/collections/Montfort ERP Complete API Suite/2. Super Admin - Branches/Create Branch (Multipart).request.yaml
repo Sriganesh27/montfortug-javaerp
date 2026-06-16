@@ -1,0 +1,16 @@
+$kind: http-request
+url: http://localhost:8080/api/superadmin/branches
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: branchName
+      value: Test Branch
+    - type: text
+      key: branchCode
+      value: TB001
+    - type: file
+      key: photo
+      src: []
+order: 2000

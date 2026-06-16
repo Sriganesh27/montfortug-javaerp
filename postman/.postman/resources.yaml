@@ -1,5 +1,10 @@
 workspace:
   id: 7d6b16f3-5924-46c5-8e6c-6cd9c7d276e2
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+
 cloudResources:
   collections:
     ../postman/collections/ERP: 55107954-13e97b4d-e488-4e07-924e-d3cacc019b73
+    ..\postman\collections\Montfort ERP Authentication: 94080381-66b5-4ed3-a7d5-510bc62d5e81
+    ..\postman\collections\Montfort ERP Complete API Suite: df92d42a-8516-47da-8c94-fda287b716e2

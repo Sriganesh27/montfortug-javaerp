@@ -1,0 +1,5 @@
+$kind: http-request
+name: http://localhost:8080/api/superadmin/branches
+url: http://localhost:8080/api/superadmin/branches
+method: GET
+order: 4166477531089901

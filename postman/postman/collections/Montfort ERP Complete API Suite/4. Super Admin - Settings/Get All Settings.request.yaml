@@ -1,0 +1,4 @@
+$kind: http-request
+url: http://localhost:8080/api/superadmin/settings
+method: GET
+order: 1000

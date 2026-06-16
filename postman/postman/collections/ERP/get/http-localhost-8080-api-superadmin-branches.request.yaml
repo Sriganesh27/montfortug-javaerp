@@ -5,5 +5,5 @@ method: GET
 auth:
   type: bearer
   credentials:
-    token: "{{auth_secret_0y1w}}"
+    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlcnBzYWRtaW4iLCJpYXQiOjE3ODE1ODg4NjYsImV4cCI6MTc4MTY3NTI2Nn0.Xi1Tzmh2MffPjnSx1gmEcn8irIzq2UhH2DSnx6d3KvA
 order: 2460103001717088

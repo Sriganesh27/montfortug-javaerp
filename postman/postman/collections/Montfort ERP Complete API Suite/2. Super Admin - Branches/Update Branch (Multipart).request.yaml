@@ -1,0 +1,10 @@
+$kind: http-request
+url: http://localhost:8080/api/superadmin/branches/1
+method: PUT
+body:
+  type: formdata
+  content:
+    - type: text
+      key: branchName
+      value: Updated Branch
+order: 3000

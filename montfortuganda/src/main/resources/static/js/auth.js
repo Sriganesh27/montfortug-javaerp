@@ -63,13 +63,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const data = await response.json();
 
-                if (response.ok && data.token) {
-                    let finalRoleString = data.role;
-                    if (finalRoleString === 'Super User' || finalRoleString === 'ROLE_SUPER_ADMIN') {
+                // We only check response.ok now, because the token is invisible!
+                if (response.ok) {
+                    let rawRole = data.role ? data.role.toUpperCase().replace(/\s+/g, '_') : '';
+                    let finalRoleString = rawRole;
+
+                    // Catch ALL variations of Super Admin
+                    if (rawRole === 'SUPER_USER' || rawRole === 'ROLE_SUPER_ADMIN' || rawRole === 'SUPER_ADMIN') {
                         finalRoleString = 'SUPER_ADMIN';
                     }
 
-                    localStorage.setItem('jwt_token', data.token);
+                    // We MUST keep saving these two so the UI knows which sidebar to show!
                     localStorage.setItem('user_role', finalRoleString);
                     localStorage.setItem('username', username);
 

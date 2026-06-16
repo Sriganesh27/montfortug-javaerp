@@ -59,8 +59,39 @@
         <p>Failed to communicate with the server.</p>
     </div>
 </template>
+<!-- ========================================== -->
+<!-- PREMIUM REUSABLE MODAL TEMPLATES           -->
+<!-- ========================================== -->
+<template id="premium-modal-template">
+    <div class="premium-modal-overlay">
+        <div class="premium-modal-box">
+            <div class="premium-modal-header">
+                <div class="premium-modal-icon"><i class="bi"></i></div>
+                <h3 class="pm-title"></h3>
+            </div>
+            <div class="premium-modal-body"></div>
+            <div class="premium-modal-footer">
+                <button class="premium-modal-btn-secondary pm-btn-cancel hidden"></button>
+                <button class="premium-modal-btn-primary pm-btn-confirm"></button>
+            </div>
+        </div>
+    </div>
+</template>
 
-<!-- Load the Javascript AJAX Router -->
+<template id="branch-success-content-template">
+    <div class="pm-text-block">
+        The branch <strong class="success-branch-name"></strong> has been successfully configured.
+    </div>
+    <div class="pm-text-block pm-spacer">
+        An Administrator account was automatically generated. Please securely save these credentials:
+    </div>
+    <div class="credentials-box">
+        <p><strong>Username:</strong> <span class="cred-username"></span></p>
+        <p><strong>Password:</strong> <span class="cred-password"></span></p>
+    </div>
+</template>
+
+<script src="/js/api.js"></script>
 <script src="/js/layout.js"></script>
 <script src="/js/superadmin.js"></script>
 </body>

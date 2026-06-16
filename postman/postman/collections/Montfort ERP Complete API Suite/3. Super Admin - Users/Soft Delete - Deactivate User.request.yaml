@@ -1,0 +1,5 @@
+$kind: http-request
+name: Soft Delete / Deactivate User
+url: http://localhost:8080/api/superadmin/users/1
+method: DELETE
+order: 4000

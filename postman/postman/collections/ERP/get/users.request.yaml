@@ -5,6 +5,6 @@ method: GET
 auth:
   type: bearer
   credentials:
-    token: "{{supabase_service_role_api_key_115n}}"
+    token: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJlcnBzYWRtaW4iLCJpYXQiOjE3ODE1ODg4NjYsImV4cCI6MTc4MTY3NTI2Nn0.Xi1Tzmh2MffPjnSx1gmEcn8irIzq2UhH2DSnx6d3KvA
 examples: .resources/users.resources/examples
 order: 4316109723771941

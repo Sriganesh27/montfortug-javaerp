@@ -1,15 +1,22 @@
 document.addEventListener('DOMContentLoaded', async function() {
     // 1. Strict Security Check
-    const token = localStorage.getItem('jwt_token');
     const userRole = localStorage.getItem('user_role'); // e.g., "SUPER_ADMIN"
-
-    if (!token || !userRole) {
+    if (!userRole) {
         window.location.href = '/login';
         return;
     }
 
     // Convert SUPER_ADMIN to superadmin for the secure clean URL
-    const urlRole = userRole.toLowerCase().replace('_', '');
+    let urlRole = 'admin'; // Default fallback
+    let safeUserRole = userRole ? userRole.toUpperCase().replace(/\s+/g, '_') : '';
+
+    if (safeUserRole === 'SUPER_ADMIN' || safeUserRole === 'ROLE_SUPER_ADMIN') {
+        urlRole = 'superadmin';
+    } else if (safeUserRole === 'ROLE_SCHOOL_ADMIN' || safeUserRole === 'SCHOOL_ADMIN') {
+        urlRole = 'admin';
+    } else if (safeUserRole.startsWith('ROLE_')) {
+        urlRole = safeUserRole.replace('ROLE_', '').toLowerCase();
+    }
 
     // 2. Load Core Layout Components
     try {
@@ -23,50 +30,102 @@ document.addEventListener('DOMContentLoaded', async function() {
         document.querySelectorAll('#sidebarMenu li').forEach(li => {
             const requiredRole = li.getAttribute('data-role');
 
-            // Hide "ALL" generic dashboard if they are a SUPER_ADMIN
             if (requiredRole === 'ALL' && userRole === 'SUPER_ADMIN') {
                 li.classList.add('hidden');
-            }
-            // Hide if the role doesn't match
-            else if (requiredRole !== 'ALL' && requiredRole !== userRole) {
+            } else if (requiredRole !== 'ALL' && requiredRole !== userRole) {
                 li.classList.add('hidden');
             }
         });
 
-        // Set User Profile Name (Strictly no HTML strings, pure text injection!)
         const userNameElement = document.getElementById('userNameText');
         if (userNameElement) {
-            // Read the username we saved during login.
-            // If it's missing for some reason, fallback to their Role.
             const savedName = localStorage.getItem('username') || userRole;
             userNameElement.textContent = savedName;
         }
 
-        // Secure Logout Function
-        document.getElementById('logoutBtn').addEventListener('click', function() {
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            // 1. Tell the backend to destroy the secure cookie
+            await fetch('/api/auth/logout', { method: 'POST' });
+
+            // 2. Clear local UI variables and redirect
             localStorage.clear();
             window.location.href = '/login';
         });
 
         const sidebarToggleBtn = document.getElementById('sidebarToggle');
-        sidebarToggleBtn.addEventListener('click', function() {
-            // Toggle the body class and get the new state
-            const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+        if (sidebarToggleBtn) {
+            sidebarToggleBtn.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    document.body.classList.toggle('mobile-sidebar-active');
+                } else {
+                    const isCollapsed = document.body.classList.toggle('sidebar-collapsed');
+                    if (isCollapsed) {
+                        sidebarToggleBtn.classList.remove('bi-chevron-left');
+                        sidebarToggleBtn.classList.add('bi-list');
+                    } else {
+                        sidebarToggleBtn.classList.remove('bi-list');
+                        sidebarToggleBtn.classList.add('bi-chevron-left');
+                    }
+                }
+            });
+        }
 
-            // Swap the icons based on the new state
-            if (isCollapsed) {
-                // When Closed: Show the hamburger menu
-                sidebarToggleBtn.classList.remove('bi-chevron-left');
-                sidebarToggleBtn.classList.add('bi-list');
-            } else {
-                // When Open: Show the left chevron
-                sidebarToggleBtn.classList.remove('bi-list');
-                sidebarToggleBtn.classList.add('bi-chevron-left');
-            }
-        });
+        // Close overlay on mobile
+        const overlay = document.getElementById('mobile-sidebar-overlay');
+        if (overlay) {
+            overlay.addEventListener('click', () => {
+                document.body.classList.remove('mobile-sidebar-active');
+            });
+        }
 
         // 3. Initialize the Router
         setupRouter(urlRole);
+
+        // 4. Initialize Smart Sidebar Clicks (Auto-Expand & Dropdowns)
+        document.querySelectorAll('.sidebar-nav > li > a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                let wasCollapsed = false;
+
+                // Auto-expand sidebar if it is currently collapsed
+                if (document.body.classList.contains('sidebar-collapsed')) {
+                    wasCollapsed = true;
+                    document.body.classList.remove('sidebar-collapsed');
+
+                    const toggleBtn = document.getElementById('sidebarToggle');
+                    if (toggleBtn) {
+                        toggleBtn.classList.remove('bi-list');
+                        toggleBtn.classList.add('bi-chevron-left');
+                    }
+                }
+
+                // Handle the Dropdown Menu Opening
+                if (this.classList.contains('dropdown-toggle')) {
+                    e.preventDefault(); // Stop from navigating
+                    const parentLi = this.closest('.has-dropdown');
+
+                    // --- SMOOTH SEQUENTIAL ACCORDION LOGIC ---
+                    const openDropdowns = document.querySelectorAll('.sidebar-nav .has-dropdown.open');
+                    let animationDelay = 0;
+
+                    // 1. Find any open menus and smoothly close them first
+                    openDropdowns.forEach(dropdown => {
+                        if (dropdown !== parentLi) {
+                            dropdown.classList.remove('open');
+                            animationDelay = 250; // Wait exactly 250ms for the CSS sliding animation to finish
+                        }
+                    });
+
+                    // 2. Wait for the old menu to completely close, THEN open the new one!
+                    setTimeout(() => {
+                        if (wasCollapsed && !parentLi.classList.contains('open')) {
+                            parentLi.classList.add('open');
+                        } else {
+                            parentLi.classList.toggle('open');
+                        }
+                    }, animationDelay || (wasCollapsed ? 50 : 0));
+                }
+            });
+        });
 
     } catch (error) {
         console.error("Critical Failure: Unable to load base components", error);
@@ -76,8 +135,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 function setupRouter(urlRole) {
     const mainContent = document.getElementById('main-content-area');
 
-    // Intercept clicks on sidebar navigation links
-    document.querySelectorAll('.sidebar-nav a').forEach(link => {
+    document.querySelectorAll('.sidebar-nav a:not(.dropdown-toggle)').forEach(link => {
         link.addEventListener('click', async function(e) {
             e.preventDefault();
 
@@ -86,25 +144,20 @@ function setupRouter(urlRole) {
                 viewName = 'home';
             }
 
-            // Update Header Title dynamically
             const newTitle = this.textContent.trim();
             const pageTitleElement = document.getElementById('pageTitle');
             if (pageTitleElement) pageTitleElement.textContent = newTitle;
 
-            // Move the 'active' highlight to the clicked link
             document.querySelectorAll('.sidebar-nav a').forEach(nav => nav.classList.remove('active'));
             this.classList.add('active');
 
-            // Update URL using HTML5 History API for copy-paste sharing
             const newUrl = `/${urlRole}/${viewName}`;
             window.history.pushState({ view: viewName, title: newTitle }, "", newUrl);
 
-            // Fetch and render the view
             await loadView(urlRole, viewName, mainContent);
         });
     });
 
-    // Handle Browser Back/Forward buttons
     window.addEventListener('popstate', async function(event) {
         const viewName = event.state ? event.state.view : 'home';
         const title = event.state && event.state.title ? event.state.title : 'Dashboard';
@@ -115,54 +168,75 @@ function setupRouter(urlRole) {
         await loadView(urlRole, viewName, mainContent);
     });
 
-    // Initial Load Logic (Reads the current URL on first page load)
     let initialView = window.location.pathname.split('/').pop();
     if (initialView === urlRole || initialView === 'dashboard' || initialView === '') {
         initialView = 'home';
     }
 
-    // Set initial title based on the active hardcoded link (if any)
-    const activeLink = document.querySelector('.sidebar-nav a.active');
-    if(activeLink) {
-        const pageTitleElement = document.getElementById('pageTitle');
-        if (pageTitleElement) pageTitleElement.textContent = activeLink.textContent.trim();
+    // SMART REFRESH MAGIC
+    document.querySelectorAll('.sidebar-nav a').forEach(nav => nav.classList.remove('active'));
+
+    let matchedLink = document.querySelector(`.sidebar-nav a[href*="${initialView}"]`);
+    if (!matchedLink && initialView === 'home') {
+        matchedLink = document.querySelector(`.sidebar-nav a[href*="${urlRole}"]`);
     }
+
+    let pageTitle = "Dashboard";
+
+    if (matchedLink) {
+        matchedLink.classList.add('active');
+        pageTitle = matchedLink.textContent.trim();
+
+        const parentDropdown = matchedLink.closest('.has-dropdown');
+        if (parentDropdown) parentDropdown.classList.add('open');
+
+    } else if (initialView === 'add-branch') {
+        const branchesLink = document.querySelector(`.sidebar-nav a[href*="branches"]`);
+        if (branchesLink) {
+            branchesLink.classList.add('active');
+            const parentDropdown = branchesLink.closest('.has-dropdown');
+            if (parentDropdown) parentDropdown.classList.add('open');
+        }
+        pageTitle = "Add New Branch";
+    } else if (initialView === 'add-user') {
+        const usersLink = document.querySelector(`.sidebar-nav a[href*="users"]`);
+        if (usersLink) {
+            usersLink.classList.add('active');
+            const parentDropdown = usersLink.closest('.has-dropdown');
+            if (parentDropdown) parentDropdown.classList.add('open');
+        }
+        pageTitle = "Add New User";
+    }
+
+    const pageTitleElement = document.getElementById('pageTitle');
+    if (pageTitleElement) pageTitleElement.textContent = pageTitle;
 
     loadView(urlRole, initialView, mainContent);
 }
 
-// ---------------------------------------------------------
-// THE PERFECT WAY: Zero HTML strings in Javascript!
-// ---------------------------------------------------------
 async function loadView(urlRole, viewName, container) {
     try {
-        // 1. Get the loader template and put it on the screen
         const loader = document.getElementById('loaderTemplate').content.cloneNode(true);
-        container.innerHTML = ''; // clear the screen
+        container.textContent = '';
         container.appendChild(loader);
 
-        // 2. Fetch the specific file based on the secure role folder
         const response = await fetch(`/views/${urlRole}/${viewName}.html`);
 
         if (response.ok) {
             container.innerHTML = await response.text();
-
-            // Broadcast an event so our page-specific JS knows to run!
-            const event = new CustomEvent('viewLoaded', {
-                detail: { role: urlRole, view: viewName }
-            });
-            document.dispatchEvent(event);
-
+            document.dispatchEvent(new CustomEvent('viewLoaded', { detail: { role: urlRole, view: viewName } }));
         } else {
-            // 3. Get the 404 error template
-            const errorView = document.getElementById('errorTemplate').content.cloneNode(true);
-            container.innerHTML = '';
-            container.appendChild(errorView);
+            container.textContent = '';
+            container.appendChild(document.getElementById('errorTemplate').content.cloneNode(true));
         }
     } catch (error) {
-        // 4. Get the System Error template
-        const sysErrorView = document.getElementById('systemErrorTemplate').content.cloneNode(true);
-        container.innerHTML = '';
-        container.appendChild(sysErrorView);
+        container.textContent = '';
+        container.appendChild(document.getElementById('systemErrorTemplate').content.cloneNode(true));
     }
 }
+
+// UI UTILITIES
+function showLoader() { const l = document.getElementById('global-loader'); if(l) l.classList.remove('hidden'); }
+function hideLoader() { const l = document.getElementById('global-loader'); if(l) l.classList.add('hidden'); }
+function showErrorMessage(m) { alert(`❌ ERROR: ${m}`); }
+function showSuccessMessage(m) { alert(`✅ SUCCESS: ${m}`); }

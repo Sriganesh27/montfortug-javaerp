@@ -3,113 +3,102 @@ package com.erp.montfortuganda.superadmin;
 import com.erp.montfortuganda.dto.ApiResponse;
 import com.erp.montfortuganda.school.dto.BranchDTO;
 import com.erp.montfortuganda.school.service.BranchService;
-import com.erp.montfortuganda.auth.User;
-import com.erp.montfortuganda.auth.UserRepository;
-import com.erp.montfortuganda.settings.SiteSetting;
-import com.erp.montfortuganda.settings.SiteSettingRepository;
+import com.erp.montfortuganda.auth.dto.UserDTO;
+import com.erp.montfortuganda.auth.service.UserService;
+import com.erp.montfortuganda.settings.dto.SiteSettingDTO;
+import com.erp.montfortuganda.settings.service.SiteSettingService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/superadmin")
-@PreAuthorize("hasRole('Super User')")
+@PreAuthorize("hasRole('SUPER_ADMIN')")
 public class SuperAdminApiController {
 
     @Autowired
     private BranchService branchService;
 
     @Autowired
-    private UserRepository userRepository;
+    private UserService userService;
 
     @Autowired
-    private SiteSettingRepository siteSettingRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    private SiteSettingService siteSettingService;
 
     // ==========================================
-    // SECURED BRANCH LOGIC (VIA SERVICE & DTO)
+    // SECURED BRANCH LOGIC
     // ==========================================
 
     @GetMapping("/branches")
     public ResponseEntity<ApiResponse<List<BranchDTO>>> getAllBranches() {
-        List<BranchDTO> branches = branchService.getAllBranches();
-        return ResponseEntity.ok(ApiResponse.success("Branches fetched successfully", branches));
+        return ResponseEntity.ok(ApiResponse.success("Branches fetched successfully", branchService.getAllBranches()));
     }
 
-    @PostMapping("/branches")
-    public ResponseEntity<ApiResponse<BranchDTO>> createBranch(@Valid @RequestBody BranchDTO branchDTO) {
-        BranchDTO createdBranch = branchService.createBranch(branchDTO);
-        return ResponseEntity.ok(ApiResponse.success("Branch created successfully", createdBranch));
+    @PostMapping(value = "/branches", consumes = {"multipart/form-data"})
+    public ResponseEntity<ApiResponse<BranchDTO>> createBranch(
+            @ModelAttribute BranchDTO branchDTO,
+            @RequestParam(value = "photo", required = false) MultipartFile photo,
+            @RequestParam(value = "documents", required = false) List<MultipartFile> documents) {
+        return ResponseEntity.ok(ApiResponse.success("Branch created successfully", branchService.createBranch(branchDTO, photo, documents)));
     }
 
-    @PutMapping("/branches/{id}")
-    public ResponseEntity<ApiResponse<BranchDTO>> updateBranch(@PathVariable Integer id, @Valid @RequestBody BranchDTO branchDTO) {
-        BranchDTO updatedBranch = branchService.updateBranch(id, branchDTO);
-        return ResponseEntity.ok(ApiResponse.success("Branch updated successfully", updatedBranch));
+    @PutMapping(value = "/branches/{id}", consumes = {"multipart/form-data"})
+    public ResponseEntity<ApiResponse<BranchDTO>> updateBranch(
+            @PathVariable Integer id,
+            @ModelAttribute BranchDTO branchDTO,
+            @RequestParam(value = "photo", required = false) MultipartFile photo,
+            @RequestParam(value = "documents", required = false) List<MultipartFile> documents) {
+        return ResponseEntity.ok(ApiResponse.success("Branch updated successfully", branchService.updateBranch(id, branchDTO, photo, documents)));
     }
 
-    @DeleteMapping("/branches/{id}")
-    public ResponseEntity<ApiResponse<String>> softDeleteBranch(@PathVariable Integer id) {
-        branchService.softDeleteBranch(id);
-        return ResponseEntity.ok(ApiResponse.success("Branch successfully deactivated", null));
+    // Toggle active status
+    @PutMapping("/branches/{id}/toggle")
+    public ResponseEntity<ApiResponse<String>> toggleBranchActive(@PathVariable Integer id) {
+        branchService.toggleBranchActive(id);
+        return ResponseEntity.ok(ApiResponse.success("Branch status toggled successfully", null));
     }
 
-    // ===========================
-    // USER MANAGEMENT
-    // ===========================
+
+    // ==========================================
+    // SECURED USER LOGIC
+    // ==========================================
+
     @GetMapping("/users")
-    public List<User> getAllUsers() { return userRepository.findAll(); }
+    public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
+        return ResponseEntity.ok(ApiResponse.success("Users fetched successfully", userService.getAllUsers()));
+    }
 
     @PostMapping("/users")
-    public ResponseEntity<?> createUser(@RequestBody User user) {
-        if (userRepository.findByUsername(user.getUsername()).isPresent()) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).body("Error: Username is already taken!");
-        }
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setIsActive(1);
-        return ResponseEntity.ok(userRepository.save(user));
+    public ResponseEntity<ApiResponse<UserDTO>> createUser(@Valid @RequestBody UserDTO userDTO) {
+        return ResponseEntity.ok(ApiResponse.success("User created successfully", userService.createUser(userDTO)));
     }
 
     @PutMapping("/users/{id}")
-    public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody User updatedUser) {
-        return userRepository.findById(id).map(user -> {
-            user.setRole(updatedUser.getRole());
-            user.setAssignedBranch(updatedUser.getAssignedBranch());
-            if (updatedUser.getPassword() != null && !updatedUser.getPassword().isEmpty()) {
-                user.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
-            }
-            return ResponseEntity.ok(userRepository.save(user));
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ApiResponse<UserDTO>> updateUser(@PathVariable Integer id, @Valid @RequestBody UserDTO userDTO) {
+        return ResponseEntity.ok(ApiResponse.success("User updated successfully", userService.updateUser(id, userDTO)));
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<?> softDeleteUser(@PathVariable Integer id) {
-        return userRepository.findById(id).map(user -> {
-            user.setIsActive(0);
-            userRepository.save(user);
-            return ResponseEntity.ok("User successfully deactivated.");
-        }).orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<ApiResponse<String>> softDeleteUser(@PathVariable Integer id) {
+        userService.softDeleteUser(id);
+        return ResponseEntity.ok(ApiResponse.success("User successfully deactivated", null));
     }
 
-    // ===========================
-    // SITE SETTINGS MANAGEMENT
-    // ===========================
+    // ==========================================
+    // SECURED SITE SETTINGS LOGIC
+    // ==========================================
+
     @GetMapping("/settings")
-    public List<SiteSetting> getAllSettings() { return siteSettingRepository.findAll(); }
+    public ResponseEntity<ApiResponse<List<SiteSettingDTO>>> getAllSettings() {
+        return ResponseEntity.ok(ApiResponse.success("Settings fetched successfully", siteSettingService.getAllSettings()));
+    }
 
     @PostMapping("/settings")
-    public SiteSetting saveSetting(@RequestBody SiteSetting setting) {
-        return siteSettingRepository.findBySettingKey(setting.getSettingKey())
-                .map(existing -> {
-                    existing.setSettingValue(setting.getSettingValue());
-                    return siteSettingRepository.save(existing);
-                }).orElseGet(() -> siteSettingRepository.save(setting));
+    public ResponseEntity<ApiResponse<SiteSettingDTO>> saveSetting(@Valid @RequestBody SiteSettingDTO settingDTO) {
+        return ResponseEntity.ok(ApiResponse.success("Setting saved successfully", siteSettingService.saveSetting(settingDTO)));
     }
 }

@@ -1,0 +1,13 @@
+$kind: http-request
+url: http://localhost:8080/api/superadmin/settings
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "settingKey": "SITE_NAME",
+        "settingValue": "Montfort ERP"
+    }
+order: 2000
