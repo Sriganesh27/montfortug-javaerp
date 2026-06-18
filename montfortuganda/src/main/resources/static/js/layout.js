@@ -235,8 +235,189 @@ async function loadView(urlRole, viewName, container) {
     }
 }
 
-// UI UTILITIES
+// ==========================================
+// UI UTILITIES & GLOBAL MODAL ENGINE
+// ==========================================
 function showLoader() { const l = document.getElementById('global-loader'); if(l) l.classList.remove('hidden'); }
 function hideLoader() { const l = document.getElementById('global-loader'); if(l) l.classList.add('hidden'); }
-function showErrorMessage(m) { alert(`❌ ERROR: ${m}`); }
-function showSuccessMessage(m) { alert(`✅ SUCCESS: ${m}`); }
+
+// 1. The Engine is now global for all modules (superadmin, admin, teacher, etc.)
+function showPremiumModal({ title, type = 'info', contentNode = null, contentText = null, confirmText = 'OK', cancelText = null, onConfirm = null }) {
+    let modalWrapper = document.getElementById('premium-modal-wrapper');
+    if (!modalWrapper) {
+        modalWrapper = document.createElement('div');
+        modalWrapper.id = 'premium-modal-wrapper';
+        document.body.appendChild(modalWrapper);
+    }
+
+    // Pure DOM clear
+    while (modalWrapper.firstChild) modalWrapper.removeChild(modalWrapper.firstChild);
+
+    const template = document.getElementById('premium-modal-template');
+    if (!template) {
+        // Ultimate fallback just in case the template hasn't loaded yet
+        if (type === 'error') alert("ERROR: " + (contentText || "An error occurred"));
+        else if (type === 'success') alert("SUCCESS: " + (contentText || "Action completed"));
+        else alert(contentText);
+        return;
+    }
+
+    const clone = template.content.cloneNode(true);
+    const overlay = clone.querySelector('.premium-modal-overlay');
+    const iconContainer = clone.querySelector('.premium-modal-icon');
+    const iconElement = clone.querySelector('.premium-modal-icon i');
+    const titleElement = clone.querySelector('.pm-title');
+    const bodyElement = clone.querySelector('.premium-modal-body');
+    const cancelBtn = clone.querySelector('.pm-btn-cancel');
+    const confirmBtn = clone.querySelector('.pm-btn-confirm');
+
+    // Assign standard Bootstrap icons dynamically based on type
+    if (type === 'success') {
+        iconContainer.classList.add('success');
+        iconElement.classList.add('bi-check-circle-fill');
+    } else if (type === 'warning') {
+        iconContainer.classList.add('warning');
+        iconElement.classList.add('bi-exclamation-triangle-fill');
+    } else if (type === 'error') {
+        iconContainer.classList.add('error');
+        iconElement.classList.add('bi-x-circle-fill');
+    } else {
+        iconContainer.classList.add('info');
+        iconElement.classList.add('bi-info-circle-fill');
+    }
+
+    titleElement.textContent = title;
+
+    if (contentNode) bodyElement.appendChild(contentNode);
+    else if (contentText) bodyElement.textContent = contentText;
+
+    const closeObj = {
+        close: () => {
+            overlay.classList.add('pm-fade-out');
+            setTimeout(() => {
+                while (modalWrapper.firstChild) modalWrapper.removeChild(modalWrapper.firstChild);
+            }, 300);
+        }
+    };
+
+    if (cancelText) {
+        cancelBtn.textContent = cancelText;
+        cancelBtn.classList.remove('hidden');
+        cancelBtn.addEventListener('click', () => closeObj.close());
+    }
+
+    confirmBtn.textContent = confirmText;
+    if (type === 'warning' || type === 'error') {
+        confirmBtn.classList.remove('premium-modal-btn-primary');
+        confirmBtn.classList.add('premium-modal-btn-danger'); // Makes button red!
+    }
+
+    confirmBtn.addEventListener('click', () => {
+        if (onConfirm) onConfirm(closeObj);
+        else closeObj.close();
+    });
+
+    modalWrapper.appendChild(clone);
+}
+
+// 2. Overwrite the generic alerts so ANY system error or success automatically uses the premium modal!
+function showErrorMessage(m) {
+    showPremiumModal({
+        title: 'Error',
+        type: 'error',
+        contentText: m,
+        confirmText: 'Dismiss'
+    });
+}
+
+function showSuccessMessage(m) {
+    showPremiumModal({
+        title: 'Success',
+        type: 'success',
+        contentText: m,
+        confirmText: 'OK'
+    });
+}
+/* ========================================= */
+/* --- GLOBAL PAGINATION UTILITY         --- */
+/* --- Added to layout.js for centralization */
+/* ========================================= */
+
+class GlobalPagination {
+    constructor(config) {
+        this.data = config.data || [];
+        this.itemsPerPage = config.itemsPerPage || 25;
+        this.currentPage = 1;
+        this.renderCallback = config.renderCallback;
+
+        this.startEl = document.getElementById(config.elements.startId);
+        this.endEl = document.getElementById(config.elements.endId);
+        this.totalEl = document.getElementById(config.elements.totalId);
+        this.prevBtn = document.getElementById(config.elements.prevBtnId);
+        this.nextBtn = document.getElementById(config.elements.nextBtnId);
+        this.numbersContainer = document.getElementById(config.elements.numbersContainerId);
+        this.numTemplate = document.getElementById(config.elements.templateId);
+
+        this.bindEvents();
+    }
+
+    updateData(newData) {
+        this.data = newData;
+        this.currentPage = 1;
+        this.render();
+    }
+
+    bindEvents() {
+        if(this.prevBtn) this.prevBtn.addEventListener('click', () => this.changePage(this.currentPage - 1));
+        if(this.nextBtn) this.nextBtn.addEventListener('click', () => this.changePage(this.currentPage + 1));
+    }
+
+    changePage(newPage) {
+        const totalPages = Math.ceil(this.data.length / this.itemsPerPage);
+        if (newPage >= 1 && newPage <= totalPages) {
+            this.currentPage = newPage;
+            this.render();
+        }
+    }
+
+    render() {
+        const startIdx = (this.currentPage - 1) * this.itemsPerPage;
+        const endIdx = startIdx + this.itemsPerPage;
+        const pageData = this.data.slice(startIdx, endIdx);
+
+        if (this.renderCallback) {
+            this.renderCallback(pageData);
+        }
+
+        this.updateUI();
+    }
+
+    updateUI() {
+        const totalItems = this.data.length;
+        const totalPages = Math.ceil(totalItems / this.itemsPerPage);
+
+        if(this.startEl) this.startEl.textContent = totalItems === 0 ? 0 : ((this.currentPage - 1) * this.itemsPerPage) + 1;
+        if(this.endEl) this.endEl.textContent = Math.min(this.currentPage * this.itemsPerPage, totalItems);
+        if(this.totalEl) this.totalEl.textContent = totalItems;
+
+        if(this.prevBtn) this.prevBtn.disabled = this.currentPage === 1 || totalItems === 0;
+        if(this.nextBtn) this.nextBtn.disabled = this.currentPage === totalPages || totalPages === 0;
+
+        if(this.numbersContainer && this.numTemplate) {
+            while (this.numbersContainer.firstChild) {
+                this.numbersContainer.removeChild(this.numbersContainer.firstChild);
+            }
+
+            for (let i = 1; i <= totalPages; i++) {
+                const btnNode = this.numTemplate.content.cloneNode(true);
+                const btn = btnNode.querySelector('button');
+                btn.textContent = i;
+
+                if (i === this.currentPage) btn.classList.add('active');
+
+                btn.addEventListener('click', () => this.changePage(i));
+                this.numbersContainer.appendChild(btnNode);
+            }
+        }
+    }
+}

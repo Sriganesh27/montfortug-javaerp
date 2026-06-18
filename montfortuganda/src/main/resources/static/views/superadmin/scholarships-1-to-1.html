@@ -1,0 +1,196 @@
+<!-- VIEW 4: 1-to-1 SPONSORSHIP -->
+<div id="superadmin-1to1-view" class="active">
+
+    <!-- 1. HEADER & ACTION -->
+    <div class="view-header header-split">
+        <div>
+            <h2>1-to-1 Full Sponsorships</h2>
+            <p class="text-subtitle">Manage direct donor-to-student pairings and financial tracking.</p>
+        </div>
+        <button class="btn-primary" data-action="open-pairing-modal"><i class="bi bi-link-45deg"></i> Create New Pairing</button>
+    </div>
+
+    <!-- 2. ACTIVE PAIRINGS TABLE (Visible by default) -->
+    <div class="card table-card view-section" id="pairings-list-section">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Sponsor / Donor</th>
+                    <th>Sponsored Student</th>
+                    <th>Campus / Branch</th>
+                    <th>Current Status</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- Pair 1 -->
+                <tr>
+                    <td>
+                        <div class="sponsor-cell">
+                            <div class="sponsor-icon"><i class="bi bi-building"></i></div>
+                            <div>
+                                <span class="sponsor-name">MTN Foundation</span>
+                                <span class="sponsor-id">SP-104</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="student-cell">
+                            <div class="student-avatar"><i class="bi bi-person-circle"></i></div>
+                            <div>
+                                <span class="student-name">John Doe</span>
+                                <span class="student-class">Primary 5</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>Wakiso Campus</td>
+                    <td><span class="badge badge-success">Active & Paid</span></td>
+                    <td class="action-cell">
+                        <button class="btn-view-pair" data-action="view-details" data-sponsor="MTN Foundation" data-student="John Doe"><i class="bi bi-eye"></i> View Profile</button>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 3. SPLIT-SCREEN DASHBOARD (Hidden by CSS class) -->
+    <div class="view-section hidden" id="pairing-details-section">
+        <div class="back-button-container">
+            <button class="btn-back" data-action="back-to-list"><i class="bi bi-arrow-left"></i> Back to List</button>
+        </div>
+
+        <div class="split-screen-grid">
+            <!-- Left: Sponsor -->
+            <div class="card profile-card">
+                <div class="card-header">
+                    <h3>Sponsor Details</h3>
+                    <button class="btn-outline-primary"><i class="bi bi-envelope"></i> Request Funds</button>
+                </div>
+                <div class="card-body text-center">
+                    <div class="large-avatar sponsor-bg"><i class="bi bi-building"></i></div>
+                    <h2 id="detail-sponsor-name">Sponsor Name</h2>
+                    <p class="text-subtitle">Total Donated: <strong class="text-primary">UGX 15,000,000</strong></p>
+                    <div class="contact-info">
+                        <p><i class="bi bi-telephone"></i> +256 700 000 000</p>
+                        <p><i class="bi bi-envelope-at"></i> csr@sponsor.com</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Student -->
+            <div class="card profile-card">
+                <div class="card-header">
+                    <h3>Student Details</h3>
+                    <button class="btn-outline-success"><i class="bi bi-file-earmark-bar-graph"></i> Send Report</button>
+                </div>
+                <div class="card-body text-center">
+                    <div class="large-avatar student-bg"><i class="bi bi-person-fill"></i></div>
+                    <h2 id="detail-student-name">Student Name</h2>
+                    <p class="text-subtitle">Wakiso Campus • <strong class="text-primary">Primary 5</strong></p>
+                    <div class="academic-progress">
+                        <div class="progress-label"><span>Current Average</span> <span>85%</span></div>
+                        <div class="progress-bar"><div class="progress-fill fill-85"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Timeline -->
+        <div class="card timeline-card">
+            <h3>Financial Timeline</h3>
+            <ul class="timeline-list">
+                <li class="timeline-item status-cleared">
+                    <div class="timeline-marker"><i class="bi bi-check-circle-fill"></i></div>
+                    <div class="timeline-content">
+                        <h4>Term 2 Fees Paid</h4>
+                        <p>Sponsor transferred UGX 500,000 via Bank Wire.</p>
+                        <span class="timeline-date">May 05, 2026</span>
+                    </div>
+                </li>
+                <li class="timeline-item status-cleared">
+                    <div class="timeline-marker"><i class="bi bi-check-circle-fill"></i></div>
+                    <div class="timeline-content">
+                        <h4>Term 1 Fees Paid</h4>
+                        <p>Sponsor transferred UGX 500,000 via Mobile Money.</p>
+                        <span class="timeline-date">Jan 10, 2026</span>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- ADVANCED PAIRING WIZARD MODAL -->
+    <div class="advanced-overlay hidden" id="pairing-modal">
+        <div class="advanced-modal-content">
+            <div class="modal-header">
+                <div>
+                    <h3>Advanced 1-to-1 Match Maker</h3>
+                    <p class="text-subtitle">Select a donor and a student to create a new pairing.</p>
+                </div>
+                <button class="close-modal" data-action="close-modal"><i class="bi bi-x-lg"></i></button>
+            </div>
+
+            <div class="advanced-split-container">
+                <!-- LEFT PANE: DONORS -->
+                <div class="selection-pane">
+                    <h4>1. Select Sponsor / Donor</h4>
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="search-donor" class="search-input" placeholder="Search by name or type...">
+                    </div>
+                    <div class="card-list" id="donor-list-container">
+                        <!-- JS injects donors here securely -->
+                    </div>
+                </div>
+
+                <!-- RIGHT PANE: STUDENTS -->
+                <div class="selection-pane">
+                    <h4>2. Select Student</h4>
+                    <div class="search-box">
+                        <i class="bi bi-search"></i>
+                        <input type="text" id="search-student" class="search-input" placeholder="Search by name, class, or campus...">
+                    </div>
+                    <div class="card-list" id="student-list-container">
+                        <!-- JS injects students here securely -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- BOTTOM BAR: CONFIRMATION -->
+            <div class="wizard-footer">
+                <div class="selection-summary">
+                    <span><strong>Sponsor:</strong> <span id="summary-sponsor">None selected</span></span>
+                    <span class="summary-divider">|</span>
+                    <span><strong>Student:</strong> <span id="summary-student">None selected</span></span>
+                </div>
+                <button class="btn-primary btn-disabled" id="btn-confirm-advanced-match" disabled><i class="bi bi-link"></i> Confirm Match</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- STRICT DOM TEMPLATES -->
+    <template id="donor-card-template">
+        <div class="selectable-card donor-card" data-id="">
+            <div class="card-icon"><i class="bi bi-building"></i></div>
+            <div class="card-details">
+                <strong class="card-title"></strong>
+                <span class="card-subtitle"></span>
+            </div>
+            <div class="card-badge badge-success"></div>
+        </div>
+    </template>
+
+    <template id="student-card-template">
+        <div class="selectable-card student-card" data-id="">
+            <div class="card-icon"><i class="bi bi-person-fill"></i></div>
+            <div class="card-details">
+                <strong class="card-title"></strong>
+                <span class="card-subtitle"></span>
+            </div>
+            <div class="card-badge badge-warning"></div>
+        </div>
+    </template>
+
+</div>

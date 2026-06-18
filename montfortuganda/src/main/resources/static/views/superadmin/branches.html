@@ -3,7 +3,6 @@
   <div id="sa-branchTableView">
     <div class="view-header">
       <h2>Manage Branches</h2>
-      <!-- The Add Branch button was removed since you have a dedicated page for it now -->
     </div>
 
     <div class="card">
@@ -34,9 +33,35 @@
       <div class="action-btn-group">
         <button id="sa-printBranchBtn" class="btn-secondary"><i class="bi bi-printer"></i> Print</button>
         <button id="sa-backToTableBtn" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back</button>
+        <button type="button" class="btn-primary" id="sa-backupBranchBtn"><i class="bi bi-cloud-download"></i> Export Data</button>
         <button id="sa-editBranchBtn" class="btn-primary"><i class="bi bi-pencil"></i> Edit Mode</button>
         <button id="sa-cancelEditBtn" class="btn-secondary hidden"><i class="bi bi-x-circle"></i> Cancel</button>
         <button id="sa-saveBranchBtn" class="btn-success hidden"><i class="bi bi-save"></i> Save Changes</button>
+      </div>
+    </div>
+
+    <!-- MOVED: STATS GRID IS NOW INSIDE THE DETAIL VIEW -->
+    <div class="stats-grid branch-stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon icon-blue"><i class="bi bi-people"></i></div>
+        <div class="stat-details">
+          <h3>Total Students</h3>
+          <h1 id="view-statStudents">0</h1>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-orange"><i class="bi bi-person-badge"></i></div>
+        <div class="stat-details">
+          <h3>Total Staff</h3>
+          <h1 id="view-statStaff">0</h1>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon icon-green"><i class="bi bi-check2-circle"></i></div>
+        <div class="stat-details">
+          <h3>Avg Attendance</h3>
+          <h1 id="view-statAttendance">0%</h1>
+        </div>
       </div>
     </div>
 
@@ -54,9 +79,13 @@
           <input type="text" class="detail-input hidden" id="edit-schoolCode">
         </div>
         <div class="form-group">
-          <label>Admin Username</label>
-          <!-- Username is strictly Read-Only! -->
-          <span class="detail-text highlighted-username readonly-always" id="view-adminUsername"></span>
+          <label>Admin Credentials</label>
+          <div class="inline-action-group">
+            <span class="detail-text highlighted-username readonly-always" id="view-adminUsername"></span>
+            <button type="button" class="btn-secondary btn-nowrap" id="sa-resetBranchAdminPwdBtn">
+              <i class="bi bi-key"></i> Reset Password
+            </button>
+          </div>
         </div>
         <div class="form-group">
           <label>Branch Type</label>
@@ -120,7 +149,29 @@
         </div>
       </div>
     </div>
-  </div>
+
+    <!-- MOVED: AUDIT LOGS CARD IS NOW INSIDE THE DETAIL VIEW -->
+    <div class="card audit-logs-card">
+      <div class="audit-card-header">
+        <h3>Recent Activity Logs</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+          <tr>
+            <th>Date & Time</th>
+            <th>User / Role</th>
+            <th>Action Performed</th>
+          </tr>
+          </thead>
+          <tbody id="view-auditLogTbody">
+          <!-- Cloned securely via JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div> <!-- THIS CLOSES sa-branchDetailView SO IT CAN BE HIDDEN! -->
 
   <!-- PURE HTML TEMPLATES (Never write HTML inside JS!) -->
   <template id="branch-row-template">
@@ -166,6 +217,7 @@
       </td>
     </tr>
   </template>
+
   <!-- GLOBAL PREMIUM MODAL TEMPLATE -->
   <template id="premium-modal-template">
     <div class="premium-modal-overlay">
@@ -195,5 +247,15 @@
       <p><strong>Username:</strong> <span class="cred-username"></span></p>
       <p><strong>Password:</strong> <span class="cred-password"></span></p>
     </div>
+  </template> <!-- FIXED: This template is now properly closed! -->
+
+  <!-- DOM TEMPLATE: Audit Log Row -->
+  <template id="audit-log-row-template">
+    <tr>
+      <td class="log-date"></td>
+      <td class="log-user"></td>
+      <td class="log-action"></td>
+    </tr>
   </template>
-</div>
+
+</div> <!-- Closes superadmin-branches-view -->

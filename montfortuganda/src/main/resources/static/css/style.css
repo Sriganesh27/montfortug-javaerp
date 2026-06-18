@@ -2,11 +2,11 @@
 body {
     font-family: 'Poppins', sans-serif;
     margin: 0;
-    overflow: auto; /* Disables global scroll. The right panel handles its own scrolling! */
+    overflow: auto;
 }
 
 /* ========================================= */
-/* --- SPLIT-SCREEN LOGIN STYLES --- */
+/* --- SPLIT-SCREEN LOGIN STYLES ---         */
 /* ========================================= */
 
 #login-view.split-layout {
@@ -17,8 +17,8 @@ body {
 
 /* --- Left Side (Premium Branding) --- */
 #login-view .login-left {
-    flex: 1; /* Takes up all remaining space on the left */
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); /* Matches ERP Sidebar */
+    flex: 1;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     position: relative;
     display: flex;
     align-items: center;
@@ -27,7 +27,7 @@ body {
 }
 
 #login-view .bg-glow {
-    position: absolute; /* Safe here because overflow is hidden on the left panel! */
+    position: absolute;
     width: 500px;
     height: 500px;
     background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, rgba(212, 175, 55, 0) 70%);
@@ -35,8 +35,16 @@ body {
     z-index: 1;
     pointer-events: none;
 }
-#login-view .glow-1 { top: -150px; left: -150px; }
-#login-view .glow-2 { bottom: -150px; right: -150px; }
+
+#login-view .glow-1 {
+    top: -150px;
+    left: -150px;
+}
+
+#login-view .glow-2 {
+    bottom: -150px;
+    right: -150px;
+}
 
 #login-view .branding-content {
     position: relative;
@@ -55,7 +63,7 @@ body {
 }
 
 #login-view .branding-content h1 {
-    font-size: 2.2rem;
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
     font-weight: 700;
     margin: 0;
     color: #ffffff;
@@ -63,53 +71,84 @@ body {
 }
 
 #login-view .branding-content h2 {
-    font-size: 1.4rem;
+    font-size: clamp(1.1rem, 2.5vw, 1.4rem);
     font-weight: 400;
     margin: 10px 0 20px 0;
-    color: #d4af37; /* ERP Gold */
+    color: #d4af37;
     letter-spacing: 2px;
 }
 
 #login-view .branding-content p {
-    font-size: 1.1rem;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
     opacity: 0.7;
 }
 
 /* --- Right Side (Action Panel) --- */
 #login-view .login-right {
     width: 100%;
-    max-width: 550px; /* Locks the width of the white panel */
+    max-width: 550px;
     background: #ffffff;
     display: flex;
     flex-direction: column;
-    overflow-y: auto; /* Independent Scrolling! */
-    box-shadow: -10px 0 40px rgba(0,0,0,0.15); /* Rich shadow cast over the left side */
+    overflow-y: auto;
+    box-shadow: -10px 0 40px rgba(0,0,0,0.15);
     z-index: 20;
 }
 
 #login-view .form-container {
     padding: 60px 50px;
-    margin: auto 0; /* Perfectly centers vertically */
+    margin: auto 0;
 }
 
-#login-view .form-header h2 { font-size: 1.8rem; color: #0f172a; margin: 0 0 5px 0; font-weight: 700; }
-#login-view .form-header p { color: #64748b; margin: 0 0 30px 0; font-size: 0.95rem; }
+#login-view .form-header h2 {
+    font-size: clamp(1.4rem, 3vw, 1.8rem);
+    color: #0f172a;
+    margin: 0 0 5px 0;
+    font-weight: 700;
+}
 
-#login-view .form-group { text-align: left; margin-bottom: 20px; }
-#login-view .form-group label { display: block; font-size: 0.75rem; font-weight: 600; margin-bottom: 8px; color: #334155; text-transform: uppercase; }
+#login-view .form-header p {
+    color: #64748b;
+    margin: 0 0 30px 0;
+    font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+}
 
-#login-view .input-wrapper { position: relative; }
-#login-view .input-wrapper i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); font-size: 1.1rem; color: #d4af37; /* Gold Icons */ }
+#login-view .form-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+#login-view .form-group label {
+    display: block;
+    font-size: clamp(0.65rem, 1vw, 0.75rem);
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #334155;
+    text-transform: uppercase;
+}
+
+#login-view .input-wrapper {
+    position: relative;
+}
+
+#login-view .input-wrapper i {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: clamp(1rem, 2vw, 1.1rem);
+    color: #d4af37;
+}
 
 #login-view .form-group input,
 #login-view .form-group select {
     width: 100%;
     padding: 14px 15px 14px 48px;
-    background: #f8fafc; /* Crisp, light grey input boxes */
+    background: #f8fafc;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     color: #0f172a;
-    font-size: 0.95rem;
+    font-size: clamp(0.85rem, 1.5vw, 0.95rem);
     box-sizing: border-box;
     outline: none;
     transition: all 0.3s ease;
@@ -118,7 +157,7 @@ body {
 #login-view .form-group input:focus,
 #login-view .form-group select:focus {
     background: #ffffff;
-    border-color: #d4af37; /* Gold focus outline */
+    border-color: #d4af37;
     box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1);
 }
 
@@ -130,11 +169,11 @@ body {
 #login-view .login-btn {
     width: 100%;
     padding: 16px;
-    background: #0f172a; /* Slate Black Button */
+    background: #0f172a;
     border: none;
     border-radius: 12px;
     color: #ffffff;
-    font-size: 1.05rem;
+    font-size: clamp(0.95rem, 2vw, 1.05rem);
     font-weight: 600;
     cursor: pointer;
     margin-top: 15px;
@@ -151,34 +190,49 @@ body {
     padding: 14px;
     margin-bottom: 25px;
     border-radius: 10px;
-    font-size: 0.9rem;
-    background: rgba(220, 38, 38, 0.1); /* Default Red Background */
+    font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+    background: rgba(220, 38, 38, 0.1);
     border: 1px solid rgba(220, 38, 38, 0.2);
-    color: #ef4444; /* Default Red Text */
+    color: #ef4444;
 }
-/* --- ADD THIS NEW BLOCK RIGHT HERE --- */
-/* This forces the box to turn Green on successful login! */
+
 #login-view .error-box.alert-success {
     display: block;
     background: rgba(34, 197, 94, 0.1);
     border: 1px solid rgba(34, 197, 94, 0.3);
-    color: #16a34a; /* Green text! */
+    color: #16a34a;
 }
 
 #login-view .footer-text {
     text-align: center;
-    font-size: 0.8rem;
+    font-size: clamp(0.7rem, 1vw, 0.8rem);
     color: #94a3b8;
     margin-top: 40px;
 }
 
-/* --- Utility Classes for Pure JS Toggling --- */
+/* --- Utility Classes --- */
 .hidden { display: none !important; }
-.alert-success { display: block !important; background: rgba(34, 197, 94, 0.1); color: #16a34a; border: 1px solid rgba(34, 197, 94, 0.3); padding: 12px; border-radius: 10px; }
-.alert-error { display: block !important; background: rgba(239, 68, 68, 0.1); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); padding: 12px; border-radius: 10px; }
+
+.alert-success {
+    display: block !important;
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    padding: 12px;
+    border-radius: 10px;
+}
+
+.alert-error {
+    display: block !important;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 12px;
+    border-radius: 10px;
+}
 
 /* ========================================= */
-/* --- MOBILE RESPONSIVENESS --- */
+/* --- MOBILE RESPONSIVENESS ---             */
 /* ========================================= */
 @media (max-width: 900px) {
     #login-view.split-layout {
@@ -187,14 +241,18 @@ body {
     #login-view .login-left {
         flex: none;
         padding: 40px 20px;
-        height: auto; /* Shrinks to fit content on mobile */
+        height: auto;
     }
     #login-view .login-right {
         max-width: 100%;
-        flex: 1; /* Takes up remaining height */
+        flex: 1;
     }
-    #login-view .huge-logo { width: 80px; height: 80px; margin-bottom: 15px; }
-    #login-view .branding-content h1 { font-size: 1.5rem; }
-    #login-view .branding-content h2 { font-size: 1.1rem; }
-    #login-view .form-container { padding: 40px 30px; }
+    #login-view .huge-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 15px;
+    }
+    #login-view .form-container {
+        padding: 40px 30px;
+    }
 }

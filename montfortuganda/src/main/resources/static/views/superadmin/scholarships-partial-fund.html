@@ -1,0 +1,151 @@
+<div class="view-content active" id="superadmin-partial-fund-view">
+
+    <!-- ===================================== -->
+    <!-- SECTION 1: MASTER LIST                -->
+    <!-- ===================================== -->
+    <div id="partial-fund-list-section">
+
+        <!-- HEADER -->
+        <div class="view-header">
+            <div>
+                <h2>Partial Student Fund</h2>
+                <p class="text-subtitle">Allocate partial scholarship amounts to students with fee shortfalls.</p>
+            </div>
+        </div>
+
+        <!-- STAT CARDS -->
+        <div class="funds-overview-cards">
+            <div class="fund-card primary-card">
+                <div class="fund-icon"><i class="bi bi-wallet2"></i></div>
+                <div class="fund-info">
+                    <h3>Available Partial Funds</h3>
+                    <h2 id="partial-funds-available">UGX 85,000,000</h2>
+                </div>
+            </div>
+            <div class="fund-card">
+                <div class="fund-icon text-orange"><i class="bi bi-people"></i></div>
+                <div class="fund-info">
+                    <h3>Pending Requests</h3>
+                    <h2>42 Students</h2>
+                </div>
+            </div>
+            <div class="fund-card">
+                <div class="fund-icon text-green"><i class="bi bi-check2-circle"></i></div>
+                <div class="fund-info">
+                    <h3>Disbursed (This Term)</h3>
+                    <h2>UGX 15,500,000</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- TOOLBAR -->
+        <div class="partial-toolbar">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="search-partial-students" placeholder="Search student by name or ID...">
+            </div>
+            <div class="filter-box">
+                <select id="filter-branch">
+                    <option value="all">All Campuses</option>
+                    <option value="mpala">Mpala Campus</option>
+                    <option value="wakiso">Wakiso Campus</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- MAIN TABLE -->
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Student Details</th>
+                    <th>Campus</th>
+                    <th>Total Fees</th>
+                    <th>Shortfall</th>
+                    <th>Allocation (UGX)</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+                </thead>
+                <tbody id="partial-funds-tbody">
+                <!-- JS Injects Template Here -->
+                </tbody>
+            </table>
+        </div>
+    </div> <!-- END LIST SECTION -->
+
+    <!-- ===================================== -->
+    <!-- SECTION 2: STUDENT DETAILS (HIDDEN)   -->
+    <!-- ===================================== -->
+    <div id="partial-fund-detail-section" class="hidden">
+
+        <div class="detail-page-header">
+            <div class="header-left">
+                <button class="btn-secondary" id="btn-back-to-partial-list"><i class="bi bi-arrow-left"></i> Back</button>
+                <div class="title-container">
+                    <h3 id="detail-student-name">Student Name</h3>
+                    <p class="text-subtitle" id="detail-student-id">STU-0000</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <span class="status-badge" id="detail-status-badge">Pending Review</span>
+            </div>
+        </div>
+
+        <div class="detail-content-grid">
+            <div class="detail-card">
+                <h4>Hardship Case Details</h4>
+                <p id="detail-hardship-reason" class="text-muted">Loading...</p>
+            </div>
+            <div class="detail-card">
+                <h4>Academic Performance</h4>
+                <p id="detail-academic-score" class="text-muted">Loading...</p>
+            </div>
+            <div class="detail-card full-width">
+                <h4>Allocation History</h4>
+                <table class="data-table">
+                    <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Amount</th>
+                        <th>Authorized By</th>
+                    </tr>
+                    </thead>
+                    <tbody id="detail-history-tbody">
+                    <tr><td colspan="3" class="text-center text-muted empty-cell">No previous allocations found.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div> <!-- END DETAIL SECTION -->
+
+</div>
+
+<!-- ===================================== -->
+<!-- STRICT DOM TEMPLATES                  -->
+<!-- ===================================== -->
+<template id="partial-student-row-template">
+    <tr>
+        <td>
+            <div class="student-cell">
+                <div class="student-icon"><i class="bi bi-person-circle"></i></div>
+                <div>
+                    <span class="student-name"></span>
+                    <span class="student-id text-muted text-small"></span>
+                </div>
+            </div>
+        </td>
+        <td class="campus-name"></td>
+        <td class="total-fees"></td>
+        <td class="shortfall-amount text-danger font-bold"></td>
+        <td>
+            <div class="allocation-input-group">
+                <span>UGX</span>
+                <input type="number" class="allocate-input" placeholder="Amount...">
+            </div>
+        </td>
+        <td class="action-cell text-center">
+            <button class="btn-allocate" data-action="allocate"><i class="bi bi-check-lg"></i> Fund</button>
+            <button class="btn-secondary btn-view-details" data-action="view-details" title="View Hardship Profile"><i class="bi bi-eye"></i> Details</button>
+        </td>
+    </tr>
+</template>

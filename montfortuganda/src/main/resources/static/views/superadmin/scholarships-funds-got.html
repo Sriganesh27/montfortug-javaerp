@@ -1,0 +1,103 @@
+<div id="superadmin-funds-got-view">
+    <div class="view-header">
+        <div>
+            <h2>Global Treasury & Donor Inflows</h2>
+            <p class="text-subtitle">Monitor consolidated incoming contributions, review donor receipts, and track available liquidity across the ERP network.</p>
+        </div>
+        <button class="btn-primary" id="btn-export-donor-report">
+            <i class="bi bi-file-earmark-pdf"></i> Export Donor Report
+        </button>
+    </div>
+
+    <!-- TREASURY STATS (These numbers will now be calculated by the JS!) -->
+    <div class="stats-grid-4">
+        <div class="stat-card">
+            <div class="stat-icon icon-blue"><i class="bi bi-safe2"></i></div>
+            <div class="stat-details">
+                <h3>Total Raised</h3>
+                <h1 id="treasury-total-raised">0</h1>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-orange"><i class="bi bi-wallet2"></i></div>
+            <div class="stat-details">
+                <h3>Total Spent</h3>
+                <h1 id="treasury-total-spent">0</h1>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-green"><i class="bi bi-cash-stack"></i></div>
+            <div class="stat-details">
+                <h3>Available Balance</h3>
+                <h1 id="treasury-available">0</h1>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-purple"><i class="bi bi-person-check"></i></div>
+            <div class="stat-details">
+                <h3>Sponsored Students</h3>
+                <h1 id="treasury-sponsored">0</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- DONOR SUPPLY TABLE -->
+    <div class="card full-width-card">
+        <div class="card-header">
+            <h3>Recent Project SSP001 Donations</h3>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Receipt ID</th>
+                    <th>Donor Name</th>
+                    <th>Foreign Currency</th>
+                    <th>Total Received (UGX)</th>
+                    <th>Available Balance (UGX)</th>
+                    <!-- YOUR TWO NEW COLUMNS -->
+                    <th>Students Benefited</th>
+                    <th>Term</th>
+                </tr>
+                </thead>
+                <tbody id="treasury-donors-tbody">
+                <!-- Populated via JS secure cloning -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- STRICT PAGINATION WRAPPER -->
+        <div class="pagination-footer">
+            <div class="pagination-info">
+                Showing <span id="funds-page-start">1</span> to <span id="funds-page-end">25</span> of <span id="funds-page-total">0</span> entries
+            </div>
+            <div class="pagination-controls">
+                <button class="btn-page" id="btn-funds-prev" disabled><i class="bi bi-chevron-left"></i></button>
+                <div class="page-numbers" id="funds-pagination-numbers"></div>
+                <button class="btn-page" id="btn-funds-next"><i class="bi bi-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECURE DOM TEMPLATE (No HTML in JS allowed) -->
+    <template id="treasury-donor-row-template">
+        <tr>
+            <td class="donor-receipt text-bold"></td>
+            <td>
+                <strong class="donor-name"></strong><br>
+                <small class="donor-email text-muted"></small>
+            </td>
+            <td><span class="donor-foreign badge-gray"></span></td>
+            <td class="donor-received-ugx text-success"></td>
+            <td class="donor-available-ugx text-bold"></td>
+            <!-- YOUR TWO NEW COLUMNS -->
+            <td class="donor-students"></td>
+            <td class="donor-term text-muted"></td>
+        </tr>
+    </template>
+
+    <!-- PAGINATION BUTTON TEMPLATE -->
+    <template id="funds-page-number-template">
+        <button class="btn-page number-btn" data-page=""></button>
+    </template>
+</div>

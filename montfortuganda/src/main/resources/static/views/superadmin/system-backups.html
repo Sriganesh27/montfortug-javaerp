@@ -1,0 +1,42 @@
+<div id="superadmin-backups-view">
+    <div class="view-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <h2>Data Backups & Recovery</h2>
+            <p class="text-subtitle">Manage full system snapshots and export global database records.</p>
+        </div>
+        <div class="action-btn-group">
+            <button type="button" class="btn-primary" id="sa-triggerGlobalBackupBtn" style="background:#0f172a;"><i class="bi bi-cloud-arrow-down"></i> Trigger System Backup</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Backup ID</th>
+                    <th>Date Completed</th>
+                    <th>File Size</th>
+                    <th>Triggered By</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="global-backups-tbody">
+                <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <template id="global-backup-row-template">
+        <tr>
+            <td class="bkp-id"></td>
+            <td class="bkp-date"></td>
+            <td class="bkp-size"></td>
+            <td class="bkp-user"></td>
+            <td>
+                <button class="btn-secondary bkp-download-btn"><i class="bi bi-download"></i> Download Zip</button>
+            </td>
+        </tr>
+    </template>
+</div>

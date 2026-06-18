@@ -1,0 +1,173 @@
+<div id="superadmin-global-search-view">
+    <div class="view-header">
+        <div>
+            <h2>Scholarship Applications</h2>
+            <p class="text-subtitle">Analyze deficit metrics and process branch applications globally.</p>
+        </div>
+    </div>
+
+    <!-- 1. CSS ANALYTICS DASHBOARD -->
+    <div class="analytics-grid mb-20">
+        <!-- Analytics Card 1: Donut Chart -->
+        <div class="card analytics-card m-0 full-height-card">
+            <h3 class="card-title text-uppercase-sm">Total Global Deficit</h3>
+            <div class="css-chart-wrapper">
+                <div class="css-donut" style="--percentage: 75; --chart-color: #ef4444;">
+                    <div class="donut-hole"><span class="donut-text">75%</span></div>
+                </div>
+                <div class="chart-legend">
+                    <p><span class="badge-pending">UGX 450M</span> Unfunded</p>
+                    <p class="text-muted text-sm mt-5">Out of UGX 600M Total Need</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Card 2: Pending Requests -->
+        <div class="card analytics-card m-0 full-height-card">
+            <h3 class="card-title text-uppercase-sm">Pending Branch Requests</h3>
+            <div class="pending-stats-list">
+                <div class="pending-stat-row">
+                    <span class="text-bold">Kampala Main (U011)</span>
+                    <span class="badge-pending">12 Pending</span>
+                </div>
+                <div class="pending-stat-row">
+                    <span class="text-bold">Jinja Outreach (U022)</span>
+                    <span class="badge-pending">8 Pending</span>
+                </div>
+                <div class="pending-stat-row">
+                    <span class="text-bold">Gulu Center (U033)</span>
+                    <span class="badge-pending">5 Pending</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. FILTER CARD -->
+    <div class="card filter-card">
+        <div class="filter-grid">
+            <div class="form-group">
+                <label>Branch / School</label>
+                <select id="gs-branch-filter">
+                    <option value="">All Branches</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Education Level</label>
+                <select id="gs-level-filter">
+                    <option value="">All Levels</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Class</label>
+                <select id="gs-class-filter">
+                    <option value="">All Classes</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select id="gs-category-filter">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Gender</label>
+                <select id="gs-gender-filter">
+                    <option value="">All Genders</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- PERFECTLY ALIGNED BOTTOM ROW -->
+        <div class="filter-actions justify-between flex-wrap">
+            <!-- Left Side: Search Bar -->
+            <div class="form-group m-0 search-bar-wrapper">
+                <div class="input-icon-wrapper">
+                    <i class="bi bi-search"></i>
+                    <input type="text" id="gs-search-input" placeholder="Search applicant name...">
+                </div>
+            </div>
+
+            <!-- Right Side: Status & Buttons -->
+            <div class="flex-row align-center gap-15 flex-wrap">
+                <div class="flex-row align-center gap-10">
+                    <label class="m-0 text-uppercase-sm text-bold">STATUS:</label>
+                    <select id="gs-status-filter" class="status-select">
+                        <option value="">All Statuses</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Approved">Approved</option>
+                    </select>
+                </div>
+                <button type="button" id="gs-reset-btn" class="btn-secondary">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+                <button type="button" id="gs-apply-btn" class="btn-primary">
+                    <i class="bi bi-funnel"></i> Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. DATA TABLE -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Student Applications</h3>
+            <div class="badge-active bg-dark" id="gs-results-count">0 Found</div>
+        </div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Applicant</th>
+                    <th>Demographics</th>
+                    <th>Branch</th>
+                    <th>Level & Class</th>
+                    <th>Category</th>
+                    <th>Approval Status</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody id="gs-table-body">
+                <!-- Populated via JS Template -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Strict 25-item Pagination Footer -->
+        <div class="pagination-footer">
+            <div class="pagination-info">
+                Showing <span id="gs-page-start">0</span> to <span id="gs-page-end">0</span> of <span id="gs-total-entries">0</span> entries
+            </div>
+            <div class="pagination-controls">
+                <button class="btn-page" id="gs-prev-page" disabled><i class="bi bi-chevron-left"></i></button>
+                <div class="page-numbers" id="gs-page-numbers">
+                    <button class="btn-page active">1</button>
+                </div>
+                <button class="btn-page" id="gs-next-page" disabled><i class="bi bi-chevron-right"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PURE HTML TEMPLATE FOR TABLE ROW -->
+    <template id="gs-row-template">
+        <tr>
+            <td class="col-id text-muted text-sm"></td>
+            <td>
+                <div class="flex-row gap-12 align-center">
+                    <div class="profile-circle circle-40 col-initials"></div>
+                    <strong class="col-name text-dark"></strong>
+                </div>
+            </td>
+            <td class="col-demo text-muted text-sm"></td>
+            <td class="col-branch text-bold"></td>
+            <td class="col-level"></td>
+            <td class="col-category"></td>
+            <td><span class="col-status"></span></td>
+            <td>
+                <button class="btn-primary col-action-btn text-sm px-15"><i class="bi bi-pencil-square"></i> Process</button>
+            </td>
+        </tr>
+    </template>
+</div>

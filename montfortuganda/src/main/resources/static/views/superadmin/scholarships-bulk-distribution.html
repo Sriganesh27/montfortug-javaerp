@@ -1,0 +1,191 @@
+<!-- VIEW 3: BULK DISTRIBUTION -->
+<div class="view-content active" id="superadmin-bulk-distribution-view">
+
+    <!-- ===================================== -->
+    <!-- SECTION 1: THE MAIN LIST              -->
+    <!-- ===================================== -->
+    <div id="bulk-list-section">
+
+        <!-- 1. HEADER -->
+        <div class="view-header">
+            <div>
+                <h2>Branch Fund Allocation</h2>
+                <p class="text-subtitle">Distribute available scholarship funds directly to school branches.</p>
+            </div>
+        </div>
+
+        <!-- 2. TOTAL FUND CARDS -->
+        <div class="funds-overview-cards">
+            <div class="fund-card primary-card">
+                <div class="fund-icon"><i class="bi bi-safe"></i></div>
+                <div class="fund-info">
+                    <h3>Total Available Funds</h3>
+                    <h2 id="total-available">UGX 450,000,000</h2>
+                </div>
+            </div>
+            <div class="fund-card">
+                <div class="fund-icon text-orange"><i class="bi bi-clock-history"></i></div>
+                <div class="fund-info">
+                    <h3>Total Branch Demands</h3>
+                    <h2>UGX 180,000,000</h2>
+                </div>
+            </div>
+            <div class="fund-card">
+                <div class="fund-icon text-green"><i class="bi bi-check-circle"></i></div>
+                <div class="fund-info">
+                    <h3>Allocated (This Term)</h3>
+                    <h2>UGX 120,000,000</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. BRANCH ALLOCATION TABLE -->
+        <div class="card table-card">
+            <div class="table-responsive">
+                <table class="data-table" id="allocation-table">
+                    <thead>
+                    <tr>
+                        <th>Branch / Campus</th>
+                        <th>Amount Required</th>
+                        <th>Currently Allocated</th>
+                        <th>Fund Allocation (UGX)</th>
+                        <th class="text-center">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <!-- Row 1 -->
+                    <tr class="branch-row" data-branch-id="1">
+                        <td>
+                            <div class="branch-cell">
+                                <div class="branch-icon"><i class="bi bi-building"></i></div>
+                                <div>
+                                    <span class="branch-name">Mpala Campus</span>
+                                    <span class="branch-id">BR-001</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-danger font-bold">UGX 50,000,000</td>
+                        <td class="text-success font-bold">UGX 10,000,000</td>
+                        <td>
+                            <div class="allocation-input-group">
+                                <span>UGX</span>
+                                <input type="number" class="allocate-input" placeholder="Enter amount...">
+                            </div>
+                        </td>
+                        <td class="action-cell">
+                            <button class="btn-allocate" data-action="allocate"><i class="bi bi-send-check"></i> Allocate</button>
+                            <button class="btn-history" data-action="history" data-branch-name="Mpala Campus" title="Transaction History"><i class="bi bi-clock-history"></i> History</button>
+                        </td>
+                    </tr>
+                    <!-- Row 2 -->
+                    <tr class="branch-row" data-branch-id="2">
+                        <td>
+                            <div class="branch-cell">
+                                <div class="branch-icon"><i class="bi bi-building"></i></div>
+                                <div>
+                                    <span class="branch-name">Wakiso Campus</span>
+                                    <span class="branch-id">BR-002</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="text-danger font-bold">UGX 130,000,000</td>
+                        <td class="text-success font-bold">UGX 0</td>
+                        <td>
+                            <div class="allocation-input-group">
+                                <span>UGX</span>
+                                <input type="number" class="allocate-input" placeholder="Enter amount...">
+                            </div>
+                        </td>
+                        <td class="action-cell">
+                            <button class="btn-allocate" data-action="allocate"><i class="bi bi-send-check"></i> Allocate</button>
+                            <button class="btn-history" data-action="history" data-branch-name="Wakiso Campus" title="Transaction History"><i class="bi bi-clock-history"></i> History</button>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div> <!-- END OF SECTION 1 -->
+
+
+    <!-- ===================================== -->
+    <!-- SECTION 2: THE HISTORY PAGE           -->
+    <!-- ===================================== -->
+    <div id="bulk-history-section" class="hidden">
+
+        <!-- Top Header Area -->
+        <div class="history-page-header">
+            <div class="header-left">
+                <button class="btn-secondary" id="btn-back-to-bulk-list"><i class="bi bi-arrow-left"></i> Back</button>
+                <div class="title-container">
+                    <h3 id="history-branch-title">Branch Name</h3>
+                    <p class="text-subtitle">Transaction History</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <button class="btn-primary" id="btn-print-all-history"><i class="bi bi-printer"></i> Print Full History</button>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="history-stats-row">
+            <div class="history-stat-card">
+                <span class="stat-label">Total Allocated</span>
+                <strong class="stat-value text-success" id="stat-total-allocated">UGX 0</strong>
+            </div>
+            <div class="history-stat-card">
+                <span class="stat-label">Total Transactions</span>
+                <strong class="stat-value text-primary" id="stat-total-tx">0</strong>
+            </div>
+            <div class="history-stat-card">
+                <span class="stat-label">Last Distribution</span>
+                <strong class="stat-value text-muted" id="stat-last-tx">N/A</strong>
+            </div>
+        </div>
+
+        <!-- Toolbar (Search) -->
+        <div class="history-toolbar">
+            <div class="history-search-box">
+                <i class="bi bi-search"></i>
+                <input type="text" id="history-search-input" placeholder="Search by ID or Status...">
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-container">
+            <table class="history-data-table">
+                <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Tx ID</th>
+                    <th>Amount Allocated</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody id="ajax-history-tbody">
+                <!-- JS Injects Template Here -->
+                </tbody>
+            </table>
+        </div>
+
+    </div> <!-- END OF SECTION 2 -->
+
+</div> <!-- END OF MAIN VIEW CONTAINER -->
+
+
+<!-- ===================================== -->
+<!-- STRICT DOM TEMPLATE                   -->
+<!-- ===================================== -->
+<template id="history-transaction-row-template">
+    <tr>
+        <td class="tx-date"></td>
+        <td class="tx-id text-bold"></td>
+        <td class="tx-amount text-success"></td>
+        <td><span class="tx-status badge"></span></td>
+        <td>
+            <button class="btn-action-small btn-print-receipt"><i class="bi bi-printer"></i> Print Receipt</button>
+        </td>
+    </tr>
+</template>

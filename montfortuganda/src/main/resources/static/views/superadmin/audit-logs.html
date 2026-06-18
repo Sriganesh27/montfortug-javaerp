@@ -1,0 +1,33 @@
+<div id="superadmin-audit-view">
+    <div class="view-header">
+        <h2>System Audit Logs</h2>
+        <p class="text-subtitle">Comprehensive tracking of all administrative actions across the network.</p>
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Branch</th>
+                    <th>User</th>
+                    <th>Action Details</th>
+                </tr>
+                </thead>
+                <tbody id="global-audit-tbody">
+                <!-- Populated via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <template id="global-audit-row-template">
+        <tr>
+            <td class="log-date"></td>
+            <td class="log-branch"></td>
+            <td class="log-user"></td>
+            <td class="log-action"></td>
+        </tr>
+    </template>
+</div>
