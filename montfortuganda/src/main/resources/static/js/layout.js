@@ -39,8 +39,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const userNameElement = document.getElementById('userNameText');
         if (userNameElement) {
-            const savedName = localStorage.getItem('username') || userRole;
-            userNameElement.textContent = savedName;
+            userNameElement.textContent = localStorage.getItem('username') || userRole;
         }
 
         document.getElementById('logoutBtn').addEventListener('click', async function() {
@@ -211,7 +210,7 @@ function setupRouter(urlRole) {
     const pageTitleElement = document.getElementById('pageTitle');
     if (pageTitleElement) pageTitleElement.textContent = pageTitle;
 
-    loadView(urlRole, initialView, mainContent);
+    void loadView(urlRole, initialView, mainContent);
 }
 
 async function loadView(urlRole, viewName, container) {
@@ -242,6 +241,16 @@ function showLoader() { const l = document.getElementById('global-loader'); if(l
 function hideLoader() { const l = document.getElementById('global-loader'); if(l) l.classList.add('hidden'); }
 
 // 1. The Engine is now global for all modules (superadmin, admin, teacher, etc.)
+/**
+ * @param {Object} config
+ * @param {string} config.title
+ * @param {string} [config.type='info']
+ * @param {Node|null} [config.contentNode=null]
+ * @param {string|null} [config.contentText=null]
+ * @param {string} [config.confirmText='OK']
+ * @param {string|null} [config.cancelText=null]
+ * @param {Function|null} [config.onConfirm=null]
+ */
 function showPremiumModal({ title, type = 'info', contentNode = null, contentText = null, confirmText = 'OK', cancelText = null, onConfirm = null }) {
     let modalWrapper = document.getElementById('premium-modal-wrapper');
     if (!modalWrapper) {
@@ -258,7 +267,7 @@ function showPremiumModal({ title, type = 'info', contentNode = null, contentTex
         // Ultimate fallback just in case the template hasn't loaded yet
         if (type === 'error') alert("ERROR: " + (contentText || "An error occurred"));
         else if (type === 'success') alert("SUCCESS: " + (contentText || "Action completed"));
-        else alert(contentText);
+        else alert(contentText || "Action completed");
         return;
     }
 
@@ -338,6 +347,7 @@ function showSuccessMessage(m) {
         confirmText: 'OK'
     });
 }
+
 /* ========================================= */
 /* --- GLOBAL PAGINATION UTILITY         --- */
 /* --- Added to layout.js for centralization */
@@ -396,9 +406,10 @@ class GlobalPagination {
         const totalItems = this.data.length;
         const totalPages = Math.ceil(totalItems / this.itemsPerPage);
 
-        if(this.startEl) this.startEl.textContent = totalItems === 0 ? 0 : ((this.currentPage - 1) * this.itemsPerPage) + 1;
-        if(this.endEl) this.endEl.textContent = Math.min(this.currentPage * this.itemsPerPage, totalItems);
-        if(this.totalEl) this.totalEl.textContent = totalItems;
+        // STRICTURE FIX: Force conversion to string to satisfy the IDE type-checker
+        if(this.startEl) this.startEl.textContent = (totalItems === 0 ? 0 : ((this.currentPage - 1) * this.itemsPerPage) + 1).toString();
+        if(this.endEl) this.endEl.textContent = Math.min(this.currentPage * this.itemsPerPage, totalItems).toString();
+        if(this.totalEl) this.totalEl.textContent = totalItems.toString();
 
         if(this.prevBtn) this.prevBtn.disabled = this.currentPage === 1 || totalItems === 0;
         if(this.nextBtn) this.nextBtn.disabled = this.currentPage === totalPages || totalPages === 0;
@@ -411,7 +422,7 @@ class GlobalPagination {
             for (let i = 1; i <= totalPages; i++) {
                 const btnNode = this.numTemplate.content.cloneNode(true);
                 const btn = btnNode.querySelector('button');
-                btn.textContent = i;
+                btn.textContent = i.toString(); // Force to string
 
                 if (i === this.currentPage) btn.classList.add('active');
 
