@@ -2,22 +2,27 @@
     <div class="view-header">
         <div>
             <h2>Scholarship Applications</h2>
-            <p class="text-subtitle">Analyze deficit metrics and process branch applications globally.</p>
         </div>
     </div>
 
-    <!-- 1. CSS ANALYTICS DASHBOARD -->
+    <!-- 1. CSS ANALYTICS DASHBOARD (CLEANED SKELETON) -->
     <div class="analytics-grid mb-20">
         <!-- Analytics Card 1: Donut Chart -->
         <div class="card analytics-card m-0 full-height-card">
             <h3 class="card-title text-uppercase-sm">Total Global Deficit</h3>
+
             <div class="css-chart-wrapper">
-                <div class="css-donut" style="--percentage: 75; --chart-color: #ef4444;">
-                    <div class="donut-hole"><span class="donut-text">75%</span></div>
+                <!-- Percentage defaults to 0% until JS loads -->
+                <div class="css-donut" style="--percentage: 0; --chart-color: #ef4444;">
+                    <div class="donut-hole">
+                        <span class="donut-text">0%</span>
+                        <span class="donut-subtext">Deficit</span>
+                    </div>
                 </div>
-                <div class="chart-legend">
-                    <p><span class="badge-pending">UGX 450M</span> Unfunded</p>
-                    <p class="text-muted text-sm mt-5">Out of UGX 600M Total Need</p>
+
+                <div class="chart-legend" id="global-deficit-legend">
+                    <p><span class="badge-pending" id="gs-unfunded-badge">UGX 0</span> Unfunded</p>
+                    <p class="text-muted text-sm mt-5" id="gs-total-need-text">Out of UGX 0 Total Need</p>
                 </div>
             </div>
         </div>
@@ -25,19 +30,8 @@
         <!-- Analytics Card 2: Pending Requests -->
         <div class="card analytics-card m-0 full-height-card">
             <h3 class="card-title text-uppercase-sm">Pending Branch Requests</h3>
-            <div class="pending-stats-list">
-                <div class="pending-stat-row">
-                    <span class="text-bold">Kampala Main (U011)</span>
-                    <span class="badge-pending">12 Pending</span>
-                </div>
-                <div class="pending-stat-row">
-                    <span class="text-bold">Jinja Outreach (U022)</span>
-                    <span class="badge-pending">8 Pending</span>
-                </div>
-                <div class="pending-stat-row">
-                    <span class="text-bold">Gulu Center (U033)</span>
-                    <span class="badge-pending">5 Pending</span>
-                </div>
+            <!-- Empty container waiting for Javascript to inject the rows -->
+            <div class="pending-stats-list" id="dynamic-branch-stats">
             </div>
         </div>
     </div>
@@ -79,9 +73,7 @@
             </div>
         </div>
 
-        <!-- PERFECTLY ALIGNED BOTTOM ROW -->
         <div class="filter-actions justify-between flex-wrap">
-            <!-- Left Side: Search Bar -->
             <div class="form-group m-0 search-bar-wrapper">
                 <div class="input-icon-wrapper">
                     <i class="bi bi-search"></i>
@@ -89,7 +81,6 @@
                 </div>
             </div>
 
-            <!-- Right Side: Status & Buttons -->
             <div class="flex-row align-center gap-15 flex-wrap">
                 <div class="flex-row align-center gap-10">
                     <label class="m-0 text-uppercase-sm text-bold">STATUS:</label>
@@ -130,12 +121,10 @@
                 </tr>
                 </thead>
                 <tbody id="gs-table-body">
-                <!-- Populated via JS Template -->
                 </tbody>
             </table>
         </div>
 
-        <!-- Strict 25-item Pagination Footer -->
         <div class="pagination-footer">
             <div class="pagination-info">
                 Showing <span id="gs-page-start">0</span> to <span id="gs-page-end">0</span> of <span id="gs-total-entries">0</span> entries
@@ -169,5 +158,11 @@
                 <button class="btn-primary col-action-btn text-sm px-15"><i class="bi bi-pencil-square"></i> Process</button>
             </td>
         </tr>
+    </template>
+    <template id="pending-stat-row-template">
+        <div class="pending-stat-row d-flex justify-content-between align-items-center mb-2">
+            <span class="stat-branch-name fw-bold text-dark"></span>
+            <span class="stat-branch-count badge bg-danger bg-opacity-10 text-danger rounded-pill px-2"></span>
+        </div>
     </template>
 </div>

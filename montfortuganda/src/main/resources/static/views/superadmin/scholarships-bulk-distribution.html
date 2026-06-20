@@ -10,31 +10,30 @@
         <div class="view-header">
             <div>
                 <h2>Branch Fund Allocation</h2>
-                <p class="text-subtitle">Distribute available scholarship funds directly to school branches.</p>
             </div>
         </div>
 
-        <!-- 2. TOTAL FUND CARDS -->
+        <!-- 2. TOTAL FUND CARDS (CLEANED SKELETON) -->
         <div class="funds-overview-cards">
             <div class="fund-card primary-card">
                 <div class="fund-icon"><i class="bi bi-safe"></i></div>
                 <div class="fund-info">
                     <h3>Total Available Funds</h3>
-                    <h2 id="total-available">UGX 450,000,000</h2>
+                    <h2 id="total-available">UGX 0</h2>
                 </div>
             </div>
             <div class="fund-card">
                 <div class="fund-icon text-orange"><i class="bi bi-clock-history"></i></div>
                 <div class="fund-info">
                     <h3>Total Branch Demands</h3>
-                    <h2>UGX 180,000,000</h2>
+                    <h2>UGX 0</h2>
                 </div>
             </div>
             <div class="fund-card">
                 <div class="fund-icon text-green"><i class="bi bi-check-circle"></i></div>
                 <div class="fund-info">
                     <h3>Allocated (This Term)</h3>
-                    <h2>UGX 120,000,000</h2>
+                    <h2>UGX 0</h2>
                 </div>
             </div>
         </div>
@@ -53,54 +52,7 @@
                     </tr>
                     </thead>
                     <tbody>
-                    <!-- Row 1 -->
-                    <tr class="branch-row" data-branch-id="1">
-                        <td>
-                            <div class="branch-cell">
-                                <div class="branch-icon"><i class="bi bi-building"></i></div>
-                                <div>
-                                    <span class="branch-name">Mpala Campus</span>
-                                    <span class="branch-id">BR-001</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="text-danger font-bold">UGX 50,000,000</td>
-                        <td class="text-success font-bold">UGX 10,000,000</td>
-                        <td>
-                            <div class="allocation-input-group">
-                                <span>UGX</span>
-                                <input type="number" class="allocate-input" placeholder="Enter amount...">
-                            </div>
-                        </td>
-                        <td class="action-cell">
-                            <button class="btn-allocate" data-action="allocate"><i class="bi bi-send-check"></i> Allocate</button>
-                            <button class="btn-history" data-action="history" data-branch-name="Mpala Campus" title="Transaction History"><i class="bi bi-clock-history"></i> History</button>
-                        </td>
-                    </tr>
-                    <!-- Row 2 -->
-                    <tr class="branch-row" data-branch-id="2">
-                        <td>
-                            <div class="branch-cell">
-                                <div class="branch-icon"><i class="bi bi-building"></i></div>
-                                <div>
-                                    <span class="branch-name">Wakiso Campus</span>
-                                    <span class="branch-id">BR-002</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="text-danger font-bold">UGX 130,000,000</td>
-                        <td class="text-success font-bold">UGX 0</td>
-                        <td>
-                            <div class="allocation-input-group">
-                                <span>UGX</span>
-                                <input type="number" class="allocate-input" placeholder="Enter amount...">
-                            </div>
-                        </td>
-                        <td class="action-cell">
-                            <button class="btn-allocate" data-action="allocate"><i class="bi bi-send-check"></i> Allocate</button>
-                            <button class="btn-history" data-action="history" data-branch-name="Wakiso Campus" title="Transaction History"><i class="bi bi-clock-history"></i> History</button>
-                        </td>
-                    </tr>
+                    <!-- Javascript will dynamically inject the TR elements here -->
                     </tbody>
                 </table>
             </div>
@@ -119,7 +71,7 @@
             <div class="header-left">
                 <button class="btn-secondary" id="btn-back-to-bulk-list"><i class="bi bi-arrow-left"></i> Back</button>
                 <div class="title-container">
-                    <h3 id="history-branch-title">Branch Name</h3>
+                    <h3 id="history-branch-title">...</h3>
                     <p class="text-subtitle">Transaction History</p>
                 </div>
             </div>
@@ -128,7 +80,7 @@
             </div>
         </div>
 
-        <!-- Quick Stats -->
+        <!-- Quick Stats (Cleaned) -->
         <div class="history-stats-row">
             <div class="history-stat-card">
                 <span class="stat-label">Total Allocated</span>
@@ -165,7 +117,6 @@
                 </tr>
                 </thead>
                 <tbody id="ajax-history-tbody">
-                <!-- JS Injects Template Here -->
                 </tbody>
             </table>
         </div>
@@ -186,6 +137,34 @@
         <td><span class="tx-status badge"></span></td>
         <td>
             <button class="btn-action-small btn-print-receipt"><i class="bi bi-printer"></i> Print Receipt</button>
+        </td>
+    </tr>
+</template>
+<!-- TEMPLATE: Bulk Distribution Table Row -->
+<template id="bulk-distribution-row-template">
+    <tr>
+        <td>
+            <div class="table-branch-info d-flex align-items-center gap-2">
+                <div class="branch-icon"><i class="bi bi-building"></i></div>
+                <div>
+                    <h4 class="branch-name mb-0 text-dark"></h4>
+                    <span class="branch-code text-muted"></span>
+                </div>
+            </div>
+        </td>
+        <td><strong class="col-requested"></strong></td>
+        <td><strong class="col-allocated text-success"></strong></td>
+        <td>
+            <div class="input-group">
+                <span class="input-group-text">UGX</span>
+                <input type="number" class="form-control allocate-input" placeholder="Enter amount...">
+            </div>
+        </td>
+        <td>
+            <div class="action-buttons d-flex gap-2">
+                <button class="btn btn-sm btn-primary btn-allocate"><i class="bi bi-send"></i> Allocate</button>
+                <button class="btn btn-sm btn-outline-secondary btn-history"><i class="bi bi-clock-history"></i> History</button>
+            </div>
         </td>
     </tr>
 </template>

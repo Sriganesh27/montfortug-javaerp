@@ -39,14 +39,7 @@
                     </tr>
                     </thead>
                     <tbody id="incharge-tbody">
-                    <tr>
-                        <!-- Restored the crucial 'incharge-input' classes! -->
-                        <td><input type="text" class="incharge-input incharge-name" placeholder="e.g. John Doe"></td>
-                        <td><input type="text" class="incharge-input incharge-role" placeholder="e.g. Principal"></td>
-                        <td><input type="text" class="incharge-input incharge-phone" placeholder="+256..."></td>
-                        <td><button type="button" class="action-btn delete-btn remove-incharge-btn"><i class="bi bi-trash"></i></button></td>
-                    </tr>
-                    </tbody>
+                </tbody>
                 </table>
             </div>
             <button type="button" id="addInchargeRowBtn" class="btn-outline-primary"><i class="bi bi-plus-circle"></i> Add Another Person</button>
@@ -55,11 +48,33 @@
         <div class="card add-branch-card">
             <h3 class="card-header">Documents & Media</h3>
             <div class="detail-grid">
-                <div class="form-group"><label>School Photo (JPG/PNG < 100KB)</label><input type="file" id="add-photo" accept="image/png, image/jpeg" /></div>
+
+                <!-- 1. School Photo -->
                 <div class="form-group">
-                    <label>Government Document (JPG/PNG < 100KB, PDF < 2MB)</label>
-                    <input type="file" id="add-doc" accept="image/png, image/jpeg, application/pdf" multiple />
+                    <label>School Photo</label>
+                    <div class="upload-zone">
+                        <input type="file" id="add-photo" class="file-hidden-input" accept="image/png, image/jpeg" />
+                        <div class="upload-content">
+                            <i class="bi bi-image text-blue"></i>
+                            <span class="upload-title">Click or drag photo here</span>
+                            <span class="upload-subtitle">JPG/PNG up to 100KB</span>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- 2. Government Document -->
+                <div class="form-group">
+                    <label>Government Document</label>
+                    <div class="upload-zone">
+                        <input type="file" id="add-doc" class="file-hidden-input" accept="image/png, image/jpeg, application/pdf" multiple />
+                        <div class="upload-content">
+                            <i class="bi bi-file-earmark-pdf text-orange"></i>
+                            <span class="upload-title">Click or drag document here</span>
+                            <span class="upload-subtitle">PDF, JPG/PNG up to 2MB</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 

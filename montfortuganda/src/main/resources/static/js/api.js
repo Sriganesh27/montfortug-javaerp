@@ -33,7 +33,19 @@ async function handleResponse(response) {
         const errorMessage = errorData?.message || `HTTP Error: ${response.status}`;
         throw new Error(errorMessage);
     }
-    return await response.json();
+
+    const json = await response.json();
+
+    // MAGIC FIX: If the backend returns raw JSON without a "data" property,
+    // we automatically wrap it so superadmin.js never throws 'undefined' again!
+    if (json !== null && typeof json === 'object' && !('data' in json)) {
+        return {
+            data: json,
+            message: json.message || "Success"
+        };
+    }
+
+    return json;
 }
 
 /**

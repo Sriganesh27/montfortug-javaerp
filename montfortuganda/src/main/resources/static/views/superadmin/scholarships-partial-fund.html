@@ -9,7 +9,6 @@
         <div class="view-header">
             <div>
                 <h2>Partial Student Fund</h2>
-                <p class="text-subtitle">Allocate partial scholarship amounts to students with fee shortfalls.</p>
             </div>
         </div>
 
@@ -19,21 +18,21 @@
                 <div class="fund-icon"><i class="bi bi-wallet2"></i></div>
                 <div class="fund-info">
                     <h3>Available Partial Funds</h3>
-                    <h2 id="partial-funds-available">UGX 85,000,000</h2>
+                    <h2 id="partial-funds-available">UGX 0</h2>
                 </div>
             </div>
             <div class="fund-card">
                 <div class="fund-icon text-orange"><i class="bi bi-people"></i></div>
                 <div class="fund-info">
                     <h3>Pending Requests</h3>
-                    <h2>42 Students</h2>
+                    <h2 id="partial-pending-count">0 Students</h2>
                 </div>
             </div>
             <div class="fund-card">
                 <div class="fund-icon text-green"><i class="bi bi-check2-circle"></i></div>
                 <div class="fund-info">
                     <h3>Disbursed (This Term)</h3>
-                    <h2>UGX 15,500,000</h2>
+                    <h2 id="partial-disbursed">UGX 0</h2>
                 </div>
             </div>
         </div>
@@ -66,8 +65,7 @@
                     <th class="text-center">Actions</th>
                 </tr>
                 </thead>
-                <tbody id="partial-funds-tbody">
-                <!-- JS Injects Template Here -->
+                <tbody id="partial-fund-tbody">
                 </tbody>
             </table>
         </div>
@@ -111,8 +109,7 @@
                     </tr>
                     </thead>
                     <tbody id="detail-history-tbody">
-                    <tr><td colspan="3" class="text-center text-muted empty-cell">No previous allocations found.</td></tr>
-                    </tbody>
+                </tbody>
                 </table>
             </div>
         </div>
@@ -147,5 +144,12 @@
             <button class="btn-allocate" data-action="allocate"><i class="bi bi-check-lg"></i> Fund</button>
             <button class="btn-secondary btn-view-details" data-action="view-details" title="View Hardship Profile"><i class="bi bi-eye"></i> Details</button>
         </td>
+    </tr>
+</template>
+<template id="partial-history-row-template">
+    <tr>
+        <td class="history-date text-muted"></td>
+        <td class="history-amount text-success fw-bold"></td>
+        <td class="history-user"></td>
     </tr>
 </template>

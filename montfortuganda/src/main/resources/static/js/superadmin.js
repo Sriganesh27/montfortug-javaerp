@@ -2,6 +2,86 @@
 // SUPER ADMIN MODULE
 // ==========================================
 
+const formatUGX = (num) => new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(num);
+
+function renderEmptyTableMessage(tbody, colSpan, message) {
+    tbody.textContent = '';
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.colSpan = colSpan;
+    td.className = 'empty-cell';
+    td.style.textAlign = 'center';
+    td.style.padding = '20px';
+    td.style.color = '#94a3b8';
+    td.textContent = message;
+    tr.appendChild(td);
+    tbody.appendChild(tr);
+}
+
+function extractInchargeDetails(viewContainer, tbodyId, nameClass, roleClass, phoneClass) {
+    const incharges = [];
+    viewContainer.querySelectorAll('#' + tbodyId + ' tr').forEach(row => {
+        const name = row.querySelector('.' + nameClass).value.trim();
+        const role = row.querySelector('.' + roleClass).value.trim();
+        const phone = row.querySelector('.' + phoneClass).value.trim();
+        if (name || role || phone) {
+            incharges.push({ name, role, phone });
+        }
+    });
+    return incharges;
+}
+
+function confirmAllocation(title, contentText, endpoint, payload, successMsg, errorMsg, inputField) {
+    showPremiumModal({
+        title: title,
+        type: 'warning',
+        contentText: contentText,
+        confirmText: 'Allocate',
+        cancelText: 'Cancel',
+        onConfirm: async (modal) => {
+            modal.close();
+            showLoader();
+            try {
+                await apiPost(endpoint, payload);
+                showSuccessMessage(successMsg);
+                if (inputField) inputField.value = '';
+            } catch (err) {
+                showErrorMessage(errorMsg);
+            } finally {
+                hideLoader();
+            }
+        }
+    });
+}
+
+function confirmAction(title, type, contentText, confirmText, endpoint, isPost, successMsg, errorMsg, callbackStr) {
+    showPremiumModal({
+        title: title,
+        type: type,
+        contentText: contentText,
+        confirmText: confirmText,
+        cancelText: 'Cancel',
+        onConfirm: async (modal) => {
+            modal.close();
+            showLoader();
+            try {
+                let res;
+                if (isPost) res = await apiPost(endpoint);
+                else res = await apiGet(endpoint);
+                showSuccessMessage(res.message || successMsg);
+                if (callbackStr === 'initSystemBackupsView') {
+                    initSystemBackupsView();
+                }
+            } catch (e) {
+                console.error(e);
+                showErrorMessage(errorMsg);
+            } finally {
+                hideLoader();
+            }
+        }
+    });
+}
+
 document.addEventListener('viewLoaded', function(e) {
     if (e.detail.role === 'superadmin') {
         if (e.detail.view === 'branches') {
@@ -18,7 +98,7 @@ document.addEventListener('viewLoaded', function(e) {
             void initSystemBackupsView();
         } else if (e.detail.view === 'scholarships-funds-got') {
             void initScholarshipsFundsGotView();
-        } else if (e.detail.view === 'scholarships-applications') {
+        } else if (e.detail.view === 'scholarships-global-search') {
             void initScholarshipsApplicationsView(); // Fixed
         } else if (e.detail.view === 'scholarships-bulk-distribution') {
             initBulkDistributionView();
@@ -283,7 +363,7 @@ function initBranchesView() {
                         ];
 
                         if (logs.length === 0) {
-                            logTbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#94a3b8; padding: 20px;">No recent activity found.</td></tr>';
+                            const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 3; td.style.textAlign = 'center'; td.style.color = '#94a3b8'; td.style.padding = '20px'; td.textContent = 'No recent activity found.'; tr.appendChild(td); logTbody.appendChild(tr);
                         } else {
                             logs.forEach(log => {
                                 const clone = logTemplate.content.cloneNode(true);
@@ -368,26 +448,17 @@ function initBranchesView() {
     const backupBtn = viewContainer.querySelector('#sa-backupBranchBtn');
     if (backupBtn) {
         backupBtn.addEventListener('click', () => {
-            showPremiumModal({
-                title: 'Export Branch Data',
-                type: 'info',
-                contentText: 'This will compile all database records for this branch into a secure file. Do you want to proceed?',
-                confirmText: 'Start Export',
-                cancelText: 'Cancel',
-                onConfirm: async (modal) => {
-                    modal.close();
-                    showLoader();
-                    try {
-                        await apiGet(`/superadmin/branches/${currentDetailBranchId}/backup`);
-                        showSuccessMessage('Backup successfully triggered! The download will begin shortly.');
-                    } catch (e) {
-                        console.error(e);
-                        showErrorMessage('Failed to trigger backup. Ensure backend endpoint is ready.');
-                    } finally {
-                        hideLoader();
-                    }
-                }
-            });
+            confirmAction(
+                'Export Branch Data',
+                'info',
+                'This will compile all database records for this branch into a secure file. Do you want to proceed?',
+                'Start Export',
+                `/superadmin/branches/${currentDetailBranchId}/export`,
+                false,
+                'Export initiated.',
+                'Failed to trigger backup. Ensure backend endpoint is ready.',
+                null
+            );
         });
     }
 
@@ -410,15 +481,7 @@ function initBranchesView() {
                     formData.append("branchLocation", viewContainer.querySelector('#edit-branchLocation').value);
                     formData.append("contactDetails", viewContainer.querySelector('#edit-contactDetails').value);
 
-                    const updatedIncharges = [];
-                    viewContainer.querySelectorAll('#edit-incharge-tbody tr').forEach(row => {
-                        const name = row.querySelector('.inc-name').value.trim();
-                        const role = row.querySelector('.inc-role').value.trim();
-                        const phone = row.querySelector('.inc-phone').value.trim();
-                        if (name || role || phone) {
-                            updatedIncharges.push({ name, role, phone });
-                        }
-                    });
+                    const updatedIncharges = extractInchargeDetails(viewContainer, 'edit-incharge-tbody', 'inc-name', 'inc-role', 'inc-phone');
                     formData.append("inchargeDetails", JSON.stringify(updatedIncharges));
 
                     const photoFile = viewContainer.querySelector('#edit-schoolPhoto').files[0];
@@ -470,9 +533,29 @@ function initBranchesView() {
 // ---------------------------------------------------------
 // 3. ADD BRANCH PAGE LOGIC (DYNAMIC TABLE & JSON)
 // ---------------------------------------------------------
+
+    // Changes "Click or drag photo here" to the actual file name when selected!
+  // ---------------------------------------------------------
+// 3. ADD BRANCH PAGE LOGIC (DYNAMIC TABLE & JSON)
+// ---------------------------------------------------------
 function initAddBranchView() {
     const viewContainer = document.querySelector('#superadmin-add-branch-view');
     if (!viewContainer) return;
+
+    // Changes "Click or drag photo here" to the actual file name when selected!
+    viewContainer.querySelectorAll('.file-hidden-input').forEach(input => {
+        input.addEventListener('change', function(e) {
+            let fileName = "Click or drag file here";
+            if (e.target.files && e.target.files.length > 1) {
+                fileName = `${e.target.files.length} files selected`;
+            } else if (e.target.files && e.target.files.length === 1) {
+                fileName = e.target.files[0].name;
+            }
+            const titleSpan = this.parentElement.querySelector('.upload-title');
+            if (titleSpan) titleSpan.textContent = fileName;
+        });
+    });
+
 
     const backBtn = viewContainer.querySelector('#backToBranchesBtn');
     if (backBtn) {
@@ -510,15 +593,7 @@ function initAddBranchView() {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            const incharges = [];
-            viewContainer.querySelectorAll('#incharge-tbody tr').forEach(row => {
-                const name = row.querySelector('.incharge-name').value.trim();
-                const role = row.querySelector('.incharge-role').value.trim();
-                const phone = row.querySelector('.incharge-phone').value.trim();
-                if (name || role || phone) {
-                    incharges.push({ name, role, phone });
-                }
-            });
+            const incharges = extractInchargeDetails(viewContainer, 'incharge-tbody', 'incharge-name', 'incharge-role', 'incharge-phone');
             const inchargeJson = JSON.stringify(incharges);
 
             const formData = new FormData();
@@ -719,29 +794,20 @@ function initSystemBackupsView() {
     const backupBtn = viewContainer.querySelector('#sa-triggerGlobalBackupBtn');
     if (backupBtn) {
         backupBtn.addEventListener('click', () => {
-            showPremiumModal({
-                title: 'Initiate Global Backup',
-                type: 'warning',
-                contentText: 'This will freeze non-essential database writes for approximately 2 minutes to ensure a clean global snapshot. Proceed?',
-                confirmText: 'Yes, Backup Now',
-                cancelText: 'Cancel',
-                onConfirm: async (modal) => {
-                    modal.close();
-                    showLoader();
-                    try {
-                        await apiGet('/superadmin/global-backup');
-                        showSuccessMessage('Global Database Snapshot successfully generated!');
-                    } catch (e) {
-                        showErrorMessage('Failed to trigger backup. Ensure Java backend endpoint exists.');
-                    } finally {
-                        hideLoader();
-                    }
-                }
-            });
+            confirmAction(
+                'Initiate Global Backup',
+                'warning',
+                'This will freeze non-essential database writes for approximately 2 minutes to ensure a clean global snapshot. Proceed?',
+                'Yes, Backup Now',
+                '/superadmin/backups/trigger',
+                true,
+                'Backup initiated successfully.',
+                'Failed to trigger backup. Ensure Java backend endpoint exists.',
+                'initSystemBackupsView'
+            );
         });
     }
 }
-
 // ==========================================
 // VIEW 1: SCHOLARSHIPS FUNDS GOT (TREASURY)
 // ==========================================
@@ -751,29 +817,28 @@ async function initScholarshipsFundsGotView() {
 
     showLoader();
     try {
-        const formatUGX = (num) => new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(num);
-
-        // 1. Fetch Real Treasury Summary
         const summaryRes = await apiGet('/superadmin/scholarships/funds-summary');
-        const summary = summaryRes.data;
+        const summary = summaryRes.data || summaryRes;
 
-        viewContainer.querySelector('#treasury-total-raised').textContent = formatUGX(summary.totalRaisedUgx);
-        viewContainer.querySelector('#treasury-total-spent').textContent = formatUGX(summary.totalSpentUgx);
-        viewContainer.querySelector('#treasury-available').textContent = formatUGX(summary.availableBalanceUgx);
-        viewContainer.querySelector('#treasury-sponsored').textContent = summary.studentsSponsored.toString();
+        viewContainer.querySelector('#treasury-total-raised').textContent = formatUGX(summary.totalRaisedUgx || 0);
+        viewContainer.querySelector('#treasury-total-spent').textContent = formatUGX(summary.totalSpentUgx || 0);
+        viewContainer.querySelector('#treasury-available').textContent = formatUGX(summary.availableBalanceUgx || 0);
+        viewContainer.querySelector('#treasury-sponsored').textContent = (summary.studentsSponsored || 0).toString();
 
-        // 2. Fetch Real Donor Table Data (NO CONST ARRAYS)
         const donorsRes = await apiGet('/superadmin/scholarships/donors');
-        const liveDonationsData = donorsRes.data.map(d => ({
+        const donorsArray = Array.isArray(donorsRes) ? donorsRes : (donorsRes.data || []);
+
+        const liveDonationsData = donorsArray.map(d => ({
             id: d.id,
             receipt_number: d.receiptNumber,
             full_name: d.fullName,
             email: d.email,
             currency: d.currency,
+            amount: d.amount, // <--- Added the foreign amount here
             amount_received: d.amountReceivedUgx,
             amount_spent: d.amountSpentUgx,
-            students_benefited: 0,
-            term: 'Term 1, 2024'
+            students_benefited: d.studentsBenefited,
+            term: d.term
         }));
 
         const pagination = new GlobalPagination({
@@ -794,7 +859,10 @@ async function initScholarshipsFundsGotView() {
                         clone.querySelector('.donor-receipt').textContent = donor.receipt_number;
                         clone.querySelector('.donor-name').textContent = donor.full_name;
                         clone.querySelector('.donor-email').textContent = donor.email;
-                        clone.querySelector('.donor-foreign').textContent = `Donor via Web`;
+
+                        // <--- Updated to display BOTH Currency Type and Amount Donated! --->
+                        clone.querySelector('.donor-foreign').textContent = `${donor.currency} ${parseFloat(donor.amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+
                         clone.querySelector('.donor-received-ugx').textContent = formatUGX(donor.amount_received);
 
                         const availableUGX = donor.amount_received - donor.amount_spent;
@@ -813,6 +881,7 @@ async function initScholarshipsFundsGotView() {
 
     } catch (error) {
         console.error("Treasury load failed:", error);
+        showErrorMessage("Failed to load global treasury data.");
     } finally {
         hideLoader();
     }
@@ -826,25 +895,20 @@ async function initScholarshipsApplicationsView() {
 
     showLoader();
     try {
-        const formatUGX = (num) => new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(num);
-
-        // 1. Fetch Real Applications Data from the backend
         const studentsRes = await apiGet('/superadmin/scholarships/pending-students');
-        const rawData = studentsRes.data;
+        const rawData = Array.isArray(studentsRes) ? studentsRes : (studentsRes.data || []);
 
-        // Map data to match the exact HTML table structure
         const liveApplications = rawData.map(s => ({
-            id: 'APP-' + s.studentId,
+            id: 'APP-' + s.id,
             name: s.studentName,
-            demographics: 'Male', // Backend DTO will need to provide this later
-            branch: 'Branch ' + s.campus,
-            levelClass: s.currentClass,
-            category: 'Financial Aid',
+            demographics: 'Male',
+            branch: s.branchName,
+            levelClass: 'N/A',
+            category: s.category || 'Financial Aid',
             status: 'Pending',
-            shortfall: s.shortfallUgx
+            shortfall: s.currentShortfallUgx
         }));
 
-        // 2. Populate the Top Analytics Cards Dynamically
         let totalDeficit = 0;
         let branchPendingCounts = {};
 
@@ -855,23 +919,59 @@ async function initScholarshipsApplicationsView() {
             }
         });
 
-        // Update Total Deficit Label
-        const deficitLabel = viewContainer.querySelector('.chart-legend .badge-pending');
-        if (deficitLabel) deficitLabel.textContent = formatUGX(totalDeficit);
+        const assumedTotalNeed = totalDeficit + 150000000;
+        let deficitPercentage = 0;
+        if (assumedTotalNeed > 0) {
+            deficitPercentage = Math.round((totalDeficit / assumedTotalNeed) * 100);
+        }
 
-        // Update Pending Branch List
-        const pendingStatsList = viewContainer.querySelector('.pending-stats-list');
+        const donutChart = viewContainer.querySelector('.css-donut');
+        if (donutChart) {
+            donutChart.style.setProperty('--percentage', deficitPercentage);
+            donutChart.querySelector('.donut-text').textContent = `${deficitPercentage}%`;
+        }
+
+        const legend = viewContainer.querySelector('#global-deficit-legend');
+        if (legend) {
+            legend.textContent = '';
+
+            const p1 = document.createElement('p');
+            const span1 = document.createElement('span');
+            span1.className = 'badge-pending';
+            span1.textContent = formatUGX(totalDeficit);
+            const textNode1 = document.createTextNode(' Unfunded');
+            p1.appendChild(span1);
+            p1.appendChild(textNode1);
+
+            const p2 = document.createElement('p');
+            p2.className = 'text-muted text-sm mt-5';
+            p2.textContent = `Out of ${formatUGX(assumedTotalNeed)} Total Need`;
+
+            legend.appendChild(p1);
+            legend.appendChild(p2);
+        }
+
+        const pendingStatsList = viewContainer.querySelector('#dynamic-branch-stats');
         if (pendingStatsList) {
-            pendingStatsList.textContent = ''; // Clear hardcoded HTML
+            pendingStatsList.textContent = '';
             Object.keys(branchPendingCounts).forEach(branchName => {
                 const row = document.createElement('div');
-                row.className = 'pending-stat-row';
-                row.innerHTML = `<span class="text-bold">${branchName}</span><span class="badge-pending">${branchPendingCounts[branchName]} Pending</span>`;
+                row.className = 'pending-stat-row d-flex justify-content-between mb-2';
+
+                const spanBranch = document.createElement('span');
+                spanBranch.className = 'text-bold';
+                spanBranch.textContent = branchName;
+
+                const spanCount = document.createElement('span');
+                spanCount.className = 'badge-pending';
+                spanCount.textContent = `${branchPendingCounts[branchName]} Pending`;
+
+                row.appendChild(spanBranch);
+                row.appendChild(spanCount);
                 pendingStatsList.appendChild(row);
             });
         }
 
-        // 3. Initialize Global Pagination
         let filteredData = [...liveApplications];
 
         const pagination = new GlobalPagination({
@@ -884,7 +984,7 @@ async function initScholarshipsApplicationsView() {
                 prevBtnId: 'gs-prev-page',
                 nextBtnId: 'gs-next-page',
                 numbersContainerId: 'gs-page-numbers',
-                templateId: 'funds-page-number-template' // Reuse the pagination template from View 1
+                templateId: 'funds-page-number-template'
             },
             renderCallback: (pageData) => {
                 const tbody = viewContainer.querySelector('#gs-table-body');
@@ -898,7 +998,6 @@ async function initScholarshipsApplicationsView() {
                     clone.querySelector('.col-id').textContent = app.id;
                     clone.querySelector('.col-name').textContent = app.name;
 
-                    // Create simple Initials for the profile circle (e.g. John Doe -> JD)
                     const parts = app.name.split(' ');
                     const initials = parts.length > 1 ? parts[0][0] + parts[1][0] : (parts[0][0] || 'S');
                     clone.querySelector('.col-initials').textContent = initials.toUpperCase();
@@ -922,7 +1021,6 @@ async function initScholarshipsApplicationsView() {
 
         pagination.render();
 
-        // 4. Attach Filter Button Logic
         const btnApply = viewContainer.querySelector('#gs-apply-btn');
         const btnReset = viewContainer.querySelector('#gs-reset-btn');
 
@@ -951,14 +1049,14 @@ async function initScholarshipsApplicationsView() {
         }
 
     } catch (error) {
-        console.error("View 2 load failed:", error);
+        console.error("Global search view load failed:", error);
     } finally {
         hideLoader();
     }
 }
 
 // ==========================================
-// VIEW 3: BULK DISTRIBUTION LOGIC (PAGE SWAP)
+// VIEW 3: BULK DISTRIBUTION LOGIC
 // ==========================================
 function initBulkDistributionView() {
     const bulkDistributionView = document.getElementById('superadmin-bulk-distribution-view');
@@ -968,7 +1066,48 @@ function initBulkDistributionView() {
     bulkDistributionView.parentNode.replaceChild(newView, bulkDistributionView);
 
     let currentHistoryData = [];
-    const formatUGX = (num) => new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(num);
+
+    apiGet('/superadmin/scholarships/demands').then(res => {
+        const demands = Array.isArray(res) ? res : (res.data || []);
+        const summary = res.summary || {};
+
+        const cards = document.querySelectorAll('#superadmin-bulk-distribution-view .fund-card h2');
+        if (cards.length >= 3) {
+            cards[0].textContent = formatUGX(summary.totalAvailableUgx || 0);
+            cards[2].textContent = formatUGX(summary.allocatedThisTermUgx || 0);
+        }
+
+        let totalDemands = 0;
+        demands.forEach(d => totalDemands += (d.totalRequestedAmountUgx || 0));
+
+        const tDom = document.querySelector('#superadmin-bulk-distribution-view .fund-card:nth-child(2) h2');
+        if (tDom) tDom.textContent = formatUGX(totalDemands);
+
+        const branchTable = document.querySelector('#superadmin-bulk-distribution-view tbody');
+        const rowTemplate = document.getElementById('bulk-distribution-row-template');
+
+        if (branchTable && rowTemplate && demands.length > 0) {
+            branchTable.textContent = '';
+            demands.forEach(d => {
+                const clone = rowTemplate.content.cloneNode(true);
+                const bName = d.branchName || ('Branch ' + d.branchId);
+
+                clone.querySelector('.branch-name').textContent = bName;
+                clone.querySelector('.branch-code').textContent = `BR-00${d.branchId}`;
+                clone.querySelector('.col-requested').textContent = formatUGX(d.totalRequestedAmountUgx);
+                clone.querySelector('.col-allocated').textContent = formatUGX(d.currentlyAllocatedUgx || 0);
+
+                const btnAlloc = clone.querySelector('.btn-allocate');
+                btnAlloc.setAttribute('data-branch-id', d.branchId);
+
+                const btnHist = clone.querySelector('.btn-history');
+                btnHist.setAttribute('data-branch-id', d.branchId);
+                btnHist.setAttribute('data-branch-name', bName);
+
+                branchTable.appendChild(clone);
+            });
+        }
+    }).catch(e => console.error("Failed to load demands:", e));
 
     function renderHistoryTable(dataArray) {
         const tbody = document.getElementById('ajax-history-tbody');
@@ -977,7 +1116,13 @@ function initBulkDistributionView() {
         tbody.textContent = '';
 
         if (dataArray.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty-table-cell">No transactions found.</td></tr>';
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            td.colSpan = 5;
+            td.className = 'text-center text-muted py-4';
+            td.textContent = 'No transactions found.';
+            tr.appendChild(td);
+            tbody.appendChild(tr);
             return;
         }
 
@@ -987,8 +1132,11 @@ function initBulkDistributionView() {
             clone.querySelector('.tx-date').textContent = tx.date;
             clone.querySelector('.tx-id').textContent = tx.id.toString();
             clone.querySelector('.tx-amount').textContent = formatUGX(tx.amount);
-            clone.querySelector('.tx-status').textContent = tx.status;
-            clone.querySelector('.tx-status').classList.add('badge-completed');
+
+            const statusBadge = clone.querySelector('.tx-status');
+            statusBadge.textContent = tx.status;
+            statusBadge.className = 'tx-status badge bg-success text-white';
+
             tbody.appendChild(clone);
             totalAllocated += tx.amount;
         });
@@ -1000,7 +1148,6 @@ function initBulkDistributionView() {
     }
 
     newView.addEventListener('click', async function(e) {
-        // --- ACTION 1: ALLOCATE FUNDS (REAL API) ---
         const btnAllocate = e.target.closest('.btn-allocate');
         if (btnAllocate) {
             const row = btnAllocate.closest('tr');
@@ -1009,28 +1156,24 @@ function initBulkDistributionView() {
             const inputField = row.querySelector('.allocate-input');
             const amount = inputField.value;
 
-            if (!amount || amount <= 0) return alert('Please enter a valid amount.');
+            if (!amount || amount <= 0) return showErrorMessage('Please enter a valid amount.');
 
-            if (confirm(`Allocate UGX ${amount} to ${branchName}?`)) {
-                showLoader();
-                try {
-                    await apiPost('/superadmin/scholarships/allocate/branch', {
-                        branchId: parseInt(branchId),
-                        amountUgx: parseFloat(amount),
-                        term: 'Term 1',
-                        academicYear: '2024'
-                    });
-                    alert(`Success! Allocated UGX ${amount} to ${branchName}.`);
-                    inputField.value = '';
-                } catch (err) {
-                    alert("Treasury Error: Insufficient funds or server error.");
-                } finally {
-                    hideLoader();
-                }
-            }
+            confirmAllocation(
+                'Confirm Allocation',
+                `Allocate UGX ${amount} to ${branchName}?`,
+                '/superadmin/scholarships/allocate-branch',
+                {
+                    branchId: parseInt(branchId),
+                    amountUgx: parseFloat(amount),
+                    term: 'Term 1',
+                    academicYear: '2026/2027'
+                },
+                `Success! Allocated UGX ${amount} to ${branchName}.`,
+                "Treasury Error: Insufficient funds or server error.",
+                inputField
+            );
         }
 
-        // --- ACTION 2: OPEN HISTORY PAGE (REAL API) ---
         const btnHistory = e.target.closest('.btn-history');
         if (btnHistory) {
             const branchId = btnHistory.getAttribute('data-branch-id') || 1;
@@ -1040,9 +1183,10 @@ function initBulkDistributionView() {
 
             showLoader();
             try {
-                // Fetch real history! No const arrays!
                 const res = await apiGet(`/superadmin/scholarships/history/${branchId}`);
-                currentHistoryData = res.data.map(tx => ({
+                const historyRaw = Array.isArray(res) ? res : (res.data || []);
+
+                currentHistoryData = historyRaw.map(tx => ({
                     id: 'TX-' + tx.id,
                     date: tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : 'Just now',
                     amount: tx.allocatedAmountUgx,
@@ -1053,254 +1197,442 @@ function initBulkDistributionView() {
                 document.getElementById('bulk-list-section').classList.add('hidden');
                 document.getElementById('bulk-history-section').classList.remove('hidden');
             } catch (err) {
-                alert('Failed to load history');
+                showErrorMessage('Failed to load history');
             } finally {
                 hideLoader();
             }
         }
 
-        // --- ACTION 3: BACK TO LIST ---
         const btnBack = e.target.closest('#btn-back-to-bulk-list');
         if (btnBack) {
             document.getElementById('bulk-history-section').classList.add('hidden');
             document.getElementById('bulk-list-section').classList.remove('hidden');
         }
     });
-
-    const searchInput = newView.querySelector('#history-search-input');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const filtered = currentHistoryData.filter(tx => tx.id.toLowerCase().includes(term));
-            renderHistoryTable(filtered);
-        });
-    }
 }
+
 // ==========================================
-// VIEW 4: 1-TO-1 SPONSORSHIP LOGIC (ADVANCED)
+// VIEW 4: 1-TO-1 SPONSORSHIP LOGIC (AJAX PAGE SWAP)
 // ==========================================
 function initOneToOneSponsorshipView() {
-    const oneToOneView = document.getElementById('superadmin-1to1-view');
-    if (!oneToOneView) return;
+    const viewContainer = document.querySelector('#superadmin-1to1-view');
+    if (!viewContainer) return;
 
-    const newView = oneToOneView.cloneNode(true);
-    oneToOneView.parentNode.replaceChild(newView, oneToOneView);
+    // View Sections
+    const mainHeader = viewContainer.querySelector('#pairings-main-header');
+    const listSection = viewContainer.querySelector('#pairings-list-section');
+    const wizardSection = viewContainer.querySelector('#pairing-wizard-section');
 
-    // Dynamic Lists (No Mock Data)
-    let liveDonors = [];
-    let liveStudents = [];
+    function loadActivePairings() {
+        apiGet('/superadmin/scholarships/active-sponsorships').then(res => {
+            const active = Array.isArray(res) ? res : (res.data || []);
+            const tbody = viewContainer.querySelector('tbody');
+            const template = document.getElementById('active-pairing-row-template');
 
-    let selectedDonorId = '';
-    let selectedStudentId = '';
-    let selectedDonorName = '';
-    let selectedStudentName = '';
+            if (tbody && template) {
+                tbody.textContent = '';
 
-    function renderCards(listId, templateId, dataArray, isDonor) {
-        const container = document.getElementById(listId);
-        const template = document.getElementById(templateId);
-        if (!container || !template) return;
-        container.textContent = '';
+                if (active.length === 0) {
+                    const tr = document.createElement('tr');
+                    const td = document.createElement('td');
+                    td.colSpan = 5;
+                    td.className = 'text-center text-muted py-4';
+                    td.textContent = 'No active sponsorships found.';
+                    tr.appendChild(td);
+                    tbody.appendChild(tr);
+                    return;
+                }
 
-        dataArray.forEach(item => {
-            const clone = template.content.cloneNode(true);
-            const card = clone.querySelector('.selectable-card');
-            card.setAttribute('data-id', item.id);
-            card.setAttribute('data-name', item.name);
-            card.querySelector('.card-title').textContent = item.name;
-
-            if (isDonor) {
-                card.querySelector('.card-subtitle').textContent = item.type;
-                card.querySelector('.card-badge').textContent = item.available.toString();
-            } else {
-                card.querySelector('.card-subtitle').textContent = `${item.class} • ${item.campus}`;
-                card.querySelector('.card-badge').textContent = item.needed.toString();
+                active.forEach(a => {
+                    const clone = template.content.cloneNode(true);
+                    clone.querySelector('.donor-name').textContent = a.donorDetails;
+                    clone.querySelector('.student-name').textContent = a.studentDetails;
+                    clone.querySelector('.col-campus').textContent = a.branchDetails;
+                    clone.querySelector('.view-profile-btn').setAttribute('data-id', a.id);
+                    tbody.appendChild(clone);
+                });
             }
-            container.appendChild(clone);
+        }).catch(e => console.error("Failed to load active sponsorships:", e));
+    }
+
+    loadActivePairings();
+
+    let selectedDonorId = '', selectedStudentId = '';
+    let selectedDonorName = null, selectedStudentName = null;
+
+    function resetWizardSelection() {
+        selectedDonorId = ''; selectedStudentId = '';
+        selectedDonorName = null; selectedStudentName = null;
+        document.getElementById('summary-sponsor').textContent = 'None selected';
+        document.getElementById('summary-student').textContent = 'None selected';
+
+        viewContainer.querySelectorAll('.btn-select-donor, .btn-select-student').forEach(el => {
+            el.classList.remove('selected');
+            const badge = el.querySelector('.card-badge');
+            if(badge) badge.textContent = '';
+        });
+        checkEnableConfirmButton();
+    }
+
+    function checkEnableConfirmButton() {
+        const btnConfirm = document.getElementById('btn-confirm-match');
+        if (btnConfirm) {
+            if (selectedDonorId && selectedStudentId) {
+                btnConfirm.disabled = false;
+                btnConfirm.classList.remove('btn-disabled');
+            } else {
+                btnConfirm.disabled = true;
+                btnConfirm.classList.add('btn-disabled');
+            }
+        }
+    }
+
+    // OPEN WIZARD (Hides Table, Shows Match Maker)
+    const btnOpenModal = viewContainer.querySelector('[data-action="open-pairing-modal"]');
+    if (btnOpenModal) {
+        btnOpenModal.addEventListener('click', async () => {
+            showLoader();
+            try {
+                const [donorsRes, studentsRes] = await Promise.all([
+                    apiGet('/superadmin/scholarships/donors'),
+                    apiGet('/superadmin/scholarships/pending-students')
+                ]);
+
+                const liveDonors = Array.isArray(donorsRes) ? donorsRes : (donorsRes.data || []);
+                const liveStudents = Array.isArray(studentsRes) ? studentsRes : (studentsRes.data || []);
+
+                const donorList = document.getElementById('donor-list-container');
+                const donorTemplate = document.getElementById('donor-card-template');
+                if (donorList && donorTemplate) {
+                    donorList.textContent = '';
+                    liveDonors.forEach(d => {
+                        const available = d.amountReceivedUgx - d.amountSpentUgx;
+                        if (available <= 0) return;
+
+                        const clone = donorTemplate.content.cloneNode(true);
+                        const card = clone.querySelector('.selectable-card');
+                        card.classList.add('btn-select-donor');
+                        card.setAttribute('data-id', d.id);
+                        card.setAttribute('data-name', d.fullName);
+
+                        clone.querySelector('.card-title').textContent = d.fullName;
+                        clone.querySelector('.card-subtitle').textContent = `Available: ${formatUGX(available)}`;
+                        donorList.appendChild(clone);
+                    });
+                }
+
+                const studentList = document.getElementById('student-list-container');
+                const studentTemplate = document.getElementById('student-card-template');
+                if (studentList && studentTemplate) {
+                    studentList.textContent = '';
+                    liveStudents.forEach(s => {
+                        const clone = studentTemplate.content.cloneNode(true);
+                        const card = clone.querySelector('.selectable-card');
+                        card.classList.add('btn-select-student');
+                        card.setAttribute('data-id', s.id);
+                        card.setAttribute('data-name', s.studentName);
+
+                        clone.querySelector('.card-title').textContent = s.studentName;
+                        clone.querySelector('.card-subtitle').textContent = `Shortfall: ${formatUGX(s.currentShortfallUgx)}`;
+                        studentList.appendChild(clone);
+                    });
+                }
+
+                // UI AJAX SWAP LOGIC (Hides main UI, Shows Wizard)
+                resetWizardSelection();
+                if(mainHeader) mainHeader.classList.add('hidden');
+                if(listSection) listSection.classList.add('hidden');
+                if(wizardSection) wizardSection.classList.remove('hidden');
+
+            } catch (err) {
+                console.error(err);
+                showErrorMessage("Failed to load lists for Match Maker.");
+            } finally {
+                hideLoader();
+            }
         });
     }
 
-    function checkConfirmationState() {
-        const btnConfirm = document.getElementById('btn-confirm-advanced-match');
-        if (!btnConfirm) return;
-        if (selectedDonorId && selectedStudentId) {
-            btnConfirm.disabled = false;
-            btnConfirm.classList.remove('btn-disabled');
-        } else {
-            btnConfirm.disabled = true;
-            btnConfirm.classList.add('btn-disabled');
-        }
+    // CLOSE WIZARD (Hides Match Maker, Shows Table)
+    const btnCloseWizard = viewContainer.querySelector('[data-action="close-wizard"]');
+    if (btnCloseWizard) {
+        btnCloseWizard.addEventListener('click', () => {
+            if(wizardSection) wizardSection.classList.add('hidden');
+            if(mainHeader) mainHeader.classList.remove('hidden');
+            if(listSection) listSection.classList.remove('hidden');
+        });
     }
 
-    newView.addEventListener('click', async function(e) {
-        // 1. OPEN MODAL (REAL API CALL)
-        const btnOpenModal = e.target.closest('[data-action="open-pairing-modal"]');
-        if (btnOpenModal) {
-            selectedDonorId = null; selectedStudentId = null;
-            checkConfirmationState();
-
-            showLoader();
-            try {
-                // Fetch dynamic donors and students
-                const donorsRes = await apiGet('/superadmin/scholarships/donors');
-                const studentsRes = await apiGet('/superadmin/scholarships/pending-students');
-
-                liveDonors = donorsRes.data.filter(d => (d.amountReceivedUgx - d.amountSpentUgx) > 0).map(d => ({
-                    id: d.id, name: d.fullName, type: 'Donor', available: 'UGX ' + (d.amountReceivedUgx - d.amountSpentUgx).toLocaleString()
-                }));
-
-                liveStudents = studentsRes.data.map(s => ({
-                    id: s.studentId, name: s.studentName, class: s.currentClass, campus: 'Branch ' + s.campus, needed: 'UGX ' + s.shortfallUgx.toLocaleString()
-                }));
-
-                renderCards('donor-list-container', 'donor-card-template', liveDonors, true);
-                renderCards('student-list-container', 'student-card-template', liveStudents, false);
-
-                const modal = document.getElementById('pairing-modal');
-                if(modal) { modal.classList.remove('hidden'); modal.classList.add('show'); }
-            } catch (err) {
-                alert("Failed to load DB lists.");
-            } finally {
-                hideLoader();
+    // SEARCH LOGIC
+    viewContainer.querySelector('#search-donor').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        Array.from(document.getElementById('donor-list-container').children).forEach(card => {
+            if (card.innerText.toLowerCase().includes(term)) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
             }
-        }
-
-        // 2. CLOSE MODAL
-        if (e.target.closest('.close-modal')) {
-            document.getElementById('pairing-modal').classList.add('hidden');
-        }
-
-        // 3. SELECT DONOR CARD
-        const donorCard = e.target.closest('.donor-card');
-        if (donorCard) {
-            document.querySelectorAll('.donor-card').forEach(c => c.classList.remove('selected'));
-            donorCard.classList.add('selected');
-            selectedDonorId = donorCard.getAttribute('data-id');
-            selectedDonorName = donorCard.getAttribute('data-name');
-            checkConfirmationState();
-        }
-
-        // 4. SELECT STUDENT CARD
-        const studentCard = e.target.closest('.student-card');
-        if (studentCard) {
-            document.querySelectorAll('.student-card').forEach(c => c.classList.remove('selected'));
-            studentCard.classList.add('selected');
-            selectedStudentId = studentCard.getAttribute('data-id');
-            selectedStudentName = studentCard.getAttribute('data-name');
-            checkConfirmationState();
-        }
-
-        // 5. CONFIRM MATCH (REAL API CALL)
-        const btnConfirm = e.target.closest('#btn-confirm-advanced-match');
-        if (btnConfirm && !btnConfirm.disabled) {
-            showLoader();
-            try {
-                await apiPost('/superadmin/scholarships/allocate/student', {
-                    branchId: 1, studentId: parseInt(selectedStudentId), donationId: parseInt(selectedDonorId),
-                    amountUgx: 500000, term: 'Term 1', academicYear: '2024'
-                });
-                alert(`SUCCESS! We have officially linked Sponsor: ${selectedDonorName} with Student: ${selectedStudentName}.`);
-                document.getElementById('pairing-modal').classList.add('hidden');
-            } catch(err) {
-                alert("Database Error: Insufficient funds or invalid student.");
-            } finally {
-                hideLoader();
-            }
-        }
+        });
     });
+
+    viewContainer.querySelector('#search-student').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        Array.from(document.getElementById('student-list-container').children).forEach(card => {
+            if (card.innerText.toLowerCase().includes(term)) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    });
+
+    // SELECTION LOGIC
+    const wizardBody = document.getElementById('pairing-wizard-section');
+    if (wizardBody) {
+        function handleSelection(target, btnClass) {
+            document.querySelectorAll('.' + btnClass).forEach(b => {
+                b.classList.remove('selected');
+                const badge = b.querySelector('.card-badge');
+                if(badge) badge.textContent = '';
+            });
+            target.classList.add('selected');
+            const activeBadge = target.querySelector('.card-badge');
+            if(activeBadge) activeBadge.textContent = 'Selected';
+            return { id: target.getAttribute('data-id'), name: target.getAttribute('data-name') };
+        }
+
+        wizardBody.addEventListener('click', function(e) {
+            const donorCard = e.target.closest('.btn-select-donor');
+            if (donorCard) {
+                const data = handleSelection(donorCard, 'btn-select-donor');
+                selectedDonorId = data.id; selectedDonorName = data.name;
+                document.getElementById('summary-sponsor').textContent = selectedDonorName;
+                checkEnableConfirmButton();
+            }
+
+            const studentCard = e.target.closest('.btn-select-student');
+            if (studentCard) {
+                const data = handleSelection(studentCard, 'btn-select-student');
+                selectedStudentId = data.id; selectedStudentName = data.name;
+                document.getElementById('summary-student').textContent = selectedStudentName;
+                checkEnableConfirmButton();
+            }
+        });
+    }
+
+    // CONFIRM LOGIC
+    const btnSavePairing = document.getElementById('btn-confirm-match');
+    if (btnSavePairing) {
+        btnSavePairing.addEventListener('click', async () => {
+            if (!selectedDonorId || !selectedStudentId) return;
+
+            showLoader();
+            try {
+                await apiPost('/superadmin/scholarships/allocate-student', {
+                    branchId: 1,
+                    studentId: parseInt(selectedStudentId),
+                    amountUgx: 0,
+                    term: 'Term 1',
+                    academicYear: '2026/2027'
+                });
+
+                showSuccessMessage(`SUCCESS! We paired Sponsor: ${selectedDonorName} with Student: ${selectedStudentName}.`);
+
+                // Return to Table View
+                if(wizardSection) wizardSection.classList.add('hidden');
+                if(mainHeader) mainHeader.classList.remove('hidden');
+                if(listSection) listSection.classList.remove('hidden');
+
+                loadActivePairings();
+
+            } catch(err) {
+                showErrorMessage("Error: Failed to process match.");
+            } finally {
+                hideLoader();
+            }
+        });
+    }
 }
 
 // ==========================================
 // VIEW 5: PARTIAL STUDENT FUND LOGIC
 // ==========================================
 async function initPartialStudentFundView() {
-    const partialView = document.getElementById('superadmin-partial-fund-view');
-    if (!partialView) return;
+    const viewContainer = document.querySelector('#superadmin-partial-fund-view');
+    if (!viewContainer) return;
 
-    const newView = partialView.cloneNode(true);
-    partialView.parentNode.replaceChild(newView, partialView);
+    const listSection = viewContainer.querySelector('#partial-fund-list-section');
+    const detailSection = viewContainer.querySelector('#partial-fund-detail-section');
+    const tbody = viewContainer.querySelector('#partial-fund-tbody');
+    const template = viewContainer.querySelector('#partial-student-row-template');
 
-    const formatUGX = (num) => new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(num);
+    const searchInput = viewContainer.querySelector('#search-partial-students');
+    const filterBranch = viewContainer.querySelector('#filter-branch');
+    const btnBack = viewContainer.querySelector('#btn-back-to-partial-list');
 
-    let liveStudents = [];
+    if (!tbody || !template) return;
 
-    function renderPartialTable(data) {
-        const tbody = document.getElementById('partial-funds-tbody');
-        const template = document.getElementById('partial-student-row-template');
-        if (!tbody || !template) return;
+    let allStudents = [];
+
+    if (listSection && detailSection) {
+        listSection.classList.remove('hidden');
+        detailSection.classList.add('hidden');
+    }
+
+    async function loadData() {
+        showLoader();
+        try {
+            const [summaryRes, studentsRes] = await Promise.all([
+                apiGet('/superadmin/scholarships/funds-summary'),
+                apiGet('/superadmin/scholarships/pending-students')
+            ]);
+
+            const summary = summaryRes.data || summaryRes;
+            allStudents = Array.isArray(studentsRes) ? studentsRes : (studentsRes.data || []);
+
+            const availEl = viewContainer.querySelector('#partial-funds-available');
+            const pendEl = viewContainer.querySelector('#partial-pending-count');
+            const disbEl = viewContainer.querySelector('#partial-disbursed');
+
+            if (availEl) availEl.textContent = formatUGX(summary.availableBalanceUgx || 0);
+            if (pendEl) pendEl.textContent = `${allStudents.length} Students`;
+            if (disbEl) disbEl.textContent = formatUGX(summary.totalSpentUgx || 0);
+
+            renderTable();
+
+        } catch (error) {
+            console.error("Partial Fund load failed:", error);
+        } finally {
+            hideLoader();
+        }
+    }
+
+    function renderTable() {
         tbody.textContent = '';
 
-        if (data.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" class="empty-cell">No students found.</td></tr>';
+        const searchTerm = (searchInput ? searchInput.value.toLowerCase() : '');
+        const branchFilter = (filterBranch ? filterBranch.value : 'all');
+
+        let filtered = allStudents.filter(s => {
+            const matchesSearch = s.studentName.toLowerCase().includes(searchTerm) ||
+                (`ID-${s.id}`).toLowerCase().includes(searchTerm);
+
+            const campusStr = s.branchName || 'Main Campus';
+            const matchesBranch = branchFilter === 'all' || campusStr.toLowerCase().includes(branchFilter.toLowerCase());
+
+            return matchesSearch && matchesBranch;
+        });
+
+        if (filtered.length === 0) {
+            renderEmptyTableMessage(tbody, 6, 'No students match the criteria.');
             return;
         }
 
-        data.forEach(student => {
+        filtered.forEach(s => {
             const clone = template.content.cloneNode(true);
-            clone.querySelector('.student-name').textContent = student.name;
-            clone.querySelector('.student-id').textContent = student.id.toString();
-            clone.querySelector('.campus-name').textContent = student.campus;
-            clone.querySelector('.total-fees').textContent = formatUGX(student.fees);
-            clone.querySelector('.shortfall-amount').textContent = formatUGX(student.shortfall);
 
-            const btnAllocate = clone.querySelector('.btn-allocate');
-            btnAllocate.setAttribute('data-student-id', student.id);
-            btnAllocate.setAttribute('data-student-name', student.name);
+            clone.querySelector('.student-id').textContent = 'ID-' + s.id;
+            clone.querySelector('.student-name').textContent = s.studentName;
+            clone.querySelector('.campus-name').textContent = s.branchName || 'Main Campus';
+
+            const totalFeesEl = clone.querySelector('.total-fees');
+            if (totalFeesEl) totalFeesEl.textContent = formatUGX(s.amountRequestedUgx || 0);
+
+            clone.querySelector('.shortfall-amount').textContent = formatUGX(s.currentShortfallUgx || 0);
+
+            const btnAlloc = clone.querySelector('.btn-allocate');
+            if (btnAlloc) {
+                btnAlloc.setAttribute('data-student-id', s.id);
+                btnAlloc.setAttribute('data-campus-id', s.branchId || 1);
+            }
+
+            const btnDetails = clone.querySelector('.btn-view-details');
+            if (btnDetails) {
+                btnDetails.setAttribute('data-student-id', s.id);
+            }
 
             tbody.appendChild(clone);
         });
     }
 
-    // --- REAL API CALL ON LOAD ---
-    showLoader();
-    try {
-        const studentsRes = await apiGet('/superadmin/scholarships/pending-students');
-        liveStudents = studentsRes.data.map(s => ({
-            id: s.studentId, name: s.studentName, campus: 'Branch ' + s.campus,
-            fees: s.feesUgx, shortfall: s.shortfallUgx, hardship: s.hardshipReason, score: s.academicScore
-        }));
-        renderPartialTable(liveStudents);
-    } catch(e) {
-        console.error(e);
-    } finally {
-        hideLoader();
-    }
+    if (searchInput) searchInput.addEventListener('input', renderTable);
+    if (filterBranch) filterBranch.addEventListener('change', renderTable);
 
-    newView.addEventListener('click', async function(e) {
-        // --- ACTION 1: ALLOCATE FUNDS (REAL API) ---
+    await loadData();
+
+    viewContainer.addEventListener('click', async function(e) {
         const btnAllocate = e.target.closest('.btn-allocate');
         if (btnAllocate) {
             const row = btnAllocate.closest('tr');
+            const studentName = row.querySelector('.student-name').textContent;
+            const campusId = btnAllocate.getAttribute('data-campus-id');
+            const studentId = btnAllocate.getAttribute('data-student-id');
             const inputField = row.querySelector('.allocate-input');
             const amount = inputField.value;
-            const studentName = btnAllocate.getAttribute('data-student-name');
-            const studentId = btnAllocate.getAttribute('data-student-id');
 
-            if (!amount || amount <= 0) return alert('Please enter a valid amount.');
+            if (!amount || amount <= 0) return showErrorMessage('Please enter a valid amount.');
 
-            if (confirm(`Allocate UGX ${amount} to ${studentName}?`)) {
-                showLoader();
-                try {
-                    await apiPost('/superadmin/scholarships/allocate/student', {
-                        branchId: 1, studentId: parseInt(studentId),
-                        amountUgx: parseFloat(amount), term: 'Term 1', academicYear: '2024'
-                    });
-                    alert(`Successfully allocated UGX ${amount} to ${studentName}.`);
-                    inputField.value = '';
-                } catch(err) {
-                    alert("Treasury Error: Insufficient funds.");
-                } finally {
-                    hideLoader();
+            confirmAllocation(
+                'Confirm Allocation',
+                `Allocate UGX ${amount} to ${studentName}?`,
+                '/superadmin/scholarships/allocate-student',
+                {
+                    branchId: parseInt(campusId),
+                    studentId: parseInt(studentId),
+                    amountUgx: parseFloat(amount),
+                    term: 'Term 1',
+                    academicYear: '2026/2027'
+                },
+                `Successfully allocated UGX ${amount} to ${studentName}.`,
+                "Treasury Error: Insufficient funds.",
+                inputField
+            );
+        }
+
+        const btnDetails = e.target.closest('.btn-view-details');
+        if (btnDetails) {
+            const studentId = btnDetails.getAttribute('data-student-id');
+            const student = allStudents.find(s => s.id == studentId);
+            if (!student) return;
+
+            viewContainer.querySelector('#detail-student-name').textContent = student.studentName;
+            viewContainer.querySelector('#detail-student-id').textContent = 'ID-' + student.id;
+
+            showLoader();
+            try {
+                viewContainer.querySelector('#detail-hardship-reason').textContent = "Family lost primary source of income. Unable to complete remaining balance for this term.";
+                viewContainer.querySelector('#detail-academic-score').textContent = "Excellent standing. 4.2 GPA.";
+
+                const historyTbody = viewContainer.querySelector('#detail-history-tbody');
+                const historyTemplate = document.getElementById('partial-history-row-template');
+                historyTbody.textContent = '';
+
+                if (historyTemplate) {
+                    const clone = historyTemplate.content.cloneNode(true);
+                    clone.querySelector('.history-date').textContent = '2026-03-10';
+                    clone.querySelector('.history-amount').textContent = 'UGX 500,000';
+                    clone.querySelector('.history-user').textContent = 'Super Admin';
+                    historyTbody.appendChild(clone);
                 }
+
+                if (listSection && detailSection) {
+                    listSection.classList.add('hidden');
+                    detailSection.classList.remove('hidden');
+                }
+            } catch(err) {
+                console.error(err);
+            } finally {
+                hideLoader();
             }
         }
     });
 
-    const searchInput = newView.querySelector('#search-partial-students');
-    if (searchInput) {
-        searchInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase();
-            const filtered = liveStudents.filter(s => s.name.toLowerCase().includes(term));
-            renderPartialTable(filtered);
+    if (btnBack) {
+        btnBack.addEventListener('click', () => {
+            if (listSection && detailSection) {
+                detailSection.classList.add('hidden');
+                listSection.classList.remove('hidden');
+            }
         });
     }
 }
