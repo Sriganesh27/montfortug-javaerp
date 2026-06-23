@@ -17,13 +17,12 @@ public class ErpScholarshipApplication {
     @Column(name = "branch_id", nullable = false)
     private Long branchId;
 
-    // Notice these two are optional (nullable). We can link to either!
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", referencedColumnName = "StudentID", nullable = true)
+    @JoinColumn(name = "student_id", referencedColumnName = "StudentID", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private ErpStudent student;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "application_id", referencedColumnName = "app_id", nullable = true)
+    @JoinColumn(name = "application_id", referencedColumnName = "app_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private ErpApplication application;
 
     @Column(name = "amount_requested_ugx", precision = 38, scale = 2, nullable = false)

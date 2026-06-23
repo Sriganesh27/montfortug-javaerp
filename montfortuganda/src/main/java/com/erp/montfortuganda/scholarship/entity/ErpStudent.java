@@ -16,7 +16,7 @@ public class ErpStudent {
     private Integer admissionNo;
 
     @Column(name = "branch_id")
-    private Long branchId;
+    private Integer branchId;
 
     @Column(name = "Name", length = 100)
     private String name;
