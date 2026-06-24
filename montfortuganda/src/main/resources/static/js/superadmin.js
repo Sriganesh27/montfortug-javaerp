@@ -4,18 +4,58 @@
 
 const formatUGX = (num) => new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(num);
 
-function renderEmptyTableMessage(tbody, colSpan, message) {
-    tbody.textContent = '';
-    const tr = document.createElement('tr');
-    const td = document.createElement('td');
-    td.colSpan = colSpan;
-    td.className = 'empty-cell';
-    td.style.textAlign = 'center';
-    td.style.padding = '20px';
-    td.style.color = '#94a3b8';
-    td.textContent = message;
-    tr.appendChild(td);
-    tbody.appendChild(tr);
+// ==========================================
+// UI ANIMATION UTILITIES
+// ==========================================
+
+function animateValue(obj, start, end, duration, isCurrency = false) {
+    if (!obj) return;
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+
+        // Premium Quartic ease-out curve (fast start, slow dramatic finish)
+        const easeOut = 1 - Math.pow(1 - progress, 4);
+        let current = Math.floor(easeOut * (end - start) + start);
+
+        obj.textContent = isCurrency ? formatUGX(current) : current.toLocaleString();
+
+        if (progress < 1) {
+            window.requestAnimationFrame(step);
+        } else {
+            // Ensure it lands perfectly on the final number
+            obj.textContent = isCurrency ? formatUGX(end) : end.toLocaleString();
+        }
+    };
+    window.requestAnimationFrame(step);
+}
+
+// ==========================================
+// UTILITY: POPULATE BRANCH DROPDOWNS
+// ==========================================
+async function populateBranchDropdowns(selectElements) {
+    try {
+        const json = await apiGet('/superadmin/branches');
+        /** @type {{branchId: number, branchName: string, branchLocation: string}[]} */
+        const branches = json.data || [];
+
+        selectElements.forEach(selectEl => {
+            if (!selectEl) return;
+            const firstOption = selectEl.options[0]; // Preserve "All Branches"
+            selectEl.textContent = '';
+            if (firstOption) selectEl.appendChild(firstOption);
+
+            branches.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.branchName;
+                opt.textContent = b.branchLocation ? `${b.branchName} (${b.branchLocation})` : b.branchName;
+                selectEl.appendChild(opt);
+            });
+        });
+    } catch (e) {
+        console.error("Failed to fetch branches for dropdowns", e);
+    }
 }
 
 function extractInchargeDetails(viewContainer, tbodyId, nameClass, roleClass, phoneClass) {
@@ -123,23 +163,18 @@ async function initHomeView() {
     }
 
     try {
-        const branchJson = await apiGet('/superadmin/branches');
-        const statTotalBranches = document.getElementById('sa-statTotalBranches');
-        if(statTotalBranches) statTotalBranches.textContent = branchJson.data.length.toString();
+        const [branchRes, usersRes, settingsRes] = await Promise.all([
+            apiGet('/superadmin/branches').catch(()=>null),
+            apiGet('/superadmin/users').catch(()=>null),
+            apiGet('/superadmin/settings').catch(()=>null)
+        ]);
 
-        const usersJson = await apiGet('/superadmin/users');
-        const statTotalUsers = document.getElementById('sa-statTotalUsers');
-        if(statTotalUsers) statTotalUsers.textContent = usersJson.data.length.toString();
-
-        const settingsJson = await apiGet('/superadmin/settings');
-        const statTotalSettings = document.getElementById('sa-statTotalSettings');
-        if(statTotalSettings) statTotalSettings.textContent = settingsJson.data.length.toString();
-
+        animateValue(document.getElementById('sa-statTotalBranches'), 0, branchRes?.data?.length || 0, 1200, false);
+        animateValue(document.getElementById('sa-statTotalUsers'), 0, usersRes?.data?.length || 0, 1500, false);
+        animateValue(document.getElementById('sa-statTotalSettings'), 0, settingsRes?.data?.length || 0, 1800, false);
     } catch (error) {
         console.error("Failed to load dashboard stats", error);
         showErrorMessage("Could not load dashboard statistics.");
-    } finally {
-        hideLoader();
     }
 }
 
@@ -182,7 +217,8 @@ function initBranchesView() {
     }
 
     async function loadBranches() {
-        showLoader();
+        const tbody = viewContainer.querySelector('#sa-branchesTableBody');
+        if (tbody) renderFetchingMessage(tbody, 10, 'Fetching branches...');
         try {
             const json = await apiGet('/superadmin/branches');
             const branches = json.data;
@@ -516,14 +552,19 @@ function initBranchesView() {
     const printBtn = viewContainer.querySelector('#sa-printBranchBtn');
     if (printBtn) {
         printBtn.addEventListener('click', () => {
-            const printContent = viewContainer.querySelector('#printable-area').innerHTML;
-            const originalContent = document.body.innerHTML;
+            const printContent = viewContainer.querySelector('#printable-area').cloneNode(true);
+            const originalChildren = Array.from(document.body.childNodes);
 
-            document.body.innerHTML = `<h2>Montfort School Branch Report</h2>${printContent}`;
+            document.body.textContent = '';
+            const header = document.createElement('h2');
+            header.textContent = 'Montfort School Branch Report';
+            document.body.appendChild(header);
+            document.body.appendChild(printContent);
+
             window.print();
 
-            document.body.innerHTML = originalContent;
-            location.reload();
+            document.body.textContent = '';
+            originalChildren.forEach(child => document.body.appendChild(child));
         });
     }
 
@@ -531,11 +572,6 @@ function initBranchesView() {
 }
 
 // ---------------------------------------------------------
-// 3. ADD BRANCH PAGE LOGIC (DYNAMIC TABLE & JSON)
-// ---------------------------------------------------------
-
-    // Changes "Click or drag photo here" to the actual file name when selected!
-  // ---------------------------------------------------------
 // 3. ADD BRANCH PAGE LOGIC (DYNAMIC TABLE & JSON)
 // ---------------------------------------------------------
 function initAddBranchView() {
@@ -686,15 +722,19 @@ async function initSystemStatsView() {
     const viewContainer = document.querySelector('#superadmin-stats-view');
     if (!viewContainer) return;
 
-    showLoader();
     try {
-        const branchesRes = await apiGet('/superadmin/branches').catch(() => ({data: []}));
+        // Fetch everything first so they animate perfectly in sync!
+        const [branchRes, stdRes, staffRes, sessRes] = await Promise.all([
+            apiGet('/superadmin/branches').catch(()=>null),
+            apiGet('/superadmin/students').catch(()=>null),
+            apiGet('/superadmin/staff').catch(()=>null),
+            apiGet('/superadmin/sessions/active').catch(()=>null)
+        ]);
 
-        // Populate Top Cards
-        viewContainer.querySelector('#global-stat-branches').textContent = (branchesRes.data.length || 7).toString();
-        viewContainer.querySelector('#global-stat-students').textContent = "4,250"; // Mock Total
-        viewContainer.querySelector('#global-stat-staff').textContent = "315"; // Mock Total
-        viewContainer.querySelector('#global-stat-sessions').textContent = "84"; // Mock Live Sessions
+        animateValue(document.querySelector('#global-stat-branches'), 0, branchRes?.data?.length || 0, 1200);
+        animateValue(document.querySelector('#global-stat-students'), 0, stdRes?.data?.length || 0, 1500);
+        animateValue(document.querySelector('#global-stat-staff'), 0, staffRes?.data?.length || 0, 1800);
+        animateValue(document.querySelector('#global-stat-sessions'), 0, sessRes?.data?.length || 0, 2000);
 
         // Populate Branch Breakdown List securely via HTML Template
         const breakdownList = viewContainer.querySelector('#enrollment-breakdown-list');
@@ -743,7 +783,7 @@ async function initAuditLogsView() {
     const template = viewContainer.querySelector('#global-audit-row-template');
     if (!tbody || !template) return;
 
-    showLoader();
+    if (tbody) renderFetchingMessage(tbody, 10, 'Fetching audit logs...');
     try {
         const logsRes = await apiGet('/superadmin/global-logs').catch(() => null);
         const logs = (logsRes && logsRes.data) ? logsRes.data : [
@@ -815,70 +855,80 @@ async function initScholarshipsFundsGotView() {
     const viewContainer = document.querySelector('#superadmin-funds-got-view');
     if (!viewContainer) return;
 
-    showLoader();
+    const tbody = viewContainer.querySelector('#treasury-donors-tbody');
+    if (tbody) renderFetchingMessage(tbody, 10, 'Fetching treasury data...');
+
     try {
         const summaryRes = await apiGet('/superadmin/scholarships/funds-summary');
+
+        /** @type {{totalRaisedUgx: number, totalSpentUgx: number, availableBalanceUgx: number, studentsSponsored: number}} */
         const summary = summaryRes.data || summaryRes;
 
-        viewContainer.querySelector('#treasury-total-raised').textContent = formatUGX(summary.totalRaisedUgx || 0);
-        viewContainer.querySelector('#treasury-total-spent').textContent = formatUGX(summary.totalSpentUgx || 0);
-        viewContainer.querySelector('#treasury-available').textContent = formatUGX(summary.availableBalanceUgx || 0);
-        viewContainer.querySelector('#treasury-sponsored').textContent = (summary.studentsSponsored || 0).toString();
+        animateValue(document.querySelector('#treasury-total-raised'), 0, summary.totalRaisedUgx || 0, 1500, true);
+        animateValue(document.querySelector('#treasury-total-spent'), 0, summary.totalSpentUgx || 0, 1800, true);
+        animateValue(document.querySelector('#treasury-available'), 0, summary.availableBalanceUgx || 0, 2000, true);
+        animateValue(document.querySelector('#treasury-sponsored'), 0, summary.studentsSponsored || 0, 1200, false);
 
         const donorsRes = await apiGet('/superadmin/scholarships/donors');
         const donorsArray = Array.isArray(donorsRes) ? donorsRes : (donorsRes.data || []);
 
-        const liveDonationsData = donorsArray.map(d => ({
-            id: d.id,
-            receipt_number: d.receiptNumber,
-            full_name: d.fullName,
-            email: d.email,
-            currency: d.currency,
-            amount: d.amount, // <--- Added the foreign amount here
-            amount_received: d.amountReceivedUgx,
-            amount_spent: d.amountSpentUgx,
-            students_benefited: d.studentsBenefited,
-            term: d.term
-        }));
+        const tbody = viewContainer.querySelector('tbody');
+        if (tbody && (!donorsArray || donorsArray.length === 0)) {
+            renderEmptyTableMessage(tbody, 10, 'No donor records found.');
+        } else if (tbody) {
 
-        const pagination = new GlobalPagination({
-            data: liveDonationsData,
-            itemsPerPage: 25,
-            elements: {
-                startId: 'funds-page-start', endId: 'funds-page-end', totalId: 'funds-page-total',
-                prevBtnId: 'btn-funds-prev', nextBtnId: 'btn-funds-next',
-                numbersContainerId: 'funds-pagination-numbers', templateId: 'funds-page-number-template'
-            },
-            renderCallback: (pageData) => {
-                const tbody = viewContainer.querySelector('#treasury-donors-tbody');
-                const template = viewContainer.querySelector('#treasury-donor-row-template');
-                if (tbody && template) {
-                    tbody.textContent = '';
-                    pageData.forEach(donor => {
-                        const clone = template.content.cloneNode(true);
-                        clone.querySelector('.donor-receipt').textContent = donor.receipt_number;
-                        clone.querySelector('.donor-name').textContent = donor.full_name;
-                        clone.querySelector('.donor-email').textContent = donor.email;
+            const liveDonationsData = donorsArray.map(d => ({
+                id: d.id,
+                receipt_number: d.receiptNumber,
+                full_name: d.fullName,
+                email: d.email,
+                currency: d.currency,
+                amount: d.amount, // <--- Added the foreign amount here
+                amount_received: d.amountReceivedUgx,
+                amount_spent: d.amountSpentUgx,
+                students_benefited: d.studentsBenefited,
+                term: d.term
+            }));
 
-                        // <--- Updated to display BOTH Currency Type and Amount Donated! --->
-                        clone.querySelector('.donor-foreign').textContent = `${donor.currency} ${parseFloat(donor.amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            const pagination = new GlobalPagination({
+                data: liveDonationsData,
+                itemsPerPage: 25,
+                elements: {
+                    startId: 'funds-page-start', endId: 'funds-page-end', totalId: 'funds-page-total',
+                    prevBtnId: 'btn-funds-prev', nextBtnId: 'btn-funds-next',
+                    numbersContainerId: 'funds-pagination-numbers', templateId: 'funds-page-number-template'
+                },
+                renderCallback: (pageData) => {
+                    const tbody = viewContainer.querySelector('#treasury-donors-tbody');
+                    const template = viewContainer.querySelector('#treasury-donor-row-template');
+                    if (tbody && template) {
+                        tbody.textContent = '';
+                        pageData.forEach(donor => {
+                            const clone = template.content.cloneNode(true);
+                            clone.querySelector('.donor-receipt').textContent = donor.receipt_number;
+                            clone.querySelector('.donor-name').textContent = donor.full_name;
+                            clone.querySelector('.donor-email').textContent = donor.email;
 
-                        clone.querySelector('.donor-received-ugx').textContent = formatUGX(donor.amount_received);
+                            // <--- Updated to display BOTH Currency Type and Amount Donated! --->
+                            clone.querySelector('.donor-foreign').textContent = `${donor.currency} ${parseFloat(donor.amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
 
-                        const availableUGX = donor.amount_received - donor.amount_spent;
-                        const availElem = clone.querySelector('.donor-available-ugx');
-                        availElem.textContent = formatUGX(availableUGX);
-                        if (availableUGX <= 0) availElem.classList.replace('text-bold', 'text-muted');
+                            clone.querySelector('.donor-received-ugx').textContent = formatUGX(donor.amount_received);
 
-                        clone.querySelector('.donor-students').textContent = `${donor.students_benefited} Students`;
-                        clone.querySelector('.donor-term').textContent = donor.term;
-                        tbody.appendChild(clone);
-                    });
+                            const availableUGX = donor.amount_received - donor.amount_spent;
+                            const availElem = clone.querySelector('.donor-available-ugx');
+                            availElem.textContent = formatUGX(availableUGX);
+                            if (availableUGX <= 0) availElem.classList.replace('text-bold', 'text-muted');
+
+                            clone.querySelector('.donor-students').textContent = `${donor.students_benefited} Students`;
+                            clone.querySelector('.donor-term').textContent = donor.term;
+                            tbody.appendChild(clone);
+                        });
+                    }
                 }
-            }
-        });
-        pagination.render();
+            });
+            pagination.render();
 
+        }
     } catch (error) {
         console.error("Treasury load failed:", error);
         showErrorMessage("Failed to load global treasury data.");
@@ -893,7 +943,12 @@ async function initScholarshipsApplicationsView() {
     const viewContainer = document.querySelector('#superadmin-global-search-view');
     if (!viewContainer) return;
 
-    showLoader();
+    const branchSelect = viewContainer.querySelector('#gs-branch-filter');
+    if (branchSelect) void populateBranchDropdowns([branchSelect]);
+
+    const tbody = viewContainer.querySelector('#gs-table-body');
+    if (tbody) renderFetchingMessage(tbody, 10, 'Fetching student applications...');
+
     try {
         const studentsRes = await apiGet('/superadmin/scholarships/pending-students');
         const rawData = Array.isArray(studentsRes) ? studentsRes : (studentsRes.data || []);
@@ -938,7 +993,9 @@ async function initScholarshipsApplicationsView() {
             const p1 = document.createElement('p');
             const span1 = document.createElement('span');
             span1.className = 'badge-pending';
+            span1.id = 'gs-pending-badge';
             span1.textContent = formatUGX(totalDeficit);
+            animateValue(span1, 0, totalDeficit, 2500, true);
             const textNode1 = document.createTextNode(' Unfunded');
             p1.appendChild(span1);
             p1.appendChild(textNode1);
@@ -1022,17 +1079,19 @@ async function initScholarshipsApplicationsView() {
         pagination.render();
 
         const btnApply = viewContainer.querySelector('#gs-apply-btn');
-        const btnReset = viewContainer.querySelector('#gs-reset-btn');
+        const btnReset = viewContainer.querySelector('#gs-reset-filters');
 
         if (btnApply) {
             btnApply.addEventListener('click', () => {
                 const search = viewContainer.querySelector('#gs-search-input').value.toLowerCase();
                 const status = viewContainer.querySelector('#gs-status-filter').value;
+                const branch = viewContainer.querySelector('#gs-branch-filter').value;
 
                 filteredData = liveApplications.filter(app => {
                     const matchesSearch = app.name.toLowerCase().includes(search) || app.id.toLowerCase().includes(search);
                     const matchesStatus = status ? app.status === status : true;
-                    return matchesSearch && matchesStatus;
+                    const matchesBranch = (branch && branch !== 'all') ? app.branch === branch : true;
+                    return matchesSearch && matchesStatus && matchesBranch;
                 });
 
                 pagination.updateData(filteredData);
@@ -1043,6 +1102,7 @@ async function initScholarshipsApplicationsView() {
             btnReset.addEventListener('click', () => {
                 viewContainer.querySelector('#gs-search-input').value = '';
                 viewContainer.querySelector('#gs-status-filter').value = '';
+                viewContainer.querySelector('#gs-branch-filter').value = '';
                 filteredData = [...liveApplications];
                 pagination.updateData(filteredData);
             });
@@ -1067,21 +1127,30 @@ function initBulkDistributionView() {
 
     let currentHistoryData = [];
 
-    apiGet('/superadmin/scholarships/demands').then(res => {
-        const demands = Array.isArray(res) ? res : (res.data || []);
-        const summary = res.summary || {};
+    const branchTable = document.querySelector('#superadmin-bulk-distribution-view tbody');
+    if (branchTable) renderFetchingMessage(branchTable, 10, 'Fetching branch demands...');
 
-        const cards = document.querySelectorAll('#superadmin-bulk-distribution-view .fund-card h2');
-        if (cards.length >= 3) {
-            cards[0].textContent = formatUGX(summary.totalAvailableUgx || 0);
-            cards[2].textContent = formatUGX(summary.allocatedThisTermUgx || 0);
-        }
+    try {apiGet('/superadmin/scholarships/branch-demands').then(res => {
+        const demands = Array.isArray(res) ? res : (res.data || []);
+
+        // Fetch funds summary so we can animate all 3 cards exactly in sync!
+        apiGet('/superadmin/scholarships/funds-summary').then(fundsRes => {
+            /** @type {{availableBalanceUgx: number, allocatedThisTermUgx: number}} */
+            const fSummary = fundsRes.data || {};
+            const cards = document.querySelectorAll('#superadmin-bulk-distribution-view .fund-card h2');
+            if (cards.length >= 3) {
+                animateValue(cards[0], 0, fSummary.availableBalanceUgx || 0, 1500, true);
+                animateValue(cards[2], 0, fSummary.allocatedThisTermUgx || 0, 1800, true);
+            }
+        }).catch(e => console.error(e));
 
         let totalDemands = 0;
         demands.forEach(d => totalDemands += (d.totalRequestedAmountUgx || 0));
 
         const tDom = document.querySelector('#superadmin-bulk-distribution-view .fund-card:nth-child(2) h2');
-        if (tDom) tDom.textContent = formatUGX(totalDemands);
+        if (tDom) {
+            animateValue(tDom, 0, totalDemands, 2000, true);
+        }
 
         const branchTable = document.querySelector('#superadmin-bulk-distribution-view tbody');
         const rowTemplate = document.getElementById('bulk-distribution-row-template');
@@ -1108,6 +1177,7 @@ function initBulkDistributionView() {
             });
         }
     }).catch(e => console.error("Failed to load demands:", e));
+    } catch(err) { hideLoader(); }
 
     function renderHistoryTable(dataArray) {
         const tbody = document.getElementById('ajax-history-tbody');
@@ -1116,13 +1186,7 @@ function initBulkDistributionView() {
         tbody.textContent = '';
 
         if (dataArray.length === 0) {
-            const tr = document.createElement('tr');
-            const td = document.createElement('td');
-            td.colSpan = 5;
-            td.className = 'text-center text-muted py-4';
-            td.textContent = 'No transactions found.';
-            tr.appendChild(td);
-            tbody.appendChild(tr);
+            renderEmptyTableMessage(tbody, 5, 'No transactions found.');
             return;
         }
 
@@ -1224,6 +1288,9 @@ function initOneToOneSponsorshipView() {
     const wizardSection = viewContainer.querySelector('#pairing-wizard-section');
 
     function loadActivePairings() {
+        const tbody = viewContainer.querySelector('tbody');
+        if (tbody) renderFetchingMessage(tbody, 10, 'Fetching active sponsorships...');
+
         apiGet('/superadmin/scholarships/active-sponsorships').then(res => {
             const active = Array.isArray(res) ? res : (res.data || []);
             const tbody = viewContainer.querySelector('tbody');
@@ -1233,13 +1300,7 @@ function initOneToOneSponsorshipView() {
                 tbody.textContent = '';
 
                 if (active.length === 0) {
-                    const tr = document.createElement('tr');
-                    const td = document.createElement('td');
-                    td.colSpan = 5;
-                    td.className = 'text-center text-muted py-4';
-                    td.textContent = 'No active sponsorships found.';
-                    tr.appendChild(td);
-                    tbody.appendChild(tr);
+                    renderEmptyTableMessage(tbody, 5, 'No active sponsorships found.');
                     return;
                 }
 
@@ -1288,6 +1349,7 @@ function initOneToOneSponsorshipView() {
     }
 
     // OPEN WIZARD (Hides Table, Shows Match Maker)
+
     const btnOpenModal = viewContainer.querySelector('[data-action="open-pairing-modal"]');
     if (btnOpenModal) {
         btnOpenModal.addEventListener('click', async () => {
@@ -1464,11 +1526,13 @@ async function initPartialStudentFundView() {
     const listSection = viewContainer.querySelector('#partial-fund-list-section');
     const detailSection = viewContainer.querySelector('#partial-fund-detail-section');
     const tbody = viewContainer.querySelector('#partial-fund-tbody');
-    const template = viewContainer.querySelector('#partial-student-row-template');
+    const template = document.querySelector('#partial-student-row-template');
 
     const searchInput = viewContainer.querySelector('#search-partial-students');
     const filterBranch = viewContainer.querySelector('#filter-branch');
     const btnBack = viewContainer.querySelector('#btn-back-to-partial-list');
+
+    if (filterBranch) void populateBranchDropdowns([filterBranch]);
 
     if (!tbody || !template) return;
 
@@ -1480,28 +1544,49 @@ async function initPartialStudentFundView() {
     }
 
     async function loadData() {
-        showLoader();
+        const tbody = viewContainer.querySelector('#partial-fund-tbody');
+        if (tbody) window.renderFetchingMessage(tbody, 10, 'Fetching sponsorships...');
+
         try {
-            const [summaryRes, studentsRes] = await Promise.all([
-                apiGet('/superadmin/scholarships/funds-summary'),
-                apiGet('/superadmin/scholarships/pending-students')
-            ]);
+            // 1. Fetch Global Treasury Summary Independently
+            let summary = { availableBalanceUgx: 0, totalSpentUgx: 0 };
+            try {
+                const summaryRes = await apiGet('/superadmin/scholarships/funds-summary');
+                summary = summaryRes.data || summaryRes;
+            } catch (summaryErr) {
+                console.warn("Could not load funds summary. Your web_donations table might have an issue.", summaryErr);
+            }
 
-            const summary = summaryRes.data || summaryRes;
-            allStudents = Array.isArray(studentsRes) ? studentsRes : (studentsRes.data || []);
+            // 2. Fetch Pending Students Independently
+            try {
+                const studentsRes = await apiGet('/superadmin/scholarships/pending-students');
+                allStudents = Array.isArray(studentsRes) ? studentsRes : (studentsRes.data || []);
+            } catch (studentsErr) {
+                console.warn("Could not load pending students. Does the erp_scholarship_applications table exist?", studentsErr);
+                allStudents = []; // Default to empty array so the UI doesn't crash
+            }
 
+            // 3. Update the UI Stat Cards Safely with Smooth Animation!
             const availEl = viewContainer.querySelector('#partial-funds-available');
             const pendEl = viewContainer.querySelector('#partial-pending-count');
             const disbEl = viewContainer.querySelector('#partial-disbursed');
 
-            if (availEl) availEl.textContent = formatUGX(summary.availableBalanceUgx || 0);
-            if (pendEl) pendEl.textContent = `${allStudents.length} Students`;
-            if (disbEl) disbEl.textContent = formatUGX(summary.totalSpentUgx || 0);
+            if (availEl) animateValue(availEl, 0, summary.availableBalanceUgx || 0, 1500, true);
+            if (disbEl) animateValue(disbEl, 0, summary.totalSpentUgx || 0, 1800, true);
 
+            if (pendEl) {
+                // Animate the number, then safely append " Students" once it finishes
+                animateValue(pendEl, 0, allStudents.length, 1200, false);
+                setTimeout(() => {
+                    if (pendEl.textContent === allStudents.length.toString()) {
+                        pendEl.textContent = `${allStudents.length} Students`;
+                    }
+                }, 1300);
+            }
+
+            // 4. Render the Table
             renderTable();
 
-        } catch (error) {
-            console.error("Partial Fund load failed:", error);
         } finally {
             hideLoader();
         }
@@ -1514,10 +1599,12 @@ async function initPartialStudentFundView() {
         const branchFilter = (filterBranch ? filterBranch.value : 'all');
 
         let filtered = allStudents.filter(s => {
-            const matchesSearch = s.studentName.toLowerCase().includes(searchTerm) ||
-                (`ID-${s.id}`).toLowerCase().includes(searchTerm);
+            const studentNameStr = s.studentName || 'Unknown';
+            const studentIdVal = s.studentId || s.id || '';
+            const matchesSearch = studentNameStr.toLowerCase().includes(searchTerm) ||
+                (`ID-${studentIdVal}`).toLowerCase().includes(searchTerm);
 
-            const campusStr = s.branchName || 'Main Campus';
+            const campusStr = s.campusName || s.branchName || 'Main Campus';
             const matchesBranch = branchFilter === 'all' || campusStr.toLowerCase().includes(branchFilter.toLowerCase());
 
             return matchesSearch && matchesBranch;
@@ -1531,24 +1618,25 @@ async function initPartialStudentFundView() {
         filtered.forEach(s => {
             const clone = template.content.cloneNode(true);
 
-            clone.querySelector('.student-id').textContent = 'ID-' + s.id;
-            clone.querySelector('.student-name').textContent = s.studentName;
-            clone.querySelector('.campus-name').textContent = s.branchName || 'Main Campus';
+            // Fix property mismatch: The Java DTO uses studentId, campusName, totalFeesUgx, shortfallUgx
+            clone.querySelector('.student-id').textContent = 'ID-' + (s.studentId || s.id || 'N/A');
+            clone.querySelector('.student-name').textContent = s.studentName || 'Unknown';
+            clone.querySelector('.campus-name').textContent = s.campusName || s.branchName || 'Main Campus';
 
             const totalFeesEl = clone.querySelector('.total-fees');
-            if (totalFeesEl) totalFeesEl.textContent = formatUGX(s.amountRequestedUgx || 0);
+            if (totalFeesEl) totalFeesEl.textContent = formatUGX(s.totalFeesUgx || s.amountRequestedUgx || 0);
 
-            clone.querySelector('.shortfall-amount').textContent = formatUGX(s.currentShortfallUgx || 0);
+            clone.querySelector('.shortfall-amount').textContent = formatUGX(s.shortfallUgx || s.currentShortfallUgx || 0);
 
             const btnAlloc = clone.querySelector('.btn-allocate');
             if (btnAlloc) {
-                btnAlloc.setAttribute('data-student-id', s.id);
-                btnAlloc.setAttribute('data-campus-id', s.branchId || 1);
+                btnAlloc.setAttribute('data-student-id', s.studentId || s.id);
+                btnAlloc.setAttribute('data-campus-id', s.campusId || s.branchId || 1);
             }
 
             const btnDetails = clone.querySelector('.btn-view-details');
             if (btnDetails) {
-                btnDetails.setAttribute('data-student-id', s.id);
+                btnDetails.setAttribute('data-student-id', s.studentId || s.id);
             }
 
             tbody.appendChild(clone);
@@ -1592,11 +1680,12 @@ async function initPartialStudentFundView() {
         const btnDetails = e.target.closest('.btn-view-details');
         if (btnDetails) {
             const studentId = btnDetails.getAttribute('data-student-id');
-            const student = allStudents.find(s => s.id == studentId);
+            // FIX: Convert the string ID to a Number safely!
+            const student = allStudents.find(s => (s.studentId || s.id) === parseInt(studentId, 10));
             if (!student) return;
 
-            viewContainer.querySelector('#detail-student-name').textContent = student.studentName;
-            viewContainer.querySelector('#detail-student-id').textContent = 'ID-' + student.id;
+            viewContainer.querySelector('#detail-student-name').textContent = student.studentName || 'Unknown';
+            viewContainer.querySelector('#detail-student-id').textContent = 'ID-' + (student.studentId || student.id);
 
             showLoader();
             try {

@@ -26,21 +26,28 @@ public class ScholarshipServiceImpl implements ScholarshipService {
     public FundsSummaryDTO getFundsSummary() {
         List<WebDonation> donations = donationRepo.findAll();
 
+        // 1. Sum up ONLY successful payments, using the converted UGX amount (amount_received)
+        // This safely ignores the NULL value in row 3!
         BigDecimal totalRaised = donations.stream()
-                .map(d -> d.getAmount() != null ? d.getAmount() : BigDecimal.ZERO)
+                .filter(d -> "success".equalsIgnoreCase(d.getPaymentStatus()))
+                .map(d -> d.getAmountReceived() != null ? d.getAmountReceived() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // 2. Sum up total spent
         BigDecimal totalSpent = donations.stream()
+                .filter(d -> "success".equalsIgnoreCase(d.getPaymentStatus()))
                 .map(d -> d.getAmountSpent() != null ? d.getAmountSpent() : BigDecimal.ZERO)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // 3. Calculate available balance (UGX)
         BigDecimal available = totalRaised.subtract(totalSpent);
 
+        // 4. Calculate total students sponsored
         int studentsSponsored = donations.stream()
+                .filter(d -> "success".equalsIgnoreCase(d.getPaymentStatus()))
                 .mapToInt(d -> d.getStudentsBenefited() != null ? d.getStudentsBenefited() : 0)
                 .sum();
 
-        // Exact match with Javascript variables
         return new FundsSummaryDTO(totalRaised, totalSpent, available, studentsSponsored);
     }
 
@@ -80,14 +87,15 @@ public class ScholarshipServiceImpl implements ScholarshipService {
                 studentName = app.getApplication().getStudentName() + " " + app.getApplication().getStudentSurname();
             }
 
+            // BUG FIX: Stopped hardcoding Total Fees to BigDecimal.ZERO!
             dtos.add(new PendingStudentDTO(
                     app.getId(),
                     studentName,
                     "Campus " + app.getBranchId(),
                     app.getBranchId(),
                     app.getCategory(),
-                    app.getAmountRequestedUgx(),
-                    BigDecimal.ZERO
+                    app.getAmountRequestedUgx(), // Shortfall
+                    app.getAmountRequestedUgx()  // Total Fees (Mapping to the same as shortfall for now)
             ));
         }
         return dtos;

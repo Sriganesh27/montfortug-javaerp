@@ -91,8 +91,24 @@
     </div>
 </template>
 
+<!-- GLOBAL TABLE TEMPLATES -->
+<template id="global-table-empty-template">
+    <tr>
+        <td class="empty-cell text-center text-muted p-4 message-cell"></td>
+    </tr>
+</template>
+
+<template id="global-table-fetching-template">
+    <tr>
+        <td class="text-center p-4 text-muted message-cell">
+            <i class="bi bi-hourglass-split me-2"></i><span class="fetching-text"></span>
+        </td>
+    </tr>
+</template>
+
 <script src="/js/api.js"></script>
 <script src="/js/layout.js"></script>
 <script src="/js/superadmin.js"></script>
 </body>
 </html>
+

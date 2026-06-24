@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="theme-color" content="#0f172a">
+
+    <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
+    <title>System Authentication | MBSG Uganda</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Global layout which now includes the Eye Icon CSS! -->
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div id="login-view" class="split-layout">
+
+    <div class="login-left">
+        <div class="bg-glow glow-1"></div>
+        <div class="bg-glow glow-2"></div>
+        <div class="branding-content">
+            <img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Logo" class="huge-logo">
+            <h1>Montfort Brothers of St. Gabriel</h1>
+            <h2>UGANDA </h2>
+            <p>Secure System Gateway</p>
+        </div>
+    </div>
+
+    <div class="login-right">
+        <div class="form-container">
+            <div class="form-header">
+                <h2>Secure Gateway</h2>
+                <p>Authorized access only.</p>
+            </div>
+
+            <div id="errorMessage" class="error-box hidden"></div>
+
+            <form id="secureAuthForm">
+                <div class="form-group">
+                    <!-- FIXED: Added for="username" -->
+                    <label for="username">Username</label>
+                    <div class="input-wrapper">
+                        <i class="bi bi-person"></i>
+                        <input type="text" id="username" placeholder="Admin Username" autocomplete="username" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <!-- FIXED: Added for="password" -->
+                    <label for="password">Password</label>
+                    <div class="input-wrapper pwd-wrapper">
+                        <i class="bi bi-lock"></i>
+                        <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
+                        <span id="toggle-password" class="pwd-toggle-btn">
+                            <i class="bi bi-eye-slash" id="eye-icon"></i>
+                        </span>
+                    </div>
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span class="btn-text">Authenticate</span>
+                </button>
+            </form>
+
+            <div class="footer-text mt-20">
+                &copy; <span id="currentYear">2026</span> Montfort Brothers of St. Gabriel:Uganda
+            </div>
+        </div>
+    </div>
+
+</div>
+<script src="/js/api.js"></script>
+<script src="/js/auth.js"></script>
+</body>
+</html>

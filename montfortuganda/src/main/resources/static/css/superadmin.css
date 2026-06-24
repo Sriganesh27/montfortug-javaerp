@@ -3286,3 +3286,362 @@
     color: #0f172a;
     border-color: #94a3b8;
 }
+/* ========================================= */
+/* SCHOLARSHIPS: PARTIAL STUDENT FUND VIEW   */
+/* ========================================= */
+
+#superadmin-partial-fund-view {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 1.25rem;
+    animation: fadeIn 0.4s ease-out;
+}
+
+#superadmin-partial-fund-view .view-header h2 {
+    font-size: clamp(1.5rem, 2.5vw, 1.875rem);
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 1.5rem 0;
+    letter-spacing: -0.025em;
+}
+
+#superadmin-partial-fund-view .funds-overview-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+#superadmin-partial-fund-view .fund-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+#superadmin-partial-fund-view .fund-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+}
+
+#superadmin-partial-fund-view .fund-card.primary-card {
+    background: #0f172a;
+    border-color: #0f172a;
+}
+
+#superadmin-partial-fund-view .fund-card.primary-card h3,
+#superadmin-partial-fund-view .fund-card.primary-card h2,
+#superadmin-partial-fund-view .fund-card.primary-card .fund-icon {
+    color: #ffffff;
+}
+
+#superadmin-partial-fund-view .fund-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.2rem, 2vw, 1.5rem);
+}
+
+#superadmin-partial-fund-view .fund-card.primary-card .fund-icon {
+    background: rgba(255,255,255,0.1);
+}
+
+#superadmin-partial-fund-view .text-orange { color: #f59e0b; background: #fffbeb; }
+#superadmin-partial-fund-view .text-green { color: #059669; background: #ecfdf5; }
+
+#superadmin-partial-fund-view .fund-info h3 {
+    font-size: clamp(0.7rem, 1.2vw, 0.8rem);
+    color: #64748b;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+#superadmin-partial-fund-view .fund-info h2 {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: #0f172a;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+}
+
+/* Toolbar */
+#superadmin-partial-fund-view .partial-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+#superadmin-partial-fund-view .search-box {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+    max-width: 400px;
+}
+
+#superadmin-partial-fund-view .search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+#superadmin-partial-fund-view .search-box input {
+    width: 100%;
+    padding: 0.85rem 1rem 0.85rem 2.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    outline: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    transition: all 0.2s;
+}
+
+#superadmin-partial-fund-view .search-box input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+#superadmin-partial-fund-view .filter-box select {
+    padding: 0.85rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    outline: none;
+    font-family: inherit;
+    font-size: 0.95rem;
+    background: #ffffff;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#superadmin-partial-fund-view .filter-box select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+/* Data Table */
+#superadmin-partial-fund-view .table-container {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#superadmin-partial-fund-view .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+#superadmin-partial-fund-view .data-table th {
+    background-color: #f8fafc;
+    padding: 0.875rem 1.5rem;
+    text-align: left;
+    font-size: clamp(0.65rem, 1vw, 0.75rem);
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#superadmin-partial-fund-view .data-table td {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+    font-weight: 500;
+    vertical-align: middle;
+}
+
+#superadmin-partial-fund-view .data-table tbody tr:hover {
+    background-color: #f8fafc;
+    transition: background-color 0.15s ease;
+}
+
+/* Student Cell */
+#superadmin-partial-fund-view .student-cell {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#superadmin-partial-fund-view .student-icon {
+    width: 40px;
+    height: 40px;
+    background: #eff6ff;
+    color: #3b82f6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+#superadmin-partial-fund-view .student-name {
+    display: block;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+#superadmin-partial-fund-view .student-id {
+    display: block;
+    font-size: 0.75rem;
+    color: #64748b;
+}
+
+#superadmin-partial-fund-view .font-bold { font-weight: 700; }
+#superadmin-partial-fund-view .text-danger { color: #ef4444; }
+
+/* Input Group */
+#superadmin-partial-fund-view .allocation-input-group {
+    display: flex;
+    align-items: center;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.25rem 0.75rem;
+    width: 160px;
+}
+
+#superadmin-partial-fund-view .allocation-input-group span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #64748b;
+    margin-right: 0.5rem;
+}
+
+#superadmin-partial-fund-view .allocate-input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #0f172a;
+}
+
+/* Buttons */
+#superadmin-partial-fund-view .btn-allocate {
+    background: #10b981;
+    color: #ffffff;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+#superadmin-partial-fund-view .btn-allocate:hover {
+    background: #059669;
+    transform: translateY(-1px);
+}
+
+#superadmin-partial-fund-view .btn-secondary {
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+#superadmin-partial-fund-view .btn-secondary:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+/* Detail Section */
+#superadmin-partial-fund-view .detail-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+#superadmin-partial-fund-view .header-left {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+#superadmin-partial-fund-view .title-container h3 {
+    margin: 0;
+    font-size: clamp(1.25rem, 2vw, 1.5rem);
+    color: #0f172a;
+}
+
+#superadmin-partial-fund-view .status-badge {
+    background: #fffbeb;
+    color: #d97706;
+    padding: 0.35rem 1rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border: 1px solid #fde68a;
+}
+
+#superadmin-partial-fund-view .detail-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+#superadmin-partial-fund-view .detail-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+#superadmin-partial-fund-view .detail-card.full-width {
+    grid-column: span 2;
+    padding: 0;
+    overflow: hidden;
+}
+
+#superadmin-partial-fund-view .detail-card h4 {
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+#superadmin-partial-fund-view .detail-card.full-width h4 {
+    padding: 1.5rem 1.5rem 0 1.5rem;
+}
+g

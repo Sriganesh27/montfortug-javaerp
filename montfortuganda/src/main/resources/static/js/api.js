@@ -86,17 +86,6 @@ async function apiPut(endpoint, data) {
     return handleResponse(response);
 }
 
-/**
- * Standard DELETE Request
- */
-async function apiDelete(endpoint) {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'DELETE',
-        headers: getAuthHeaders(),
-        credentials: 'include' // <--- FORCES COOKIE TO BE SENT
-    });
-    return handleResponse(response);
-}
 
 /**
  * MULTIPART Request (For File Uploads like Photos/Documents)

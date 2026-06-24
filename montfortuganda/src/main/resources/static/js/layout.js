@@ -1,3 +1,33 @@
+// ==========================================
+// GLOBAL TABLE UTILITIES
+// ==========================================
+window.renderEmptyTableMessage = function(tbody, colSpan, message) {
+    if (!tbody) return;
+    tbody.textContent = '';
+    const template = document.getElementById('global-table-empty-template');
+    if (!template) return;
+    const clone = template.content.cloneNode(true);
+    const td = clone.querySelector('.message-cell');
+    if (td) {
+        td.colSpan = colSpan;
+        td.textContent = message;
+    }
+    tbody.appendChild(clone);
+};
+
+window.renderFetchingMessage = function(tbody, colSpan, message) {
+    if (!tbody) return;
+    tbody.textContent = '';
+    const template = document.getElementById('global-table-fetching-template');
+    if (!template) return;
+    const clone = template.content.cloneNode(true);
+    const td = clone.querySelector('.message-cell');
+    const span = clone.querySelector('.fetching-text');
+    if (td) td.colSpan = colSpan;
+    if (span) span.textContent = message;
+    tbody.appendChild(clone);
+};
+
 document.addEventListener('DOMContentLoaded', async function() {
     // 1. Strict Security Check
     const userRole = localStorage.getItem('user_role'); // e.g., "SUPER_ADMIN"
@@ -222,7 +252,21 @@ async function loadView(urlRole, viewName, container) {
         const response = await fetch(`/views/${urlRole}/${viewName}.html`);
 
         if (response.ok) {
-            container.innerHTML = await response.text();
+            const htmlText = await response.text();
+            
+            // Inject with initial hidden state for animation
+            container.innerHTML = `<div class="view-transition-wrapper" style="opacity: 0; transform: translateY(15px); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);">${htmlText}</div>`;
+            
+            // Force a browser reflow to ensure the initial state is painted before animating
+            void container.offsetWidth;
+            
+            // Trigger the smooth fade-in and slide-up
+            const wrapper = container.querySelector('.view-transition-wrapper');
+            if (wrapper) {
+                wrapper.style.opacity = '1';
+                wrapper.style.transform = 'translateY(0)';
+            }
+            
             document.dispatchEvent(new CustomEvent('viewLoaded', { detail: { role: urlRole, view: viewName } }));
         } else {
             container.textContent = '';

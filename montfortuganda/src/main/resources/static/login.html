@@ -4,56 +4,58 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
-  <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
   <meta name="theme-color" content="#0f172a">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
   <!-- Strict CSP -->
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:;">
 
   <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
-  <title>ERP Login | Montfort Brothers of St. Gabriel:Uganda</title>
+  <title>Student & Parent Portal | MBSG Uganda</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
-<!-- The Split Screen Namespace! -->
-<div id="login-view" class="split-layout">
+<!-- Restored the original ID but added the 'student-portal' class for safe scoping -->
+<div id="login-view" class="split-layout student-portal">
 
-  <!-- =============================== -->
-  <!-- LEFT SIDE: PREMIUM BRANDING     -->
-  <!-- =============================== -->
+  <!-- Left Branding Section -->
   <div class="login-left">
-    <div class="bg-glow glow-1"></div>
-    <div class="bg-glow glow-2"></div>
+    <div class="bg-glow student-glow-1"></div>
+    <div class="bg-glow student-glow-2"></div>
+
+
 
     <div class="branding-content">
-      <img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Logo" class="huge-logo">
-      <h1>Montfort Brothers of St. Gabriel</h1>
-      <h2>UGANDA </h2>
-      <p>Enterprise Resource Planning Portal</p>
+      <img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Montfort Logo" class="huge-logo pulse-animation">
+
+      <div class="badge-container">
+        <span class="portal-badge"><i class="bi bi-mortarboard-fill"></i> Academic Portal</span>
+      </div>
+
+      <h1>Student & Parent Portal</h1>
+      <h2>Montfort Brothers of St. Gabriel</h2>
     </div>
   </div>
 
-  <!-- =============================== -->
-  <!-- RIGHT SIDE: THE ACTION PANEL    -->
-  <!-- =============================== -->
+  <!-- Right Form Section -->
   <div class="login-right">
-    <div class="form-container">
+    <div class="form-container glass-panel">
 
       <div class="form-header">
         <h2>Welcome Back</h2>
-        <p>Please enter your details to sign in.</p>
+        <p>Sign in to access your dashboard.</p>
       </div>
 
-      <div id="errorMessage" class="error-box"></div>
+      <div id="errorMessage" class="error-box hidden"></div>
 
       <form id="loginForm">
+
         <div class="form-group" id="campusGroup">
-          <label>Campus Location</label>
-          <div class="input-wrapper">
+          <label for="branchId">Campus Location</label>
+          <div class="input-wrapper focus-effect">
             <i class="bi bi-buildings"></i>
             <select id="branchId" required>
               <option value="" disabled selected>Select Campus</option>
@@ -64,55 +66,54 @@
           </div>
         </div>
 
-        <div class="form-group">
-          <label>Account Role</label>
-          <div class="input-wrapper">
-            <i class="bi bi-shield-lock"></i>
-            <select id="role" required>
-              <option value="" disabled selected>Select Role</option>
-              <option value="PARENT">Parent</option>
-              <option value="SUPER_ADMIN">Super Admin</option>
-              <option value="SCHOOL_ADMIN">School Admin</option>
-              <option value="ACADEMIC_COORDINATOR">Academic Coordinator</option>
-              <option value="ADMISSION_STAFF">Admission Staff</option>
-              <option value="FEE_OFFICER">Fee Officer</option>
-              <option value="TEACHER">Teacher</option>
-              <option value="AUDITOR">Auditor</option>
-            </select>
-          </div>
-        </div>
+        <!-- Role Dropdown Removed! -->
 
         <div class="form-group">
-          <label>Username</label>
-          <div class="input-wrapper">
+          <label for="username">Admission Number / Email</label>
+          <div class="input-wrapper focus-effect">
             <i class="bi bi-person"></i>
-            <input type="text" id="username" placeholder="Username / Email" autocomplete="username" required>
+            <input type="text" id="username" placeholder="Enter Admission No." autocomplete="username" required>
           </div>
         </div>
 
         <div class="form-group">
-          <label>Password</label>
-          <div class="input-wrapper">
+          <label for="password">Password</label>
+          <div class="input-wrapper focus-effect">
             <i class="bi bi-lock"></i>
-            <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
+            <input type="password" id="password" placeholder="Enter Password" autocomplete="current-password" required>
+            <i class="bi bi-eye-slash" id="toggle-password" style="cursor: pointer;" title="Toggle Password Visibility"></i>
           </div>
         </div>
 
-        <button type="submit" class="login-btn" id="loginBtn">
-          <span class="btn-text">Secure Login</span>
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" id="rememberMe">
+            <span class="checkmark"></span>
+            Remember Me
+          </label>
+          <a href="#" class="forgot-password">Forgot Password?</a>
+        </div>
+
+        <button type="submit" id="loginBtn" class="btn-primary login-btn hover-lift">
+          <span class="btn-text">Sign In</span>
+          <i class="bi bi-arrow-right-circle"></i>
         </button>
+
       </form>
 
-      <div class="footer-text mt-20">
-        &copy; <span id="currentYear">2026</span> Montfort Brothers of St. Gabriel:Uganda
+      <div class="footer-links">
+        <p>Need help? <a href="#">Contact Support</a></p>
+        <div class="copyright">
+          &copy; 2026 Montfort Brothers of St. Gabriel:Uganda
+        </div>
       </div>
-
     </div>
   </div>
 
 </div>
 
-<!-- ZERO inline JavaScript -->
+<script src="/js/api.js"></script>
 <script src="/js/auth.js"></script>
+
 </body>
 </html>
