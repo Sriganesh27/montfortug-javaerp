@@ -32,14 +32,10 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // Disable CSRF for REST APIs
                 .authorizeHttpRequests(auth -> auth
-                        // 1. Authentication APIs are public
                         .requestMatchers("/api/auth/**").permitAll()
-
-                        // 2. ALL other data APIs require a valid JWT token
+                        .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/**").authenticated()
 
-                        // 3. The SPA Frontend (HTML, CSS, JS, URL Routes) is entirely public.
-                        // Our layout.js handles the client-side kickout, and the APIs protect the actual data.
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))

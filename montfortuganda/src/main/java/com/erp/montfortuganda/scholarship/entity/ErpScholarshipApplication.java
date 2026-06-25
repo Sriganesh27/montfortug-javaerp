@@ -1,5 +1,5 @@
 package com.erp.montfortuganda.scholarship.entity;
-
+import com.erp.montfortuganda.admission.entity.ErpApplication;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;

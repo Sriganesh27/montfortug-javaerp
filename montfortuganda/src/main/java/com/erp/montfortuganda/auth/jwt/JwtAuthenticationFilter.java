@@ -5,6 +5,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,13 +28,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+    protected void doFilterInternal(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
             throws ServletException, IOException {
 
         String username = null;
         String jwt = null;
 
-        // --- NEW LOGIC: Extract JWT from Secure Cookies instead of headers! ---
+        // --- STEP 1: Try to extract JWT from Secure Cookies ---
         if (request.getCookies() != null) {
             for (Cookie cookie : request.getCookies()) {
                 if ("jwt_token".equals(cookie.getName())) {
@@ -43,6 +44,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     } catch (Exception e) {
                         // Invalid token
                     }
+                }
+            }
+        }
+
+        // --- STEP 2: Fallback to HTTP Headers if no Cookie was found ---
+        if (jwt == null) {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                jwt = authHeader.substring(7);
+                try {
+                    username = jwtUtil.extractUsername(jwt);
+                } catch (Exception e) {
+                    // Invalid token
                 }
             }
         }

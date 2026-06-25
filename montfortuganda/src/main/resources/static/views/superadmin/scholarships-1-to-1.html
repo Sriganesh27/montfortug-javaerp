@@ -52,6 +52,17 @@
                     <div class="card-list scrollable-list" id="donor-list-container">
                         <!-- JS injects donors here securely -->
                     </div>
+                    <!-- STRICT PAGINATION WRAPPER: DONORS -->
+                    <div class="pagination-footer mt-2">
+                        <div class="pagination-info">
+                            Showing <span id="donor-page-start">0</span> to <span id="donor-page-end">0</span> of <span id="donor-total-entries">0</span>
+                        </div>
+                        <div class="pagination-controls">
+                            <button class="btn-page" id="btn-donor-prev" disabled><i class="bi bi-chevron-left"></i></button>
+                            <div class="page-numbers" id="donor-pagination-numbers"></div>
+                            <button class="btn-page" id="btn-donor-next"><i class="bi bi-chevron-right"></i></button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- RIGHT PANE: STUDENTS -->
@@ -63,6 +74,17 @@
                     </div>
                     <div class="card-list scrollable-list" id="student-list-container">
                         <!-- JS injects students here securely -->
+                    </div>
+                    <!-- STRICT PAGINATION WRAPPER: STUDENTS -->
+                    <div class="pagination-footer mt-2">
+                        <div class="pagination-info">
+                            Showing <span id="student-page-start">0</span> to <span id="student-page-end">0</span> of <span id="student-total-entries">0</span>
+                        </div>
+                        <div class="pagination-controls">
+                            <button class="btn-page" id="btn-student-prev" disabled><i class="bi bi-chevron-left"></i></button>
+                            <div class="page-numbers" id="student-pagination-numbers"></div>
+                            <button class="btn-page" id="btn-student-next"><i class="bi bi-chevron-right"></i></button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -127,5 +149,10 @@
                 <div><span class="card-badge badge bg-primary text-white"></span></div>
             </div>
         </div>
+    </template>
+
+    <!-- PAGINATION BUTTON TEMPLATE -->
+    <template id="page-number-template">
+        <button class="btn-page number-btn" data-page=""></button>
     </template>
 </div>

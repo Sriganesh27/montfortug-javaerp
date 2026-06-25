@@ -12,6 +12,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addViewController("/").setViewName("forward:/login.html");
         registry.addViewController("/login").setViewName("forward:/login.html");
         registry.addViewController("/dashboard").setViewName("forward:/dashboard.html");
+        registry.addViewController("/apply").setViewName("forward:/apply.html");
 
         // --- SECURE SPA ROUTING ---
         // We explicitly map our roles so we don't accidentally intercept the /css/ or /js/ folders!

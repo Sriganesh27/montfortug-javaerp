@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                     if (errorMessage) {
                         errorMessage.className = 'error-box alert-success';
-                        errorMessage.textContent = 'Authorized! Redirecting...';
+                        errorMessage.textContent = 'Login Successfully! Redirecting...';
                     }
 
                     setTimeout(() => {

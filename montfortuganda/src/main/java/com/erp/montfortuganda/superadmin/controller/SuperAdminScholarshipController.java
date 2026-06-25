@@ -5,12 +5,14 @@ import com.erp.montfortuganda.scholarship.service.ScholarshipService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/superadmin/scholarships")
+@PreAuthorize("hasRole('SUPER_ADMIN')")
 @RequiredArgsConstructor
 public class SuperAdminScholarshipController {
 

@@ -592,7 +592,6 @@ function initAddBranchView() {
         });
     });
 
-
     const backBtn = viewContainer.querySelector('#backToBranchesBtn');
     if (backBtn) {
         backBtn.addEventListener('click', () => {
@@ -629,6 +628,17 @@ function initAddBranchView() {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
 
+            // --- ✨ THE FIX STARTS HERE ✨ ---
+            // Grab the submit button and instantly disable it to prevent double clicks!
+            const submitBtn = form.querySelector('button[type="submit"]');
+            let originalBtnText = "";
+            if (submitBtn) {
+                originalBtnText = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+            }
+            // ---------------------------------
+
             const incharges = extractInchargeDetails(viewContainer, 'incharge-tbody', 'incharge-name', 'incharge-role', 'incharge-phone');
             const inchargeJson = JSON.stringify(incharges);
 
@@ -655,14 +665,18 @@ function initAddBranchView() {
                 const file = docFiles[i];
                 if (!allowedTypes.includes(file.type)) {
                     showErrorMessage(`Upload blocked: "${file.name}" is not a JPG, PNG, or PDF.`);
+                    // ✨ FIX: Turn button back on if upload blocked
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; }
                     return;
                 }
                 if (file.type === 'application/pdf' && file.size > MAX_PDF_SIZE) {
                     showErrorMessage(`Upload blocked: PDF "${file.name}" exceeds the 2MB limit.`);
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; }
                     return;
                 }
                 if ((file.type === 'image/jpeg' || file.type === 'image/png') && file.size > MAX_IMG_SIZE) {
                     showErrorMessage(`Upload blocked: Image "${file.name}" exceeds the 100KB limit.`);
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; }
                     return;
                 }
                 formData.append("documents", file);
@@ -710,6 +724,10 @@ function initAddBranchView() {
                 showErrorMessage("Upload failed. Ensure files are within limits and valid types.");
             } finally {
                 hideLoader();
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalBtnText;
+                }
             }
         });
     }
@@ -1363,42 +1381,66 @@ function initOneToOneSponsorshipView() {
                 const liveDonors = Array.isArray(donorsRes) ? donorsRes : (donorsRes.data || []);
                 const liveStudents = Array.isArray(studentsRes) ? studentsRes : (studentsRes.data || []);
 
-                const donorList = document.getElementById('donor-list-container');
-                const donorTemplate = document.getElementById('donor-card-template');
-                if (donorList && donorTemplate) {
-                    donorList.textContent = '';
-                    liveDonors.forEach(d => {
-                        const available = d.amountReceivedUgx - d.amountSpentUgx;
-                        if (available <= 0) return;
+                const validDonors = liveDonors.filter(d => (d.amountReceivedUgx - d.amountSpentUgx) > 0);
+                
+                const donorPagination = new GlobalPagination({
+                    data: validDonors,
+                    itemsPerPage: 25,
+                    elements: {
+                        startId: 'donor-page-start', endId: 'donor-page-end', totalId: 'donor-total-entries',
+                        prevBtnId: 'btn-donor-prev', nextBtnId: 'btn-donor-next',
+                        numbersContainerId: 'donor-pagination-numbers', templateId: 'page-number-template'
+                    },
+                    renderCallback: (pageData) => {
+                        const donorList = document.getElementById('donor-list-container');
+                        const donorTemplate = document.getElementById('donor-card-template');
+                        if (donorList && donorTemplate) {
+                            donorList.textContent = '';
+                            pageData.forEach(d => {
+                                const available = d.amountReceivedUgx - d.amountSpentUgx;
+                                const clone = donorTemplate.content.cloneNode(true);
+                                const card = clone.querySelector('.selectable-card');
+                                card.classList.add('btn-select-donor');
+                                card.setAttribute('data-id', d.id);
+                                card.setAttribute('data-name', d.fullName);
 
-                        const clone = donorTemplate.content.cloneNode(true);
-                        const card = clone.querySelector('.selectable-card');
-                        card.classList.add('btn-select-donor');
-                        card.setAttribute('data-id', d.id);
-                        card.setAttribute('data-name', d.fullName);
+                                clone.querySelector('.card-title').textContent = d.fullName;
+                                clone.querySelector('.card-subtitle').textContent = `Available: ${formatUGX(available)}`;
+                                donorList.appendChild(clone);
+                            });
+                        }
+                    }
+                });
+                donorPagination.render();
 
-                        clone.querySelector('.card-title').textContent = d.fullName;
-                        clone.querySelector('.card-subtitle').textContent = `Available: ${formatUGX(available)}`;
-                        donorList.appendChild(clone);
-                    });
-                }
+                const studentPagination = new GlobalPagination({
+                    data: liveStudents,
+                    itemsPerPage: 25,
+                    elements: {
+                        startId: 'student-page-start', endId: 'student-page-end', totalId: 'student-total-entries',
+                        prevBtnId: 'btn-student-prev', nextBtnId: 'btn-student-next',
+                        numbersContainerId: 'student-pagination-numbers', templateId: 'page-number-template'
+                    },
+                    renderCallback: (pageData) => {
+                        const studentList = document.getElementById('student-list-container');
+                        const studentTemplate = document.getElementById('student-card-template');
+                        if (studentList && studentTemplate) {
+                            studentList.textContent = '';
+                            pageData.forEach(s => {
+                                const clone = studentTemplate.content.cloneNode(true);
+                                const card = clone.querySelector('.selectable-card');
+                                card.classList.add('btn-select-student');
+                                card.setAttribute('data-id', s.id);
+                                card.setAttribute('data-name', s.studentName);
 
-                const studentList = document.getElementById('student-list-container');
-                const studentTemplate = document.getElementById('student-card-template');
-                if (studentList && studentTemplate) {
-                    studentList.textContent = '';
-                    liveStudents.forEach(s => {
-                        const clone = studentTemplate.content.cloneNode(true);
-                        const card = clone.querySelector('.selectable-card');
-                        card.classList.add('btn-select-student');
-                        card.setAttribute('data-id', s.id);
-                        card.setAttribute('data-name', s.studentName);
-
-                        clone.querySelector('.card-title').textContent = s.studentName;
-                        clone.querySelector('.card-subtitle').textContent = `Shortfall: ${formatUGX(s.currentShortfallUgx)}`;
-                        studentList.appendChild(clone);
-                    });
-                }
+                                clone.querySelector('.card-title').textContent = s.studentName;
+                                clone.querySelector('.card-subtitle').textContent = `Shortfall: ${formatUGX(s.currentShortfallUgx)}`;
+                                studentList.appendChild(clone);
+                            });
+                        }
+                    }
+                });
+                studentPagination.render();
 
                 // UI AJAX SWAP LOGIC (Hides main UI, Shows Wizard)
                 resetWizardSelection();
