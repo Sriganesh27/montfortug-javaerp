@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Official Online Admission Portal for Montfort Brothers of St. Gabriel, Uganda.">
+    <meta name="theme-color" content="#0f172a">
+    <title>Online Admission Portal | Montfort Uganda</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Isolated Dashboard Styles -->
+    <link rel="stylesheet" href="/css/apply.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="/assets/scripts/jspdf.umd.min.js" defer></script>
+    <script src="/js/apply.js" defer></script>
+</head>
+<body>
+
+<!-- ISOLATED WRAPPER: No conflicts with style.css -->
+<div id="montfort-admission-wrapper" class="dashboard-layout">
+
+    <!-- FIXED LEFT SIDEBAR -->
+    <aside class="dashboard-sidebar">
+        <div class="sidebar-brand">
+            <img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Montfort Logo" class="sidebar-logo">
+            <h2>Montfort Admissions</h2>
+        </div>
+
+        <!-- Vertical Progress Tracker -->
+        <ul class="vertical-tracker">
+            <li class="tracker-step active" id="indicator-1">
+                <div class="step-icon">1</div>
+                <div class="step-text">Enrollment Info</div>
+            </li>
+            <li class="tracker-step" id="indicator-2">
+                <div class="step-icon">2</div>
+                <div class="step-text">Student Details</div>
+            </li>
+            <li class="tracker-step" id="indicator-3">
+                <div class="step-icon">3</div>
+                <div class="step-text">Guardian Info</div>
+            </li>
+            <li class="tracker-step" id="indicator-4">
+                <div class="step-icon">4</div>
+                <div class="step-text">Academic Record</div>
+            </li>
+        </ul>
+
+        <!-- Guidelines -->
+        <div class="sidebar-instructions">
+            <h4><i class="bi bi-info-circle-fill"></i> Guidelines</h4>
+            <p><i class="bi bi-check2-circle"></i> Have your PLE/UCE slips ready in PDF or JPG.</p>
+            <p><i class="bi bi-check2-circle"></i> Passport Photo must strictly be <strong>under 50KB</strong>.</p>
+            <p><i class="bi bi-check2-circle"></i> Note down your Reference Number after submission.</p>
+        </div>
+    </aside>
+
+    <!-- MAIN SCROLLING CONTENT AREA -->
+    <main class="dashboard-main">
+
+        <header class="dashboard-header">
+            <h1>Online Application Form</h1>
+            <a href="/apply/status" class="track-btn hover-lift"><i class="bi bi-search"></i> Track Application</a>
+        </header>
+
+        <div class="dashboard-content">
+            <div class="solid-white-panel">
+
+                <form id="admission-form" enctype="multipart/form-data">
+                    <input type="text" name="fax_number" id="fax_number_trap" autocomplete="off" tabindex="-1">
+                    <input type="hidden" name="action" value="submit_application">
+                    <input type="hidden" name="classCode" id="hiddenClassCode">
+                    <input type="hidden" name="appliedClass" id="hiddenAppliedClass">
+
+                    <!-- STEP 1: ENROLLMENT -->
+                    <div id="step-1" class="wizard-step active-step">
+                        <h3 class="section-title">Program Selection</h3>
+
+                        <div class="form-group">
+                            <label>Select School Branch *</label>
+                            <div class="input-wrapper focus-effect">
+                                <i class="bi bi-buildings"></i>
+                                <select name="branchId" id="branchSelect" required>
+                                    <!-- Populated via JS -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Education Level *</label>
+                                <div class="input-wrapper focus-effect">
+                                    <i class="bi bi-bar-chart-steps"></i>
+                                    <!-- Options will filter based on Branch selection! -->
+                                    <select name="level" id="level" required>
+                                        <option value="" disabled selected>Select Level</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Applying For Class *</label>
+                                <div class="input-wrapper focus-effect">
+                                    <i class="bi bi-mortarboard"></i>
+                                    <select id="classSelect" required>
+                                        <option value="" disabled selected>Select Class</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Admission Year *</label>
+                                <div class="input-wrapper focus-effect">
+                                    <i class="bi bi-calendar"></i>
+                                    <input type="number" name="academicYear" value="2026" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Term *</label>
+                                <div class="input-wrapper focus-effect">
+                                    <i class="bi bi-clock-history"></i>
+                                    <select name="term" required>
+                                        <option value="Term I">Term I</option>
+                                        <option value="Term II">Term II</option>
+                                        <option value="Term III">Term III</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Date of Registration *</label>
+                            <div class="input-wrapper focus-effect">
+                                <i class="bi bi-calendar-check"></i>
+                                <input type="date" name="dateOfRegistration" required>
+                            </div>
+                        </div>
+
+                        <div class="button-group align-right">
+                            <button type="button" class="login-btn hover-lift btn-next" id="btn-next-1">
+                                <span class="btn-text">Proceed to Student Details</span> <i class="bi bi-arrow-right-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: STUDENT DETAILS -->
+                    <div id="step-2" class="wizard-step hidden-element">
+                        <h3 class="section-title">Personal Details</h3>
+
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label>First Name *</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-person"></i><input type="text" name="studentName" required placeholder="First Name"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Middle Name</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-person"></i><input type="text" name="middleName" placeholder="Middle Name"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Surname *</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-person"></i><input type="text" name="studentSurname" required placeholder="Surname"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label>Gender *</label>
+                                <div class="input-wrapper focus-effect">
+                                    <i class="bi bi-gender-ambiguous"></i>
+                                    <select name="gender" required>
+                                        <option value="" disabled selected>Select Gender</option>
+                                        <option value="Male">Male</option>
+                                        <option value="Female">Female</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Date of Birth *</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-calendar2-heart"></i><input type="date" name="dob" required></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Nationality *</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-globe"></i><input type="text" name="nationality" value="Uganda" required></div>
+                            </div>
+                        </div>
+
+                        <h3 class="section-title">Residential Address</h3>
+                        <div class="form-row-3">
+                            <div class="form-group">
+                                <label>District</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-geo-alt"></i><input type="text" name="addressDistrict" placeholder="District"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Village/Town</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-house"></i><input type="text" name="addressVillage" placeholder="Village"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Street/Zone</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-signpost"></i><input type="text" name="addressStreet" placeholder="Street"></div>
+                            </div>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="button" class="btn-prev" id="btn-prev-2"><i class="bi bi-arrow-left-circle"></i> <span class="btn-text">Previous</span></button>
+                            <button type="button" class="login-btn hover-lift btn-next" id="btn-next-2"><span class="btn-text">Proceed to Guardian Details</span> <i class="bi bi-arrow-right-circle"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: PARENTS & GUARDIAN -->
+                    <div id="step-3" class="wizard-step hidden-element">
+                        <h3 class="section-title">Father's Details</h3>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Father's Name</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-person-fill"></i><input type="text" name="fatherName" placeholder="Full Name"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Contact Number</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-telephone"></i><input type="text" name="fatherContact" placeholder="Phone Number"></div>
+                            </div>
+                        </div>
+
+                        <h3 class="section-title">Mother's Details</h3>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Mother's Name</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-person-fill"></i><input type="text" name="motherName" placeholder="Full Name"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Contact Number</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-telephone"></i><input type="text" name="motherContact" placeholder="Phone Number"></div>
+                            </div>
+                        </div>
+
+                        <h3 class="section-title">Primary Guardian Details (Required)</h3>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Guardian Name *</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-person-badge"></i><input type="text" name="guardianName" required placeholder="Full Name"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Contact Number *</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-telephone-fill"></i><input type="text" name="guardianContact" required placeholder="Phone Number"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Relationship *</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-diagram-3"></i><input type="text" name="guardianRelation" required placeholder="e.g. Uncle, Mother"></div>
+                            </div>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="button" class="btn-prev" id="btn-prev-3"><i class="bi bi-arrow-left-circle"></i> <span class="btn-text">Previous</span></button>
+                            <button type="button" class="login-btn hover-lift btn-next" id="btn-next-3"><span class="btn-text">Proceed to Academic Details</span> <i class="bi bi-arrow-right-circle"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 4: ACADEMIC & UPLOADS -->
+                    <div id="step-4" class="wizard-step hidden-element">
+                        <h3 class="section-title">Previous Education</h3>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Former School</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-building"></i><input type="text" name="formerSchool" placeholder="Name of previous school"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Former School LIN</label>
+                                <div class="input-wrapper focus-effect"><i class="bi bi-upc-scan"></i><input type="text" name="formerSchoolLin" placeholder="School LIN"></div>
+                            </div>
+                        </div>
+
+                        <div id="dynamic-exam-container"></div>
+
+                        <div id="dynamic-subjects-container" class="hidden-element">
+                            <label class="subject-grades-label">Enter Subjects & Grades</label>
+                            <table class="apply-table">
+                                <thead>
+                                <tr>
+                                    <th>Subject Name</th>
+                                    <th>Marks (100)</th>
+                                    <th>Grade</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                                </thead>
+                                <tbody id="subjectsBody"></tbody>
+                                <tfoot>
+                                <tr>
+                                    <td colspan="4" class="table-footer-cell">
+                                        <div class="table-footer-flex">
+                                            <button type="button" class="login-btn hover-lift btn-add" id="addSubjectBtn">
+                                                <i class="bi bi-plus-circle"></i> <span class="btn-text">Add Subject</span>
+                                            </button>
+                                            <strong class="total-score-label">Total Score: <span id="totalSubjectScore" class="total-score-value">0</span></strong>
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <h3 class="section-title">Final Attachments</h3>
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label>Upload Passport Photo (< 50KB) *</label>
+                                <div class="input-wrapper focus-effect file-input-wrapper">
+                                    <i class="bi bi-camera"></i>
+                                    <input type="file" name="photo" id="photoInput" accept=".jpg,.jpeg,.png" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Applying for Scholarship?</label>
+                                <div class="input-wrapper focus-effect">
+                                    <i class="bi bi-award"></i>
+                                    <select name="scholarshipStatus">
+                                        <option value="No">No</option>
+                                        <option value="Yes">Yes</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Medical / Additional Information</label>
+                            <div class="input-wrapper focus-effect textarea-wrapper">
+                                <i class="bi bi-info-circle info-icon-top"></i>
+                                <textarea name="moreInfo" rows="3" class="more-info-textarea" placeholder="Any allergies, conditions, or extra information the school should know..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="button-group">
+                            <button type="button" class="btn-prev" id="btn-prev-4"><i class="bi bi-arrow-left-circle"></i> <span class="btn-text">Previous</span></button>
+                            <button type="submit" class="login-btn hover-lift submit-btn-layout" id="btn-submit">
+                                <span class="btn-text" id="btn-submit-text">Submit Application</span> <i class="bi bi-check-circle-fill" id="btn-submit-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </main>
+
+</div>
+
+<!-- HTML5 TEMPLATES -->
+<template id="tmpl-subject-row">
+    <tr>
+        <td><div class="input-wrapper"><input type="text" name="subject_name[]" placeholder="Subject" class="table-input"></div></td>
+        <td><div class="input-wrapper"><input type="number" class="subject-mark-input table-input" name="subject_mark[]" placeholder="Marks" max="100"></div></td>
+        <td><div class="input-wrapper"><input type="text" name="subject_grade[]" placeholder="Grade" class="table-input"></div></td>
+        <td class="text-center"><button type="button" class="btn-remove row-remover"><i class="bi bi-x"></i></button></td>
+    </tr>
+</template>
+
+<template id="tmpl-exam-s1">
+    <h3 class="section-title">Primary Leaving Examinations (PLE)</h3>
+    <div class="form-row-2">
+        <div class="form-group">
+            <label>PLE Index Number *</label>
+            <div class="input-wrapper focus-effect"><i class="bi bi-hash"></i><input type="text" name="pleRef" required></div>
+        </div>
+        <div class="form-group">
+            <label>Aggregate Score *</label>
+            <div class="input-wrapper focus-effect"><i class="bi bi-123"></i><input type="number" name="pleScore" required></div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Upload PLE Pass Slip (PDF/JPG)</label>
+        <div class="input-wrapper focus-effect file-input-wrapper"><i class="bi bi-file-earmark-pdf"></i><input type="file" name="prevMarks" accept=".pdf,.jpg,.jpeg,.png"></div>
+    </div>
+</template>
+
+<template id="tmpl-exam-s5">
+    <h3 class="section-title">Uganda Certificate of Education (UCE)</h3>
+    <div class="form-row-2">
+        <div class="form-group">
+            <label>UCE Index Number</label>
+            <div class="input-wrapper focus-effect"><i class="bi bi-hash"></i><input type="text" name="uceRef"></div>
+        </div>
+        <div class="form-group">
+            <label>Aggregate Score</label>
+            <div class="input-wrapper focus-effect"><i class="bi bi-123"></i><input type="number" name="uceScore"></div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label>Upload UCE Results Slip (PDF/JPG)</label>
+        <div class="input-wrapper focus-effect file-input-wrapper"><i class="bi bi-file-earmark-pdf"></i><input type="file" name="prevMarks" accept=".pdf,.jpg,.jpeg,.png"></div>
+    </div>
+</template>
+
+<template id="tmpl-exam-other">
+    <h3 class="section-title">Academic Record</h3>
+    <div class="form-group">
+        <label>Upload Previous Report Card (PDF/JPG)</label>
+        <div class="input-wrapper focus-effect file-input-wrapper"><i class="bi bi-file-earmark-pdf"></i><input type="file" name="prevMarks" accept=".pdf,.jpg,.jpeg,.png"></div>
+    </div>
+</template>
+
+<template id="tmpl-success-popup">
+    <div class="success-popup-container">
+        <p>Your Official Reference Number is:</p>
+        <strong class="success-popup-ref"></strong>
+        <p class="success-popup-msg">Please safely store this number and download your application copy below.</p>
+    </div>
+</template>
+
+</body>
+</html>
