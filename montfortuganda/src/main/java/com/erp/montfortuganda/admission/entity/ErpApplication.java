@@ -167,6 +167,8 @@ public class ErpApplication {
     @Column(name = "guardian_education", length = 100)
     private String guardianEducation;
 
+    @Column(name = "guardian_location", length = 255)
+    private String guardianLocation;
     // ==========================================
     // 8. ACADEMIC HISTORY
     // ==========================================

@@ -1,451 +1,263 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-#montfort-admission-wrapper {
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+body{
+    margin: 0;
+    padding: 0;
+}
+#montfort-portal-wrapper {
     font-family: 'Poppins', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    position: relative; min-height: 100vh;
+    display: flex; flex-direction: column;
+    margin: 0; padding: 0; background-color: #0f172a;
 }
 
-/* ========================================= */
-/* DASHBOARD LAYOUT                          */
-/* ========================================= */
+#montfort-portal-wrapper .campus-slider { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 1; }
 
-#montfort-admission-wrapper.dashboard-layout {
-    display: flex;
-    min-height: 100vh;
-    background-color: #f1f5f9;
+#montfort-portal-wrapper .slide {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    object-fit: cover; /* This makes the <img> stretch perfectly! */
+    opacity: 0; transition: opacity 2.5s ease-in-out, transform 8s linear; transform: scale(1);
+}
+
+#montfort-portal-wrapper .slide.active-slide { opacity: 1; transform: scale(1.03); }
+#montfort-portal-wrapper .slider-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(2px); z-index: 2; }#montfort-portal-wrapper .slider-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(2px); z-index: 2; }
+
+#montfort-portal-wrapper #fax_number_trap, #montfort-portal-wrapper .hidden-element { display: none !important; }
+
+/* --- PREMIUM OFFICIAL HEADER --- */
+#montfort-portal-wrapper .portal-header {
     width: 100%;
-    margin: 0;
-    padding: 0;
-}
-
-#montfort-admission-wrapper .dashboard-sidebar {
-    width: 320px;
-    background-color: #0f172a;
-    color: white;
-    position: fixed;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    padding: 3rem 2rem;
-    box-sizing: border-box;
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
-    z-index: 100;
-}
-
-#montfort-admission-wrapper .sidebar-brand {
-    text-align: center;
-    margin-bottom: 3.5rem;
-}
-
-#montfort-admission-wrapper .sidebar-logo {
-    width: 90px;
-    margin-bottom: 1.2rem;
-    filter: drop-shadow(0 0 10px rgba(255,255,255,0.2));
-}
-
-#montfort-admission-wrapper .sidebar-brand h2 {
-    font-size: 1.25rem;
-    color: #f8fafc;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    margin: 0;
-}
-
-/* Vertical Progress Tracker */
-#montfort-admission-wrapper .vertical-tracker {
-    list-style: none;
-    padding: 0;
-    margin: 0 0 3rem 0;
+    padding: 16px 0;
+    background: rgba(15, 23, 42, 0.98);
+    backdrop-filter: blur(10px);
+    border-bottom: 2px solid #d4af37; /* Distinctive Gold Accent Line */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    margin-bottom: 40px;
     position: relative;
-}
-
-#montfort-admission-wrapper .vertical-tracker::before {
-    content: '';
-    position: absolute;
-    left: 17px;
-    top: 20px;
-    bottom: 20px;
-    width: 2px;
-    background: #334155;
-    z-index: 1;
-}
-
-#montfort-admission-wrapper .tracker-step {
-    display: flex;
-    align-items: center;
-    margin-bottom: 2.5rem;
-    position: relative;
-    z-index: 2;
-    opacity: 0.4;
-    transition: all 0.3s ease;
-}
-
-#montfort-admission-wrapper .tracker-step.active {
-    opacity: 1;
-}
-
-#montfort-admission-wrapper .step-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: #1e293b;
-    border: 2px solid #334155;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    margin-right: 18px;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-    box-shadow: 0 0 0 4px #0f172a;
-}
-
-#montfort-admission-wrapper .tracker-step.active .step-icon {
-    background: #d4af37;
-    border-color: #d4af37;
-    color: #0f172a;
-    box-shadow: 0 0 15px rgba(212, 175, 55, 0.4), 0 0 0 4px #0f172a;
-}
-
-#montfort-admission-wrapper .step-text {
-    font-size: 1.05rem;
-    font-weight: 500;
-}
-
-/* Sidebar Instructions */
-#montfort-admission-wrapper .sidebar-instructions {
-    margin-top: auto;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 1.5rem;
-    border-radius: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-#montfort-admission-wrapper .sidebar-instructions h4 {
-    color: #38bdf8;
-    margin: 0 0 1rem 0;
-    font-size: 1.05rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-#montfort-admission-wrapper .sidebar-instructions p {
-    font-size: 0.85rem;
-    color: #cbd5e0;
-    line-height: 1.6;
-    margin: 0 0 0.8rem 0;
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-}
-
-#montfort-admission-wrapper .sidebar-instructions p i {
-    color: #10b981;
-    margin-top: 2px;
-}
-
-/* MAIN SCROLLING AREA */
-#montfort-admission-wrapper .dashboard-main {
-    margin-left: 320px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-#montfort-admission-wrapper .dashboard-header {
-    background: white;
-    padding: 1.5rem 3rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-    position: sticky;
-    top: 0;
     z-index: 10;
 }
-
-#montfort-admission-wrapper .dashboard-header h1 {
-    font-size: 1.5rem;
-    color: #0f172a;
-    font-weight: 700;
-    margin: 0;
-}
-
-#montfort-admission-wrapper .track-btn {
-    background: transparent;
-    color: #3b82f6;
-    font-weight: 600;
-    text-decoration: none;
-    font-size: 0.95rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 20px;
-    border-radius: 8px;
-    border: 2px solid #3b82f6;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#montfort-admission-wrapper .track-btn:hover {
-    background: #3b82f6;
-    color: white;
-    box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
-}
-
-#montfort-admission-wrapper .dashboard-content {
-    padding: 3rem;
-    max-width: 1000px;
-    width: 100%;
+#montfort-portal-wrapper .header-container {
+    max-width: 900px; /* Slightly wider than the form card to frame it nicely */
     margin: 0 auto;
-    box-sizing: border-box;
-}
-
-#montfort-admission-wrapper .solid-white-panel {
-    background: white;
-    border-radius: 16px;
-    padding: 3rem;
-    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-}
-
-/* ========================================= */
-/* PREMIUM INPUT STYLES (Isolated)           */
-/* ========================================= */
-
-#montfort-admission-wrapper .form-group {
-    margin-bottom: 1.2rem;
-}
-
-#montfort-admission-wrapper .form-group label {
-    display: block;
-    margin-bottom: 6px;
-    color: #475569;
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-#montfort-admission-wrapper .input-wrapper {
-    position: relative;
-    width: 100%;
-}
-
-#montfort-admission-wrapper .input-wrapper i {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #94a3b8;
-    font-size: 1.1rem;
-    pointer-events: none;
-    transition: color 0.3s;
-}
-
-#montfort-admission-wrapper .input-wrapper input,
-#montfort-admission-wrapper .input-wrapper select {
-    width: 100%;
-    padding: 14px 15px 14px 48px;
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    color: #0f172a;
-    font-size: clamp(0.85rem, 1.5vw, 0.95rem);
-    box-sizing: border-box;
-    outline: none;
-    font-family: inherit;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#montfort-admission-wrapper .input-wrapper select {
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-    padding-right: 40px;
-}
-
-/* Dropdown Arrow */
-#montfort-admission-wrapper .input-wrapper select + &::after {
-    display: none;
-}
-#montfort-admission-wrapper .input-wrapper select:not([multiple]) {
-    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 15px center;
-    background-size: 16px;
-}
-
-#montfort-admission-wrapper .focus-effect input:focus,
-#montfort-admission-wrapper .focus-effect select:focus {
-    background: #ffffff;
-    border-color: #d4af37;
-    box-shadow: 0 10px 20px -10px rgba(56, 189, 248, 0.2);
-}
-
-#montfort-admission-wrapper .focus-effect input:focus + i,
-#montfort-admission-wrapper .focus-effect select:focus + i,
-#montfort-admission-wrapper .focus-effect input:focus ~ i {
-    color: #d4af37;
-}
-
-/* Wizard Specific Overrides */
-#montfort-admission-wrapper .file-input-wrapper input {
-    padding: 10px 15px 10px 48px;
-}
-#montfort-admission-wrapper .textarea-wrapper { height: auto; }
-#montfort-admission-wrapper .info-icon-top { top: 20px !important; transform: none !important; }
-
-#montfort-admission-wrapper .more-info-textarea {
-    width: 100%;
-    padding: 14px 15px 14px 48px;
-    background: #f8fafc;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    color: #0f172a;
-    font-size: clamp(0.85rem, 1.5vw, 0.95rem);
-    box-sizing: border-box;
-    outline: none;
-    font-family: inherit;
-    resize: vertical;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-#montfort-admission-wrapper .more-info-textarea:focus {
-    background: #ffffff;
-    border-color: #d4af37;
-    box-shadow: 0 10px 20px -10px rgba(56, 189, 248, 0.2);
-}
-
-/* ========================================= */
-/* PREMIUM BUTTONS & LAYOUT                  */
-/* ========================================= */
-
-#montfort-admission-wrapper .login-btn {
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    border: none;
-    border-radius: 10px;
-    color: white;
-    font-size: clamp(0.95rem, 2vw, 1.05rem);
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-}
-
-#montfort-admission-wrapper .login-btn::after {
-    content: '';
-    position: absolute;
-    top: 0; left: -100%; width: 50%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-    transform: skewX(-20deg);
-    transition: 0.5s;
-}
-
-#montfort-admission-wrapper .login-btn:hover::after {
-    left: 150%;
-}
-
-#montfort-admission-wrapper .hover-lift:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px -10px rgba(15, 23, 42, 0.5);
-}
-
-#montfort-admission-wrapper .button-group {
+    padding: 0 20px;
     display: flex;
     justify-content: space-between;
-    margin-top: 2.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid #e2e8f0;
-}
-
-#montfort-admission-wrapper .button-group.align-right {
-    justify-content: flex-end;
-}
-
-#montfort-admission-wrapper .btn-prev {
-    padding: 14px 24px;
-    background: #f1f5f9;
-    border: none;
-    border-radius: 10px;
-    color: #475569;
-    font-size: clamp(0.95rem, 2vw, 1.05rem);
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    justify-content: center;
     align-items: center;
-    gap: 10px;
-    transition: all 0.3s ease;
 }
-
-#montfort-admission-wrapper .btn-prev:hover {
-    background: #e2e8f0;
+#montfort-portal-wrapper .brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+#montfort-portal-wrapper .brand-logo {
+    height: 54px; /* Larger, prouder logo */
+    width: 54px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+#montfort-portal-wrapper .brand-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+#montfort-portal-wrapper .brand-title {
+    color: #ffffff; /* Pure white main title */
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    line-height: 1.2;
+}
+#montfort-portal-wrapper .brand-subtitle {
+    color: #d4af37; /* Gold Subtitle */
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 2px;
+}
+#montfort-portal-wrapper .btn-track {
     color: #0f172a;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border-radius: 30px;
+    background: #d4af37; /* Solid gold CTA button */
+    transition: all 0.2s;
+}
+#montfort-portal-wrapper .btn-track:hover {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 4px 15px rgba(255,255,255,0.2);
     transform: translateY(-2px);
 }
 
-#montfort-admission-wrapper .btn-next {
-    margin-left: auto;
-    width: auto;
-    padding: 14px 30px;
+#montfort-portal-wrapper .portal-main { flex: 1; padding: 0 20px 60px 20px; position: relative; z-index: 10; }
+#montfort-portal-wrapper .form-document-card { max-width: 950px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.3), 0 8px 10px -2px rgba(0,0,0,0.1); position: relative; padding: 35px 45px 45px 45px; overflow: hidden; }
+#montfort-portal-wrapper .card-top-accent { position: absolute; top: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, #d4af37, #fde073); }
+
+/* VISUAL STEPPER  */
+#montfort-portal-wrapper .stepper-wrapper { display: flex; justify-content: space-between; margin-bottom: 35px; position: relative; }
+#montfort-portal-wrapper .stepper-wrapper::before { content: ""; position: absolute; top: 16px; left: 0; width: 100%; height: 2px; background: #e2e8f0; z-index: 1; }
+#montfort-portal-wrapper .stepper-item { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; flex: 1; cursor: pointer; }
+#montfort-portal-wrapper .stepper-item:hover .step-counter { transform: scale(1.1); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+#montfort-portal-wrapper .step-counter { width: 34px; height: 34px; border-radius: 50%; background: #f8fafc; border: 2px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.95rem; color: #94a3b8; margin-bottom: 6px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+#montfort-portal-wrapper .step-name { font-size: 0.7rem; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.3s; }
+#montfort-portal-wrapper .stepper-item.completed .step-counter { background: #0f172a; border-color: #0f172a; color: #d4af37; font-size: 1.1rem; }
+#montfort-portal-wrapper .stepper-item.completed .step-name { color: #0f172a; }
+#montfort-portal-wrapper .stepper-item.active .step-counter { background: #d4af37; border-color: #d4af37; color: #0f172a; box-shadow: 0 0 0 4px rgba(212,175,55,0.2); }
+#montfort-portal-wrapper .stepper-item.active .step-name { color: #d4af37; }
+/* VALIDATION ERRORS */
+#montfort-portal-wrapper .error-border {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+}
+/* Grid & Layout Alignments */
+#montfort-portal-wrapper .form-header-title { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9; }
+#montfort-portal-wrapper .form-header-title.text-center { text-align: center; }
+#montfort-portal-wrapper .form-header-title h1 { font-size: 1.8rem; font-weight: 700; color: #0f172a; margin: 0 0 5px 0; letter-spacing: -0.5px; }
+#montfort-portal-wrapper .form-header-title p { color: #64748b; font-size: 0.95rem; margin: 0; }
+#montfort-portal-wrapper .icon-circle { width: 60px; height: 60px; background: #fffbeb; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; color: #d4af37; font-size: 2rem; box-shadow: 0 4px 10px rgba(212,175,55,0.2); }
+
+#montfort-portal-wrapper .section-title { font-size: 1.15rem; color: #0f172a; font-weight: 700; margin: 0 0 15px 0; display: flex; align-items: center; gap: 8px; }
+#montfort-portal-wrapper .mt-4 { margin-top: 25px; }
+#montfort-portal-wrapper .mt-5 { margin-top: 35px; }
+#montfort-portal-wrapper .text-center { text-align: center; }
+#montfort-portal-wrapper .align-items-end { align-items: flex-end; }
+
+/* Compacted Grids */
+#montfort-portal-wrapper .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; margin-bottom: 16px; }
+#montfort-portal-wrapper .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px 20px; margin-bottom: 16px; }
+
+/* Form Controls - Sleeker 46px Height */
+#montfort-portal-wrapper .form-group { margin-bottom: 16px; display: flex; flex-direction: column; justify-content: flex-end; }
+/* Kill bottom margin if inside a grid, let the grid gap handle spacing */
+#montfort-portal-wrapper .grid-2 .form-group, #montfort-portal-wrapper .grid-3 .form-group { margin-bottom: 0; }
+
+#montfort-portal-wrapper .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2;}
+#montfort-portal-wrapper .form-control {
+    width: 100%; height: 46px; border: 2px solid transparent; border-radius: 6px; padding: 0 14px;
+    font-size: 0.95rem; font-family: inherit; background-color: #f8fafc; color: #1e293b; font-weight: 500;
+    box-sizing: border-box; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02) inset;
+}
+#montfort-portal-wrapper .form-control::placeholder { color: #94a3b8; font-weight: 400; }
+#montfort-portal-wrapper .form-control:hover { background-color: #f1f5f9; }
+#montfort-portal-wrapper .form-control:focus { outline: none; background-color: #ffffff; border-color: #d4af37; box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15); }
+#montfort-portal-wrapper textarea.form-control { height: auto; min-height: 80px; padding: 10px 14px; resize: vertical; }
+
+#montfort-portal-wrapper .custom-select {
+    appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d4af37' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat; background-position: right 1rem center; background-size: 1em;
 }
 
-#montfort-admission-wrapper .submit-btn-layout {
-    width: auto;
-    padding: 14px 30px;
-    background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
-    color: #0f172a;
+#montfort-portal-wrapper .hidden-radio { display: none; }
+#montfort-portal-wrapper .ios-segmented-control {
+    display: flex !important; align-items: stretch !important; height: 46px !important; background: #f1f5f9; padding: 4px; border-radius: 6px; gap: 4px; box-sizing: border-box;
+}
+#montfort-portal-wrapper .segment-label {
+    flex: 1; display: block !important; height: 38px !important; line-height: 38px !important; border-radius: 4px;
+    color: #64748b; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); margin: 0 !important; padding: 0 !important; text-align: center !important;
+}
+#montfort-portal-wrapper .hidden-radio:checked + .segment-label { background-color: #ffffff !important; color: #0f172a !important; box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important; }
+
+/* ULTRA-SLIM FILE DROPZONE */
+#montfort-portal-wrapper .file-dropzone {
+    position: relative; border: 2px dashed #cbd5e1; border-radius: 6px; background-color: #f8fafc; padding: 0 15px;
+    display: flex; flex-direction: row; align-items: center; justify-content: center; height: 46px;
+    transition: all 0.2s; cursor: pointer; overflow: hidden; box-sizing: border-box; gap: 10px;
+}
+#montfort-portal-wrapper .file-dropzone:hover { border-color: #d4af37; background-color: #fffbeb; }
+#montfort-portal-wrapper .file-dropzone i { font-size: 1.15rem; color: #94a3b8; margin: 0; }
+#montfort-portal-wrapper .file-dropzone span { font-size: 0.85rem; color: #64748b; font-weight: 500; }
+#montfort-portal-wrapper .file-dropzone input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+/* Buttons */
+#montfort-portal-wrapper .form-actions { margin-top: 40px; padding-top: 25px; border-top: 1px solid #f1f5f9; display: flex; }
+#montfort-portal-wrapper .right-align { justify-content: flex-end; }
+#montfort-portal-wrapper .space-between { justify-content: space-between; }
+#montfort-portal-wrapper button { font-family: inherit; font-weight: 600; font-size: 0.95rem; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 26px; border: none; }
+#montfort-portal-wrapper .btn-primary, #montfort-portal-wrapper .btn-submit { background: linear-gradient(180deg, #1e293b, #0f172a); color: #d4af37; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
+#montfort-portal-wrapper .btn-primary:hover, #montfort-portal-wrapper .btn-submit:hover { background: linear-gradient(180deg, #27364f, #0f172a); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transform: translateY(-2px); }
+#montfort-portal-wrapper .btn-primary:active { transform: translateY(0); }
+#montfort-portal-wrapper .btn-outline { background-color: transparent; color: #475569; padding: 10px 22px; border: 2px solid #e2e8f0; }
+#montfort-portal-wrapper .btn-outline:hover { color: #0f172a; border-color: #cbd5e1; background-color: #f8fafc; }
+#montfort-portal-wrapper .btn-text { background: transparent; color: #d4af37; font-weight: 600; padding: 0; box-shadow: none; }
+#montfort-portal-wrapper .btn-text:hover { color: #b3922c; transform: none; }
+#montfort-portal-wrapper .btn-large { font-size: 1.05rem; padding: 14px 35px; border-radius: 30px; }
+
+/* Tables & Instructions */
+#montfort-portal-wrapper .instruction-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; color: #334155; border-left: 4px solid #d4af37; }
+#montfort-portal-wrapper .instruction-box h3 { margin-top: 0; font-size: 1.05rem; color: #0f172a; font-weight: 700; }
+#montfort-portal-wrapper .instruction-box ul { list-style: none; padding: 0; margin: 12px 0 0 0; }
+#montfort-portal-wrapper .instruction-box li { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 0.95rem; }
+#montfort-portal-wrapper .icon-gold { color: #d4af37; font-size: 1.1rem; }
+
+#montfort-portal-wrapper .table-container { border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+#montfort-portal-wrapper .data-table { width: 100%; border-collapse: collapse; }
+#montfort-portal-wrapper .data-table th { padding: 12px 14px; text-align: left; font-size: 0.8rem; font-weight: 700; color: #475569; background-color: #f8fafc; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; letter-spacing: 0.5px; }
+#montfort-portal-wrapper .data-table td { padding: 8px 14px; border-bottom: 1px solid #e2e8f0; }
+#montfort-portal-wrapper .table-input { width: 100%; border: 2px solid transparent; padding: 8px 12px; font-size: 0.9rem; font-family: inherit; border-radius: 4px; outline: none; background: #f1f5f9; transition: all 0.2s; }
+#montfort-portal-wrapper .table-input:focus { border-color: #d4af37; background: #ffffff; box-shadow: 0 0 0 3px rgba(212,175,55,0.1); }
+#montfort-portal-wrapper .table-footer { padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; background-color: #f8fafc; }
+#montfort-portal-wrapper .score-badge { background: #0f172a; color: #d4af37; padding: 4px 10px; border-radius: 20px; font-weight: 700; margin-left: 8px; font-size: 0.9rem;}
+#montfort-portal-wrapper .btn-icon { background: #fef2f2; color: #ef4444; font-size: 0.95rem; padding: 6px; border-radius: 4px; }
+#montfort-portal-wrapper .btn-icon:hover { background: #fee2e2; color: #b91c1c; }
+
+/* Review & Success */
+#montfort-portal-wrapper .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; border-left: 4px solid #d4af37; }
+#montfort-portal-wrapper .review-item { display: flex; flex-direction: column; }
+#montfort-portal-wrapper .review-item strong { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+#montfort-portal-wrapper .review-item span { font-size: 0.95rem; color: #0f172a; font-weight: 600; }
+#montfort-portal-wrapper .review-section-break { grid-column: 1 / -1; margin-top: 15px; margin-bottom: 5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; font-size: 1.05rem; font-weight: 700; color: #0f172a; }
+
+#montfort-portal-wrapper .success-screen { padding: 30px 20px; }
+#montfort-portal-wrapper .success-icon-wrapper { margin-bottom: 20px; }
+#montfort-portal-wrapper .success-icon { font-size: 4.5rem; color: #10b981; filter: drop-shadow(0 10px 15px rgba(16,185,129,0.2)); }
+#montfort-portal-wrapper .success-title { font-size: 2.2rem; color: #0f172a; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+#montfort-portal-wrapper .success-msg { font-size: 1.05rem; color: #475569; }
+#montfort-portal-wrapper .ref-number-box { background: #f0fdf4; border: 2px dashed #10b981; padding: 25px; border-radius: 8px; margin: 25px auto; max-width: 400px; }
+#montfort-portal-wrapper .ref-label { display: block; color: #047857; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.85rem; }
+#montfort-portal-wrapper .ref-number { display: block; font-size: 2.2rem; font-weight: 800; color: #064e3b; letter-spacing: 2px; }
+/* --- LAYOUT POLISH (Add to bottom of apply.css) --- */
+
+/* 1. Slim down the form card from 950px to 800px for a tighter, premium look */
+#montfort-portal-wrapper .header-container,
+#montfort-portal-wrapper .form-document-card {
+    max-width: 800px !important;
 }
 
-/* ========================================= */
-/* GRID & TABLE STYLES                       */
-/* ========================================= */
-
-#montfort-admission-wrapper #fax_number_trap { display: none !important; position: absolute; left: -9999px; }
-#montfort-admission-wrapper .hidden-element { display: none !important; }
-#montfort-admission-wrapper .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-#montfort-admission-wrapper .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; }
-#montfort-admission-wrapper h3.section-title {
-    color: #0f172a; font-size: 1.25rem; margin-top: 1rem; margin-bottom: 1.5rem; font-weight: 600;
-    border-bottom: 2px solid #f1f5f9; padding-bottom: 0.5rem;
+/* 2. Add distinct borders and a pure white background to inputs so they don't float */
+#montfort-portal-wrapper .form-control,
+#montfort-portal-wrapper .table-input {
+    border: 1px solid #cbd5e1 !important;
+    background-color: #ffffff !important;
 }
 
-#montfort-admission-wrapper .subject-grades-label { margin-top: 20px; display: block; font-weight: 600; color: #334155; margin-bottom: 8px; }
-#montfort-admission-wrapper .apply-table { width: 100%; border-collapse: collapse; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
-#montfort-admission-wrapper .apply-table th { background: #f8fafc; color: #475569; padding: 12px 15px; text-align: left; font-size: 0.9rem; font-weight: 600; border-bottom: 1px solid #e2e8f0; }
-#montfort-admission-wrapper .apply-table td { padding: 10px 15px; border-bottom: 1px solid #e2e8f0; }
-#montfort-admission-wrapper .table-footer-cell { background: #ffffff; padding: 15px; }
-#montfort-admission-wrapper .table-footer-flex { display: flex; justify-content: space-between; align-items: center; }
-#montfort-admission-wrapper .btn-add { padding: 8px 16px; font-size: 0.85rem; width: auto; }
-#montfort-admission-wrapper .total-score-label { color: #0f172a; font-size: 1.1rem; }
-#montfort-admission-wrapper .total-score-value { color: #10b981; font-weight: 700; }
-#montfort-admission-wrapper .table-input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e0; border-radius: 6px; outline: none; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; }
-#montfort-admission-wrapper .table-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
-#montfort-admission-wrapper .row-remover { background: #ef4444; color: white; border: none; border-radius: 6px; width: 32px; height: 32px; cursor: pointer; display: inline-flex; justify-content: center; align-items: center; transition: background 0.2s; }
-#montfort-admission-wrapper .row-remover:hover { background: #dc2626; }
+/* 3. Add a beautiful gold glowing border when typing */
+#montfort-portal-wrapper .form-control:focus,
+#montfort-portal-wrapper .table-input:focus {
+    border-color: #d4af37 !important;
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.15) !important;
+    outline: none !important;
+}
 
-/* Spinner */
-#montfort-admission-wrapper .btn-spinner { width: 1.2rem; height: 1.2rem; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; display: inline-block; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* 4. Anchor the Subject Marks table with a subtle header background */
+#montfort-portal-wrapper .data-table th {
+    background-color: #f1f5f9 !important;
+    border-top: 1px solid #e2e8f0 !important;
+    border-bottom: 2px solid #e2e8f0 !important;
+}
 
-/* SweetAlert */
-.success-popup-container { font-family: 'Poppins', sans-serif; }
-.success-popup-ref { color: #16a34a; font-size: 26px; font-weight: 700; display: block; margin: 15px 0; }
-.success-popup-msg { font-size: 0.95rem; color: #64748b; }
-
+/* 5. Improve the File Dropzone contrast */
+#montfort-portal-wrapper .file-dropzone {
+    background-color: #f8fafc !important;
+    border: 1px dashed #94a3b8 !important;
+}
 /* Responsive */
-@media (max-width: 992px) {
-    #montfort-admission-wrapper.dashboard-layout { flex-direction: column; }
-    #montfort-admission-wrapper .dashboard-sidebar { width: 100%; height: auto; position: relative; padding: 2rem 1.5rem; }
-    #montfort-admission-wrapper .dashboard-main { margin-left: 0; }
-    #montfort-admission-wrapper .vertical-tracker { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; }
-    #montfort-admission-wrapper .vertical-tracker::before { display: none; }
-    #montfort-admission-wrapper .tracker-step { margin-bottom: 0; margin-right: 1rem; }
-    #montfort-admission-wrapper .dashboard-header { padding: 1.5rem; flex-direction: column; gap: 15px; text-align: center; }
-    #montfort-admission-wrapper .dashboard-content { padding: 1.5rem; }
-    #montfort-admission-wrapper .solid-white-panel { padding: 1.5rem; }
-    #montfort-admission-wrapper .form-row-2, #montfort-admission-wrapper .form-row-3 { grid-template-columns: 1fr; gap: 0; }
+@media (max-width: 768px) {
+    #montfort-portal-wrapper .form-document-card { padding: 25px 20px; border-radius: 0; }
+    #montfort-portal-wrapper .grid-2, #montfort-portal-wrapper .grid-3, #montfort-portal-wrapper .review-grid { grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px;}
+    #montfort-portal-wrapper .step-name { display: none; }
 }
