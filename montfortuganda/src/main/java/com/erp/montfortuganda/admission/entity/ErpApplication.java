@@ -133,7 +133,7 @@ public class ErpApplication {
     @Column(name = "student_name", length = 100) private String studentName = "";
     @Column(name = "student_surname", length = 100) private String studentSurname = "";
     @Column(name = "dob", length = 50) private String dobLegacy = "";
-    @Column(name = "ref_number", length = 50) private String refNumberLegacy = "";
+    @Column(name = "ref_number", length = 50) private String refNumberLegacy = java.util.UUID.randomUUID().toString();
     @Column(name = "academic_year", length = 50) private String academicYearLegacy = "";
     @Column(name = "term", length = 50) private String term = "";
     @Column(name = "photo_path", columnDefinition = "TEXT") private String photoPath = "";
