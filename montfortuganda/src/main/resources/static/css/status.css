@@ -13,7 +13,7 @@ body { margin: 0; padding: 0; min-height: 100vh; background-color: #0f172a; }
 #montfort-portal-wrapper .portal-header { width: 100%; padding: 16px 0; background: rgba(15, 23, 42, 0.98); backdrop-filter: blur(10px); border-bottom: 2px solid #d4af37; box-shadow: 0 10px 30px rgba(0,0,0,0.3); position: relative; z-index: 10; margin-bottom: 40px; }
 #montfort-portal-wrapper .header-container { max-width: 900px; margin: 0 auto; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
 #montfort-portal-wrapper .brand { display: flex; align-items: center; gap: 16px; }
-#montfort-portal-wrapper .brand-logo { height: 54px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+#montfort-portal-wrapper .brand-logo { height: 54px; width: 54px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
 #montfort-portal-wrapper .brand-text { display: flex; flex-direction: column; justify-content: center; }
 #montfort-portal-wrapper .brand-title { color: #ffffff; font-size: 1.25rem; font-weight: 700; letter-spacing: 0.3px; line-height: 1.2; }
 #montfort-portal-wrapper .brand-subtitle { color: #d4af37; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; margin-top: 2px; }

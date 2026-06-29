@@ -1,190 +1,152 @@
 package com.erp.montfortuganda.admission.service;
 
+import com.erp.montfortuganda.admission.dto.ApplicationCreateDTO;
+import com.erp.montfortuganda.admission.dto.ApplicationResponseDTO;
 import com.erp.montfortuganda.admission.entity.ErpApplication;
+import com.erp.montfortuganda.admission.entity.ErpApplicationStatusHistory;
 import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
 import com.erp.montfortuganda.school.Branch;
 import com.erp.montfortuganda.school.BranchRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class PublicApplicationService {
 
     private final ErpApplicationRepository applicationRepository;
     private final BranchRepository branchRepository;
 
-    // NEW: Injecting our advanced security scanner
-    private final SecuritySanitizerService securitySanitizerService;
+    @Transactional
+    public ApplicationResponseDTO submitApplication(ApplicationCreateDTO dto) {
 
-    // This is the absolute root directory for all application files
-    private final String ROOT_UPLOAD_DIR = System.getProperty("user.dir") + "/secure_uploads/applications/";
+        Branch branch = branchRepository.findById(dto.getBranchId().intValue())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid Branch ID"));
 
-    // Constructor updated to require the new Security Service
-    public PublicApplicationService(ErpApplicationRepository applicationRepository,
-                                    BranchRepository branchRepository,
-                                    SecuritySanitizerService securitySanitizerService) {
-        this.applicationRepository = applicationRepository;
-        this.branchRepository = branchRepository;
-        this.securitySanitizerService = securitySanitizerService;
+        String yearString = String.valueOf(java.time.LocalDateTime.now().getYear());
+        long currentCount = applicationRepository.countByBranchAndYear(branch.getBranchId(), dto.getAcademicYearId());
+        String sequence = String.format("%03d", currentCount + 1); // 3 digits as requested
+        String applicationNo = "APP-" + yearString + "-" + branch.getSchoolCode() + "-" + sequence;
+
+        ErpApplication app = new ErpApplication();
+        app.setApplicationNo(applicationNo);
+        app.setBranch(branch);
+        app.setAcademicYearId(dto.getAcademicYearId());
+        app.setBranchClassId(dto.getBranchClassId());
+
+        app.setFirstName(dto.getFirstName());
+        app.setMiddleName(dto.getMiddleName());
+        app.setLastName(dto.getLastName());
+        app.setGender(dto.getGender());
+        app.setDateOfBirth(dto.getDateOfBirth());
+
+        app.setReligionId(dto.getReligionId());
+        app.setBloodGroupId(dto.getBloodGroupId());
+        app.setCategoryId(dto.getCategoryId());
+
+        app.setNationality(dto.getNationality());
+        app.setAdmissionType(dto.getAdmissionType());
+        app.setPreviousSchool(dto.getPreviousSchool());
+
+        app.setGuardianName(dto.getGuardianName());
+        app.setGuardianMobile(dto.getGuardianMobile());
+        app.setGuardianEmail(dto.getGuardianEmail());
+
+        app.setApplicationStatus(ErpApplication.ApplicationStatus.SUBMITTED);
+
+        ErpApplicationStatusHistory history = new ErpApplicationStatusHistory();
+        history.setNewStatus(ErpApplication.ApplicationStatus.SUBMITTED);
+        history.setRemarks("Application submitted by user");
+        app.addHistory(history);
+
+        ErpApplication savedApp = applicationRepository.save(app);
+
+        return mapToResponseDTO(savedApp);
     }
 
-    public String processApplication(ErpApplication app, MultipartFile photo, MultipartFile prevMarks) throws Exception {
+    @Transactional
+    public void updateApplicationStatus(Long applicationId, ErpApplication.ApplicationStatus newStatus, Long userId, String remarks) {
+        ErpApplication app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
 
-        // 1. Fetch the School Branch Details First
-        Branch branch = branchRepository.findById(app.getBranchId().intValue())
-                .orElseThrow(() -> new Exception("Invalid Branch ID"));
+        ErpApplication.ApplicationStatus oldStatus = app.getApplicationStatus();
+        if (oldStatus == newStatus) return;
 
-        // 2. Determine Academic Year
-        String yearString = app.getAcademicYear();
-        if (yearString == null || yearString.isEmpty()) {
-            yearString = String.valueOf(LocalDateTime.now().getYear());
-            app.setAcademicYear(yearString);
-        }
+        app.setApplicationStatus(newStatus);
+        app.setUpdatedBy(userId);
+        app.setUpdatedAt(LocalDateTime.now());
 
-        // 3. Generate the Unique Tracking ID
-        long currentCount = applicationRepository.countByAcademicYearAndBranchId(yearString, app.getBranchId());
-        String sequence = String.format("%03d", currentCount + 1);
-        String refNumber = "APP-" + yearString + "-" + branch.getSchoolCode() + "-" + sequence;
-        app.setRefNumber(refNumber.toUpperCase());
+        ErpApplicationStatusHistory history = new ErpApplicationStatusHistory();
+        history.setOldStatus(oldStatus);
+        history.setNewStatus(newStatus);
+        history.setChangedBy(userId);
+        history.setRemarks(remarks);
+        app.addHistory(history);
 
-        // 4. Build the dynamic folder structure
-        String safeSchoolCode = sanitizeFolderName(branch.getSchoolCode());
-        String safeSchoolName = sanitizeFolderName(branch.getBranchName());
-        String safeLocation = sanitizeFolderName(branch.getBranchLocation());
-
-        String dynamicRelativePath = safeSchoolCode + "_" + safeSchoolName + "_" + safeLocation + "/" + refNumber + "/";
-        String finalAbsoluteDirPath = ROOT_UPLOAD_DIR + dynamicRelativePath;
-
-        File studentDir = new File(finalAbsoluteDirPath);
-        if (!studentDir.exists()) {
-            boolean created = studentDir.mkdirs();
-            if (!created) System.out.println("Warning: Could not create student directory.");
-        }
-
-        // 5. Process File Uploads
-        if (photo != null && !photo.isEmpty()) {
-            verifySafeImageFile(photo);
-            String photoName = saveFileSecurely(photo, "photo", finalAbsoluteDirPath);
-            app.setPhotoPath(dynamicRelativePath + photoName);
-        }
-
-        if (prevMarks != null && !prevMarks.isEmpty()) {
-            verifySafePdfOrImage(prevMarks);
-            String docName = saveFileSecurely(prevMarks, "doc", finalAbsoluteDirPath);
-            app.setPrevMarksDoc(dynamicRelativePath + docName);
-        }
-
-        if (app.getClassCode() == null) app.setClassCode("N/A");
-
-        // ==============================================================
-        // 6. MAXIMUM SECURITY LOCKDOWN
-        // ==============================================================
-
-        // A. Scan entire application for Hostile SQLi and XSS scripts!
-        securitySanitizerService.sanitizeAndValidate(app);
-
-        // B. Prevent Mass Assignment Attacks (Force safe defaults)
-        app.setAppId(null);
-        app.setStatus("Pending");
-        app.setScholarshipStatus("No");
-        app.setCreatedAt(LocalDateTime.now());
-
-        // 7. Save to Database
         applicationRepository.save(app);
-
-        return refNumber;
     }
 
-    // --- MILITARY GRADE ANTI-MALWARE SCANNING & STORAGE ---
+    @Transactional
+    public void uploadApplicationFiles(String refNumber, org.springframework.web.multipart.MultipartFile photo, java.util.List<org.springframework.web.multipart.MultipartFile> documents) {
+        ErpApplication app = applicationRepository.findByApplicationNo(refNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+        
+        String uploadDir = "uploads/applications/" + refNumber + "/";
+        try {
+            java.nio.file.Path basePath = java.nio.file.Paths.get(uploadDir).toAbsolutePath().normalize();
+            if (!java.nio.file.Files.exists(basePath)) java.nio.file.Files.createDirectories(basePath);
 
-    private String saveFileSecurely(MultipartFile file, String type, String absoluteDirPath) throws IOException {
-        String extension = getExtension(file.getOriginalFilename());
-        // We still use a UUID for the file name so hackers can't do Path Traversal attacks!
-        String secureFilename = UUID.randomUUID() + "_" + type + extension;
-
-        Path path = Paths.get(absoluteDirPath + secureFilename);
-        Files.write(path, file.getBytes());
-
-        // Return just the filename, the caller handles the path
-        return secureFilename;
-    }
-
-    private void verifySafeImageFile(MultipartFile file) throws Exception {
-        if (file.getSize() > 100 * 1024) throw new Exception("Photo exceeds 100KB limit.");
-        byte[] magicBytes = getMagicBytes(file);
-        if (isNotJpeg(magicBytes) && isNotPng(magicBytes)) {
-            throw new Exception("MALWARE DETECTED: Disguised file signature. Upload blocked.");
-        }
-    }
-
-    private void verifySafePdfOrImage(MultipartFile file) throws Exception {
-        if (file.getSize() > 2 * 1024 * 1024) throw new Exception("Document exceeds 2MB limit.");
-        byte[] magicBytes = getMagicBytes(file);
-        if (isNotJpeg(magicBytes) && isNotPng(magicBytes) && isNotPdf(magicBytes)) {
-            throw new Exception("MALWARE DETECTED: Disguised file signature. Upload blocked.");
-        }
-    }
-
-    private byte[] getMagicBytes(MultipartFile file) throws IOException {
-        byte[] header = new byte[8];
-        try (InputStream is = file.getInputStream()) {
-            int bytesRead = is.read(header, 0, 8);
-            if (bytesRead < 4) {
-                throw new IOException("File is too small to verify signature.");
+            if (photo != null && !photo.isEmpty()) {
+                String photoName = "photo_" + System.currentTimeMillis() + "_" + photo.getOriginalFilename().replaceAll("[^a-zA-Z0-9.\\-]", "_");
+                java.nio.file.Path filePath = basePath.resolve(photoName).normalize();
+                java.nio.file.Files.copy(photo.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                
+                com.erp.montfortuganda.admission.entity.ErpApplicationDocument doc = new com.erp.montfortuganda.admission.entity.ErpApplicationDocument();
+                doc.setApplication(app);
+                doc.setDocumentType("PHOTO");
+                doc.setOriginalFileName(photo.getOriginalFilename());
+                doc.setStoredFileName(photoName);
+                doc.setFilePath("/" + uploadDir + photoName);
+                app.addDocument(doc);
             }
+            
+            if (documents != null) {
+                for (org.springframework.web.multipart.MultipartFile file : documents) {
+                    if (file != null && !file.isEmpty()) {
+                        String docName = "doc_" + System.currentTimeMillis() + "_" + file.getOriginalFilename().replaceAll("[^a-zA-Z0-9.\\-]", "_");
+                        java.nio.file.Path filePath = basePath.resolve(docName).normalize();
+                        java.nio.file.Files.copy(file.getInputStream(), filePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                        
+                        com.erp.montfortuganda.admission.entity.ErpApplicationDocument doc = new com.erp.montfortuganda.admission.entity.ErpApplicationDocument();
+                        doc.setApplication(app);
+                        doc.setDocumentType("DOCUMENT");
+                        doc.setOriginalFileName(file.getOriginalFilename());
+                        doc.setStoredFileName(docName);
+                        doc.setFilePath("/" + uploadDir + docName);
+                        app.addDocument(doc);
+                    }
+                }
+            }
+            
+            applicationRepository.save(app);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload files: " + e.getMessage(), e);
         }
-        return header;
     }
 
-    private boolean isNotJpeg(byte[] bytes) {
-        return !(bytes[0] == (byte) 0xFF && bytes[1] == (byte) 0xD8 && bytes[2] == (byte) 0xFF);
-    }
-
-    private boolean isNotPng(byte[] bytes) {
-        return !(bytes[0] == (byte) 0x89 && bytes[1] == (byte) 0x50 && bytes[2] == (byte) 0x4E && bytes[3] == (byte) 0x47);
-    }
-
-    private boolean isNotPdf(byte[] bytes) {
-        return !(bytes[0] == (byte) 0x25 && bytes[1] == (byte) 0x50 && bytes[2] == (byte) 0x44 && bytes[3] == (byte) 0x46);
-    }
-
-    private String getExtension(String filename) {
-        if (filename == null || !filename.contains(".")) return "";
-        return filename.substring(filename.lastIndexOf(".")).toLowerCase();
-    }
-
-    // Helper tool to safely remove spaces and special characters from folder names
-    private String sanitizeFolderName(String input) {
-        if (input == null) return "Unknown";
-        return input.replaceAll("[^a-zA-Z0-9.-]", "_");
-    }
-    // ==============================================================
-    // NEW METHODS FOR TRACKING & PRINTING
-    // ==============================================================
-
-    public ErpApplication getApplicationByRef(String refNumber) throws Exception {
-        // 1. Fetch the application
-        ErpApplication app = applicationRepository.findByRefNumber(refNumber.toUpperCase())
-                .orElseThrow(() -> new Exception("Application not found for reference: " + refNumber));
-
-        // 2. Fetch the associated branch name so the printer can display it
-        Branch branch = branchRepository.findById(app.getBranchId().intValue()).orElse(null);
-        if (branch != null) {
-            // Note: Since ErpApplication doesn't have a branchName field mapped to the DB,
-            // you might want to temporarily store it in a @Transient field if you have one,
-            // OR we can just return the app, and let the Controller build a Map.
-            // For simplicity, we will just return the raw application entity here.
-        }
-
-        return app;
+    private ApplicationResponseDTO mapToResponseDTO(ErpApplication app) {
+        ApplicationResponseDTO dto = new ApplicationResponseDTO();
+        dto.setApplicationId(app.getApplicationId());
+        dto.setApplicationNo(app.getApplicationNo());
+        dto.setApplicationStatus(app.getApplicationStatus());
+        dto.setBranchName(app.getBranch().getBranchName());
+        dto.setFirstName(app.getFirstName());
+        dto.setMiddleName(app.getMiddleName());
+        dto.setLastName(app.getLastName());
+        dto.setGender(app.getGender());
+        dto.setCreatedAt(app.getCreatedAt());
+        return dto;
     }
 }

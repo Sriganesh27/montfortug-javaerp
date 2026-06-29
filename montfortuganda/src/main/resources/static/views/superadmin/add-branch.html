@@ -10,19 +10,21 @@
         <div class="card add-branch-card">
             <h3 class="card-header">General Information</h3>
             <div class="detail-grid">
-                <div class="form-group"><label>School Name</label><input type="text" id="add-schoolName" required /></div>
-                <div class="form-group"><label>School Code</label><input type="text" id="add-schoolCode" placeholder="e.g. U011" required /></div>
-                <div class="form-group"><label>Foundation Date</label><input type="date" id="add-foundationDate" required /></div>
-                <div class="form-group"><label>Location</label><input type="text" id="add-location" required /></div>
-                <div class="form-group"><label>Contact Details</label><input type="text" id="add-contact" required /></div>
+                <!-- Added "for" attributes to link labels to inputs -->
+                <div class="form-group"><label for="add-schoolName">School Name</label><input type="text" id="add-schoolName" required /></div>
+                <div class="form-group"><label for="add-schoolCode">School Code</label><input type="text" id="add-schoolCode" placeholder="e.g. U011" required /></div>
+                <div class="form-group"><label for="add-foundationDate">Foundation Date</label><input type="date" id="add-foundationDate" required /></div>
+                <div class="form-group"><label for="add-location">Location</label><input type="text" id="add-location" required /></div>
+                <div class="form-group"><label for="add-contact">Contact Details</label><input type="text" id="add-contact" required /></div>
+
+                <!-- PURE DYNAMIC LEVELS INJECTED HERE -->
                 <div class="form-group">
-                    <label>Branch Type</label>
-                    <div class="checkbox-group">
-                        <label><input type="checkbox" value="Nursery" class="type-cb"> Nursery</label>
-                        <label><input type="checkbox" value="Primary" class="type-cb"> Primary</label>
-                        <label><input type="checkbox" value="Secondary" class="type-cb"> Secondary</label>
+                    <label>Assigned Levels</label>
+                    <div class="checkbox-group level-checkbox-group" id="add-branchLevels">
+                        <span class="loading-text">Loading database levels...</span>
                     </div>
                 </div>
+
             </div>
         </div>
 
@@ -39,7 +41,7 @@
                     </tr>
                     </thead>
                     <tbody id="incharge-tbody">
-                </tbody>
+                    </tbody>
                 </table>
             </div>
             <button type="button" id="addInchargeRowBtn" class="btn-outline-primary"><i class="bi bi-plus-circle"></i> Add Another Person</button>
@@ -51,7 +53,7 @@
 
                 <!-- 1. School Photo -->
                 <div class="form-group">
-                    <label>School Photo</label>
+                    <label for="add-photo">School Photo</label>
                     <div class="upload-zone">
                         <input type="file" id="add-photo" class="file-hidden-input" accept="image/png, image/jpeg" />
                         <div class="upload-content">
@@ -64,7 +66,7 @@
 
                 <!-- 2. Government Document -->
                 <div class="form-group">
-                    <label>Government Document</label>
+                    <label for="add-doc">Government Document</label>
                     <div class="upload-zone">
                         <input type="file" id="add-doc" class="file-hidden-input" accept="image/png, image/jpeg, application/pdf" multiple />
                         <div class="upload-content">
@@ -86,11 +88,11 @@
     <!-- Hidden Template for New Rows -->
     <template id="incharge-row-template">
         <tr>
-            <!-- Restored the crucial 'incharge-input' classes here too! -->
-            <td><input type="text" class="incharge-input incharge-name" placeholder="Name"></td>
-            <td><input type="text" class="incharge-input incharge-role" placeholder="Role"></td>
-            <td><input type="text" class="incharge-input incharge-phone" placeholder="Phone"></td>
-            <td><button type="button" class="action-btn delete-btn remove-incharge-btn"><i class="bi bi-trash"></i></button></td>
+            <!-- Added aria-labels to fix missing label warnings in table cells -->
+            <td><input type="text" class="incharge-input incharge-name" placeholder="Name" aria-label="Incharge Name"></td>
+            <td><input type="text" class="incharge-input incharge-role" placeholder="Role" aria-label="Incharge Role"></td>
+            <td><input type="text" class="incharge-input incharge-phone" placeholder="Phone" aria-label="Incharge Phone"></td>
+            <td><button type="button" class="action-btn delete-btn remove-incharge-btn" aria-label="Remove Row"><i class="bi bi-trash"></i></button></td>
         </tr>
     </template>
 </div>

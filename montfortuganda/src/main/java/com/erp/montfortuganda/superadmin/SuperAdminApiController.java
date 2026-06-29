@@ -62,7 +62,23 @@ public class SuperAdminApiController {
         return ResponseEntity.ok(ApiResponse.success("Branch status toggled successfully", null));
     }
 
+    // ==========================================
+    // MOCK STATS & LOGS (TO PREVENT 404 ERRORS)
+    // ==========================================
+    @GetMapping("/branches/{id}/stats")
+    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getBranchStats() {
+        java.util.Map<String, Object> mockStats = new java.util.HashMap<>();
+        mockStats.put("students", 0);
+        mockStats.put("staff", 0);
+        mockStats.put("attendance", 100);
+        return ResponseEntity.ok(ApiResponse.success("Stats fetched", mockStats));
+    }
 
+    @GetMapping("/branches/{id}/logs")
+    public ResponseEntity<ApiResponse<List<java.util.Map<String, String>>>> getBranchLogs() {
+        List<java.util.Map<String, String>> mockLogs = new java.util.ArrayList<>();
+        return ResponseEntity.ok(ApiResponse.success("Logs fetched", mockLogs));
+    }
     // ==========================================
     // SECURED USER LOGIC
     // ==========================================

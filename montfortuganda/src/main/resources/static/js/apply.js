@@ -1,17 +1,40 @@
 /* global Swal, window */
 
-const classData = {
-    "Nursery": [{ code: "N1", name: "Baby Class" }, { code: "N2", name: "Middle Class" }, { code: "N3", name: "Top Class" }],
-    "Primary": [{ code: "P1", name: "Primary 1" }, { code: "P2", name: "Primary 2" }, { code: "P3", name: "Primary 3" }, { code: "P4", name: "Primary 4" }, { code: "P5", name: "Primary 5" }, { code: "P6", name: "Primary 6" }, { code: "P7", name: "Primary 7" }],
-    "Secondary": [{ code: "S1", name: "Senior 1" }, { code: "S2", name: "Senior 2" }, { code: "S3", name: "Senior 3" }, { code: "S4", name: "Senior 4" }, { code: "S5", name: "Senior 5" }, { code: "S6", name: "Senior 6" }]
-};
+/**
+ * @typedef {Object} Level
+ * @property {number} levelId
+ * @property {string} levelName
+ */
+
+/**
+ * @typedef {Object} BranchLevel
+ * @property {Level} level
+ */
+
+/**
+ * @typedef {Object} Branch
+ * @property {number} branchId
+ * @property {string} branchName
+ * @property {string} schoolCode
+ * @property {BranchLevel[]} branchLevels
+ */
+
+/**
+ * @typedef {Object} SchoolClass
+ * @property {number} classId
+ * @property {string} classCode
+ * @property {string} className
+ * @property {number} levelId
+ */
+
+/** @type {Branch[]} */
 let branchList = [];
+
+/** @type {SchoolClass[]} */
+let classList = [];
 
 // Helper to safely trigger SweetAlert without ARIA focus-retention violations
 function showAlert(title, text, icon) {
-    // FIX: Explicitly remove focus from the currently active element (e.g. the select box or button)
-    // before the modal opens. This prevents Chrome from throwing "Blocked aria-hidden on an element
-    // because its descendant retained focus" errors.
     if (document.activeElement && typeof document.activeElement.blur === 'function') {
         document.activeElement.blur();
     }
@@ -26,7 +49,9 @@ function showAlert(title, text, icon) {
 
 document.addEventListener("DOMContentLoaded", () => {
     startJavascriptSlider();
-    fetchBranches().catch(e => console.error("Initialization error:", e));
+
+    // Fetch both branches and classes simultaneously on page load
+    Promise.all([fetchBranches(), fetchClasses()]).catch(e => console.error("Initialization error:", e));
 
     document.getElementById("branchSelect").addEventListener("change", handleBranchChange);
     document.getElementById("level").addEventListener("change", handleLevelChange);
@@ -35,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("subjectsBody").addEventListener("click", handleTableClick);
     document.getElementById("subjectsBody").addEventListener("input", calculateSubjectTotal);
     document.getElementById("admission-form").addEventListener("submit", handleFormSubmit);
-
     document.addEventListener("change", handleFileUploadUI);
 
     // CSP-Compliant Event Delegation for Navigation
@@ -84,20 +108,16 @@ function validateAndGoTo(targetStepNumber) {
     if (!activeStepDiv) { goToStep(targetStepNumber); return; }
 
     const currentStep = parseInt(activeStepDiv.id.replace("step-", ""));
-
-    // If they are going backwards, no need to validate
     if (targetStepNumber < currentStep) {
         goToStep(targetStepNumber);
         return;
     }
 
-    // Check validation for the current active step
     const requiredInputs = activeStepDiv.querySelectorAll("input[required], select[required]");
     let isValid = true;
     let firstInvalid = null;
 
     requiredInputs.forEach(input => {
-        // Duck-typing validity to satisfy IDE without redundant variable
         if (input.checkValidity && !input.checkValidity()) {
             isValid = false;
             if (!firstInvalid) firstInvalid = input;
@@ -109,9 +129,7 @@ function validateAndGoTo(targetStepNumber) {
 
     if (!isValid) {
         showAlert('Missing Fields', 'Please fill in all required fields marked in red.', 'warning')
-            .then(() => {
-                if (firstInvalid && firstInvalid.focus) firstInvalid.focus();
-            });
+            .then(() => { if (firstInvalid && firstInvalid.focus) firstInvalid.focus(); });
         return;
     }
 
@@ -143,8 +161,6 @@ function goToStep(targetStepNumber) {
             let stepNum = index + 1;
             item.classList.remove("active", "completed");
             const counter = item.querySelector(".step-counter");
-
-            // Safe DOM rendering
             counter.textContent = '';
             if (stepNum < targetStepNumber) {
                 item.classList.add("completed");
@@ -164,20 +180,17 @@ function goToStep(targetStepNumber) {
 
 function buildReviewSummary() {
     const container = document.getElementById("review-summary-container");
-    container.textContent = ''; // Safely clear container
+    container.textContent = '';
     const form = document.getElementById("admission-form");
 
-    // Using input[name=...] helps IDE naturally infer it's an input
     const getVal = (name) => {
         const el = form.querySelector(`input[name="${name}"], select[name="${name}"], textarea[name="${name}"]`);
         return el ? el.value : '';
     };
-
     const getRadio = (name) => {
         const el = form.querySelector(`input[name="${name}"]:checked`);
         return el ? el.value : 'Not Selected';
     };
-
     const getSelectText = (id) => {
         const el = document.getElementById(id);
         return (el && el.selectedIndex > 0) ? el.options[el.selectedIndex].text : 'Not Selected';
@@ -193,7 +206,6 @@ function buildReviewSummary() {
     let addressString = fullAddress.join(', ');
     if(getVal('addressPostal')) addressString += ` (P.O. Box: ${getVal('addressPostal')})`;
 
-    // Helper to generate DOM elements without HTML strings
     const appendSectionBreak = (title) => {
         const div = document.createElement("div");
         div.classList.add("review-section-break");
@@ -205,13 +217,10 @@ function buildReviewSummary() {
         const div = document.createElement("div");
         div.classList.add("review-item");
         if (fullWidth) div.classList.add("full-width-grid");
-
         const strong = document.createElement("strong");
         strong.textContent = label;
-
         const span = document.createElement("span");
         span.textContent = value;
-
         div.appendChild(strong);
         div.appendChild(span);
         container.appendChild(div);
@@ -247,6 +256,7 @@ function setupDefaultOption(selectElem, text="Select...") {
     selectElem.appendChild(defaultOpt);
 }
 
+// API FETCH CALLS
 async function fetchBranches() {
     setupDefaultOption(document.getElementById("branchSelect"), "Select Branch");
     const response = await fetch("/api/public/branches");
@@ -262,44 +272,58 @@ async function fetchBranches() {
     }
 }
 
+async function fetchClasses() {
+    const response = await fetch("/api/public/classes");
+    const result = await response.json();
+    if (result.success && result.data) {
+        classList = result.data;
+    }
+}
+
+// DYNAMIC CASCADING LOGIC
 function handleBranchChange() {
     const selectedId = parseInt(this.value);
     const branch = branchList.find(b => b.branchId === selectedId);
 
     const levelSelect = document.getElementById("level");
-
     setupDefaultOption(levelSelect, "Select Level");
     setupDefaultOption(document.getElementById("classSelect"), "Select Class");
     document.getElementById("dynamic-exam-container").textContent = '';
     document.getElementById("dynamic-subjects-container").classList.add("hidden-element");
 
-    if (branch && branch.branchType) {
-        const bType = branch.branchType.toLowerCase();
-        Object.keys(classData).forEach(lvl => {
-            let add = false;
-            if (bType.includes("primary") && (lvl === "Primary" || lvl === "Nursery")) add = true;
-            else if (bType.includes("secondary") && lvl === "Secondary") add = true;
-            else if (bType === lvl.toLowerCase()) add = true;
-            if (add) levelSelect.appendChild(new Option(lvl, lvl));
+    if (branch && branch.branchLevels) {
+        branch.branchLevels.forEach(bl => {
+            const lvl = bl.level;
+            levelSelect.appendChild(new Option(lvl.levelName, lvl.levelName));
         });
     }
 }
 
 function handleLevelChange() {
     const classSelect = document.getElementById("classSelect");
-
     setupDefaultOption(classSelect, "Select Class");
     document.getElementById("dynamic-exam-container").textContent = '';
     document.getElementById("dynamic-subjects-container").classList.add("hidden-element");
 
     const hiddenCode = document.getElementById("hiddenClassCode");
     const hiddenApplied = document.getElementById("hiddenAppliedClass");
-
     if (hiddenCode) hiddenCode.value = "";
     if (hiddenApplied) hiddenApplied.value = "";
 
-    if(this.value && classData[this.value]) {
-        classData[this.value].forEach(c => classSelect.appendChild(new Option(c.name, c.code)));
+    const selectedLevelName = this.value;
+    const selectedBranchId = parseInt(document.getElementById("branchSelect").value);
+    const branch = branchList.find(b => b.branchId === selectedBranchId);
+
+    if (branch && branch.branchLevels) {
+        const blObj = branch.branchLevels.find(bl => bl.level.levelName === selectedLevelName);
+        if (blObj) {
+            const levelObj = blObj.level;
+            // Filter dynamic classList by mapped Level ID
+            const filteredClasses = classList.filter(c => c.levelId === levelObj.levelId);
+            filteredClasses.forEach(c => {
+                classSelect.appendChild(new Option('[' + c.classCode + '] ' + c.className, c.classCode));
+            });
+        }
     }
 }
 
@@ -344,7 +368,6 @@ function handleTableClick(e) { if (e.target.closest(".btn-icon")) { e.target.clo
 
 function calculateSubjectTotal() {
     let total = 0;
-    // By querying 'input.subject-mark-input', IDEs naturally infer this is an HTMLInputElement!
     document.querySelectorAll("input.subject-mark-input").forEach(input => {
         const val = parseFloat(input.value);
         if (!isNaN(val)) total += val;
@@ -354,49 +377,90 @@ function calculateSubjectTotal() {
 
 async function handleFormSubmit(e) {
     e.preventDefault();
+    const form = e.target;
     const btnSubmit = document.getElementById("btn-submit");
     const btnText = document.getElementById("btn-submit-text");
     const btnSpinner = document.getElementById("btn-submit-spinner");
 
-    // HONEYPOT INTERCEPTOR
     const honeypot = document.getElementById("fax_number_trap");
     if (honeypot && honeypot.value.trim() !== "") {
         console.warn("Bot detected by honeypot. Request killed.");
-        document.getElementById("final-ref-number").textContent = "APP-U011-26-" + Math.floor(Math.random() * 900 + 100);
+        document.getElementById("final-ref-number").textContent = "APP-2026-U011-" + Math.floor(Math.random() * 900 + 100);
         goToStep(7);
         return;
     }
 
-    // BUTTON THROTTLING
     if (btnSubmit) btnSubmit.disabled = true;
     if (btnText) btnText.classList.add("hidden-element");
     if (btnSpinner) btnSpinner.classList.remove("hidden-element");
 
-    let subjectArray = [];
-    document.querySelectorAll("#subjectsBody tr").forEach(row => {
-        const nameInput = row.querySelector("input[name='subject_name[]']");
-        const markInput = row.querySelector("input[name='subject_mark[]']");
-        const gradeInput = row.querySelector("input[name='subject_grade[]']");
+    // We still extract FormData so the PDF generator has access to the user's raw inputs!
+    const formData = new FormData(form);
 
-        const sName = nameInput ? nameInput.value.trim() : "";
-        const sMark = markInput ? markInput.value.trim() : "";
-        const sGrade = gradeInput ? gradeInput.value.trim() : "";
-        if (sName) subjectArray.push({ subject: sName, marks: sMark, grade: sGrade });
-    });
+    // Look up the TRUE classId from the selected classCode
+    const selectedClassCode = document.getElementById("classSelect").value;
+    const selectedClassObj = classList.find(c => c.classCode === selectedClassCode);
+    const trueClassId = selectedClassObj ? selectedClassObj.classId : null;
 
-    const formData = new FormData(this);
-    if (subjectArray.length > 0) formData.append("subjectMarks", JSON.stringify(subjectArray));
+    // MAPPING FRONTEND TO BACKEND: Create the clean ApplicationCreateDTO JSON payload
+    const payload = {
+        branchId: document.getElementById("branchSelect").value ? parseInt(document.getElementById("branchSelect").value) : null,
+        branchClassId: trueClassId,  // Use the ID mapped from the database!
+        academicYearId: document.getElementById("academicYear") ? parseInt(document.getElementById("academicYear").value) : 2026,
+        firstName: form.querySelector("[name='studentName']").value,
+        middleName: form.querySelector("[name='middleName']") ? form.querySelector("[name='middleName']").value : "",
+        lastName: form.querySelector("[name='studentSurname']").value,
+        gender: form.querySelector("input[name='gender']:checked") ? form.querySelector("input[name='gender']:checked").value.toUpperCase() : "MALE",
+        dateOfBirth: form.querySelector("[name='dob']").value,
+        nationality: form.querySelector("[name='nationality']") ? form.querySelector("[name='nationality']").value : "Uganda",
+        previousSchool: form.querySelector("[name='formerSchool']") ? form.querySelector("[name='formerSchool']").value : "",
+        guardianName: form.querySelector("[name='guardianName']") ? form.querySelector("[name='guardianName']").value : "",
+        guardianMobile: form.querySelector("[name='guardianContact']") ? form.querySelector("[name='guardianContact']").value : "",
+        guardianEmail: form.querySelector("[name='guardianEmail']") ? form.querySelector("[name='guardianEmail']").value : ""
+    };
 
     try {
-        const response = await fetch("/api/public/applications/submit", { method: "POST", body: formData });
+        // Send pure JSON instead of multipart/form-data
+        const response = await fetch("/api/public/applications/submit", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        // Wait for the ApplicationResponseDTO
         const result = await response.json();
 
-        if (result.success) {
-            document.getElementById("final-ref-number").textContent = String(result['ref_number']);
+        // The new backend returns the DTO directly. Check if it was successfully created.
+        if (response.ok && result.applicationNo) {
+            
+            // --- FILE UPLOAD LOGIC ---
+            const fileData = new FormData();
+            const photoInput = document.getElementById("photoInput");
+            if (photoInput && photoInput.files.length > 0) {
+                fileData.append("photo", photoInput.files[0]);
+            }
+            const docInput = document.getElementById("docInput");
+            if (docInput && docInput.files.length > 0) {
+                for (let i = 0; i < docInput.files.length; i++) {
+                    fileData.append("documents", docInput.files[i]);
+                }
+            }
+            if (fileData.has("photo") || fileData.has("documents")) {
+                try {
+                    await fetch('/api/public/applications/' + result.applicationNo + '/upload', {
+                        method: 'POST',
+                        body: fileData
+                    });
+                } catch (uploadErr) {
+                    console.warn("File upload issue:", uploadErr);
+                }
+            }
+            
+            document.getElementById("final-ref-number").textContent = String(result.applicationNo);
             goToStep(7);
-            document.getElementById("downloadPdfBtn").addEventListener("click", () => generatePDF(result['ref_number'], formData));
+            document.getElementById("downloadPdfBtn").addEventListener("click", () => generatePDF(result.applicationNo, formData));
         } else {
-            showAlert('Error', String(result.message) || "Submission failed.", 'error');
+            showAlert('Error', String(result.message || result.error || "Submission failed."), 'error');
             if (btnSubmit) btnSubmit.disabled = false;
             if (btnText) btnText.classList.remove("hidden-element");
             if (btnSpinner) btnSpinner.classList.add("hidden-element");

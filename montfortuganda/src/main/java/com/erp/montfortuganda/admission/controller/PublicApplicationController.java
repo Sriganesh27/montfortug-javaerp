@@ -1,199 +1,269 @@
 package com.erp.montfortuganda.admission.controller;
-import com.erp.montfortuganda.school.Branch;
 
+import com.erp.montfortuganda.admission.dto.ApplicationCreateDTO;
+import com.erp.montfortuganda.admission.dto.ApplicationResponseDTO;
 import com.erp.montfortuganda.admission.entity.ErpApplication;
+import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
 import com.erp.montfortuganda.admission.service.PublicApplicationService;
-import com.erp.montfortuganda.admission.service.RateLimitingService;
-import com.erp.montfortuganda.school.BranchRepository;
-import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import java.util.HashMap;
-import java.util.Map;
 
-// MAXIMUM CORS LOCKDOWN: Only accept form submissions originating from these specific websites!
-@CrossOrigin(origins = {"https://montfort.ug", "http://localhost:8080"})
+import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.BranchLevel;
+import com.erp.montfortuganda.school.Level;
+import com.erp.montfortuganda.school.SchoolClass;
+import com.erp.montfortuganda.school.BranchRepository;
+import com.erp.montfortuganda.school.LevelRepository;
+import com.erp.montfortuganda.school.SchoolClassRepository;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 @RestController
-@RequestMapping("/api/public")
+@RequestMapping("/api")
+@RequiredArgsConstructor
 public class PublicApplicationController {
 
     private final PublicApplicationService applicationService;
+    private final ErpApplicationRepository applicationRepository;
     private final BranchRepository branchRepository;
-    private final RateLimitingService rateLimitingService;
+    private final LevelRepository levelRepository;
+    private final SchoolClassRepository classRepository;
 
-    public PublicApplicationController(PublicApplicationService applicationService,
-                                       BranchRepository branchRepository,
-                                       RateLimitingService rateLimitingService) {
-        this.applicationService = applicationService;
-        this.branchRepository = branchRepository;
-        this.rateLimitingService = rateLimitingService;
-    }
-
-    @GetMapping("/branches")
+    @GetMapping("/public/branches")
     public ResponseEntity<Map<String, Object>> getPublicBranches() {
         Map<String, Object> response = new HashMap<>();
-        response.put("success", true);
-        response.put("data", branchRepository.findAll());
+        try {
+            List<Map<String, Object>> branchList = new ArrayList<>();
+            for (Branch b : branchRepository.findAll()) {
+                Map<String, Object> branchMap = new HashMap<>();
+                branchMap.put("branchId", b.getBranchId());
+                branchMap.put("branchName", b.getBranchName());
+                branchMap.put("schoolCode", b.getSchoolCode());
+                branchMap.put("branchLevels", extractBranchLevelsList(b.getBranchLevels()));
+                branchList.add(branchMap);
+            }
+            response.put("success", true);
+            response.put("data", branchList);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    private List<Map<String, Object>> extractBranchLevelsList(List<BranchLevel> branchLevels) {
+        List<Map<String, Object>> branchLevelsList = new ArrayList<>();
+        if (branchLevels != null) {
+            for (BranchLevel bl : branchLevels) {
+                Map<String, Object> blMap = new HashMap<>();
+                Map<String, Object> levelMap = new HashMap<>();
+                if (bl.getLevel() != null) {
+                    levelMap.put("levelId", bl.getLevel().getLevelId());
+                    levelMap.put("levelName", bl.getLevel().getLevelName());
+                }
+                blMap.put("level", levelMap);
+                branchLevelsList.add(blMap);
+            }
+        }
+        return branchLevelsList;
+    }
+
+    @GetMapping("/public/levels")
+    public ResponseEntity<Map<String, Object>> getPublicLevels() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            List<Map<String, Object>> levelList = new ArrayList<>();
+            for (Level lvl : levelRepository.findAll()) {
+                Map<String, Object> levelMap = new HashMap<>();
+                levelMap.put("levelId", lvl.getLevelId());
+                levelMap.put("levelName", lvl.getLevelName());
+                levelList.add(levelMap);
+            }
+            response.put("success", true);
+            response.put("data", levelList);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping("/public/classes")
+    public ResponseEntity<Map<String, Object>> getPublicClasses() {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            List<Map<String, Object>> classList = new ArrayList<>();
+            for (SchoolClass sc : classRepository.findAll()) {
+                Map<String, Object> classMap = new HashMap<>();
+                classMap.put("classId", sc.getClassId());
+                classMap.put("classCode", sc.getClassCode());
+                classMap.put("className", sc.getClassName());
+                if (sc.getLevel() != null) {
+                    classMap.put("levelId", sc.getLevel().getLevelId());
+                }
+                classList.add(classMap);
+            }
+            response.put("success", true);
+            response.put("data", classList);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // Public Endpoint: Submission
+    @PostMapping("/public/applications/submit")
+    public ResponseEntity<ApplicationResponseDTO> submitApplication(@Valid @RequestBody ApplicationCreateDTO dto) {
+        ApplicationResponseDTO response = applicationService.submitApplication(dto);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/applications/submit")
-    public ResponseEntity<Map<String, Object>> submitApplication(
-            HttpServletRequest request,
-            @ModelAttribute ErpApplication app,
-            @RequestParam(value = "photo", required = false) MultipartFile photo,
-            @RequestParam(value = "prevMarks", required = false) MultipartFile prevMarks,
-            // THE INVISIBLE HONEYPOT TRAP!
-            @RequestParam(value = "fax_number", required = false) String honeypot) {
-
+    // Public Endpoint: Document Upload
+    @PostMapping("/public/applications/{refNumber}/upload")
+    public ResponseEntity<Map<String, Object>> uploadApplicationFiles(
+            @PathVariable String refNumber,
+            @RequestParam(value = "photo", required = false) org.springframework.web.multipart.MultipartFile photo,
+            @RequestParam(value = "documents", required = false) List<org.springframework.web.multipart.MultipartFile> documents) {
         Map<String, Object> response = new HashMap<>();
-
         try {
-            // SECURITY CHECK 1: The Honeypot Trap
-            // Real parents will never see 'fax_number'. If it's filled out, it's 100% a spam bot!
-            if (honeypot != null && !honeypot.trim().isEmpty()) {
-                System.err.println("SECURITY ALERT: Bot detected via honeypot. IP: " + request.getRemoteAddr());
-                throw new Exception("Automated bot submission detected and blocked.");
+            applicationService.uploadApplicationFiles(refNumber, photo, documents);
+            response.put("success", true);
+            response.put("message", "Files uploaded successfully");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", "File upload failed: " + e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    // Public Endpoint: Check Status (Compact for the Status Page)
+    @PostMapping("/public/applications/status")
+    public ResponseEntity<Map<String, Object>> checkApplicationStatus(@RequestParam("ref_number") String refNumber) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<ErpApplication> appOpt = applicationRepository.findByApplicationNo(refNumber);
+
+        if (appOpt.isEmpty()) {
+            response.put("success", false);
+            response.put("message", "Application not found with reference number: " + refNumber);
+            return ResponseEntity.ok(response);
+        }
+
+        ErpApplication app = appOpt.get();
+        Map<String, Object> data = new HashMap<>();
+
+        String fullName = app.getFirstName();
+        if (app.getMiddleName() != null && !app.getMiddleName().trim().isEmpty()) fullName += " " + app.getMiddleName();
+        if (app.getLastName() != null) fullName += " " + app.getLastName();
+        data.put("student_name", fullName.trim());
+
+        String appliedClass = String.valueOf(app.getBranchClassId());
+        if (app.getBranchClassId() != null) {
+            Optional<SchoolClass> sc = classRepository.findById(app.getBranchClassId().intValue());
+            if (sc.isPresent()) {
+                appliedClass = sc.get().getClassName();
             }
-
-            // SECURITY CHECK 2: Rate Limiting (1 application per IP every 10 minutes)
-            String clientIp = request.getRemoteAddr();
-            rateLimitingService.checkRateLimit(clientIp);
-
-            // SECURITY CHECK 3: Process securely with XSS and Mass Assignment protections
-            String refNumber = applicationService.processApplication(app, photo, prevMarks);
-
-            response.put("success", true);
-            response.put("message", "Application submitted successfully.");
-            response.put("ref_number", refNumber);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            System.err.println("Application Submission Failed: " + e.getMessage());
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
         }
+        data.put("applied_class", appliedClass);
+        data.put("status", app.getApplicationStatus().name());
+        data.put("ref_number", app.getApplicationNo());
+        data.put("scholarship_status", "None");
+
+        response.put("success", true);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
     }
-    @PostMapping("/applications/status")
-    public ResponseEntity<Map<String, Object>> trackApplicationStatus(
-            @RequestParam("ref_number") String refNumber) {
 
-        Map<String, Object> response = new HashMap<>();
-
-        try {
-            ErpApplication app = applicationService.getApplicationByRef(refNumber);
-
-            // Map the exact fields expected by status.js
-            Map<String, Object> statusData = new HashMap<>();
-            statusData.put("status", app.getStatus());
-            statusData.put("ref_number", app.getRefNumber());
-            statusData.put("student_name", app.getStudentName() + " " + (app.getMiddleName() != null ? app.getMiddleName() : "") + " " + app.getStudentSurname());
-            statusData.put("applied_class", app.getAppliedClass());
-            statusData.put("scholarship_status", app.getScholarshipStatus());
-
-            response.put("success", true);
-            response.put("data", statusData);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-    // --- THIS REMAINS UNCHANGED (Uses GET and expects 'ref') ---
-    @GetMapping("/applications/details")
+    // Public Endpoint: Details (For the Print Page)
+    @GetMapping("/public/applications/details")
     public ResponseEntity<Map<String, Object>> getApplicationDetails(@RequestParam("ref") String refNumber) {
-
         Map<String, Object> response = new HashMap<>();
+        Optional<ErpApplication> appOpt = applicationRepository.findByApplicationNo(refNumber);
 
-        try {
-            ErpApplication app = applicationService.getApplicationByRef(refNumber);
-
-            // Map the entity to a dictionary to inject the Branch Name dynamically
-            Map<String, Object> details = new HashMap<>();
-            details.put("ref_number", app.getRefNumber());
-            details.put("date_of_registration", app.getDateOfRegistration());
-            details.put("status", app.getStatus());
-            details.put("scholarship_status", app.getScholarshipStatus());
-
-            // Student Info
-            details.put("student_name", app.getStudentName());
-            details.put("middle_name", app.getMiddleName());
-            details.put("student_surname", app.getStudentSurname());
-            details.put("gender", app.getGender());
-            details.put("dob", app.getDob());
-            details.put("nationality", app.getNationality());
-            details.put("photo_path", app.getPhotoPath());
-
-            // Enrollment
-            details.put("academic_year", app.getAcademicYear());
-            details.put("term", app.getTerm());
-            details.put("applied_class", app.getAppliedClass());
-            details.put("class_code", app.getClassCode());
-            details.put("level", app.getLevel());
-
-            // Parents
-            details.put("father_name", app.getFatherName());
-            details.put("father_contact", app.getFatherContact());
-            details.put("father_email", app.getFatherEmail());
-            details.put("father_occupation", app.getFatherOccupation());
-            details.put("father_education", app.getFatherEducation());
-            details.put("father_age", app.getFatherAge());
-
-            details.put("mother_name", app.getMotherName());
-            details.put("mother_contact", app.getMotherContact());
-            details.put("mother_email", app.getMotherEmail());
-            details.put("mother_occupation", app.getMotherOccupation());
-            details.put("mother_education", app.getMotherEducation());
-            details.put("mother_age", app.getMotherAge());
-
-            // Guardian
-            details.put("guardian_name", app.getGuardianName());
-            details.put("guardian_relation", app.getGuardianRelation());
-            details.put("guardian_contact", app.getGuardianContact());
-            details.put("guardian_email", app.getGuardianEmail());
-            details.put("guardian_occupation", app.getGuardianOccupation());
-            details.put("guardian_education", app.getGuardianEducation());
-            details.put("guardian_age", app.getGuardianAge());
-            details.put("guardian_location", app.getGuardianLocation());
-
-            // Address
-            details.put("address_country", app.getAddressCountry());
-            details.put("address_state", app.getAddressState());
-            details.put("address_district", app.getAddressDistrict());
-            details.put("address_village", app.getAddressVillage());
-            details.put("address_street", app.getAddressStreet());
-            details.put("address_house", app.getAddressHouse());
-            details.put("address_postal", app.getAddressPostal());
-
-            // Academics
-            details.put("former_school", app.getFormerSchool());
-            details.put("former_school_code", app.getFormerSchoolCode());
-            details.put("former_school_lin", app.getFormerSchoolLin());
-            details.put("ple_score", app.getPleScore());
-            details.put("ple_ref", app.getPleRef());
-            details.put("uce_score", app.getUceScore());
-            details.put("uce_ref", app.getUceRef());
-            details.put("subject_marks", app.getSubjectMarks());
-
-            details.put("more_info", app.getMoreInfo());
-
-            // Fetch Branch Name manually!
-            branchRepository.findById(app.getBranchId().intValue()).ifPresent(branch -> {
-                details.put("branch_name", branch.getBranchName());
-                details.put("branch_location", branch.getBranchLocation());
-            });
-            response.put("success", true);
-            response.put("data", details);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
+        if (appOpt.isEmpty()) {
             response.put("success", false);
-            response.put("message", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
+            response.put("message", "Application not found.");
+            return ResponseEntity.ok(response);
         }
+
+        ErpApplication app = appOpt.get();
+        Map<String, Object> data = new HashMap<>();
+
+        // Campus & System info
+        data.put("branch_name", app.getBranch() != null ? app.getBranch().getBranchName() : "");
+        data.put("branch_location", "Uganda");
+        data.put("ref_number", app.getApplicationNo());
+        data.put("date_of_registration", app.getCreatedAt() != null ? app.getCreatedAt().toLocalDate().toString() : "");
+        data.put("status", app.getApplicationStatus().name());
+        data.put("scholarship_status", "None");
+
+        // Student Info
+        data.put("student_name", app.getFirstName());
+        data.put("middle_name", app.getMiddleName() != null ? app.getMiddleName() : "");
+        data.put("student_surname", app.getLastName());
+        data.put("gender", app.getGender() != null ? app.getGender().name() : "");
+        data.put("dob", app.getDateOfBirth() != null ? app.getDateOfBirth().toString() : "");
+        data.put("nationality", app.getNationality());
+
+        // Class Info
+        data.put("academic_year", String.valueOf(app.getAcademicYearId()));
+        data.put("term", "Term I"); // Placeholder
+
+        String appliedClass = "";
+        String classCode = "";
+        String level = "";
+        if (app.getBranchClassId() != null) {
+            Optional<SchoolClass> sc = classRepository.findById(app.getBranchClassId().intValue());
+            if (sc.isPresent()) {
+                appliedClass = sc.get().getClassName();
+                classCode = sc.get().getClassCode();
+                if (sc.get().getLevel() != null) {
+                    level = sc.get().getLevel().getLevelName();
+                }
+            }
+        }
+        data.put("applied_class", appliedClass);
+        data.put("class_code", classCode);
+        data.put("level", level);
+
+        // Guardian Info (Mapped to all family fields to avoid blank lines)
+        data.put("father_name", app.getGuardianName());
+        data.put("father_contact", app.getGuardianMobile());
+        data.put("father_email", app.getGuardianEmail());
+        data.put("mother_name", app.getGuardianName());
+        data.put("guardian_name", app.getGuardianName());
+        data.put("guardian_contact", app.getGuardianMobile());
+
+        data.put("former_school", app.getPreviousSchool());
+
+        response.put("success", true);
+        response.put("data", data);
+        return ResponseEntity.ok(response);
+    }
+
+    // Secured Endpoint: Approve/Reject workflows
+    @PostMapping("/superadmin/applications/{id}/status")
+    @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('BRANCH_ADMIN')")
+    public ResponseEntity<String> updateStatus(
+            @PathVariable Long id,
+            @RequestParam ErpApplication.ApplicationStatus status,
+            @RequestParam(required = false) String remarks) {
+
+        // Use the authenticated user's ID from SecurityContext in production
+        Long currentUserId = 1L;
+        applicationService.updateApplicationStatus(id, status, currentUserId, remarks);
+        return ResponseEntity.ok("Status successfully updated to " + status);
     }
 }

@@ -506,11 +506,11 @@
 
 #superadmin-branches-view label,
 #superadmin-add-branch-view label {
-    display: block;
+    display: inline-block;
     font-weight: 600;
     font-size: clamp(0.75rem, 1.2vw, 0.85rem);
     color: #334155;
-    margin-bottom: 0.5rem;
+    margin: 0.5rem;
 }
 
 #superadmin-branches-view input[type="text"],
@@ -3644,4 +3644,4 @@
 #superadmin-partial-fund-view .detail-card.full-width h4 {
     padding: 1.5rem 1.5rem 0 1.5rem;
 }
-g
+#superadmin-partial-fund-view .level-checkbox-group { display: flex; gap: 1rem; margin-top: 0.8rem; }

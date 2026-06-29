@@ -84,7 +84,7 @@ public class ScholarshipServiceImpl implements ScholarshipService {
             if (app.getStudent() != null) {
                 studentName = app.getStudent().getName() + " " + app.getStudent().getSurname();
             } else if (app.getApplication() != null) {
-                studentName = app.getApplication().getStudentName() + " " + app.getApplication().getStudentSurname();
+                studentName = app.getApplication().getFirstName() + " " + app.getApplication().getLastName();
             }
 
             // BUG FIX: Stopped hardcoding Total Fees to BigDecimal.ZERO!

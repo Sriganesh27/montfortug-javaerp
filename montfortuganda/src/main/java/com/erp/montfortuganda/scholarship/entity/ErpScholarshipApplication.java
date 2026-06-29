@@ -22,7 +22,7 @@ public class ErpScholarshipApplication {
     private ErpStudent student;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "application_id", referencedColumnName = "app_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "application_id", referencedColumnName = "application_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private ErpApplication application;
 
     @Column(name = "amount_requested_ugx", precision = 38, scale = 2, nullable = false)

@@ -4,8 +4,12 @@ import com.erp.montfortuganda.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
+import java.util.ArrayList;
+import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = true, exclude = "branchLevels")
+@ToString(exclude = "branchLevels")
 @Entity
 @Table(name = "erp_branches")
 @Data
@@ -21,8 +25,9 @@ public class Branch extends AuditableEntity {
     @Column(name = "school_code", length = 10, unique = true)
     private String schoolCode;
 
-    @Column(name = "branch_type")
-    private String branchType;
+    // REPLACE branch_type String with the List
+    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BranchLevel> branchLevels = new ArrayList<>();
 
     @Column(name = "branch_location")
     private String branchLocation;
@@ -31,7 +36,7 @@ public class Branch extends AuditableEntity {
     private String contactDetails;
 
     @Column(name = "incharge_details", columnDefinition = "TEXT")
-    private String inchargeDetails; // Stores the JSON string
+    private String inchargeDetails;
 
     @Column(name = "school_photo_url")
     private String schoolPhotoUrl;
@@ -40,8 +45,18 @@ public class Branch extends AuditableEntity {
     private String govDocumentUrl;
 
     @Column(name = "foundation_date")
-    private String foundationDate; // Use String to easily store "YYYY-MM-DD"
+    private String foundationDate;
 
     @Column(name = "is_active", columnDefinition = "integer default 1")
     private Integer isActive = 1;
+
+    // Helper methods
+    public void addLevel(Level level, String createdBy) {
+        BranchLevel branchLevel = new BranchLevel();
+        branchLevel.setBranch(this);
+        branchLevel.setLevel(level);
+        branchLevel.setCreatedBy(createdBy);
+        this.branchLevels.add(branchLevel);
+    }
+
 }

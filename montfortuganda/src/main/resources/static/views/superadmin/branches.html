@@ -19,7 +19,7 @@
           </tr>
           </thead>
           <tbody id="sa-branchesTableBody">
-                </tbody>
+          </tbody>
         </table>
       </div>
     </div>
@@ -86,11 +86,17 @@
             </button>
           </div>
         </div>
+
+        <!-- PURE DYNAMIC LEVELS INJECTED HERE -->
         <div class="form-group">
-          <label>Branch Type</label>
+          <label>Assigned Levels</label>
           <span class="detail-text" id="view-branchType"></span>
-          <input type="text" class="detail-input hidden" id="edit-branchType" placeholder="Nursery, Primary, Secondary">
+
+          <div class="detail-input hidden level-checkbox-group" id="edit-branchLevels">
+            <span class="loading-text">Loading database levels...</span>
+          </div>
         </div>
+
         <div class="form-group">
           <label>Foundation Date</label>
           <span class="detail-text" id="view-foundationDate"></span>
@@ -126,7 +132,7 @@
               </tr>
               </thead>
               <tbody id="edit-incharge-tbody">
-                </tbody>
+              </tbody>
             </table>
             <button type="button" class="btn-secondary btn-add-incharge" id="edit-addInchargeRowBtn">
               <i class="bi bi-plus-circle"></i> Add Person
@@ -163,7 +169,7 @@
           </tr>
           </thead>
           <tbody id="view-auditLogTbody">
-                </tbody>
+          </tbody>
         </table>
       </div>
     </div>
@@ -199,8 +205,8 @@
         <th>Phone</th>
       </tr>
       </thead>
-      <tbody class="incharge-view-tbody">
-                </tbody>
+      <class="incharge-view-tbody">
+      </tbody>
     </table>
   </template>
 

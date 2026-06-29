@@ -58,6 +58,45 @@ async function populateBranchDropdowns(selectElements) {
     }
 }
 
+// ==========================================
+// UTILITY: FETCH AND RENDER DYNAMIC LEVELS
+// ==========================================
+async function populateDynamicLevels(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    try {
+        const json = await apiGet('/public/levels');
+        const levels = json.data || [];
+
+        container.innerHTML = ''; // Clear loading text
+
+        levels.forEach(level => {
+            const label = document.createElement('label');
+            label.className = 'cb-container';
+            
+
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.className = 'level-cb';
+            checkbox.value = level.levelId;
+
+            const textNode = document.createTextNode(' ' + level.levelName);
+            const span = document.createElement('span');
+            span.className = 'checkmark';
+
+            label.appendChild(checkbox);
+            label.appendChild(textNode);
+            label.appendChild(span);
+
+            container.appendChild(label);
+        });
+    } catch (e) {
+        console.error("Failed to load dynamic levels", e);
+        container.innerHTML = '<span style="color:red">Failed to load database levels.</span>';
+    }
+}
+
 function extractInchargeDetails(viewContainer, tbodyId, nameClass, roleClass, phoneClass) {
     const incharges = [];
     viewContainer.querySelectorAll('#' + tbodyId + ' tr').forEach(row => {
@@ -184,6 +223,8 @@ async function initHomeView() {
 // ---------------------------------------------------------
 function initBranchesView() {
 
+    void populateDynamicLevels('edit-branchLevels');
+
     const viewContainer = document.querySelector('#superadmin-branches-view');
     if (!viewContainer) return;
 
@@ -234,7 +275,7 @@ function initBranchesView() {
                 clone.querySelector('.col-id').textContent = branch.branchId.toString();
                 clone.querySelector('.col-name strong').textContent = branch.branchName;
                 clone.querySelector('.col-code').textContent = branch.schoolCode;
-                clone.querySelector('.col-type').textContent = branch.branchType;
+                clone.querySelector('.col-type').textContent = (branch.levels && branch.levels.length > 0) ? branch.levels.map(l => l.levelName).join(', ') : 'N/A';
 
                 const toggle = clone.querySelector('.status-toggle');
                 toggle.checked = branch.isActive === 1;
@@ -309,7 +350,7 @@ function initBranchesView() {
                 viewContainer.querySelector('#view-branchName').textContent = branch.branchName;
                 viewContainer.querySelector('#view-schoolCode').textContent = branch.schoolCode;
                 viewContainer.querySelector('#view-adminUsername').textContent = branch.schoolCode.toLowerCase() + "@montfort.ug";
-                viewContainer.querySelector('#view-branchType').textContent = branch.branchType;
+                viewContainer.querySelector('#view-branchType').textContent = (branch.levels && branch.levels.length > 0) ? branch.levels.map(l => l.levelName).join(', ') : 'N/A';
                 viewContainer.querySelector('#view-foundationDate').textContent = branch.foundationDate || '';
                 viewContainer.querySelector('#view-branchLocation').textContent = branch.branchLocation;
                 viewContainer.querySelector('#view-contactDetails').textContent = branch.contactDetails;
@@ -430,16 +471,29 @@ function initBranchesView() {
     const cancelEditBtn = viewContainer.querySelector('#sa-cancelEditBtn');
 
     if (editBtn) {
-        editBtn.addEventListener('click', () => {
+        editBtn.addEventListener('click', async () => {
             viewContainer.querySelectorAll('.detail-text:not(.readonly-always)').forEach(el => el.classList.add('hidden'));
             viewContainer.querySelectorAll('.detail-input').forEach(el => el.classList.remove('hidden'));
 
             viewContainer.querySelector('#edit-branchName').value = viewContainer.querySelector('#view-branchName').textContent;
             viewContainer.querySelector('#edit-schoolCode').value = viewContainer.querySelector('#view-schoolCode').textContent;
-            viewContainer.querySelector('#edit-branchType').value = viewContainer.querySelector('#view-branchType').textContent;
             viewContainer.querySelector('#edit-foundationDate').value = viewContainer.querySelector('#view-foundationDate').textContent;
             viewContainer.querySelector('#edit-branchLocation').value = viewContainer.querySelector('#view-branchLocation').textContent;
             viewContainer.querySelector('#edit-contactDetails').value = viewContainer.querySelector('#view-contactDetails').textContent;
+
+            // NEW: Fetch full branch details from API to get the mapped levels
+            try {
+                const json = await apiGet('/superadmin/branches');
+                const branch = json.data.find(b => b.branchId === currentDetailBranchId);
+                const branchLevelIds = branch.levelIds || [];
+
+                // Tick the appropriate checkboxes based on the branch's levelIds
+                viewContainer.querySelectorAll('.level-cb').forEach(cb => {
+                    cb.checked = branchLevelIds.includes(parseInt(cb.value));
+                });
+            } catch (e) {
+                console.error("Failed to load branch levels for editing", e);
+            }
 
             editBtn.classList.add('hidden');
             saveBtn.classList.remove('hidden');
@@ -512,10 +566,22 @@ function initBranchesView() {
                     const formData = new FormData();
                     formData.append("branchName", viewContainer.querySelector('#edit-branchName').value);
                     formData.append("schoolCode", viewContainer.querySelector('#edit-schoolCode').value);
-                    formData.append("branchType", viewContainer.querySelector('#edit-branchType').value);
                     formData.append("foundationDate", viewContainer.querySelector('#edit-foundationDate').value);
                     formData.append("branchLocation", viewContainer.querySelector('#edit-branchLocation').value);
                     formData.append("contactDetails", viewContainer.querySelector('#edit-contactDetails').value);
+
+                    // NEW: Map checkboxes to a list of level IDs and validate!
+                    const selectedLevels = Array.from(viewContainer.querySelectorAll('.level-cb:checked')).map(cb => cb.value);
+
+                    if (selectedLevels.length === 0) {
+                        if (typeof Swal !== 'undefined') Swal.fire('Validation Error', 'Please select at least one education level.', 'warning');
+                        return;
+                    }
+
+                    // Append each selected level ID
+                    selectedLevels.forEach(levelId => {
+                        formData.append("levelIds", levelId);
+                    });
 
                     const updatedIncharges = extractInchargeDetails(viewContainer, 'edit-incharge-tbody', 'inc-name', 'inc-role', 'inc-phone');
                     formData.append("inchargeDetails", JSON.stringify(updatedIncharges));
@@ -575,6 +641,9 @@ function initBranchesView() {
 // 3. ADD BRANCH PAGE LOGIC (DYNAMIC TABLE & JSON)
 // ---------------------------------------------------------
 function initAddBranchView() {
+
+    void populateDynamicLevels('add-branchLevels');
+
     const viewContainer = document.querySelector('#superadmin-add-branch-view');
     if (!viewContainer) return;
 
@@ -1382,7 +1451,7 @@ function initOneToOneSponsorshipView() {
                 const liveStudents = Array.isArray(studentsRes) ? studentsRes : (studentsRes.data || []);
 
                 const validDonors = liveDonors.filter(d => (d.amountReceivedUgx - d.amountSpentUgx) > 0);
-                
+
                 const donorPagination = new GlobalPagination({
                     data: validDonors,
                     itemsPerPage: 25,

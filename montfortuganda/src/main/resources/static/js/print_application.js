@@ -120,10 +120,12 @@ document.addEventListener("DOMContentLoaded", function() {
                     document.getElementById('gender').textContent = displayField(app.gender);
                     document.getElementById('dob').textContent = displayField(app.dob);
                     document.getElementById('nationality').textContent = displayField(app.nationality);
-                    document.getElementById('acad_term').textContent = `${displayField(app.academic_year)} / ${displayField(app.term)}`;
+                    document.getElementById('acad_year').textContent = displayField(app.academic_year);
+                    document.getElementById('acad_term_only').textContent = displayField(app.term);
 
                     const classCode = app.class_code ? `[${app.class_code}]` : '';
-                    document.getElementById('applied_class').textContent = `${displayField(app.applied_class)} ${classCode} (${displayField(app.level)})`;
+                    document.getElementById('applied_class').textContent = `${displayField(app.applied_class)} ${classCode}`;
+                    document.getElementById('level').textContent = displayField(app.level);
 
                     if (app.photo_path) {
                         let finalPhotoPath = app.photo_path;
