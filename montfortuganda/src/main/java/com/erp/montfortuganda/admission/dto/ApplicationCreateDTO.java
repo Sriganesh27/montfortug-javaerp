@@ -9,7 +9,6 @@ import java.time.LocalDate;
 @Data
 public class ApplicationCreateDTO {
 
-    // Ensures malicious users cannot overwrite application_id or status
     @NotNull(message = "Branch ID is required")
     private Long branchId;
 
@@ -21,7 +20,6 @@ public class ApplicationCreateDTO {
 
     @NotBlank(message = "First Name is required")
     private String firstName;
-
     private String middleName;
 
     @NotBlank(message = "Last Name is required")
@@ -29,7 +27,6 @@ public class ApplicationCreateDTO {
 
     @NotNull(message = "Gender is required")
     private ErpApplication.Gender gender;
-
     private LocalDate dateOfBirth;
 
     private Long religionId;
@@ -38,9 +35,51 @@ public class ApplicationCreateDTO {
 
     private String nationality = "Uganda";
     private ErpApplication.AdmissionType admissionType = ErpApplication.AdmissionType.NEW;
-    private String previousSchool;
 
+    // Address Fields
+    private String addressHouse;
+    private String addressStreet;
+    private String addressVillage;
+    private String addressDistrict;
+    private String addressState;
+    private String addressPostal;
+    private String addressCountry;
+
+    // Father Fields
+    private String fatherName;
+    private Integer fatherAge;
+    private String fatherContact;
+    private String fatherEducation;
+    private String fatherOccupation;
+    private String fatherEmail;
+
+    // Mother Fields
+    private String motherName;
+    private Integer motherAge;
+    private String motherContact;
+    private String motherEducation;
+    private String motherOccupation;
+    private String motherEmail;
+
+    // Guardian Fields
     private String guardianName;
     private String guardianMobile;
     private String guardianEmail;
+    private Integer guardianAge;
+    private String guardianEducation;
+    private String guardianOccupation;
+    private String guardianRelation;
+    private String guardianLocation;
+
+    // Academic Fields
+    private String previousSchool;
+    private String formerSchoolCode;
+    private String formerSchoolLin;
+    private String pleRef;
+    private Double pleScore;
+    private String uceRef;
+    private Double uceScore;
+    private String subjectMarks;
+    private String scholarshipStatus;
+    private String moreInfo;
 }

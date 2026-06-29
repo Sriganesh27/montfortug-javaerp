@@ -405,18 +405,67 @@ async function handleFormSubmit(e) {
     // MAPPING FRONTEND TO BACKEND: Create the clean ApplicationCreateDTO JSON payload
     const payload = {
         branchId: document.getElementById("branchSelect").value ? parseInt(document.getElementById("branchSelect").value) : null,
-        branchClassId: trueClassId,  // Use the ID mapped from the database!
         academicYearId: document.getElementById("academicYear") ? parseInt(document.getElementById("academicYear").value) : 2026,
+
+        // FIX 1: Use the trueClassId instead of trying to parse a String like "S1"
+        branchClassId: trueClassId,
+
         firstName: form.querySelector("[name='studentName']").value,
         middleName: form.querySelector("[name='middleName']") ? form.querySelector("[name='middleName']").value : "",
         lastName: form.querySelector("[name='studentSurname']").value,
         gender: form.querySelector("input[name='gender']:checked") ? form.querySelector("input[name='gender']:checked").value.toUpperCase() : "MALE",
         dateOfBirth: form.querySelector("[name='dob']").value,
         nationality: form.querySelector("[name='nationality']") ? form.querySelector("[name='nationality']").value : "Uganda",
-        previousSchool: form.querySelector("[name='formerSchool']") ? form.querySelector("[name='formerSchool']").value : "",
+        religionId: document.getElementById("religionId") && document.getElementById("religionId").value ? parseInt(document.getElementById("religionId").value) : null,
+        bloodGroupId: document.getElementById("bloodGroupId") && document.getElementById("bloodGroupId").value ? parseInt(document.getElementById("bloodGroupId").value) : null,
+        categoryId: document.getElementById("categoryId") && document.getElementById("categoryId").value ? parseInt(document.getElementById("categoryId").value) : null,
+
+        // Address
+        addressHouse: form.querySelector("[name='addressHouse']") ? form.querySelector("[name='addressHouse']").value : "",
+        addressStreet: form.querySelector("[name='addressStreet']") ? form.querySelector("[name='addressStreet']").value : "",
+        addressVillage: form.querySelector("[name='addressVillage']") ? form.querySelector("[name='addressVillage']").value : "",
+        addressDistrict: form.querySelector("[name='addressDistrict']") ? form.querySelector("[name='addressDistrict']").value : "",
+        addressState: form.querySelector("[name='addressState']") ? form.querySelector("[name='addressState']").value : "",
+        addressPostal: form.querySelector("[name='addressPostal']") ? form.querySelector("[name='addressPostal']").value : "",
+        addressCountry: form.querySelector("[name='addressCountry']") ? form.querySelector("[name='addressCountry']").value : "",
+
+        // FIX 2: Check value first before parseInt to satisfy strict type checking
+        fatherName: form.querySelector("[name='fatherName']") ? form.querySelector("[name='fatherName']").value : "",
+        fatherAge: form.querySelector("[name='fatherAge']") && form.querySelector("[name='fatherAge']").value ? parseInt(form.querySelector("[name='fatherAge']").value) : 0,
+        fatherContact: form.querySelector("[name='fatherContact']") ? form.querySelector("[name='fatherContact']").value : "",
+        fatherEducation: form.querySelector("[name='fatherEducation']") ? form.querySelector("[name='fatherEducation']").value : "",
+        fatherOccupation: form.querySelector("[name='fatherOccupation']") ? form.querySelector("[name='fatherOccupation']").value : "",
+        fatherEmail: form.querySelector("[name='fatherEmail']") ? form.querySelector("[name='fatherEmail']").value : "",
+
+        // Mother
+        motherName: form.querySelector("[name='motherName']") ? form.querySelector("[name='motherName']").value : "",
+        motherAge: form.querySelector("[name='motherAge']") && form.querySelector("[name='motherAge']").value ? parseInt(form.querySelector("[name='motherAge']").value) : 0,
+        motherContact: form.querySelector("[name='motherContact']") ? form.querySelector("[name='motherContact']").value : "",
+        motherEducation: form.querySelector("[name='motherEducation']") ? form.querySelector("[name='motherEducation']").value : "",
+        motherOccupation: form.querySelector("[name='motherOccupation']") ? form.querySelector("[name='motherOccupation']").value : "",
+        motherEmail: form.querySelector("[name='motherEmail']") ? form.querySelector("[name='motherEmail']").value : "",
+
+        // Guardian
         guardianName: form.querySelector("[name='guardianName']") ? form.querySelector("[name='guardianName']").value : "",
         guardianMobile: form.querySelector("[name='guardianContact']") ? form.querySelector("[name='guardianContact']").value : "",
-        guardianEmail: form.querySelector("[name='guardianEmail']") ? form.querySelector("[name='guardianEmail']").value : ""
+        guardianEmail: form.querySelector("[name='guardianEmail']") ? form.querySelector("[name='guardianEmail']").value : "",
+        guardianAge: form.querySelector("[name='guardianAge']") && form.querySelector("[name='guardianAge']").value ? parseInt(form.querySelector("[name='guardianAge']").value) : 0,
+        guardianEducation: form.querySelector("[name='guardianEducation']") ? form.querySelector("[name='guardianEducation']").value : "",
+        guardianOccupation: form.querySelector("[name='guardianOccupation']") ? form.querySelector("[name='guardianOccupation']").value : "",
+        guardianRelation: form.querySelector("[name='guardianRelation']") ? form.querySelector("[name='guardianRelation']").value : "",
+        guardianLocation: form.querySelector("[name='guardianLocation']") ? form.querySelector("[name='guardianLocation']").value : "",
+
+        // Academic - Updated to use parseFloat for double types
+        previousSchool: form.querySelector("[name='formerSchool']") ? form.querySelector("[name='formerSchool']").value : "",
+        formerSchoolCode: form.querySelector("[name='formerSchoolCode']") ? form.querySelector("[name='formerSchoolCode']").value : "",
+        formerSchoolLin: form.querySelector("[name='formerSchoolLin']") ? form.querySelector("[name='formerSchoolLin']").value : "",
+        pleRef: form.querySelector("[name='pleRef']") ? form.querySelector("[name='pleRef']").value : "",
+        pleScore: form.querySelector("[name='pleScore']") && form.querySelector("[name='pleScore']").value ? parseFloat(form.querySelector("[name='pleScore']").value) : null,
+        uceRef: form.querySelector("[name='uceRef']") ? form.querySelector("[name='uceRef']").value : "",
+        uceScore: form.querySelector("[name='uceScore']") && form.querySelector("[name='uceScore']").value ? parseFloat(form.querySelector("[name='uceScore']").value) : null,
+        subjectMarks: form.querySelector("[name='subjectMarks']") ? form.querySelector("[name='subjectMarks']").value : "",
+        scholarshipStatus: form.querySelector("[name='scholarshipStatus']") ? form.querySelector("[name='scholarshipStatus']").value : "",
+        moreInfo: form.querySelector("[name='moreInfo']") ? form.querySelector("[name='moreInfo']").value : ""
     };
 
     try {
@@ -432,7 +481,7 @@ async function handleFormSubmit(e) {
 
         // The new backend returns the DTO directly. Check if it was successfully created.
         if (response.ok && result.applicationNo) {
-            
+
             // --- FILE UPLOAD LOGIC ---
             const fileData = new FormData();
             const photoInput = document.getElementById("photoInput");
@@ -455,7 +504,7 @@ async function handleFormSubmit(e) {
                     console.warn("File upload issue:", uploadErr);
                 }
             }
-            
+
             document.getElementById("final-ref-number").textContent = String(result.applicationNo);
             goToStep(7);
             document.getElementById("downloadPdfBtn").addEventListener("click", () => generatePDF(result.applicationNo, formData));

@@ -30,6 +30,13 @@ public class PublicApplicationService {
         String sequence = String.format("%03d", currentCount + 1); // 3 digits as requested
         String applicationNo = "APP-" + yearString + "-" + branch.getSchoolCode() + "-" + sequence;
 
+        // Guarantee uniqueness even if the database count is mismatched
+        while (applicationRepository.findByApplicationNo(applicationNo).isPresent()) {
+            currentCount++;
+            sequence = String.format("%03d", currentCount + 1);
+            applicationNo = "APP-" + yearString + "-" + branch.getSchoolCode() + "-" + sequence;
+        }
+
         ErpApplication app = new ErpApplication();
         app.setApplicationNo(applicationNo);
         app.setBranch(branch);
@@ -53,6 +60,45 @@ public class PublicApplicationService {
         app.setGuardianName(dto.getGuardianName());
         app.setGuardianMobile(dto.getGuardianMobile());
         app.setGuardianEmail(dto.getGuardianEmail());
+        // Map Extended Data Fields
+        app.setAddressHouse(dto.getAddressHouse());
+        app.setAddressStreet(dto.getAddressStreet());
+        app.setAddressVillage(dto.getAddressVillage());
+        app.setAddressDistrict(dto.getAddressDistrict());
+        app.setAddressState(dto.getAddressState());
+        app.setAddressPostal(dto.getAddressPostal());
+        app.setAddressCountry(dto.getAddressCountry());
+
+        app.setFatherName(dto.getFatherName());
+        app.setFatherAge(dto.getFatherAge() != null ? dto.getFatherAge() : 0);
+        app.setFatherContact(dto.getFatherContact());
+        app.setFatherEducation(dto.getFatherEducation());
+        app.setFatherOccupation(dto.getFatherOccupation());
+        app.setFatherEmail(dto.getFatherEmail());
+
+        app.setMotherName(dto.getMotherName());
+        app.setMotherAge(dto.getMotherAge() != null ? dto.getMotherAge() : 0);
+        app.setMotherContact(dto.getMotherContact());
+        app.setMotherEducation(dto.getMotherEducation());
+        app.setMotherOccupation(dto.getMotherOccupation());
+        app.setMotherEmail(dto.getMotherEmail());
+
+        app.setGuardianAge(dto.getGuardianAge() != null ? dto.getGuardianAge() : 0);
+        app.setGuardianEducation(dto.getGuardianEducation());
+        app.setGuardianOccupation(dto.getGuardianOccupation());
+        app.setGuardianRelation(dto.getGuardianRelation());
+        app.setGuardianLocation(dto.getGuardianLocation());
+
+        app.setFormerSchool(dto.getPreviousSchool());
+        app.setFormerSchoolCode(dto.getFormerSchoolCode());
+        app.setFormerSchoolLin(dto.getFormerSchoolLin());
+        app.setPleRef(dto.getPleRef());
+        app.setPleScore(dto.getPleScore());
+        app.setUceRef(dto.getUceRef());
+        app.setUceScore(dto.getUceScore());
+        app.setSubjectMarks(dto.getSubjectMarks());
+        app.setScholarshipStatus(dto.getScholarshipStatus());
+        app.setMoreInfo(dto.getMoreInfo());
 
         app.setApplicationStatus(ErpApplication.ApplicationStatus.SUBMITTED);
 
