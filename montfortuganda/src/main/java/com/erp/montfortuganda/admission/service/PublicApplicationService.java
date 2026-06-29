@@ -167,4 +167,24 @@ public class PublicApplicationService {
         if (input == null) return "Unknown";
         return input.replaceAll("[^a-zA-Z0-9.-]", "_");
     }
+    // ==============================================================
+    // NEW METHODS FOR TRACKING & PRINTING
+    // ==============================================================
+
+    public ErpApplication getApplicationByRef(String refNumber) throws Exception {
+        // 1. Fetch the application
+        ErpApplication app = applicationRepository.findByRefNumber(refNumber.toUpperCase())
+                .orElseThrow(() -> new Exception("Application not found for reference: " + refNumber));
+
+        // 2. Fetch the associated branch name so the printer can display it
+        Branch branch = branchRepository.findById(app.getBranchId().intValue()).orElse(null);
+        if (branch != null) {
+            // Note: Since ErpApplication doesn't have a branchName field mapped to the DB,
+            // you might want to temporarily store it in a @Transient field if you have one,
+            // OR we can just return the app, and let the Controller build a Map.
+            // For simplicity, we will just return the raw application entity here.
+        }
+
+        return app;
+    }
 }

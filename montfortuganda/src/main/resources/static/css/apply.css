@@ -20,9 +20,15 @@ body{
 }
 
 #montfort-portal-wrapper .slide.active-slide { opacity: 1; transform: scale(1.03); }
-#montfort-portal-wrapper .slider-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(2px); z-index: 2; }#montfort-portal-wrapper .slider-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(2px); z-index: 2; }
+#montfort-portal-wrapper .slider-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(2px); z-index: 2; }
 
-#montfort-portal-wrapper #fax_number_trap, #montfort-portal-wrapper .hidden-element { display: none !important; }
+#montfort-portal-wrapper .hidden-element { display: none !important; }
+
+/* --- UTILITY CLASSES (Strict Separation of Concerns) --- */
+#montfort-portal-wrapper .honeypot-field { position: absolute; left: -9999px; opacity: 0; display: block; }
+#montfort-portal-wrapper .full-width-grid { grid-column: 1 / -1; }
+#montfort-portal-wrapper .text-muted-small { font-size: 0.9rem; color: #64748b; }
+#montfort-portal-wrapper .file-selected-text { color: #0f172a; font-weight: 600; }
 
 /* --- PREMIUM OFFICIAL HEADER --- */
 #montfort-portal-wrapper .portal-header {
@@ -220,7 +226,7 @@ body{
 #montfort-portal-wrapper .ref-number-box { background: #f0fdf4; border: 2px dashed #10b981; padding: 25px; border-radius: 8px; margin: 25px auto; max-width: 400px; }
 #montfort-portal-wrapper .ref-label { display: block; color: #047857; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.85rem; }
 #montfort-portal-wrapper .ref-number { display: block; font-size: 2.2rem; font-weight: 800; color: #064e3b; letter-spacing: 2px; }
-/* --- LAYOUT POLISH (Add to bottom of apply.css) --- */
+/* --- LAYOUT POLISH --- */
 
 /* 1. Slim down the form card from 950px to 800px for a tighter, premium look */
 #montfort-portal-wrapper .header-container,

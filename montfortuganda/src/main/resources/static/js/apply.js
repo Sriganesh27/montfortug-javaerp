@@ -1,4 +1,4 @@
-/* global Swal, jspdf */
+/* global Swal, window */
 
 const classData = {
     "Nursery": [{ code: "N1", name: "Baby Class" }, { code: "N2", name: "Middle Class" }, { code: "N3", name: "Top Class" }],
@@ -6,6 +6,23 @@ const classData = {
     "Secondary": [{ code: "S1", name: "Senior 1" }, { code: "S2", name: "Senior 2" }, { code: "S3", name: "Senior 3" }, { code: "S4", name: "Senior 4" }, { code: "S5", name: "Senior 5" }, { code: "S6", name: "Senior 6" }]
 };
 let branchList = [];
+
+// Helper to safely trigger SweetAlert without ARIA focus-retention violations
+function showAlert(title, text, icon) {
+    // FIX: Explicitly remove focus from the currently active element (e.g. the select box or button)
+    // before the modal opens. This prevents Chrome from throwing "Blocked aria-hidden on an element
+    // because its descendant retained focus" errors.
+    if (document.activeElement && typeof document.activeElement.blur === 'function') {
+        document.activeElement.blur();
+    }
+
+    if (typeof Swal !== 'undefined') {
+        return Swal.fire(title, text, icon);
+    } else {
+        alert(title + "\n\n" + text);
+        return Promise.resolve();
+    }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     startJavascriptSlider();
@@ -20,6 +37,17 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("admission-form").addEventListener("submit", handleFormSubmit);
 
     document.addEventListener("change", handleFileUploadUI);
+
+    // CSP-Compliant Event Delegation for Navigation
+    document.addEventListener("click", function(e) {
+        const targetElement = e.target.closest('[data-step-target]');
+        if (targetElement) {
+            const stepNum = parseInt(targetElement.getAttribute('data-step-target'), 10);
+            if (!isNaN(stepNum)) {
+                validateAndGoTo(stepNum);
+            }
+        }
+    });
 });
 
 function handleFileUploadUI(e) {
@@ -28,20 +56,19 @@ function handleFileUploadUI(e) {
         const span = e.target.closest('.file-dropzone').querySelector('span');
         if (file) {
             span.textContent = file.name;
-            span.style.color = "#0f172a"; span.style.fontWeight = "600";
+            span.classList.add("file-selected-text");
             if (e.target.id === "photoInput" && file.size > 51200) {
-                if (typeof Swal !== 'undefined') Swal.fire('Warning', 'Photo is larger than 50KB. The system might reject it.', 'warning');
-                else alert('Warning: Photo is larger than 50KB.');
+                showAlert('Warning', 'Photo is larger than 50KB. The system might reject it.', 'warning');
             }
         } else {
             span.textContent = "Choose a file or drag it here";
-            span.style.color = ""; span.style.fontWeight = "";
+            span.classList.remove("file-selected-text");
         }
     }
 }
 
 function startJavascriptSlider() {
-    const slides = document.querySelectorAll('#montfort-portal-wrapper .slide');
+    const slides = document.querySelectorAll('#montfort-portal-wrapper img.slide');
     if (slides.length === 0) return;
     let currentSlide = 0;
     setInterval(() => {
@@ -51,7 +78,7 @@ function startJavascriptSlider() {
     }, 6000);
 }
 
-// NEW VALIDATION ENGINE
+// VALIDATION ENGINE
 function validateAndGoTo(targetStepNumber) {
     const activeStepDiv = document.querySelector(".form-step.active-step");
     if (!activeStepDiv) { goToStep(targetStepNumber); return; }
@@ -65,12 +92,13 @@ function validateAndGoTo(targetStepNumber) {
     }
 
     // Check validation for the current active step
-    const requiredInputs = activeStepDiv.querySelectorAll("[required]");
+    const requiredInputs = activeStepDiv.querySelectorAll("input[required], select[required]");
     let isValid = true;
     let firstInvalid = null;
 
     requiredInputs.forEach(input => {
-        if (!input.checkValidity()) {
+        // Duck-typing validity to satisfy IDE without redundant variable
+        if (input.checkValidity && !input.checkValidity()) {
             isValid = false;
             if (!firstInvalid) firstInvalid = input;
             input.classList.add("error-border");
@@ -79,22 +107,20 @@ function validateAndGoTo(targetStepNumber) {
         }
     });
 
-    // If validation fails, alert user and focus on the red field
     if (!isValid) {
-        if (typeof Swal !== 'undefined') Swal.fire('Missing Fields', 'Please fill in all required fields marked in red.', 'warning');
-        else alert("Please fill in all required fields.");
-        if (firstInvalid) firstInvalid.focus();
+        showAlert('Missing Fields', 'Please fill in all required fields marked in red.', 'warning')
+            .then(() => {
+                if (firstInvalid && firstInvalid.focus) firstInvalid.focus();
+            });
         return;
     }
 
-    // Force them to complete steps in order (prevent jumping from Step 1 straight to Step 6)
     if (targetStepNumber > currentStep + 1) {
-        if (typeof Swal !== 'undefined') Swal.fire('Notice', 'Please complete the form steps in order.', 'info');
+        showAlert('Notice', 'Please complete the form steps in order.', 'info');
         goToStep(currentStep + 1);
         return;
     }
 
-    // If all clear, proceed to the requested step
     goToStep(targetStepNumber);
 }
 
@@ -118,14 +144,18 @@ function goToStep(targetStepNumber) {
             item.classList.remove("active", "completed");
             const counter = item.querySelector(".step-counter");
 
+            // Safe DOM rendering
+            counter.textContent = '';
             if (stepNum < targetStepNumber) {
                 item.classList.add("completed");
-                counter.innerHTML = '<i class="bi bi-check2"></i>';
+                const icon = document.createElement("i");
+                icon.className = "bi bi-check2";
+                counter.appendChild(icon);
             } else if (stepNum === targetStepNumber) {
                 item.classList.add("active");
-                counter.innerHTML = stepNum;
+                counter.textContent = String(stepNum);
             } else {
-                counter.innerHTML = stepNum;
+                counter.textContent = String(stepNum);
             }
         });
     }
@@ -134,11 +164,24 @@ function goToStep(targetStepNumber) {
 
 function buildReviewSummary() {
     const container = document.getElementById("review-summary-container");
+    container.textContent = ''; // Safely clear container
     const form = document.getElementById("admission-form");
 
-    const getVal = (name) => form.querySelector(`[name="${name}"]`) ? form.querySelector(`[name="${name}"]`).value : '';
-    const getRadio = (name) => form.querySelector(`[name="${name}"]:checked`) ? form.querySelector(`[name="${name}"]:checked`).value : 'Not Selected';
-    const getSelectText = (id) => { const el = document.getElementById(id); return (el && el.selectedIndex > 0) ? el.options[el.selectedIndex].text : 'Not Selected'; };
+    // Using input[name=...] helps IDE naturally infer it's an input
+    const getVal = (name) => {
+        const el = form.querySelector(`input[name="${name}"], select[name="${name}"], textarea[name="${name}"]`);
+        return el ? el.value : '';
+    };
+
+    const getRadio = (name) => {
+        const el = form.querySelector(`input[name="${name}"]:checked`);
+        return el ? el.value : 'Not Selected';
+    };
+
+    const getSelectText = (id) => {
+        const el = document.getElementById(id);
+        return (el && el.selectedIndex > 0) ? el.options[el.selectedIndex].text : 'Not Selected';
+    };
 
     let fullAddress = [];
     if(getVal('addressHouse')) fullAddress.push(getVal('addressHouse'));
@@ -150,29 +193,51 @@ function buildReviewSummary() {
     let addressString = fullAddress.join(', ');
     if(getVal('addressPostal')) addressString += ` (P.O. Box: ${getVal('addressPostal')})`;
 
-    container.innerHTML = `
-        <div class="review-section-break">Enrollment</div>
-        <div class="review-item"><strong>Branch</strong><span>${getSelectText('branchSelect')}</span></div>
-        <div class="review-item"><strong>Class</strong><span>${getSelectText('classSelect')}</span></div>
-        <div class="review-item"><strong>Year & Term</strong><span>${getVal('academicYear')} - ${getRadio('term')}</span></div>
-        
-        <div class="review-section-break">Student Info</div>
-        <div class="review-item"><strong>Full Name</strong><span>${getVal('studentName')} ${getVal('middleName')} ${getVal('studentSurname')}</span></div>
-        <div class="review-item"><strong>Gender</strong><span>${getRadio('gender')}</span></div>
-        <div class="review-item"><strong>DOB & Nationality</strong><span>${getVal('dob') || 'N/A'} | ${getVal('nationality')}</span></div>
-        
-        <div class="review-section-break">Residential Address</div>
-        <div class="review-item" style="grid-column: 1 / -1;"><strong>Full Address</strong><span>${addressString || 'Not Provided'}</span></div>
+    // Helper to generate DOM elements without HTML strings
+    const appendSectionBreak = (title) => {
+        const div = document.createElement("div");
+        div.classList.add("review-section-break");
+        div.textContent = title;
+        container.appendChild(div);
+    };
 
-        <div class="review-section-break">Family Contact</div>
-        <div class="review-item"><strong>Father</strong><span>${getVal('fatherName') || 'N/A'} ${getVal('fatherContact') ? '('+getVal('fatherContact')+')' : ''}</span></div>
-        <div class="review-item"><strong>Mother</strong><span>${getVal('motherName') || 'N/A'} ${getVal('motherContact') ? '('+getVal('motherContact')+')' : ''}</span></div>
-        <div class="review-item"><strong>Guardian</strong><span>${getVal('guardianName') || 'N/A'} ${getVal('guardianContact') ? '('+getVal('guardianContact')+')' : ''} ${getVal('guardianLocation') ? '- '+getVal('guardianLocation') : ''}</span></div>
-        
-        <div class="review-section-break">Academic Details</div>
-        <div class="review-item"><strong>Former School</strong><span>${getVal('formerSchool') || 'N/A'} ${getVal('formerSchoolLin') ? '(LIN: '+getVal('formerSchoolLin')+')' : ''}</span></div>
-        <div class="review-item"><strong>Attachments</strong><span>Photo & Documents Ready for Upload</span></div>
-    `;
+    const appendItem = (label, value, fullWidth = false) => {
+        const div = document.createElement("div");
+        div.classList.add("review-item");
+        if (fullWidth) div.classList.add("full-width-grid");
+
+        const strong = document.createElement("strong");
+        strong.textContent = label;
+
+        const span = document.createElement("span");
+        span.textContent = value;
+
+        div.appendChild(strong);
+        div.appendChild(span);
+        container.appendChild(div);
+    };
+
+    appendSectionBreak("Enrollment");
+    appendItem("Branch", getSelectText('branchSelect'));
+    appendItem("Class", getSelectText('classSelect'));
+    appendItem("Year & Term", `${getVal('academicYear')} - ${getRadio('term')}`);
+
+    appendSectionBreak("Student Info");
+    appendItem("Full Name", `${getVal('studentName')} ${getVal('middleName')} ${getVal('studentSurname')}`);
+    appendItem("Gender", getRadio('gender'));
+    appendItem("DOB & Nationality", `${getVal('dob') || 'N/A'} | ${getVal('nationality')}`);
+
+    appendSectionBreak("Residential Address");
+    appendItem("Full Address", addressString || 'Not Provided', true);
+
+    appendSectionBreak("Family Contact");
+    appendItem("Father", `${getVal('fatherName') || 'N/A'} ${getVal('fatherContact') ? '('+getVal('fatherContact')+')' : ''}`);
+    appendItem("Mother", `${getVal('motherName') || 'N/A'} ${getVal('motherContact') ? '('+getVal('motherContact')+')' : ''}`);
+    appendItem("Guardian", `${getVal('guardianName') || 'N/A'} ${getVal('guardianContact') ? '('+getVal('guardianContact')+')' : ''} ${getVal('guardianLocation') ? '- '+getVal('guardianLocation') : ''}`);
+
+    appendSectionBreak("Academic Details");
+    appendItem("Former School", `${getVal('formerSchool') || 'N/A'} ${getVal('formerSchoolLin') ? '(LIN: '+getVal('formerSchoolLin')+')' : ''}`);
+    appendItem("Attachments", "Photo & Documents Ready for Upload");
 }
 
 function setupDefaultOption(selectElem, text="Select...") {
@@ -190,7 +255,7 @@ async function fetchBranches() {
         branchList = result.data;
         result.data.forEach(branch => {
             const opt = document.createElement("option");
-            opt.value = branch.branchId;
+            opt.value = String(branch.branchId);
             opt.textContent = `${branch.schoolCode ? '['+branch.schoolCode+'] ' : ''}${branch.branchName}`;
             document.getElementById("branchSelect").appendChild(opt);
         });
@@ -200,11 +265,12 @@ async function fetchBranches() {
 function handleBranchChange() {
     const selectedId = parseInt(this.value);
     const branch = branchList.find(b => b.branchId === selectedId);
+
     const levelSelect = document.getElementById("level");
 
     setupDefaultOption(levelSelect, "Select Level");
     setupDefaultOption(document.getElementById("classSelect"), "Select Class");
-    document.getElementById("dynamic-exam-container").innerHTML = '';
+    document.getElementById("dynamic-exam-container").textContent = '';
     document.getElementById("dynamic-subjects-container").classList.add("hidden-element");
 
     if (branch && branch.branchType) {
@@ -221,11 +287,16 @@ function handleBranchChange() {
 
 function handleLevelChange() {
     const classSelect = document.getElementById("classSelect");
+
     setupDefaultOption(classSelect, "Select Class");
-    document.getElementById("dynamic-exam-container").innerHTML = '';
+    document.getElementById("dynamic-exam-container").textContent = '';
     document.getElementById("dynamic-subjects-container").classList.add("hidden-element");
-    document.getElementById("hiddenClassCode").value = "";
-    document.getElementById("hiddenAppliedClass").value = "";
+
+    const hiddenCode = document.getElementById("hiddenClassCode");
+    const hiddenApplied = document.getElementById("hiddenAppliedClass");
+
+    if (hiddenCode) hiddenCode.value = "";
+    if (hiddenApplied) hiddenApplied.value = "";
 
     if(this.value && classData[this.value]) {
         classData[this.value].forEach(c => classSelect.appendChild(new Option(c.name, c.code)));
@@ -234,17 +305,30 @@ function handleLevelChange() {
 
 function handleClassChange() {
     const code = this.value;
-    document.getElementById("hiddenClassCode").value = code;
-    document.getElementById("hiddenAppliedClass").value = this.options[this.selectedIndex].text;
+
+    const hiddenCode = document.getElementById("hiddenClassCode");
+    const hiddenApplied = document.getElementById("hiddenAppliedClass");
+
+    if (hiddenCode) hiddenCode.value = code;
+    if (hiddenApplied) hiddenApplied.value = this.options[this.selectedIndex].text;
 
     const dynExam = document.getElementById("dynamic-exam-container");
     const dynSubj = document.getElementById("dynamic-subjects-container");
-    dynExam.innerHTML = '';
+    dynExam.textContent = '';
     dynSubj.classList.add("hidden-element");
 
-    if (code === "S1") dynExam.appendChild(document.getElementById("tmpl-exam-s1").content.cloneNode(true));
-    else if (code === "S5") dynExam.appendChild(document.getElementById("tmpl-exam-s5").content.cloneNode(true));
-    else if (code) dynExam.appendChild(document.getElementById("tmpl-exam-other").content.cloneNode(true));
+    if (code === "S1") {
+        const tmpl = document.getElementById("tmpl-exam-s1");
+        dynExam.appendChild(tmpl.content.cloneNode(true));
+    }
+    else if (code === "S5") {
+        const tmpl = document.getElementById("tmpl-exam-s5");
+        dynExam.appendChild(tmpl.content.cloneNode(true));
+    }
+    else if (code) {
+        const tmpl = document.getElementById("tmpl-exam-other");
+        dynExam.appendChild(tmpl.content.cloneNode(true));
+    }
 
     if (!code.startsWith("N") && code !== "") {
         dynSubj.classList.remove("hidden-element");
@@ -252,28 +336,51 @@ function handleClassChange() {
     }
 }
 
-function addSubjectRow() { document.getElementById("subjectsBody").appendChild(document.getElementById("tmpl-subject-row").content.cloneNode(true)); }
+function addSubjectRow() {
+    const tmpl = document.getElementById("tmpl-subject-row");
+    document.getElementById("subjectsBody").appendChild(tmpl.content.cloneNode(true));
+}
 function handleTableClick(e) { if (e.target.closest(".btn-icon")) { e.target.closest("tr").remove(); calculateSubjectTotal(); } }
+
 function calculateSubjectTotal() {
     let total = 0;
-    document.querySelectorAll(".subject-mark-input").forEach(input => {
+    // By querying 'input.subject-mark-input', IDEs naturally infer this is an HTMLInputElement!
+    document.querySelectorAll("input.subject-mark-input").forEach(input => {
         const val = parseFloat(input.value);
         if (!isNaN(val)) total += val;
     });
-    document.getElementById("totalSubjectScore").textContent = total;
+    document.getElementById("totalSubjectScore").textContent = String(total);
 }
 
 async function handleFormSubmit(e) {
     e.preventDefault();
     const btnSubmit = document.getElementById("btn-submit");
     const btnText = document.getElementById("btn-submit-text");
-    btnSubmit.disabled = true; btnText.innerHTML = "Submitting... <span class='spinner-border spinner-border-sm'></span>";
+    const btnSpinner = document.getElementById("btn-submit-spinner");
+
+    // HONEYPOT INTERCEPTOR
+    const honeypot = document.getElementById("fax_number_trap");
+    if (honeypot && honeypot.value.trim() !== "") {
+        console.warn("Bot detected by honeypot. Request killed.");
+        document.getElementById("final-ref-number").textContent = "APP-U011-26-" + Math.floor(Math.random() * 900 + 100);
+        goToStep(7);
+        return;
+    }
+
+    // BUTTON THROTTLING
+    if (btnSubmit) btnSubmit.disabled = true;
+    if (btnText) btnText.classList.add("hidden-element");
+    if (btnSpinner) btnSpinner.classList.remove("hidden-element");
 
     let subjectArray = [];
     document.querySelectorAll("#subjectsBody tr").forEach(row => {
-        const sName = row.querySelector("input[name='subject_name[]']").value.trim();
-        const sMark = row.querySelector("input[name='subject_mark[]']").value.trim();
-        const sGrade = row.querySelector("input[name='subject_grade[]']").value.trim();
+        const nameInput = row.querySelector("input[name='subject_name[]']");
+        const markInput = row.querySelector("input[name='subject_mark[]']");
+        const gradeInput = row.querySelector("input[name='subject_grade[]']");
+
+        const sName = nameInput ? nameInput.value.trim() : "";
+        const sMark = markInput ? markInput.value.trim() : "";
+        const sGrade = gradeInput ? gradeInput.value.trim() : "";
         if (sName) subjectArray.push({ subject: sName, marks: sMark, grade: sGrade });
     });
 
@@ -285,23 +392,25 @@ async function handleFormSubmit(e) {
         const result = await response.json();
 
         if (result.success) {
-            document.getElementById("final-ref-number").textContent = result['ref_number'];
+            document.getElementById("final-ref-number").textContent = String(result['ref_number']);
             goToStep(7);
-            document.getElementById("downloadPdfBtn").onclick = () => generatePDF(result['ref_number'], formData);
+            document.getElementById("downloadPdfBtn").addEventListener("click", () => generatePDF(result['ref_number'], formData));
         } else {
-            if(typeof Swal !== 'undefined') Swal.fire('Error', result.message || "Submission failed.", 'error');
-            else alert("Error: " + result.message);
-            btnSubmit.disabled = false; btnText.innerHTML = "Confirm & Submit <i class='bi bi-check2-circle'></i>";
+            showAlert('Error', String(result.message) || "Submission failed.", 'error');
+            if (btnSubmit) btnSubmit.disabled = false;
+            if (btnText) btnText.classList.remove("hidden-element");
+            if (btnSpinner) btnSpinner.classList.add("hidden-element");
         }
     } catch (error) {
-        if(typeof Swal !== 'undefined') Swal.fire('Network Error', 'Please check connection.', 'error');
-        else alert("Network error.");
-        btnSubmit.disabled = false; btnText.innerHTML = "Confirm & Submit <i class='bi bi-check2-circle'></i>";
+        showAlert('Network Error', 'Please check connection.', 'error');
+        if (btnSubmit) btnSubmit.disabled = false;
+        if (btnText) btnText.classList.remove("hidden-element");
+        if (btnSpinner) btnSpinner.classList.add("hidden-element");
     }
 }
 
 function generatePDF(refNum, formData) {
-    const { jsPDF } = window.jspdf;
+    const { jsPDF } = window['jspdf'];
     const doc = new jsPDF();
     const form = document.getElementById("admission-form");
 
@@ -314,7 +423,9 @@ function generatePDF(refNum, formData) {
     let y = 60;
     doc.text(`Student Name: ${formData.get("studentName")} ${formData.get("studentSurname")}`, 20, y); y+=10;
     doc.text(`Class Applied: ${formData.get("appliedClass")}`, 20, y); y+=10;
-    doc.text(`Term: ${form.querySelector('[name="term"]:checked') ? form.querySelector('[name="term"]:checked').value : ''}`, 20, y); y+=10;
+
+    const termInput = form.querySelector('input[name="term"]:checked');
+    doc.text(`Term: ${termInput ? termInput.value : ''}`, 20, y); y+=10;
 
     doc.setLineWidth(0.5); doc.setDrawColor(229, 231, 235); doc.line(20, y+5, 190, y+5); y+=15;
     doc.setFontSize(10); doc.setTextColor(100, 100, 100);

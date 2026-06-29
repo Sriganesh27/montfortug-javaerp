@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Official Online Admission Portal for Montfort Brothers of St. Gabriel, Uganda.">
+    <!-- Security Headers -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:;">
     <title>School Application | Montfort Uganda</title>
     <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -45,31 +48,31 @@
         <div class="form-document-card">
             <div class="card-top-accent"></div>
 
-            <!-- VISUAL STEPPER (CLICKABLE WITH VALIDATION) -->
+            <!-- VISUAL STEPPER (CSP COMPLIANT - USING DATA TARGETS) -->
             <div class="stepper-wrapper" id="wizard-stepper">
-                <div class="stepper-item active" id="stepper-1" onclick="validateAndGoTo(1)">
-                    <div class="step-counter">1</div><div class="step-name">Start</div>
+                <div class="stepper-item active" id="stepper-1" data-step-target="1">
+                    <div class="step-counter" id="step-counter-1">1</div><div class="step-name">Start</div>
                 </div>
-                <div class="stepper-item" id="stepper-2" onclick="validateAndGoTo(2)">
-                    <div class="step-counter">2</div><div class="step-name">Enroll</div>
+                <div class="stepper-item" id="stepper-2" data-step-target="2">
+                    <div class="step-counter" id="step-counter-2">2</div><div class="step-name">Enroll</div>
                 </div>
-                <div class="stepper-item" id="stepper-3" onclick="validateAndGoTo(3)">
-                    <div class="step-counter">3</div><div class="step-name">Student</div>
+                <div class="stepper-item" id="stepper-3" data-step-target="3">
+                    <div class="step-counter" id="step-counter-3">3</div><div class="step-name">Student</div>
                 </div>
-                <div class="stepper-item" id="stepper-4" onclick="validateAndGoTo(4)">
-                    <div class="step-counter">4</div><div class="step-name">Family</div>
+                <div class="stepper-item" id="stepper-4" data-step-target="4">
+                    <div class="step-counter" id="step-counter-4">4</div><div class="step-name">Family</div>
                 </div>
-                <div class="stepper-item" id="stepper-5" onclick="validateAndGoTo(5)">
-                    <div class="step-counter">5</div><div class="step-name">Academic</div>
+                <div class="stepper-item" id="stepper-5" data-step-target="5">
+                    <div class="step-counter" id="step-counter-5">5</div><div class="step-name">Academic</div>
                 </div>
-                <div class="stepper-item" id="stepper-6" onclick="validateAndGoTo(6)">
-                    <div class="step-counter">6</div><div class="step-name">Review</div>
+                <div class="stepper-item" id="stepper-6" data-step-target="6">
+                    <div class="step-counter" id="step-counter-6">6</div><div class="step-name">Review</div>
                 </div>
             </div>
 
             <form id="admission-form" enctype="multipart/form-data">
-                <!-- Honeypot for bots -->
-                <input type="text" name="fax_number" id="fax_number_trap" autocomplete="off" tabindex="-1" style="position: absolute; left: -9999px; opacity: 0;">
+                <!-- Honeypot for bots (Using utility class instead of inline style) -->
+                <input type="text" name="fax_number" id="fax_number_trap" autocomplete="off" tabindex="-1" class="honeypot-field">
 
                 <input type="hidden" name="action" value="submit_application">
                 <input type="hidden" name="classCode" id="hiddenClassCode">
@@ -90,11 +93,12 @@
                             <li><i class="bi bi-check-circle-fill icon-gold"></i> Previous academic reports or pass slips (PDF/JPG).</li>
                             <li><i class="bi bi-check-circle-fill icon-gold"></i> Details of both parents and primary guardian.</li>
                         </ul>
-                        <p class="mt-3" style="font-size:0.9rem; color:#64748b;">The application will take approximately 5-10 minutes to complete.</p>
+                        <!-- Removed inline style -->
+                        <p class="mt-3 text-muted-small">The application will take approximately 5-10 minutes to complete.</p>
                     </div>
 
                     <div class="form-actions right-align">
-                        <button type="button" class="btn-primary" onclick="validateAndGoTo(2)">Start Application <i class="bi bi-arrow-right"></i></button>
+                        <button type="button" class="btn-primary" data-step-target="2">Start Application <i class="bi bi-arrow-right"></i></button>
                     </div>
                 </div>
 
@@ -106,26 +110,27 @@
                     </div>
 
                     <div class="grid-2">
-                        <div class="form-group" style="grid-column: 1 / -1;">
-                            <label for="branchSelect">Select School Branch <span style="color:#ef4444">*</span></label>
+                        <!-- Removed inline style -->
+                        <div class="form-group full-width-grid">
+                            <label for="branchSelect">Select School Branch <span class="text-danger">*</span></label>
                             <select name="branchId" id="branchSelect" class="form-control custom-select" required></select>
                         </div>
                     </div>
 
                     <div class="grid-2 align-items-end">
                         <div class="form-group">
-                            <label for="level">Education Level <span style="color:#ef4444">*</span></label>
+                            <label for="level">Education Level <span class="text-danger">*</span></label>
                             <select name="level" id="level" class="form-control custom-select" required><option value="" disabled selected>Select Level</option></select>
                         </div>
                         <div class="form-group">
-                            <label for="classSelect">Applying For Class <span style="color:#ef4444">*</span></label>
+                            <label for="classSelect">Applying For Class <span class="text-danger">*</span></label>
                             <select id="classSelect" class="form-control custom-select" required><option value="" disabled selected>Select Class</option></select>
                         </div>
                     </div>
 
                     <div class="grid-3 align-items-end">
                         <div class="form-group">
-                            <label for="academicYear">Admission Year <span style="color:#ef4444">*</span></label>
+                            <label for="academicYear">Admission Year <span class="text-danger">*</span></label>
                             <input type="number" name="academicYear" id="academicYear" class="form-control" value="2026" required>
                         </div>
                         <div class="form-group">
@@ -146,8 +151,8 @@
                     </div>
 
                     <div class="form-actions space-between">
-                        <button type="button" class="btn-outline" onclick="validateAndGoTo(1)"><i class="bi bi-arrow-left"></i> Back</button>
-                        <button type="button" class="btn-primary" onclick="validateAndGoTo(3)">Next Step <i class="bi bi-arrow-right"></i></button>
+                        <button type="button" class="btn-outline" data-step-target="1"><i class="bi bi-arrow-left"></i> Back</button>
+                        <button type="button" class="btn-primary" data-step-target="3">Next Step <i class="bi bi-arrow-right"></i></button>
                     </div>
                 </div>
 
@@ -159,9 +164,9 @@
                     </div>
 
                     <div class="grid-3 align-items-end">
-                        <div class="form-group"><label>First Name <span style="color:#ef4444">*</span></label><input type="text" name="studentName" class="form-control" placeholder="e.g. John" required></div>
+                        <div class="form-group"><label>First Name <span class="text-danger">*</span></label><input type="text" name="studentName" class="form-control" placeholder="e.g. John" required></div>
                         <div class="form-group"><label>Middle Name</label><input type="text" name="middleName" class="form-control" placeholder="Optional"></div>
-                        <div class="form-group"><label>Surname <span style="color:#ef4444">*</span></label><input type="text" name="studentSurname" class="form-control" placeholder="e.g. Doe" required></div>
+                        <div class="form-group"><label>Surname <span class="text-danger">*</span></label><input type="text" name="studentSurname" class="form-control" placeholder="e.g. Doe" required></div>
                     </div>
 
                     <div class="grid-3 align-items-end">
@@ -174,7 +179,7 @@
                                 <label for="genderFemale" class="segment-label">Female</label>
                             </div>
                         </div>
-                        <div class="form-group"><label>Date of Birth <span style="color:#ef4444">*</span></label><input type="date" name="dob" class="form-control" required></div>
+                        <div class="form-group"><label>Date of Birth <span class="text-danger">*</span></label><input type="date" name="dob" class="form-control" required></div>
                         <div class="form-group"><label>Nationality</label><input type="text" name="nationality" class="form-control" value="Uganda"></div>
                     </div>
 
@@ -184,7 +189,7 @@
                         <div class="form-group"><label>Region / Province</label><input type="text" name="addressState" class="form-control" placeholder="e.g. Central Region"></div>
                     </div>
                     <div class="grid-2 align-items-end">
-                        <div class="form-group"><label>District <span style="color:#ef4444">*</span></label><input type="text" name="addressDistrict" class="form-control" placeholder="e.g. Wakiso" required></div>
+                        <div class="form-group"><label>District <span class="text-danger">*</span></label><input type="text" name="addressDistrict" class="form-control" placeholder="e.g. Wakiso" required></div>
                         <div class="form-group"><label>Village / Town</label><input type="text" name="addressVillage" class="form-control"></div>
                     </div>
                     <div class="grid-3 align-items-end">
@@ -194,8 +199,8 @@
                     </div>
 
                     <div class="form-actions space-between">
-                        <button type="button" class="btn-outline" onclick="validateAndGoTo(2)"><i class="bi bi-arrow-left"></i> Back</button>
-                        <button type="button" class="btn-primary" onclick="validateAndGoTo(4)">Next Step <i class="bi bi-arrow-right"></i></button>
+                        <button type="button" class="btn-outline" data-step-target="2"><i class="bi bi-arrow-left"></i> Back</button>
+                        <button type="button" class="btn-primary" data-step-target="4">Next Step <i class="bi bi-arrow-right"></i></button>
                     </div>
                 </div>
 
@@ -252,8 +257,8 @@
                     </div>
 
                     <div class="form-actions space-between">
-                        <button type="button" class="btn-outline" onclick="validateAndGoTo(3)"><i class="bi bi-arrow-left"></i> Back</button>
-                        <button type="button" class="btn-primary" onclick="validateAndGoTo(5)">Next Step <i class="bi bi-arrow-right"></i></button>
+                        <button type="button" class="btn-outline" data-step-target="3"><i class="bi bi-arrow-left"></i> Back</button>
+                        <button type="button" class="btn-primary" data-step-target="5">Next Step <i class="bi bi-arrow-right"></i></button>
                     </div>
                 </div>
 
@@ -295,7 +300,7 @@
                             <label>Upload Passport Size Photo (JPG/PNG &lt; 50KB)</label>
                             <div class="file-dropzone">
                                 <i class="bi bi-cloud-arrow-up"></i>
-                                <span>Choose a file or drag it here</span>
+                                <span id="photo-filename-label">Choose a file or drag it here</span>
                                 <input type="file" name="photo" id="photoInput" accept=".jpg,.jpeg,.png">
                             </div>
                         </div>
@@ -306,8 +311,8 @@
                     </div>
 
                     <div class="form-actions space-between">
-                        <button type="button" class="btn-outline" onclick="validateAndGoTo(4)"><i class="bi bi-arrow-left"></i> Back</button>
-                        <button type="button" class="btn-primary" onclick="validateAndGoTo(6)">Review Details <i class="bi bi-search"></i></button>
+                        <button type="button" class="btn-outline" data-step-target="4"><i class="bi bi-arrow-left"></i> Back</button>
+                        <button type="button" class="btn-primary" data-step-target="6">Review Details <i class="bi bi-search"></i></button>
                     </div>
                 </div>
 
@@ -319,12 +324,15 @@
                         <p>Please double check the details below before submitting.</p>
                     </div>
 
+                    <!-- Pure Container (No innerHTML will be used here) -->
                     <div id="review-summary-container" class="review-grid"></div>
 
                     <div class="form-actions space-between mt-5">
-                        <button type="button" class="btn-outline" onclick="validateAndGoTo(5)"><i class="bi bi-pencil-square"></i> Edit Details</button>
+                        <button type="button" class="btn-outline" data-step-target="5"><i class="bi bi-pencil-square"></i> Edit Details</button>
                         <button type="submit" class="btn-submit" id="btn-submit">
+                            <!-- Pre-built DOM structure to avoid innerHTML injection -->
                             <span id="btn-submit-text">Confirm & Submit <i class="bi bi-check2-circle"></i></span>
+                            <span id="btn-submit-spinner" class="hidden-element">Submitting... <span class='spinner-border spinner-border-sm'></span></span>
                         </button>
                     </div>
                 </div>
@@ -341,7 +349,8 @@
                             <span class="ref-number" id="final-ref-number">LOADING...</span>
                         </div>
 
-                        <p class="mt-4" style="color: #64748b; font-size: 0.95rem;">Please download and print your official copy to bring to the school administration block.</p>
+                        <!-- Removed inline style -->
+                        <p class="mt-4 text-muted-small">Please download and print your official copy to bring to the school administration block.</p>
 
                         <button type="button" class="btn-primary mt-4 btn-large" id="downloadPdfBtn">
                             <i class="bi bi-file-earmark-pdf-fill"></i> Download PDF Copy

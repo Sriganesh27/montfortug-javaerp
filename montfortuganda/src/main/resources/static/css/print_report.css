@@ -1,0 +1,184 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+body { margin: 0; padding: 20px; background-color: #f1f5f9; color: #0f172a; }
+
+#print-receipt-wrapper { font-family: 'Poppins', sans-serif; box-sizing: border-box; }
+#print-receipt-wrapper * { box-sizing: inherit; }
+#print-receipt-wrapper .hidden-element { display: none !important; }
+
+/* Control Bar */
+#print-receipt-wrapper .action-bar { max-width: 900px; margin: 0 auto 20px; display: flex; justify-content: space-between; background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+#print-receipt-wrapper .btn-print { background: #0f172a; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; }
+#print-receipt-wrapper .btn-print:hover { background: #1e293b; }
+#print-receipt-wrapper .btn-back { color: #475569; text-decoration: none; font-weight: 600; display: flex; align-items: center; }
+
+/* Table Wrapper for Footer Spacing */
+#print-receipt-wrapper .print-table { width: 100%; border-collapse: collapse; border: none; max-width: 900px; margin: 0 auto; }
+#print-receipt-wrapper .print-table td { padding: 0; border: none; }
+#print-receipt-wrapper .footer-space { height: 60px; }
+
+/* Document Layout */
+#print-receipt-wrapper .document-container { background: #fff; padding: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-top: 8px solid #0f172a; }
+
+/* PERFECT HEADER ALIGNMENT & 1:1 LOGO RATIO */
+#print-receipt-wrapper .header-section { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 20px; margin-bottom: 25px; }
+#print-receipt-wrapper .logo-placeholder { width: 100px; height: 100px; flex: 0 0 100px; object-fit: fill; }
+#print-receipt-wrapper .header-spacer { width: 100px; height: 100px; flex: 0 0 100px; }
+#print-receipt-wrapper .header-text { text-align: center; flex: 1; }
+
+/* --- NEW PROFESSIONAL HEADER TYPOGRAPHY --- */
+#print-receipt-wrapper .header-text h1 { font-size: 1.6rem; color: #1e293b; margin: 0 0 4px 0; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; }
+#print-receipt-wrapper .header-text .school-location { font-size: 0.9rem; color: #475569; margin: 0 0 12px 0; font-weight: 500; text-transform: uppercase; }
+#print-receipt-wrapper .header-text .receipt-title { font-size: 0.8rem; color: #1a365d; margin: 0 0 4px 0; font-weight: 700; border-bottom: 2px solid #1a365d; display: inline-block; padding-bottom: 2px; }
+#print-receipt-wrapper .header-text .trust-name { font-size: 0.75rem; color: #64748b; margin: 4px 0 0 0; font-style: italic; }
+/* ------------------------------------------- */
+
+/* Meta Info (Using Flexbox so it evenly distributes 3 OR 4 columns!) */
+#print-receipt-wrapper .meta-info { display: flex; justify-content: space-between; margin-bottom: 25px; background: #f8fafc; padding: 0; border-radius: 6px; border: 1px solid #e2e8f0; border-left: none; }
+#print-receipt-wrapper .meta-box { flex: 1; display: flex; flex-direction: column; padding: 15px; border-left: 1px solid #e2e8f0; }
+#print-receipt-wrapper .meta-label { font-size: 0.7rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 4px; }
+#print-receipt-wrapper .meta-value { font-size: 1.05rem; font-weight: 600; color: #0f172a; }
+#print-receipt-wrapper .ref-highlight { color: #1a365d; font-size: 0.9rem; font-weight: 800; letter-spacing: 0.5px; }
+
+#print-receipt-wrapper .status-admitted { color: #166534; }
+#print-receipt-wrapper .status-rejected { color: #991b1b; }
+#print-receipt-wrapper .status-pending { color: #b45309; }
+
+/* Grid Forms */
+#print-receipt-wrapper .form-section { margin-bottom: 25px; border: 1px solid #cbd5e1; }
+#print-receipt-wrapper .form-section-title { background: #0f172a; color: #ffffff; padding: 8px 15px; font-size: 0.85rem; font-weight: 700; letter-spacing: 1px; }
+#print-receipt-wrapper .profile-header { background: #f1f5f9; padding: 6px 15px; font-size: 0.75rem; font-weight: 700; color: #475569; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #cbd5e1; }
+
+#print-receipt-wrapper .content-grid-photo { display: grid; grid-template-columns: 1fr 140px; }
+#print-receipt-wrapper .data-group { border-right: 1px solid #cbd5e1; }
+
+#print-receipt-wrapper .grid-row { display: grid; border-bottom: 1px solid #cbd5e1; }
+#print-receipt-wrapper .two-col { grid-template-columns: 1fr 1fr; }
+#print-receipt-wrapper .three-col { grid-template-columns: 1fr 1fr 1fr; }
+#print-receipt-wrapper .full-width { grid-template-columns: 1fr; }
+
+#print-receipt-wrapper .grid-item { padding: 10px 15px; border-right: 1px solid #cbd5e1; display: flex; flex-direction: column; }
+#print-receipt-wrapper .grid-item:last-child { border-right: none; }
+#print-receipt-wrapper .grid-row .no-bottom { border-bottom: none; }
+
+#print-receipt-wrapper .label { font-size: 0.65rem; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 4px; }
+#print-receipt-wrapper .value { font-size: 0.9rem; color: #0f172a; font-weight: 600; word-break: break-word; }
+
+/* Photo */
+#print-receipt-wrapper .photo-area { padding: 15px; display: flex; align-items: center; justify-content: center; background: #f8fafc; }
+#print-receipt-wrapper .student-photo { width: 100%; max-width: 110px; height: auto; border-radius: 4px; border: 1px solid #cbd5e1; }
+#print-receipt-wrapper .no-photo { width: 100px; height: 120px; border: 2px dashed #cbd5e1; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-size: 0.8rem; font-weight: 600; text-align: center; }
+
+/* Secure Tables */
+#print-receipt-wrapper .secure-marks-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.85rem; }
+#print-receipt-wrapper .secure-marks-table th { background: #f8fafc; border: 1px solid #cbd5e1; padding: 6px 10px; text-align: left; color: #475569; font-weight: 700; text-transform: uppercase; font-size: 0.7rem; }
+#print-receipt-wrapper .secure-marks-table td { border: 1px solid #cbd5e1; padding: 6px 10px; font-weight: 600; color: #0f172a; }
+
+#print-receipt-wrapper #more_info_container { margin-top: 10px; }
+
+/* Hide the repeating footer on the screen */
+.print-footer { display: none; }
+
+/* =========================================
+   PERFECT PRINT LAYOUT FIX (TABLE WRAPPER)
+   ========================================= */
+@media print {
+    /* FORCE BACKGROUND COLORS */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        color-adjust: exact !important;
+    }
+
+    /* 1. GUARANTEE PERFECT MARGINS ON EVERY PAGE */
+    @page {
+        size: auto;
+        margin: 15mm 10mm;
+    }
+
+    body { background: #fff; padding: 0; margin: 0; }
+    #print-receipt-wrapper .no-print { display: none !important; }
+    #print-receipt-wrapper .header-text h1 { font-size: 1.4rem; }
+    #print-receipt-wrapper .print-table { width: 100%; max-width: 100%; }
+    #print-receipt-wrapper .document-container { box-shadow: none; border-top: none; width: 100%; max-width: 100%; padding: 0; }
+
+    /* 2. SMART PAGE BREAKS */
+    #print-receipt-wrapper .form-section { break-inside: auto; margin-bottom: 8px; }
+    #print-receipt-wrapper .grid-row { break-inside: avoid; }
+    #print-receipt-wrapper .profile-header { break-after: avoid; }
+    #print-receipt-wrapper .form-section-title { break-after: avoid; }
+    #print-receipt-wrapper .full-width { break-inside: avoid; }
+    #print-receipt-wrapper .secure-marks-table { break-inside: avoid; }
+
+    #print-receipt-wrapper .grid-item { padding: 5px 10px; }
+    #print-receipt-wrapper .header-section { margin-bottom: 15px; padding-bottom: 10px; }
+    #print-receipt-wrapper .footer-space { height: 75px; }
+    #print-receipt-wrapper .value { font-size: 0.85rem; }
+    #print-receipt-wrapper .label { font-size: 0.6rem; }
+
+    /* =========================================================
+       3. CONVERT DASHBOARD WIDGETS TO FORMAL TABLE GRIDS
+       ========================================================= */
+    #print-receipt-wrapper .meta-info {
+        display: flex;
+        background: transparent !important;
+        padding: 0;
+        border-radius: 0;
+        border: 1px solid #cbd5e1;
+        border-left: none; /* Left borders are applied to meta-box */
+        margin-bottom: 15px;
+    }
+    #print-receipt-wrapper .meta-box {
+        flex: 1; /* Automatically stretches 3 or 4 columns evenly! */
+        padding: 5px 10px;
+        border-left: 1px solid #cbd5e1;
+        border-right: none;
+    }
+    #print-receipt-wrapper .meta-label {
+        font-size: 0.6rem;
+        color: #64748b !important;
+        margin-bottom: 4px;
+    }
+    #print-receipt-wrapper .meta-value {
+        font-size: 0.85rem;
+    }
+    /* Force the giant Reference Number to match standard grid text size */
+    #print-receipt-wrapper .ref-highlight {
+        font-size: 0.75rem !important;
+        color: #0f172a !important;
+        font-weight: 600 !important;
+        letter-spacing: 0 !important;
+    }
+
+    /* 4. BULLETPROOF NON-OVERLAPPING FOOTER (Strict ID Scope) */
+    #print-receipt-wrapper .print-footer {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 15px;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+
+        /* Added a safe 10px bottom padding so the browser doesn't clip the text */
+        padding: 10px 0 10px 0 !important;
+        height: auto !important;
+        font-size: 0.65rem;
+        color: #475569;
+        border-top: 1px dashed #cbd5e1;
+        background: #fff;
+        z-index: 9999 !important;
+    }
+
+    #print-receipt-wrapper .print-footer .footer-text {
+        font-weight: 500;
+        flex: 1;
+    }
+
+    #print-receipt-wrapper .print-footer .footer-time {
+        font-style: italic;
+        color: #94a3b8;
+        white-space: nowrap;
+    }
+}

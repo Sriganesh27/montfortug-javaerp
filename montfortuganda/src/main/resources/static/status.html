@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Security Headers -->
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:;">
+    <title>Track Application | Montfort Uganda</title>
+    <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link rel="stylesheet" href="/css/status.css">
+    <script src="/js/status.js" defer></script>
+</head>
+<body>
+
+<div id="montfort-portal-wrapper">
+    <div class="campus-slider">
+        <img src="/assets/Images/apply1.webp" alt="Campus View 1" class="slide active-slide">
+        <div class="slider-overlay"></div>
+    </div>
+
+    <header class="portal-header">
+        <div class="header-container">
+            <div class="brand">
+                <img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Montfort Logo" class="brand-logo">
+                <div class="brand-text">
+                    <span class="brand-title">Montfort Brothers of St. Gabriel</span>
+                    <span class="brand-subtitle">Uganda Province</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="/apply" class="btn-track"><i class="bi bi-arrow-left"></i> Back to Portal</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="portal-main">
+        <div class="tracker-card">
+            <div class="card-top-accent"></div>
+
+            <div class="form-header-title text-center">
+                <h1>Track Application</h1>
+                <p>Enter your Reference Number to check your admission status.</p>
+            </div>
+
+            <form id="statusForm" class="search-box">
+                <input type="text" name="fax_number" id="fax_number_trap" autocomplete="off" tabindex="-1" style="position: absolute; left: -9999px; opacity: 0;">
+                <div class="form-group">
+                    <label for="ref_number">Application Reference Number</label>
+                    <div class="input-group">
+                        <i class="bi bi-hash"></i>
+                        <input type="text" id="ref_number" name="ref_number" class="form-control" placeholder="e.g. APP-U011-26-001" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary" id="searchBtn">
+                    <span class="btn-text" id="searchBtnText">Check Status</span>
+                    <i class="bi bi-arrow-right btn-icon" id="searchBtnIcon"></i>
+                </button>
+            </form>
+
+            <div id="errorMessage" class="error-message hidden-element"></div>
+
+            <div id="resultCard" class="result-card hidden-element">
+                <h3 class="result-title"><i class="bi bi-person-badge"></i> Application Details</h3>
+
+                <div class="result-grid">
+                    <div class="result-item"><strong>Student Name</strong> <span id="resName"></span></div>
+                    <div class="result-item"><strong>Applied Class</strong> <span id="resClass"></span></div>
+
+                    <div class="result-item hidden-element" id="scholDiv"><strong>Scholarship</strong> <span id="resSchol" class="text-danger"></span></div>
+
+                    <div class="result-item status-row">
+                        <strong>Admission Status</strong>
+                        <span id="resStatus" class="status-badge"></span>
+                    </div>
+                </div>
+
+                <a href="#" id="printLink" target="_blank" class="btn-outline print-btn"><i class="bi bi-printer"></i> Download / Print Application Receipt</a>
+            </div>
+        </div>
+    </main>
+</div>
+</body>
+</html>
