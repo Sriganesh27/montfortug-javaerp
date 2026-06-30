@@ -127,14 +127,19 @@ document.addEventListener("DOMContentLoaded", function() {
                     document.getElementById('applied_class').textContent = `${displayField(app.applied_class)} ${classCode}`;
                     document.getElementById('level').textContent = displayField(app.level);
 
+                    // --- PHOTO LOADING LOGIC ---
                     if (app.photo_path) {
                         let finalPhotoPath = app.photo_path;
                         if (finalPhotoPath.includes('/assets/uploads/')) {
                             finalPhotoPath = finalPhotoPath.substring(finalPhotoPath.indexOf('/assets/uploads/'));
                         }
-                        document.getElementById('student_photo').src = finalPhotoPath;
-                        document.getElementById('student_photo').classList.remove('hidden-element');
-                        document.getElementById('no_photo').classList.add('hidden-element');
+                        const photoEl = document.getElementById('student_photo');
+                        const noPhotoEl = document.getElementById('no_photo');
+
+                        photoEl.src = finalPhotoPath;
+                        photoEl.classList.remove('hidden-element');
+                        noPhotoEl.classList.add('hidden-element');
+                        noPhotoEl.style.display = 'none';
                     }
 
                     // Section 2

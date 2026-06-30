@@ -1,7 +1,0 @@
-$kind: http-request
-name: "Test Case 3: Get Application Details for Printing"
-url: http://localhost:8080/api/public/applications/details?ref=U011-26-004
-method: GET
-queryParams:
-  ref: U011-26-004
-order: 2000

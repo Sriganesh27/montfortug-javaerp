@@ -248,6 +248,8 @@ public class PublicApplicationController {
 
         data.put("former_school", app.getPreviousSchool());
 
+        data.put("photo_path", app.getPhotoPath());
+
         response.put("success", true);
         response.put("data", data);
         return ResponseEntity.ok(response);

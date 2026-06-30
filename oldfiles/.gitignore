@@ -1,9 +1,0 @@
-﻿.idea/
-*.iml
-
-target/
-**/target/
-
-backend/src/main/resources/static/assets/uploads/
-
-*.log
