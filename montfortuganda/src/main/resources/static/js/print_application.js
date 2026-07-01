@@ -1,46 +1,131 @@
+/**
+ * @typedef {Object} ErpApplicationData
+ * @property {string} [branch_name]
+ * @property {string} [branch_location]
+ * @property {string} [ref_number]
+ * @property {string} [date_of_registration]
+ * @property {string} [scholarship_status]
+ * @property {string} [status]
+ * @property {string} [student_name]
+ * @property {string} [middle_name]
+ * @property {string} [student_surname]
+ * @property {string} [gender]
+ * @property {string} [dob]
+ * @property {string} [nationality]
+ * @property {string} [academic_year]
+ * @property {string} [term]
+ * @property {string} [applied_class]
+ * @property {string} [class_code]
+ * @property {string} [level]
+ * @property {string} [photo_path]
+ * @property {string} [primary_email]
+ * @property {string} [primary_mobile]
+ * @property {string} [father_name]
+ * @property {string} [father_contact]
+ * @property {string} [father_email]
+ * @property {string} [father_occupation]
+ * @property {string} [father_education]
+ * @property {string} [father_age]
+ * @property {string} [mother_name]
+ * @property {string} [mother_contact]
+ * @property {string} [mother_email]
+ * @property {string} [mother_occupation]
+ * @property {string} [mother_education]
+ * @property {string} [mother_age]
+ * @property {string} [guardian_name]
+ * @property {string} [guardian_relation]
+ * @property {string} [guardian_contact]
+ * @property {string} [guardian_email]
+ * @property {string} [guardian_occupation]
+ * @property {string} [guardian_education]
+ * @property {string} [guardian_age]
+ * @property {string} [guardian_location]
+ * @property {string} [address_house]
+ * @property {string} [address_street]
+ * @property {string} [address_village]
+ * @property {string} [address_district]
+ * @property {string} [address_state]
+ * @property {string} [address_postal]
+ * @property {string} [former_school]
+ * @property {string} [former_school_code]
+ * @property {string} [former_school_lin]
+ * @property {string} [ple_ref]
+ * @property {string} [ple_score]
+ * @property {string} [uce_ref]
+ * @property {string} [uce_score]
+ * @property {string} [subject_marks]
+ * @property {string} [more_info]
+ */
+
 // Remove inline onclick and bind in JS
 document.addEventListener('DOMContentLoaded', () => {
     const printBtn = document.getElementById('triggerPrintBtn');
     if (printBtn) {
-        printBtn.addEventListener('click', () => {
-            window.print();
-        });
+        printBtn.addEventListener('click', () => window.print());
     }
 
-    // Remove inline onerror and bind in JS
     const schoolLogo = document.getElementById('schoolLogo');
     if (schoolLogo) {
-        schoolLogo.addEventListener('error', () => {
-            schoolLogo.classList.add('hidden-element');
-        });
+        schoolLogo.addEventListener('error', () => schoolLogo.classList.add('hidden-element'));
     }
 });
 
+/**
+ * Fix #1 & #2: Smart Field Combiner (No more "-, -" or double spaces)
+ * @param {Array<any>} fields
+ * @param {string} separator
+ * @returns {string}
+ */
+function combineFields(fields, separator) {
+    const valid = fields.filter(f => f !== null && f !== undefined && String(f).trim() !== '');
+    return valid.length > 0 ? valid.join(separator) : '-';
+}
+
+/**
+ * @param {any} val
+ * @returns {string}
+ */
 function displayField(val) {
-    return (val && val.trim() !== '') ? val : '-';
+    if (val === null || val === undefined || val === '') return '-';
+    return String(val).trim() !== '' ? String(val).trim() : '-';
+}
+
+/**
+ * Fix #3: Bulletproof DOM Setter (Prevents the script from crashing if an ID is missing)
+ * @param {string} id
+ * @param {string} text
+ */
+function setElementText(id, text) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = text;
 }
 
 function renderSubjectsSecurely(containerId, jsonStr) {
     const container = document.getElementById(containerId);
+    if (!container) return;
 
-    // Completely secure DOM clear without innerHTML
     while(container.firstChild) {
         container.removeChild(container.firstChild);
     }
 
     if (!jsonStr || jsonStr.trim() === '') {
-        container.textContent = 'No specific subjects declared.';
+        const span = document.createElement('span');
+        span.className = 'value';
+        span.textContent = 'No specific subjects declared.';
+        container.appendChild(span);
         return;
     }
 
     try {
         let arr = JSON.parse(jsonStr);
         if (arr.length === 0) {
-            container.textContent = 'No subjects declared.';
+            const span = document.createElement('span');
+            span.className = 'value';
+            span.textContent = 'No subjects declared.';
+            container.appendChild(span);
             return;
         }
 
-        // Strict DOM Element Creation (Zero HTML Strings)
         const table = document.createElement('table');
         table.className = 'secure-marks-table';
 
@@ -49,11 +134,8 @@ function renderSubjectsSecurely(containerId, jsonStr) {
         const th1 = document.createElement('th'); th1.textContent = 'Subject Name';
         const th2 = document.createElement('th'); th2.textContent = 'Marks Submitted';
         const th3 = document.createElement('th'); th3.textContent = 'Grade';
-        trHead.appendChild(th1);
-        trHead.appendChild(th2);
-        trHead.appendChild(th3);
-        thead.appendChild(trHead);
-        table.appendChild(thead);
+        trHead.appendChild(th1); trHead.appendChild(th2); trHead.appendChild(th3);
+        thead.appendChild(trHead); table.appendChild(thead);
 
         const tbody = document.createElement('tbody');
         arr.forEach(sub => {
@@ -66,16 +148,17 @@ function renderSubjectsSecurely(containerId, jsonStr) {
             const tdMark = document.createElement('td'); tdMark.textContent = mark;
             const tdGrade = document.createElement('td'); tdGrade.textContent = grade;
 
-            tr.appendChild(tdName);
-            tr.appendChild(tdMark);
-            tr.appendChild(tdGrade);
+            tr.appendChild(tdName); tr.appendChild(tdMark); tr.appendChild(tdGrade);
             tbody.appendChild(tr);
         });
 
         table.appendChild(tbody);
         container.appendChild(table);
     } catch (e) {
-        container.textContent = jsonStr;
+        const span = document.createElement('span');
+        span.className = 'value';
+        span.textContent = jsonStr;
+        container.appendChild(span);
     }
 }
 
@@ -90,20 +173,24 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
+
+                    /** @type {ErpApplicationData} */
                     const app = data.data;
 
-                    document.getElementById('branch_name').textContent = displayField(app.branch_name || 'General Campus');
-                    document.getElementById('branch_location').textContent = displayField(app.branch_location || 'KAMPALA');
-                    document.getElementById('ref_number').textContent = displayField(app.ref_number);
-                    document.getElementById('date_of_registration').textContent = displayField(app.date_of_registration);
+                    setElementText('branch_name', displayField(app.branch_name || 'General Campus'));
+                    setElementText('branch_location', displayField(app.branch_location || 'KAMPALA'));
+                    setElementText('ref_number', displayField(app.ref_number));
+                    setElementText('date_of_registration', displayField(app.date_of_registration));
 
+                    // Scholarship Status
                     const schol = app.scholarship_status ? app.scholarship_status.trim() : '';
                     const scholContainer = document.getElementById('schol_container');
-                    if (schol && schol.toLowerCase() !== 'none') {
-                        document.getElementById('schol_val').textContent = schol;
+                    if (scholContainer && schol && schol.toLowerCase() !== 'none') {
+                        setElementText('schol_val', schol);
                         scholContainer.classList.remove('hidden-element');
                     }
 
+                    // Admission Status
                     const stat = app.status ? app.status.trim() : 'Pending';
                     let statClass = 'status-pending';
                     const statLower = stat.toLowerCase();
@@ -111,21 +198,22 @@ document.addEventListener("DOMContentLoaded", function() {
                     else if (statLower === 'rejected') { statClass = 'status-rejected'; }
 
                     const statusElem = document.getElementById('status_val');
-                    statusElem.textContent = stat;
-                    statusElem.className = 'meta-value ' + statClass;
+                    if (statusElem) {
+                        statusElem.textContent = stat;
+                        statusElem.className = 'meta-value ' + statClass;
+                    }
 
-                    // Section 1
-                    const fullName = `${app.student_name || ''} ${app.middle_name || ''} ${app.student_surname || ''}`.trim();
-                    document.getElementById('full_name').textContent = displayField(fullName);
-                    document.getElementById('gender').textContent = displayField(app.gender);
-                    document.getElementById('dob').textContent = displayField(app.dob);
-                    document.getElementById('nationality').textContent = displayField(app.nationality);
-                    document.getElementById('acad_year').textContent = displayField(app.academic_year);
-                    document.getElementById('acad_term_only').textContent = displayField(app.term);
+                    // Section 1: Student Details
+                    setElementText('full_name', combineFields([app.student_name, app.middle_name, app.student_surname], ' '));
+                    setElementText('gender', displayField(app.gender));
+                    setElementText('dob', displayField(app.dob));
+                    setElementText('nationality', displayField(app.nationality));
+                    setElementText('acad_year', displayField(app.academic_year));
+                    setElementText('acad_term_only', displayField(app.term));
 
                     const classCode = app.class_code ? `[${app.class_code}]` : '';
-                    document.getElementById('applied_class').textContent = `${displayField(app.applied_class)} ${classCode}`;
-                    document.getElementById('level').textContent = displayField(app.level);
+                    setElementText('applied_class', combineFields([app.applied_class, classCode], ' '));
+                    setElementText('level', displayField(app.level));
 
                     // --- PHOTO LOADING LOGIC ---
                     if (app.photo_path) {
@@ -136,51 +224,64 @@ document.addEventListener("DOMContentLoaded", function() {
                         const photoEl = document.getElementById('student_photo');
                         const noPhotoEl = document.getElementById('no_photo');
 
-                        photoEl.src = finalPhotoPath;
-                        photoEl.classList.remove('hidden-element');
-                        noPhotoEl.classList.add('hidden-element');
-                        noPhotoEl.style.display = 'none';
+                        if (photoEl && noPhotoEl) {
+                            photoEl.src = finalPhotoPath;
+                            photoEl.classList.remove('hidden-element');
+                            noPhotoEl.classList.add('hidden-element');
+                            noPhotoEl.style.display = 'none';
+                        }
                     }
 
-                    // Section 2
-                    document.getElementById('father_name').textContent = displayField(app.father_name);
-                    document.getElementById('father_contact').textContent = displayField(app.father_contact);
-                    document.getElementById('father_email').textContent = displayField(app.father_email);
-                    document.getElementById('father_occupation').textContent = displayField(app.father_occupation);
-                    document.getElementById('father_education').textContent = displayField(app.father_education);
-                    document.getElementById('father_age').textContent = displayField(app.father_age);
+                    // Section 2: Primary Account Contact
+                    setElementText('primary_email', displayField(app.primary_email));
+                    setElementText('primary_mobile', displayField(app.primary_mobile));
 
-                    document.getElementById('mother_name').textContent = displayField(app.mother_name);
-                    document.getElementById('mother_contact').textContent = displayField(app.mother_contact);
-                    document.getElementById('mother_email').textContent = displayField(app.mother_email);
-                    document.getElementById('mother_occupation').textContent = displayField(app.mother_occupation);
-                    document.getElementById('mother_education').textContent = displayField(app.mother_education);
-                    document.getElementById('mother_age').textContent = displayField(app.mother_age);
+                    // Section 3: Parents & Guardian
+                    setElementText('father_name', displayField(app.father_name));
+                    setElementText('father_contact', displayField(app.father_contact));
+                    setElementText('father_email', displayField(app.father_email));
+                    setElementText('father_occupation', displayField(app.father_occupation));
+                    setElementText('father_education', displayField(app.father_education));
+                    setElementText('father_age', displayField(app.father_age));
 
-                    document.getElementById('guardian_name').textContent = displayField(app.guardian_name);
-                    document.getElementById('guardian_relation').textContent = displayField(app.guardian_relation);
-                    document.getElementById('guardian_contact').textContent = displayField(app.guardian_contact);
-                    document.getElementById('guardian_email').textContent = displayField(app.guardian_email);
-                    document.getElementById('guardian_occupation').textContent = displayField(app.guardian_occupation);
-                    document.getElementById('guardian_edu_age').textContent = `${displayField(app.guardian_education)} | Age: ${displayField(app.guardian_age)}`;
-                    document.getElementById('guardian_location').textContent = displayField(app.guardian_location);
+                    setElementText('mother_name', displayField(app.mother_name));
+                    setElementText('mother_contact', displayField(app.mother_contact));
+                    setElementText('mother_email', displayField(app.mother_email));
+                    setElementText('mother_occupation', displayField(app.mother_occupation));
+                    setElementText('mother_education', displayField(app.mother_education));
+                    setElementText('mother_age', displayField(app.mother_age));
 
-                    // Section 3
-                    document.getElementById('address_house_street').textContent = `${displayField(app.address_house)}, ${displayField(app.address_street)}`;
-                    document.getElementById('address_village_district').textContent = `${displayField(app.address_village)} / ${displayField(app.address_district)} / ${displayField(app.address_state)}`;
-                    document.getElementById('address_postal_country').textContent = `${displayField(app.address_postal)} / ${displayField(app.address_country)}`;
+                    setElementText('guardian_name', displayField(app.guardian_name));
+                    setElementText('guardian_relation', displayField(app.guardian_relation));
+                    setElementText('guardian_contact', displayField(app.guardian_contact));
+                    setElementText('guardian_email', displayField(app.guardian_email));
+                    setElementText('guardian_occupation', displayField(app.guardian_occupation));
 
-                    // Section 4
-                    document.getElementById('former_school').textContent = displayField(app.former_school);
-                    document.getElementById('former_school_code').textContent = displayField(app.former_school_code);
-                    document.getElementById('former_school_lin').textContent = displayField(app.former_school_lin);
+                    const eduAge = combineFields([app.guardian_education, app.guardian_age ? `Age: ${app.guardian_age}` : null], ' | ');
+                    setElementText('guardian_edu_age', eduAge);
+                    setElementText('guardian_location', displayField(app.guardian_location));
 
-                    document.getElementById('ple_ref_score').textContent = `${displayField(app.ple_ref)} / ${displayField(app.ple_score)}`;
-                    document.getElementById('uce_ref_score').textContent = `${displayField(app.uce_ref)} / ${displayField(app.uce_score)}`;
+                    // Section 4: Residential Address
+                    setElementText('address_house_street', combineFields([app.address_house, app.address_street], ' / '));
+                    setElementText('address_village_district', combineFields([app.address_village, app.address_district], ' / '));
+                    setElementText('address_region_postal', combineFields([app.address_state, app.address_postal], ' / '));
+
+                    // Section 5: Academic History
+                    setElementText('former_school', displayField(app.former_school));
+                    setElementText('former_school_code', displayField(app.former_school_code));
+                    setElementText('former_school_lin', displayField(app.former_school_lin));
+
+                    setElementText('ple_ref_score', combineFields([app.ple_ref, app.ple_score], ' / '));
+                    setElementText('uce_ref_score', combineFields([app.uce_ref, app.uce_score], ' / '));
 
                     renderSubjectsSecurely('subject_marks_container', app.subject_marks);
 
-                    document.getElementById('more_info').textContent = displayField(app.more_info || 'None declared.');
+                    setElementText('more_info', displayField(app.more_info || 'None declared.'));
+                    const moreInfoEl = document.getElementById('more_info');
+                    if (moreInfoEl) {
+                        moreInfoEl.classList.add('value');
+                    }
+
                 } else {
                     alert("Could not securely load application details: " + data.message);
                 }
@@ -192,7 +293,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 });
 
-// --- Set Generated Timestamp (Strictly JS separated) ---
+// --- Set Generated Timestamp ---
 document.addEventListener('DOMContentLoaded', () => {
     const timestampEl = document.getElementById('generated_timestamp');
     if (timestampEl) {

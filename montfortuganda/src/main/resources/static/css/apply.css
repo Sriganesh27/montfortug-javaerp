@@ -30,6 +30,14 @@ body{
 #montfort-portal-wrapper .text-muted-small { font-size: 0.9rem; color: #64748b; }
 #montfort-portal-wrapper .file-selected-text { color: #0f172a; font-weight: 600; }
 
+/* NEW HINT TEXT CLASS */
+#montfort-portal-wrapper .form-hint-text {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.85em;
+    color: #64748b;
+}
+
 /* --- PREMIUM OFFICIAL HEADER --- */
 #montfort-portal-wrapper .portal-header {
     width: 100%;
@@ -261,6 +269,203 @@ body{
     background-color: #f8fafc !important;
     border: 1px dashed #94a3b8 !important;
 }
+
+/* ========================================================
+   MONTFORT BESPOKE CALENDAR THEME (MATCHES LOGIN PORTAL)
+   SCOPED STRICTLY TO .erp-calendar-theme TO PREVENT LEAKAGE
+======================================================== */
+.flatpickr-calendar.erp-calendar-theme {
+    font-family: 'Poppins', sans-serif !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 10px 25px rgba(17, 24, 39, 0.08) !important;
+    border-radius: 12px !important;
+    padding: 10px !important;
+    width: 280px !important;
+}
+.flatpickr-calendar.erp-calendar-theme .dayContainer,
+.flatpickr-calendar.erp-calendar-theme .flatpickr-days {
+    width: 260px !important;
+    min-width: 260px !important;
+    max-width: 260px !important;
+}
+.flatpickr-calendar.erp-calendar-theme .flatpickr-day {
+    max-width: 35px !important;
+    height: 35px !important;
+    line-height: 35px !important;
+    border-radius: 8px !important;
+    color: #374151 !important;
+    font-weight: 500 !important;
+}
+.flatpickr-calendar.erp-calendar-theme .flatpickr-day:hover {
+    background-color: #f3f4f6 !important;
+    color: #111827 !important;
+}
+.flatpickr-calendar.erp-calendar-theme .flatpickr-day.selected {
+    background: #0f172a !important;
+    color: #ffffff !important;
+    border-color: #0f172a !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 8px rgba(15, 23, 42, 0.25) !important;
+}
+.flatpickr-calendar.erp-calendar-theme .flatpickr-day.today {
+    border-color: #d97706 !important;
+    color: #d97706 !important;
+    font-weight: bold !important;
+}
+.flatpickr-calendar.erp-calendar-theme .flatpickr-day.today:hover {
+    background: #fef3c7 !important;
+    color: #b45309 !important;
+}
+.flatpickr-calendar.erp-calendar-theme .flatpickr-months .flatpickr-month {
+    height: 45px !important;
+    color: #0f172a !important;
+    fill: #0f172a !important;
+}
+.flatpickr-calendar.erp-calendar-theme .flatpickr-current-month {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 110% !important;
+    font-weight: 600 !important;
+    padding-top: 5px !important;
+}
+.flatpickr-calendar.erp-calendar-theme .flatpickr-current-month input.cur-year {
+    font-weight: 700 !important;
+    background: rgba(15, 23, 42, 0.05) !important;
+    border-radius: 6px !important;
+    padding: 2px 6px !important;
+    margin-left: 8px !important;
+    box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.1) !important;
+    transition: all 0.2s ease !important;
+    height: 28px !important;
+}
+.flatpickr-calendar.erp-calendar-theme .flatpickr-current-month input.cur-year:hover,
+.flatpickr-calendar.erp-calendar-theme .flatpickr-current-month input.cur-year:focus {
+    background: rgba(15, 23, 42, 0.12) !important;
+    outline: none !important;
+}
+.flatpickr-calendar.erp-calendar-theme .flatpickr-current-month .numInputWrapper {
+    width: 65px !important;
+}
+
+/* ========================================================
+   CUSTOM YEAR DROPDOWN UI FIX (WITH INNER SCROLL)
+======================================================== */
+.flatpickr-calendar.erp-calendar-theme .erp-year-dropdown-container {
+    position: relative;
+    display: inline-block;
+    margin-left: 4px;
+}
+
+.flatpickr-calendar.erp-calendar-theme .erp-year-dropdown-toggle {
+    background: transparent !important;
+    color: #0f172a !important;
+    font-weight: 700 !important;
+    font-size: inherit !important;
+    font-family: inherit !important;
+    border: none !important;
+    cursor: pointer !important;
+    outline: none !important;
+    padding: 2px 16px 2px 4px !important;
+
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f172a' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+    background-repeat: no-repeat !important;
+    background-position: right center !important;
+    background-size: 10px !important;
+
+    width: 60px !important;
+    text-align: left;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.flatpickr-calendar.erp-calendar-theme .erp-year-dropdown-toggle:hover {
+    background-color: rgba(15, 23, 42, 0.05) !important;
+    border-radius: 4px !important;
+}
+
+/* The Popup List */
+.flatpickr-calendar.erp-calendar-theme .erp-year-dropdown-list {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 75px;
+    max-height: 200px; /* RESTRICTS HEIGHT PERFECTLY */
+    overflow-y: auto;  /* ENABLES INNER SCROLLING */
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    z-index: 1000;
+    list-style: none;
+    margin: 4px 0 0 0;
+    padding: 0;
+}
+
+.flatpickr-calendar.erp-calendar-theme .erp-year-dropdown-list.show {
+    display: block;
+    animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.flatpickr-calendar.erp-calendar-theme .erp-year-dropdown-list li {
+    padding: 8px 12px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.95rem;
+    transition: background 0.2s;
+}
+
+.flatpickr-calendar.erp-calendar-theme .erp-year-dropdown-list li:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+/* Beautiful custom scrollbar for the year list */
+.flatpickr-calendar.erp-calendar-theme .erp-year-dropdown-list::-webkit-scrollbar {
+    width: 6px;
+}
+.flatpickr-calendar.erp-calendar-theme .erp-year-dropdown-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+.flatpickr-calendar.erp-calendar-theme .erp-year-dropdown-list::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+/* ========================================================
+   QUICK ACTIONS FOOTER UI (ERP SPECIFIC)
+======================================================== */
+.flatpickr-calendar.erp-calendar-theme .erp-calendar-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    margin-top: 10px;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border-radius: 0 0 12px 12px;
+}
+.flatpickr-calendar.erp-calendar-theme .erp-footer-btn {
+    background: transparent;
+    border: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: #475569;
+    padding: 4px 8px;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+.flatpickr-calendar.erp-calendar-theme .erp-btn-today { color: #d97706; }
+.flatpickr-calendar.erp-calendar-theme .erp-btn-clear { color: #ef4444; }
+.flatpickr-calendar.erp-calendar-theme .erp-btn-close { color: #0f172a; }
+.flatpickr-calendar.erp-calendar-theme .erp-footer-btn:hover { background-color: #e2e8f0; color: #1e293b; }
+
 /* Responsive */
 @media (max-width: 768px) {
     #montfort-portal-wrapper .form-document-card { padding: 25px 20px; border-radius: 0; }

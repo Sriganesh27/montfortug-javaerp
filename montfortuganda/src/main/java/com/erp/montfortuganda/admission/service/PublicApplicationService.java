@@ -11,6 +11,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import org.springframework.beans.factory.annotation.Autowired;
+import com.erp.montfortuganda.notification.service.EmailService;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +20,8 @@ public class PublicApplicationService {
 
     private final ErpApplicationRepository applicationRepository;
     private final BranchRepository branchRepository;
-
+    @Autowired
+    private EmailService emailService;
     @Transactional
     public ApplicationResponseDTO submitApplication(ApplicationCreateDTO dto) {
 
@@ -48,10 +51,12 @@ public class PublicApplicationService {
         app.setLastName(dto.getLastName());
         app.setGender(dto.getGender());
         app.setDateOfBirth(dto.getDateOfBirth());
+        if (dto.getDateOfRegistration() != null) {
+            app.setDateOfRegistration(dto.getDateOfRegistration().toString());
+        } else {
+            app.setDateOfRegistration("");
+        }
 
-        app.setReligionId(dto.getReligionId());
-        app.setBloodGroupId(dto.getBloodGroupId());
-        app.setCategoryId(dto.getCategoryId());
 
         app.setNationality(dto.getNationality());
         app.setAdmissionType(dto.getAdmissionType());
@@ -67,7 +72,6 @@ public class PublicApplicationService {
         app.setAddressDistrict(dto.getAddressDistrict());
         app.setAddressState(dto.getAddressState());
         app.setAddressPostal(dto.getAddressPostal());
-        app.setAddressCountry(dto.getAddressCountry());
 
         app.setFatherName(dto.getFatherName());
         app.setFatherAge(dto.getFatherAge() != null ? dto.getFatherAge() : 0);
@@ -106,9 +110,12 @@ public class PublicApplicationService {
         history.setNewStatus(ErpApplication.ApplicationStatus.SUBMITTED);
         history.setRemarks("Application submitted by user");
         app.addHistory(history);
+        app.setPrimaryEmail(dto.getPrimaryEmail());
+        app.setPrimaryMobile(dto.getPrimaryMobile());
 
         ErpApplication savedApp = applicationRepository.save(app);
-
+        // Fire and forget the background email task
+        emailService.sendApplicationReceipt(savedApp);
         return mapToResponseDTO(savedApp);
     }
 

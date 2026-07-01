@@ -17,33 +17,27 @@ import java.util.List;
 @ToString(exclude = {"documents", "statusHistory"})
 public class ErpApplication {
 
-    // ==========================================
-    // NESTED ENUMS
-    // ==========================================
-    public enum Gender {
-        MALE, FEMALE, OTHER
-    }
-
-    public enum AdmissionType {
-        NEW, TRANSFER
-    }
-
-    public enum ApplicationStatus {
-        DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED, WAITLISTED, ADMITTED
-    }
+    public enum Gender { MALE, FEMALE, OTHER }
+    public enum AdmissionType { NEW, TRANSFER }
+    public enum ApplicationStatus { DRAFT, SUBMITTED, UNDER_REVIEW, APPROVED, REJECTED, WAITLISTED, ADMITTED }
 
     // ==========================================
-    // FIELDS
+    // 1. CORE IDENTITY & SYSTEM NOTIFICATIONS
     // ==========================================
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "application_id")
     private Long applicationId;
 
-    @Column(name = "application_no", unique = true, nullable = false)
+    @Column(name = "application_no", unique = true, nullable = false, length = 50)
     private String applicationNo;
 
-    // Use LAZY fetch to prevent N+1 queries. We map to the Branch entity.
+    @Column(name = "primary_email", length = 100)
+    private String primaryEmail;
+
+    @Column(name = "primary_mobile", length = 20)
+    private String primaryMobile;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "branch_id", nullable = false)
     private Branch branch;
@@ -54,134 +48,129 @@ public class ErpApplication {
     @Column(name = "branch_class_id", nullable = false)
     private Long branchClassId;
 
-    @Column(name = "first_name", nullable = false)
+    @Column(name = "admission_type", length = 20)
+    @Enumerated(EnumType.STRING)
+    private AdmissionType admissionType = AdmissionType.NEW;
+
+    // ==========================================
+    // 2. STUDENT DETAILS
+    // ==========================================
+    @Column(name = "first_name", nullable = false, length = 50)
     private String firstName;
 
-    @Column(name = "middle_name")
+    @Column(name = "middle_name", length = 50)
     private String middleName;
 
-    @Column(name = "last_name", nullable = false)
+    @Column(name = "last_name", nullable = false, length = 50)
     private String lastName;
 
+    @Column(name = "gender", nullable = false, length = 20)
     @Enumerated(EnumType.STRING)
-    @Column(name = "gender", nullable = false)
     private Gender gender;
 
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;
 
-    @Column(name = "religion_id")
-    private Long religionId;
-
-    @Column(name = "blood_group_id")
-    private Long bloodGroupId;
-
-    @Column(name = "category_id")
-    private Long categoryId;
-
-    @Column(name = "nationality")
+    @Column(name = "nationality", length = 50)
     private String nationality = "Uganda";
 
+    @Column(name = "photo_path", columnDefinition = "TEXT")
+    private String photoPath = "";
+
+    @Column(name = "more_info", columnDefinition = "TEXT")
+    private String moreInfo = "";
+
+    // ==========================================
+    // 3. ACADEMIC & ENROLLMENT HISTORY
+    // ==========================================
+    @Column(name = "class_code", length = 20) private String classCode = "";
+    @Column(name = "level", length = 20) private String level = "";
+    @Column(name = "term", length = 20) private String term = "";
+    @Column(name = "date_of_registration", length = 20) private String dateOfRegistration = "";
+    @Column(name = "scholarship_status", length = 50) private String scholarshipStatus = "";
+
+    @Column(name = "previous_school", length = 150) private String previousSchool;
+    @Column(name = "former_school", columnDefinition = "TEXT") private String formerSchool = "";
+    @Column(name = "former_school_code", length = 50) private String formerSchoolCode = "";
+    @Column(name = "former_school_lin", length = 50) private String formerSchoolLin = "";
+
+    @Column(name = "ple_ref", length = 50) private String pleRef = "";
+    @Column(name = "ple_score") private Double pleScore;
+    @Column(name = "uce_ref", length = 50) private String uceRef = "";
+    @Column(name = "uce_score") private Double uceScore;
+
+    @Column(name = "subject_marks", columnDefinition = "TEXT") private String subjectMarks = "";
+    @Column(name = "prev_marks_doc", columnDefinition = "TEXT") private String prevMarksDoc = "";
+
+    // ==========================================
+    // 4. FATHER'S DETAILS
+    // ==========================================
+    @Column(name = "father_name", length = 50) private String fatherName = "";
+    @Column(name = "father_contact", length = 20) private String fatherContact = "";
+    @Column(name = "father_email", length = 100) private String fatherEmail = "";
+    @Column(name = "father_occupation", columnDefinition = "TEXT") private String fatherOccupation = "";
+    @Column(name = "father_education", length = 50) private String fatherEducation = "";
+    @Column(name = "father_age") private Integer fatherAge = 0;
+
+    // ==========================================
+    // 5. MOTHER'S DETAILS
+    // ==========================================
+    @Column(name = "mother_name", length = 50) private String motherName = "";
+    @Column(name = "mother_contact", length = 20) private String motherContact = "";
+    @Column(name = "mother_email", length = 100) private String motherEmail = "";
+    @Column(name = "mother_occupation", columnDefinition = "TEXT") private String motherOccupation = "";
+    @Column(name = "mother_education", length = 50) private String motherEducation = "";
+    @Column(name = "mother_age") private Integer motherAge = 0;
+
+    // ==========================================
+    // 6. GUARDIAN'S DETAILS
+    // ==========================================
+    @Column(name = "guardian_name", length = 50) private String guardianName = "";
+    @Column(name = "guardian_mobile", length = 20) private String guardianMobile; // Legacy fallback
+    @Column(name = "guardian_contact", length = 20) private String guardianContact = "";
+    @Column(name = "guardian_email", length = 100) private String guardianEmail;
+    @Column(name = "guardian_relation", length = 50) private String guardianRelation = "";
+    @Column(name = "guardian_occupation", columnDefinition = "TEXT") private String guardianOccupation = "";
+    @Column(name = "guardian_education", length = 50) private String guardianEducation = "";
+    @Column(name = "guardian_location", columnDefinition = "TEXT") private String guardianLocation = "";
+    @Column(name = "guardian_age") private Integer guardianAge = 0;
+
+    // ==========================================
+    // 7. PHYSICAL ADDRESS
+    // ==========================================
+    @Column(name = "address_region", length = 50) private String addressState = "";
+    @Column(name = "address_district", length = 50) private String addressDistrict = "";
+    @Column(name = "address_village", length = 50) private String addressVillage = "";
+    @Column(name = "address_street", columnDefinition = "TEXT") private String addressStreet = "";
+    @Column(name = "address_house", length = 50) private String addressHouse = "";
+    @Column(name = "address_postal", length = 50) private String addressPostal = "";
+
+    // ==========================================
+    // 8. SYSTEM AUDIT & STATUS
+    // ==========================================
     @Enumerated(EnumType.STRING)
-    @Column(name = "admission_type")
-    private AdmissionType admissionType = AdmissionType.NEW;
-
-    @Column(name = "previous_school")
-    private String previousSchool;
-
-    @Column(name = "guardian_name")
-    private String guardianName;
-
-    @Column(name = "guardian_mobile")
-    private String guardianMobile;
-
-    @Column(name = "guardian_email")
-    private String guardianEmail;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "application_status")
+    @Column(name = "application_status", length = 50)
     private ApplicationStatus applicationStatus = ApplicationStatus.DRAFT;
 
     @Column(name = "remarks", columnDefinition = "TEXT")
     private String remarks;
 
-    @Column(name = "created_by")
-    private Long createdBy;
+    @Column(name = "created_by") private Long createdBy;
+    @Column(name = "updated_by") private Long updatedBy;
+    @Column(name = "created_at", updatable = false) private LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "updated_at") private LocalDateTime updatedAt = LocalDateTime.now();
+    @Column(name = "status") private Integer status = 1;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt = LocalDateTime.now();
-
-    @Column(name = "updated_by")
-    private Long updatedBy;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
-
-    @Column(name = "status")
-    private Integer status = 1;
-
-    // One-To-Many Relationships with strict CASCADE ALL
+    // ==========================================
+    // 9. RELATIONSHIPS
+    // ==========================================
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ErpApplicationDocument> documents = new ArrayList<>();
 
     @OneToMany(mappedBy = "application", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ErpApplicationStatusHistory> statusHistory = new ArrayList<>();
-    // --- LEGACY FIELDS TO SATISFY EXISTING MYSQL NOT NULL CONSTRAINTS ---
-    @Column(name = "applied_class") private String appliedClass = "";
-    @Column(name = "class_code") private String classCode = "";
-    @Column(name = "level") private String level = "";
-    @Column(name = "student_name") private String studentName = "";
-    @Column(name = "student_surname") private String studentSurname = "";
-    @Column(name = "dob") private String dobLegacy = "";
-    @Column(name = "ref_number") private String refNumberLegacy = java.util.UUID.randomUUID().toString();
-    @Column(name = "academic_year") private String academicYearLegacy = "";
-    @Column(name = "term") private String term = "";
-    @Column(name = "photo_path", columnDefinition = "TEXT") private String photoPath = "";
 
-    @Column(name = "address_country") private String addressCountry = "";
-    @Column(name = "address_district") private String addressDistrict = "";
-    @Column(name = "address_house") private String addressHouse = "";
-    @Column(name = "address_postal") private String addressPostal = "";
-    @Column(name = "address_state") private String addressState = "";
-    @Column(name = "address_street") private String addressStreet = "";
-    @Column(name = "address_village") private String addressVillage = "";
-    @Column(name = "date_of_registration") private String dateOfRegistration = "";
-
-    @Column(name = "father_age") private Integer fatherAge = 0;
-    @Column(name = "father_contact") private String fatherContact = "";
-    @Column(name = "father_education") private String fatherEducation = "";
-    @Column(name = "father_email") private String fatherEmail = "";
-    @Column(name = "father_name") private String fatherName = "";
-    @Column(name = "father_occupation") private String fatherOccupation = "";
-
-    @Column(name = "former_school") private String formerSchool = "";
-    @Column(name = "former_school_code") private String formerSchoolCode = "";
-    @Column(name = "former_school_lin") private String formerSchoolLin = "";
-
-    @Column(name = "guardian_age") private Integer guardianAge = 0;
-    @Column(name = "guardian_contact") private String guardianContact = "";
-    @Column(name = "guardian_education") private String guardianEducation = "";
-    @Column(name = "guardian_location") private String guardianLocation = "";
-    @Column(name = "guardian_occupation") private String guardianOccupation = "";
-    @Column(name = "guardian_relation") private String guardianRelation = "";
-
-    @Column(name = "more_info", columnDefinition = "TEXT") private String moreInfo = "";
-
-    @Column(name = "mother_age") private Integer motherAge = 0;
-    @Column(name = "mother_contact") private String motherContact = "";
-    @Column(name = "mother_education") private String motherEducation = "";
-    @Column(name = "mother_email") private String motherEmail = "";
-    @Column(name = "mother_name") private String motherName = "";
-    @Column(name = "mother_occupation") private String motherOccupation = "";
-
-    @Column(name = "ple_ref") private String pleRef = "";
-    @Column(name = "ple_score") private Double pleScore;
-    @Column(name = "prev_marks_doc", columnDefinition = "TEXT") private String prevMarksDoc = "";
-    @Column(name = "scholarship_status") private String scholarshipStatus = "";
-    @Column(name = "subject_marks", columnDefinition = "TEXT") private String subjectMarks = "";
-    @Column(name = "uce_ref") private String uceRef = "";
-    @Column(name = "uce_score") private Double uceScore;
-    // Utility methods for bidirectional consistency
+    // Utility methods
     public void addDocument(ErpApplicationDocument doc) {
         documents.add(doc);
         doc.setApplication(this);

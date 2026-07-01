@@ -4,7 +4,10 @@ import com.erp.montfortuganda.admission.entity.ErpApplication;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+
 import java.time.LocalDate;
+
+import jakarta.validation.constraints.PastOrPresent;
 
 @Data
 public class ApplicationCreateDTO {
@@ -17,7 +20,11 @@ public class ApplicationCreateDTO {
 
     @NotNull(message = "Class ID is required")
     private Long branchClassId;
+    @NotBlank(message = "Primary Email is required for notifications")
+    private String primaryEmail;
 
+    @NotBlank(message = "Primary Mobile Number is required for SMS alerts")
+    private String primaryMobile;
     @NotBlank(message = "First Name is required")
     private String firstName;
     private String middleName;
@@ -28,10 +35,8 @@ public class ApplicationCreateDTO {
     @NotNull(message = "Gender is required")
     private ErpApplication.Gender gender;
     private LocalDate dateOfBirth;
-
-    private Long religionId;
-    private Long bloodGroupId;
-    private Long categoryId;
+    @PastOrPresent(message = "Date of Registration cannot be in the future")
+    private LocalDate dateOfRegistration;
 
     private String nationality = "Uganda";
     private ErpApplication.AdmissionType admissionType = ErpApplication.AdmissionType.NEW;
@@ -43,7 +48,6 @@ public class ApplicationCreateDTO {
     private String addressDistrict;
     private String addressState;
     private String addressPostal;
-    private String addressCountry;
 
     // Father Fields
     private String fatherName;

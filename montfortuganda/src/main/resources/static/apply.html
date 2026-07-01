@@ -12,7 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="/css/apply.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="/js/apply.js" defer></script>
@@ -145,8 +146,8 @@
                             </div>
                         </div>
                         <div class="form-group">
-                            <label for="dateOfRegistration">Date of Registration</label>
-                            <input type="date" name="dateOfRegistration" id="dateOfRegistration" class="form-control">
+                            <label for="dateOfRegistration">Date of Registration <span class="text-danger">*</span></label>
+                            <input type="date" name="dateOfRegistration" id="dateOfRegistration" class="form-control" placeholder="YYYY-MM-DD" required>
                         </div>
                     </div>
 
@@ -179,23 +180,42 @@
                                 <label for="genderFemale" class="segment-label">Female</label>
                             </div>
                         </div>
-                        <div class="form-group"><label>Date of Birth <span class="text-danger">*</span></label><input type="date" name="dob" class="form-control" required></div>
+                        <div class="form-group"><label>Date of Birth <span class="text-danger">*</span></label><input type="date" name="dob" class="form-control" placeholder="YYYY-MM-DD" required></div>
                         <div class="form-group"><label>Nationality</label><input type="text" name="nationality" class="form-control" value="Uganda"></div>
                     </div>
 
                     <h2 class="section-title mt-4">Residential Address</h2>
-                    <div class="grid-2 align-items-end">
-                        <div class="form-group"><label>Country</label><input type="text" name="addressCountry" class="form-control" value="Uganda"></div>
-                        <div class="form-group"><label>Region / Province</label><input type="text" name="addressState" class="form-control" placeholder="e.g. Central Region"></div>
-                    </div>
-                    <div class="grid-2 align-items-end">
-                        <div class="form-group"><label>District <span class="text-danger">*</span></label><input type="text" name="addressDistrict" class="form-control" placeholder="e.g. Wakiso" required></div>
-                        <div class="form-group"><label>Village / Town</label><input type="text" name="addressVillage" class="form-control"></div>
-                    </div>
+
+                    <!-- ROW 1: Most Specific (House -> Street -> Village) -->
                     <div class="grid-3 align-items-end">
-                        <div class="form-group"><label>Street / Zone</label><input type="text" name="addressStreet" class="form-control"></div>
-                        <div class="form-group"><label>House / Plot No.</label><input type="text" name="addressHouse" class="form-control"></div>
-                        <div class="form-group"><label>P.O. Box</label><input type="text" name="addressPostal" class="form-control" placeholder="e.g. 123"></div>
+                        <div class="form-group">
+                            <label>House / Plot No.</label>
+                            <input type="text" name="addressHouse" class="form-control" placeholder="e.g. Plot 14 / Block 2">
+                        </div>
+                        <div class="form-group">
+                            <label>Street / Zone</label>
+                            <input type="text" name="addressStreet" class="form-control" placeholder="e.g. Kampala Road / Nsambya Zone">
+                        </div>
+                        <div class="form-group">
+                            <label>Village / Town</label>
+                            <input type="text" name="addressVillage" class="form-control" placeholder="e.g. Bweyogerere / Nansana">
+                        </div>
+                    </div>
+
+                    <!-- ROW 2: Broader (District -> Region -> P.O. Box) -->
+                    <div class="grid-3 align-items-end">
+                        <div class="form-group">
+                            <label>District <span class="text-danger">*</span></label>
+                            <input type="text" name="addressDistrict" class="form-control" placeholder="e.g. Kampala / Wakiso" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Region</label>
+                            <input type="text" name="addressState" class="form-control" placeholder="e.g. Central Region">
+                        </div>
+                        <div class="form-group">
+                            <label>P.O. Box</label>
+                            <input type="text" name="addressPostal" class="form-control" placeholder="e.g. P.O. Box 7122, Kampala">
+                        </div>
                     </div>
 
                     <div class="form-actions space-between">
@@ -208,7 +228,24 @@
                 <div id="step-4" class="form-step hidden-element">
                     <div class="form-header-title"><h1>Parents & Guardian</h1><p>Contact information for the student's family.</p></div>
 
-                    <h2 class="section-title">Father's Details</h2>
+                    <!-- ============================================== -->
+                    <!-- NEW PRIMARY CONTACT FIELDS FOR SYSTEM ALERTS -->
+                    <!-- ============================================== -->
+                    <h2 class="section-title">Primary Account Contact</h2>
+                    <div class="grid-2 align-items-start mb-4">
+                        <div class="form-group">
+                            <label for="primaryEmail">Primary Email <span class="text-danger">*</span></label>
+                            <input type="email" name="primaryEmail" id="primaryEmail" class="form-control" placeholder="e.g. myname@example.com" required>
+                            <small class="form-hint-text">To receive application updates and receipts.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="primaryMobile">Primary Mobile <span class="text-danger">*</span></label>
+                            <input type="text" name="primaryMobile" id="primaryMobile" class="form-control" placeholder="e.g. +256 700 000000" required>
+                            <small class="form-hint-text">For future SMS alerts and direct contact.</small>
+                        </div>
+                    </div>
+
+                    <h2 class="section-title mt-4">Father's Details</h2>
                     <div class="grid-3 align-items-end">
                         <div class="form-group"><label>Full Name</label><input type="text" name="fatherName" class="form-control"></div>
                         <div class="form-group"><label>Contact</label><input type="text" name="fatherContact" class="form-control"></div>
@@ -243,12 +280,13 @@
                             <label>Relationship</label>
                             <select name="guardianRelation" class="form-control custom-select">
                                 <option value="" disabled selected>Select...</option>
-                                <option value="Biological Parent">Biological Parent</option>
-                                <option value="Step Parent">Step Parent</option>
+                                <option value="Step-mother">Step-mother</option>
+                                <option value="Step-father">Step-father</option>
                                 <option value="Grandparent">Grandparent</option>
-                                <option value="Aunt / Uncle">Aunt / Uncle</option>
-                                <option value="Sibling">Sibling</option>
-                                <option value="Legal Guardian">Legal Guardian</option>
+                                <option value="Aunt">Aunt</option>
+                                <option value="Uncle">Uncle</option>
+                                <option value="Brother">Brother</option>
+                                <option value="Sister">Sister</option>
                                 <option value="Other">Other</option>
                             </select>
                         </div>
@@ -321,7 +359,7 @@
                     <div class="form-header-title text-center">
                         <div class="icon-circle"><i class="bi bi-search"></i></div>
                         <h1>Review Application</h1>
-                        <p>Please double check the details below before submitting.</p>
+                        <p>Please double-check the details below before submitting.</p>
                     </div>
 
                     <!-- Pure Container (No innerHTML will be used here) -->

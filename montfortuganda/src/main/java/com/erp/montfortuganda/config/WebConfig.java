@@ -22,12 +22,19 @@ public class WebConfig implements WebMvcConfigurer {
     }
 
     // --- NEW FIX: Map clean URLs to your HTML files ---
+    // --- NEW FIX: Map clean URLs to your HTML files ---
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
+        // Admin & Dashboards
         registry.addViewController("/login").setViewName("forward:/login.html");
         registry.addViewController("/mbsg-auth").setViewName("forward:/mbsg-auth.html");
         registry.addViewController("/dashboard").setViewName("forward:/dashboard.html");
         registry.addViewController("/superadmin").setViewName("forward:/dashboard.html");
         registry.addViewController("/").setViewName("forward:/login.html");
+
+        // Public Application Pages (Nested under /apply)
+        registry.addViewController("/apply").setViewName("forward:/apply.html");
+        registry.addViewController("/apply/status").setViewName("forward:/status.html");
+        registry.addViewController("/apply/print_application").setViewName("forward:/print_application.html");
     }
 }

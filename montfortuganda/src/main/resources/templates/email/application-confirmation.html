@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Application Receipt</title>
+
+    <!-- This automatically imports the CSS from email-theme.html -->
+    <th:block th:replace="~{email/email-theme :: styles}"></th:block>
+</head>
+<body>
+
+<table class="email-wrapper" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+        <td align="center">
+
+            <table class="email-container" border="0" cellspacing="0" cellpadding="0">
+
+                <!-- Premium Header (Side-by-Side Layout) -->
+                <tr>
+                    <td class="email-header" align="center">
+                        <table border="0" cellspacing="0" cellpadding="0" width="100%">
+                            <tr>
+                                <!-- Left side: Logo -->
+                                <td width="100" align="center" valign="middle">
+                                    <img th:src="${#strings.contains(frontendUrl, 'localhost') ? 'https://via.placeholder.com/120x120.png?text=Montfort+Logo' : frontendUrl + '/assets/Images/logo_MBSG_UG_8.webp'}" alt="School Logo" class="email-header-logo">
+                                </td>
+
+                                <!-- Right side: Typography -->
+                                <td align="left" valign="middle" class="email-header-text-container">
+                                    <p class="email-header-supertitle">Montfort Brothers of St. Gabriel, Uganda</p>
+                                    <h1 class="email-header-title" th:text="${schoolName}">Montfort School</h1>
+                                    <p class="email-header-subtitle">Admissions Department</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- Body Content -->
+                <tr>
+                    <td class="email-body">
+                        <p class="email-greeting">Dear Parent / Guardian,</p>
+
+                        <p class="email-text">
+                            Thank you for submitting an application for <strong class="email-text-strong" th:text="${studentName}">Student Name</strong>. We have successfully received all your details.
+                        </p>
+
+                        <!-- Highlighted Reference Number Box -->
+                        <table class="email-ref-box" border="0" cellspacing="0" cellpadding="0" width="100%">
+                            <tr>
+                                <td align="center">
+                                    <p class="email-ref-label">Official Reference Number</p>
+                                    <h2 class="email-ref-value" th:text="${applicationNo}">APP-2026-001</h2>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p class="email-text">
+                            Please keep this reference number safe. You can track the real-time status of your application, download receipts, and view updates at any time.
+                        </p>
+
+                        <!-- Call to Action Button -->
+                        <table class="email-button-container" border="0" cellspacing="0" cellpadding="0" width="100%">
+                            <tr>
+                                <td align="center">
+                                    <a th:href="${trackingUrl}" class="email-button" target="_blank">Track Application Status</a>
+                                </td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                    <td class="email-footer" align="center">
+                        <p class="email-footer-text">
+                            This is an automated message from the ERP Admission System. Please do not reply to this email.
+                        </p>
+                        <p class="email-footer-copyright">
+                            &copy; <span th:text="${currentYear}">2026</span> <span th:text="${schoolName}">School Name</span>. All rights reserved.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

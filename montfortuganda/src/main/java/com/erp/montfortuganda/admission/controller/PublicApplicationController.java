@@ -46,6 +46,7 @@ public class PublicApplicationController {
                 Map<String, Object> branchMap = new HashMap<>();
                 branchMap.put("branchId", b.getBranchId());
                 branchMap.put("branchName", b.getBranchName());
+                branchMap.put("branchLocation", b.getBranchLocation());
                 branchMap.put("schoolCode", b.getSchoolCode());
                 branchMap.put("branchLevels", extractBranchLevelsList(b.getBranchLevels()));
                 branchList.add(branchMap);
@@ -203,7 +204,8 @@ public class PublicApplicationController {
 
         // Campus & System info
         data.put("branch_name", app.getBranch() != null ? app.getBranch().getBranchName() : "");
-        data.put("branch_location", "Uganda");
+        data.put("branch_location", app.getBranch() != null && app.getBranch().getBranchLocation() != null
+                ? app.getBranch().getBranchLocation() : "Uganda");
         data.put("ref_number", app.getApplicationNo());
         data.put("date_of_registration", app.getCreatedAt() != null ? app.getCreatedAt().toLocalDate().toString() : "");
         data.put("status", app.getApplicationStatus().name());
@@ -237,16 +239,51 @@ public class PublicApplicationController {
         data.put("applied_class", appliedClass);
         data.put("class_code", classCode);
         data.put("level", level);
+        data.put("primary_email", app.getPrimaryEmail());
+        data.put("primary_mobile", app.getPrimaryMobile());
 
-        // Guardian Info (Mapped to all family fields to avoid blank lines)
-        data.put("father_name", app.getGuardianName());
-        data.put("father_contact", app.getGuardianMobile());
-        data.put("father_email", app.getGuardianEmail());
-        data.put("mother_name", app.getGuardianName());
+        // Family Info
+        data.put("father_name", app.getFatherName());
+        data.put("father_contact", app.getFatherContact());
+        data.put("father_email", app.getFatherEmail());
+        data.put("father_occupation", app.getFatherOccupation());
+        data.put("father_education", app.getFatherEducation());
+        data.put("father_age", app.getFatherAge());
+
+        data.put("mother_name", app.getMotherName());
+        data.put("mother_contact", app.getMotherContact());
+        data.put("mother_email", app.getMotherEmail());
+        data.put("mother_occupation", app.getMotherOccupation());
+        data.put("mother_education", app.getMotherEducation());
+        data.put("mother_age", app.getMotherAge());
+
         data.put("guardian_name", app.getGuardianName());
-        data.put("guardian_contact", app.getGuardianMobile());
+        data.put("guardian_relation", app.getGuardianRelation());
+        data.put("guardian_contact", app.getGuardianMobile() != null ? app.getGuardianMobile() : app.getGuardianContact());
+        data.put("guardian_email", app.getGuardianEmail());
+        data.put("guardian_occupation", app.getGuardianOccupation());
+        data.put("guardian_education", app.getGuardianEducation());
+        data.put("guardian_age", app.getGuardianAge());
+        data.put("guardian_location", app.getGuardianLocation());
 
-        data.put("former_school", app.getPreviousSchool());
+        // Address
+        data.put("address_house", app.getAddressHouse());
+        data.put("address_street", app.getAddressStreet());
+        data.put("address_village", app.getAddressVillage());
+        data.put("address_district", app.getAddressDistrict());
+        data.put("address_state", app.getAddressState());
+        data.put("address_postal", app.getAddressPostal());
+
+        // Academic Info
+        data.put("former_school", app.getPreviousSchool() != null ? app.getPreviousSchool() : app.getFormerSchool());
+        data.put("former_school_code", app.getFormerSchoolCode());
+        data.put("former_school_lin", app.getFormerSchoolLin());
+        data.put("ple_ref", app.getPleRef());
+        data.put("ple_score", app.getPleScore());
+        data.put("uce_ref", app.getUceRef());
+        data.put("uce_score", app.getUceScore());
+        data.put("subject_marks", app.getSubjectMarks());
+        data.put("more_info", app.getMoreInfo());
 
         data.put("photo_path", app.getPhotoPath());
 

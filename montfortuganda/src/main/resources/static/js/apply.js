@@ -1,4 +1,4 @@
-/* global Swal, window */
+/* global Swal, window, flatpickr */
 
 /**
  * @typedef {Object} Level
@@ -50,6 +50,28 @@ function showAlert(title, text, icon) {
 document.addEventListener("DOMContentLoaded", () => {
     startJavascriptSlider();
 
+    // ========================================================
+    // ENTERPRISE CALENDAR INITIALIZATION
+    // ========================================================
+    const currentYear = new Date().getFullYear();
+    const exactToday = new Date();
+    exactToday.setHours(23, 59, 59, 999);
+    // 1. Date of Birth Picker (Targets the existing HTML name)
+    createErpCalendar("input[name='dob']", {
+        maxDate: exactToday,
+        minYear: currentYear - 25,
+        maxYear: currentYear,
+        footerActions: ['today', 'clear', 'close']
+    });
+
+    // 2. Admission/Registration Date Picker (Targets the existing HTML name)
+    createErpCalendar("input[name='dateOfRegistration']", {
+        maxDate: exactToday,
+        minYear: currentYear - 5,
+        maxYear: currentYear,
+        footerActions: ['today', 'clear', 'close']
+    });
+
     // Fetch both branches and classes simultaneously on page load
     Promise.all([fetchBranches(), fetchClasses()]).catch(e => console.error("Initialization error:", e));
 
@@ -73,6 +95,221 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+// ========================================================
+// ERP CALENDAR ARCHITECTURE PLUGINS & WRAPPERS
+// ========================================================
+
+/**
+ * Factory method for initializing an ERP-grade Flatpickr calendar.
+ * @param {string} selector - The CSS selector for the input field.
+ * @param {Object} customConfig - Field-specific Flatpickr configurations.
+ */
+function createErpCalendar(selector, customConfig = {}) {
+    if (typeof flatpickr === "undefined") return;
+
+    /** @type {any} */
+    const defaultERPConfig = {
+        dateFormat: "Y-m-d",
+        disableMobile: true, // Force consistent desktop UI
+        allowInput: true,    // Allow manual keyboard typing
+
+        // Custom Configuration Properties
+        footerActions: ['today', 'clear', 'close'],
+        minYear: 1950,
+        maxYear: new Date().getFullYear() + 10,
+
+        onReady: function(selectedDates, dateStr, instance) {
+            if (instance.calendarContainer) {
+                instance.calendarContainer.classList.add('erp-calendar-theme');
+            }
+
+            const defaultYearWrapper = instance.currentYearElement.parentNode;
+            if (defaultYearWrapper) {
+                defaultYearWrapper.style.display = "none";
+            }
+
+            // Inject custom isolated DOM elements
+            buildYearDropdown(instance, this.config.minYear, this.config.maxYear);
+
+            if (this.config.footerActions && this.config.footerActions.length > 0) {
+                buildActionFooter(instance, this.config.footerActions);
+            }
+
+            attachBlurParser(instance);
+        },
+        onYearChange: function(selectedDates, dateStr, instance) {
+            if (instance.customYearSelect) {
+                instance.customYearSelect.value = instance.currentYear.toString();
+            }
+        },
+        onMonthChange: function(selectedDates, dateStr, instance) {
+            if (instance.customYearSelect) {
+                instance.customYearSelect.value = instance.currentYear.toString();
+            }
+        }
+    };
+
+    const finalConfig = Object.assign({}, defaultERPConfig, customConfig);
+    return flatpickr(selector, finalConfig);
+}
+
+/**
+ * Dynamically builds and synchronizes a custom Year Dropdown with STRICT height and inner scrolling.
+ * @param {any} instance - The Flatpickr instance
+ * @param {number} minYear - The minimum bound
+ * @param {number} maxYear - The maximum bound
+ */
+function buildYearDropdown(instance, minYear, maxYear) {
+    const container = document.createElement("div");
+    container.className = "erp-year-dropdown-container";
+
+    const toggle = document.createElement("div");
+    toggle.className = "erp-year-dropdown-toggle";
+    toggle.textContent = instance.currentYear.toString();
+
+    const list = document.createElement("ul");
+    list.className = "erp-year-dropdown-list";
+
+    const start = maxYear || new Date().getFullYear();
+    const end = minYear || 1950;
+
+    // Build the custom list of years
+    for (let y = start; y >= end; y--) {
+        const li = document.createElement("li");
+        li.textContent = y.toString();
+        li.setAttribute("data-year", y.toString());
+
+        li.addEventListener("click", function(e) {
+            e.stopPropagation(); // Stop calendar from closing
+            e.preventDefault();
+            const selectedYear = parseInt(this.getAttribute("data-year"), 10);
+            instance.changeYear(selectedYear); // Tell Flatpickr to update
+            toggle.textContent = selectedYear.toString();
+            list.classList.remove("show"); // Close dropdown
+        });
+
+        list.appendChild(li);
+    }
+
+    // Toggle Dropdown logic
+    toggle.addEventListener("click", function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        // Close other open custom dropdowns if they exist
+        document.querySelectorAll('.erp-year-dropdown-list').forEach(el => {
+            if (el !== list) el.classList.remove('show');
+        });
+
+        list.classList.toggle("show");
+
+        if (list.classList.contains("show")) {
+            // Auto-scroll the inner scrollbar to the currently selected year!
+            const activeLi = Array.from(list.children).find(li => li.textContent === instance.currentYear.toString());
+            if (activeLi) {
+                list.scrollTop = activeLi.offsetTop - (list.offsetHeight / 2) + (activeLi.offsetHeight / 2);
+            }
+        }
+    });
+
+    // Close when clicking anywhere else on the screen
+    document.addEventListener("click", function(e) {
+        if (!container.contains(e.target)) {
+            list.classList.remove("show");
+        }
+    });
+
+    container.appendChild(toggle);
+    container.appendChild(list);
+
+    // Bind to instance
+    instance.customYearSelect = toggle;
+
+    // Architect Trick: Monkey-patch the 'value' property so the rest of our architecture doesn't break!
+    Object.defineProperty(instance.customYearSelect, "value", {
+        set: function(val) { this.textContent = val; },
+        get: function() { return this.textContent; }
+    });
+
+    if (instance.monthNav) {
+        instance.monthNav.appendChild(container);
+    }
+}
+
+/**
+ * Builds the configurable Quick Actions Footer
+ * @param {any} instance - The Flatpickr instance
+ * @param {string[]} actions - Array of action names ('today', 'clear', 'close')
+ */
+function buildActionFooter(instance, actions) {
+    const footer = document.createElement("div");
+    footer.className = "erp-calendar-footer";
+
+    actions.forEach(action => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "erp-footer-btn erp-btn-" + action;
+
+        if (action === 'today') {
+            btn.textContent = "Today";
+            btn.addEventListener("click", () => {
+                instance.setDate(new Date(), true);
+                instance.close();
+            });
+        } else if (action === 'clear') {
+            btn.textContent = "Clear";
+            btn.addEventListener("click", () => instance.clear());
+        } else if (action === 'close') {
+            btn.textContent = "Close";
+            btn.addEventListener("click", () => instance.close());
+        }
+        footer.appendChild(btn);
+    });
+
+    instance.calendarContainer.appendChild(footer);
+}
+
+/**
+ * Safely parses manual keyboard entries (DD/MM/YYYY or DD-MM-YYYY) on blur
+ * and strictly enforces Min/Max bounds.
+ * @param {any} instance - The Flatpickr instance
+ */
+function attachBlurParser(instance) {
+    instance.input.addEventListener("blur", function(e) {
+        const typedVal = e.target.value.trim();
+        if (!typedVal) return;
+
+        const euDateMatch = typedVal.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (euDateMatch) {
+            const day = parseInt(euDateMatch[1], 10);
+            const month = parseInt(euDateMatch[2], 10) - 1; // JS months are 0-indexed
+            const year = parseInt(euDateMatch[3], 10);
+
+            // Build local Date object from keyboard input
+            const typedDate = new Date(year, month, day);
+
+            // SECURITY CHECK: If they typed a date in the future, force it to Max Date
+            if (instance.config.maxDate) {
+                // Convert config maxDate back to a comparable JS Date
+                const max = new Date(instance.config.maxDate);
+                max.setHours(23, 59, 59, 999); // Allow any time during the max day
+
+                if (typedDate > max) {
+                    showAlert('Invalid Date', 'You cannot select a date in the future.', 'warning');
+                    instance.setDate(max, true); // Clamp back to today
+                    return;
+                }
+            }
+
+            // If it passes validation, accept the typed date
+            instance.setDate(typedDate, true);
+        }
+    });
+}
+
+// ========================================================
+// EXISTING UTILITIES AND VALIDATION
+// ========================================================
 
 function handleFileUploadUI(e) {
     if (e.target.type === "file") {
@@ -261,12 +498,19 @@ async function fetchBranches() {
     setupDefaultOption(document.getElementById("branchSelect"), "Select Branch");
     const response = await fetch("/api/public/branches");
     const result = await response.json();
+
     if (result.success && result.data) {
         branchList = result.data;
         result.data.forEach(branch => {
             const opt = document.createElement("option");
             opt.value = String(branch.branchId);
-            opt.textContent = `${branch.schoolCode ? '['+branch.schoolCode+'] ' : ''}${branch.branchName}`;
+
+            // Format requested: (code)name, location
+            const codeStr = branch.schoolCode ? `(${branch.schoolCode})` : '';
+            const locationStr = branch.branchLocation ? `, ${branch.branchLocation}` : '';
+
+            opt.textContent = `${codeStr}${branch.branchName}${locationStr}`;
+
             document.getElementById("branchSelect").appendChild(opt);
         });
     }
@@ -394,9 +638,6 @@ async function handleFormSubmit(e) {
     if (btnText) btnText.classList.add("hidden-element");
     if (btnSpinner) btnSpinner.classList.remove("hidden-element");
 
-    // We still extract FormData so the PDF generator has access to the user's raw inputs!
-    const formData = new FormData(form);
-
     // Look up the TRUE classId from the selected classCode
     const selectedClassCode = document.getElementById("classSelect").value;
     const selectedClassObj = classList.find(c => c.classCode === selectedClassCode);
@@ -406,30 +647,29 @@ async function handleFormSubmit(e) {
     const payload = {
         branchId: document.getElementById("branchSelect").value ? parseInt(document.getElementById("branchSelect").value) : null,
         academicYearId: document.getElementById("academicYear") ? parseInt(document.getElementById("academicYear").value) : 2026,
-
-        // FIX 1: Use the trueClassId instead of trying to parse a String like "S1"
         branchClassId: trueClassId,
+
+        primaryEmail: form.querySelector("[name='primaryEmail']") ? form.querySelector("[name='primaryEmail']").value : "",
+        primaryMobile: form.querySelector("[name='primaryMobile']") ? form.querySelector("[name='primaryMobile']").value : "",
 
         firstName: form.querySelector("[name='studentName']").value,
         middleName: form.querySelector("[name='middleName']") ? form.querySelector("[name='middleName']").value : "",
         lastName: form.querySelector("[name='studentSurname']").value,
         gender: form.querySelector("input[name='gender']:checked") ? form.querySelector("input[name='gender']:checked").value.toUpperCase() : "MALE",
-        dateOfBirth: form.querySelector("[name='dob']").value,
+        dateOfBirth: form.querySelector("[name='dob']") && form.querySelector("[name='dob']").value ? form.querySelector("[name='dob']").value : null,
+        dateOfRegistration: form.querySelector("[name='dateOfRegistration']") ? form.querySelector("[name='dateOfRegistration']").value : null,
         nationality: form.querySelector("[name='nationality']") ? form.querySelector("[name='nationality']").value : "Uganda",
         religionId: document.getElementById("religionId") && document.getElementById("religionId").value ? parseInt(document.getElementById("religionId").value) : null,
         bloodGroupId: document.getElementById("bloodGroupId") && document.getElementById("bloodGroupId").value ? parseInt(document.getElementById("bloodGroupId").value) : null,
         categoryId: document.getElementById("categoryId") && document.getElementById("categoryId").value ? parseInt(document.getElementById("categoryId").value) : null,
 
-        // Address
         addressHouse: form.querySelector("[name='addressHouse']") ? form.querySelector("[name='addressHouse']").value : "",
         addressStreet: form.querySelector("[name='addressStreet']") ? form.querySelector("[name='addressStreet']").value : "",
         addressVillage: form.querySelector("[name='addressVillage']") ? form.querySelector("[name='addressVillage']").value : "",
         addressDistrict: form.querySelector("[name='addressDistrict']") ? form.querySelector("[name='addressDistrict']").value : "",
         addressState: form.querySelector("[name='addressState']") ? form.querySelector("[name='addressState']").value : "",
         addressPostal: form.querySelector("[name='addressPostal']") ? form.querySelector("[name='addressPostal']").value : "",
-        addressCountry: form.querySelector("[name='addressCountry']") ? form.querySelector("[name='addressCountry']").value : "",
 
-        // FIX 2: Check value first before parseInt to satisfy strict type checking
         fatherName: form.querySelector("[name='fatherName']") ? form.querySelector("[name='fatherName']").value : "",
         fatherAge: form.querySelector("[name='fatherAge']") && form.querySelector("[name='fatherAge']").value ? parseInt(form.querySelector("[name='fatherAge']").value) : 0,
         fatherContact: form.querySelector("[name='fatherContact']") ? form.querySelector("[name='fatherContact']").value : "",
@@ -437,7 +677,6 @@ async function handleFormSubmit(e) {
         fatherOccupation: form.querySelector("[name='fatherOccupation']") ? form.querySelector("[name='fatherOccupation']").value : "",
         fatherEmail: form.querySelector("[name='fatherEmail']") ? form.querySelector("[name='fatherEmail']").value : "",
 
-        // Mother
         motherName: form.querySelector("[name='motherName']") ? form.querySelector("[name='motherName']").value : "",
         motherAge: form.querySelector("[name='motherAge']") && form.querySelector("[name='motherAge']").value ? parseInt(form.querySelector("[name='motherAge']").value) : 0,
         motherContact: form.querySelector("[name='motherContact']") ? form.querySelector("[name='motherContact']").value : "",
@@ -445,7 +684,6 @@ async function handleFormSubmit(e) {
         motherOccupation: form.querySelector("[name='motherOccupation']") ? form.querySelector("[name='motherOccupation']").value : "",
         motherEmail: form.querySelector("[name='motherEmail']") ? form.querySelector("[name='motherEmail']").value : "",
 
-        // Guardian
         guardianName: form.querySelector("[name='guardianName']") ? form.querySelector("[name='guardianName']").value : "",
         guardianMobile: form.querySelector("[name='guardianContact']") ? form.querySelector("[name='guardianContact']").value : "",
         guardianEmail: form.querySelector("[name='guardianEmail']") ? form.querySelector("[name='guardianEmail']").value : "",
@@ -455,7 +693,6 @@ async function handleFormSubmit(e) {
         guardianRelation: form.querySelector("[name='guardianRelation']") ? form.querySelector("[name='guardianRelation']").value : "",
         guardianLocation: form.querySelector("[name='guardianLocation']") ? form.querySelector("[name='guardianLocation']").value : "",
 
-        // Academic - Updated to use parseFloat for double types
         previousSchool: form.querySelector("[name='formerSchool']") ? form.querySelector("[name='formerSchool']").value : "",
         formerSchoolCode: form.querySelector("[name='formerSchoolCode']") ? form.querySelector("[name='formerSchoolCode']").value : "",
         formerSchoolLin: form.querySelector("[name='formerSchoolLin']") ? form.querySelector("[name='formerSchoolLin']").value : "",
@@ -469,31 +706,28 @@ async function handleFormSubmit(e) {
     };
 
     try {
-        // Send pure JSON instead of multipart/form-data
         const response = await fetch("/api/public/applications/submit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)
         });
 
-        // Wait for the ApplicationResponseDTO
         const result = await response.json();
 
-        // The new backend returns the DTO directly. Check if it was successfully created.
         if (response.ok && result.applicationNo) {
-
-            // --- FILE UPLOAD LOGIC ---
             const fileData = new FormData();
             const photoInput = document.getElementById("photoInput");
             if (photoInput && photoInput.files.length > 0) {
                 fileData.append("photo", photoInput.files[0]);
             }
-            const docInput = document.getElementById("docInput");
-            if (docInput && docInput.files.length > 0) {
-                for (let i = 0; i < docInput.files.length; i++) {
-                    fileData.append("documents", docInput.files[i]);
+            const docInputs = document.querySelectorAll("input[type='file'][name='prevMarks']");
+            docInputs.forEach(input => {
+                if (input.files && input.files.length > 0) {
+                    for (let i = 0; i < input.files.length; i++) {
+                        fileData.append("documents", input.files[i]);
+                    }
                 }
-            }
+            });
             if (fileData.has("photo") || fileData.has("documents")) {
                 try {
                     await fetch('/api/public/applications/' + result.applicationNo + '/upload', {
@@ -507,7 +741,15 @@ async function handleFormSubmit(e) {
 
             document.getElementById("final-ref-number").textContent = String(result.applicationNo);
             goToStep(7);
-            document.getElementById("downloadPdfBtn").addEventListener("click", () => generatePDF(result.applicationNo, formData));
+
+            const printBtn = document.getElementById("downloadPdfBtn");
+            const newBtn = printBtn.cloneNode(true);
+            printBtn.parentNode.replaceChild(newBtn, printBtn);
+
+            newBtn.addEventListener("click", () => {
+                window.open('/apply/print_application?ref=' + result.applicationNo, '_blank');
+            });
+
         } else {
             showAlert('Error', String(result.message || result.error || "Submission failed."), 'error');
             if (btnSubmit) btnSubmit.disabled = false;
@@ -520,28 +762,4 @@ async function handleFormSubmit(e) {
         if (btnText) btnText.classList.remove("hidden-element");
         if (btnSpinner) btnSpinner.classList.add("hidden-element");
     }
-}
-
-function generatePDF(refNum, formData) {
-    const { jsPDF } = window['jspdf'];
-    const doc = new jsPDF();
-    const form = document.getElementById("admission-form");
-
-    doc.setFont("helvetica", "bold"); doc.setFontSize(22); doc.setTextColor(15, 23, 42);
-    doc.text("Montfort Brothers of St. Gabriel", 105, 20, null, null, "center");
-    doc.setFontSize(14); doc.setTextColor(107, 114, 128); doc.text("Official Application Copy", 105, 30, null, null, "center");
-    doc.setFontSize(16); doc.setTextColor(15, 23, 42); doc.text(`Ref Number: ${refNum}`, 105, 45, null, null, "center");
-    doc.setFontSize(11); doc.setTextColor(0, 0, 0); doc.setFont("helvetica", "normal");
-
-    let y = 60;
-    doc.text(`Student Name: ${formData.get("studentName")} ${formData.get("studentSurname")}`, 20, y); y+=10;
-    doc.text(`Class Applied: ${formData.get("appliedClass")}`, 20, y); y+=10;
-
-    const termInput = form.querySelector('input[name="term"]:checked');
-    doc.text(`Term: ${termInput ? termInput.value : ''}`, 20, y); y+=10;
-
-    doc.setLineWidth(0.5); doc.setDrawColor(229, 231, 235); doc.line(20, y+5, 190, y+5); y+=15;
-    doc.setFontSize(10); doc.setTextColor(100, 100, 100);
-    doc.text("Please carry this document to the school administration block.", 105, y, null, null, "center");
-    doc.save(`Montfort_Application_${refNum}.pdf`);
 }
