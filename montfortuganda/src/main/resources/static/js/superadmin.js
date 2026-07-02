@@ -1,3 +1,4 @@
+/* global Swal, initErpCalendar */
 // ==========================================
 // SUPER ADMIN MODULE
 // ==========================================
@@ -1836,3 +1837,9 @@ async function initPartialStudentFundView() {
         });
     }
 }
+document.addEventListener('viewLoaded', function() {
+    if (typeof createErpCalendar === 'function') {
+        createErpCalendar('input[type="date"]',
+            { minYear: 2022 });
+    }
+});

@@ -10,9 +10,10 @@
     <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="/css/status.css">
-    <script src="/js/status.js" defer></script>
+
 </head>
 <body>
 
@@ -55,6 +56,13 @@
                         <input type="text" id="ref_number" name="ref_number" class="form-control" placeholder="e.g. APP-U011-26-001" required>
                     </div>
                 </div>
+                <div class="form-group">
+                    <label for="dob">Date of Birth</label>
+                    <div class="input-group">
+                        <i class="bi bi-calendar"></i>
+                        <input type="date" id="dob" name="dob" class="form-control" placeholder="YYYY-MM-DD" required>
+                    </div>
+                </div>
                 <button type="submit" class="btn-primary" id="searchBtn">
                     <span class="btn-text" id="searchBtnText">Check Status</span>
                     <i class="bi bi-arrow-right btn-icon" id="searchBtnIcon"></i>
@@ -83,5 +91,8 @@
         </div>
     </main>
 </div>
+<script src="/js/status.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="/js/global.js"></script>
 </body>
 </html>

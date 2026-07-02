@@ -25,10 +25,18 @@ async function handleResponse(response) {
     if (!response.ok) {
         // Handle 401 Unauthorized globally
         if (response.status === 401) {
-            window.location.href = '/login.html';
+            if (typeof window.showSessionTimeoutModal === 'function') {
+                window.showSessionTimeoutModal({
+                    title: "Session Expired",
+                    message: "Your secure dashboard session has expired.",
+                    buttonText: "Login Again",
+                    redirectUrl: "/login.html"
+                });
+            } else {
+                window.location.href = '/login.html';
+            }
             throw new Error("Session expired. Please log in again.");
         }
-
         const errorData = await response.json().catch(() => null);
         const errorMessage = errorData?.message || `HTTP Error: ${response.status}`;
         throw new Error(errorMessage);

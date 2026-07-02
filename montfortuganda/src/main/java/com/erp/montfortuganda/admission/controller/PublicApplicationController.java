@@ -152,146 +152,59 @@ public class PublicApplicationController {
 
     // Public Endpoint: Check Status (Compact for the Status Page)
     @PostMapping("/public/applications/status")
-    public ResponseEntity<Map<String, Object>> checkApplicationStatus(@RequestParam("ref_number") String refNumber) {
-        Map<String, Object> response = new HashMap<>();
-        Optional<ErpApplication> appOpt = applicationRepository.findByApplicationNo(refNumber);
+    public ResponseEntity<Map<String, Object>> checkApplicationStatus(
+            @RequestParam("ref_number") String refNumber,
+            @RequestParam("dob") String dob,
+            jakarta.servlet.http.HttpServletRequest request) {
 
-        if (appOpt.isEmpty()) {
-            response.put("success", false);
-            response.put("message", "Application not found with reference number: " + refNumber);
-            return ResponseEntity.ok(response);
+        // 1. Fetch data from Service Layer
+        Map<String, Object> response = applicationService.verifyAndGetStatus(refNumber, dob);
+
+        if ((Boolean) response.get("success")) {
+            Long appId = (Long) response.remove("internal_id"); // Strip internal ID
+
+            // 2. Session Fixation Protection (Modern Servlet 3.1+ Approach)
+            jakarta.servlet.http.HttpSession session = request.getSession(true);
+            request.changeSessionId();
+
+            // 3. Set the secure VerifiedApplicationSession object
+            com.erp.montfortuganda.admission.dto.VerifiedApplicationSession verifiedSession =
+                    new com.erp.montfortuganda.admission.dto.VerifiedApplicationSession(refNumber, appId, 10);
+
+            session.setAttribute("VERIFIED_APPLICATION", verifiedSession);
         }
 
-        ErpApplication app = appOpt.get();
-        Map<String, Object> data = new HashMap<>();
-
-        String fullName = app.getFirstName();
-        if (app.getMiddleName() != null && !app.getMiddleName().trim().isEmpty()) fullName += " " + app.getMiddleName();
-        if (app.getLastName() != null) fullName += " " + app.getLastName();
-        data.put("student_name", fullName.trim());
-
-        String appliedClass = String.valueOf(app.getBranchClassId());
-        if (app.getBranchClassId() != null) {
-            Optional<SchoolClass> sc = classRepository.findById(app.getBranchClassId().intValue());
-            if (sc.isPresent()) {
-                appliedClass = sc.get().getClassName();
-            }
-        }
-        data.put("applied_class", appliedClass);
-        data.put("status", app.getApplicationStatus().name());
-        data.put("ref_number", app.getApplicationNo());
-        data.put("scholarship_status", "None");
-
-        response.put("success", true);
-        response.put("data", data);
         return ResponseEntity.ok(response);
     }
 
-    // Public Endpoint: Details (For the Print Page)
     @GetMapping("/public/applications/details")
-    public ResponseEntity<Map<String, Object>> getApplicationDetails(@RequestParam("ref") String refNumber) {
-        Map<String, Object> response = new HashMap<>();
-        Optional<ErpApplication> appOpt = applicationRepository.findByApplicationNo(refNumber);
+    public ResponseEntity<Map<String, Object>> getApplicationDetails(jakarta.servlet.http.HttpServletRequest request) {
 
-        if (appOpt.isEmpty()) {
-            response.put("success", false);
-            response.put("message", "Application not found.");
-            return ResponseEntity.ok(response);
+        // 1. Check Session Authorization
+        jakarta.servlet.http.HttpSession session = request.getSession(false);
+        if (session == null || session.getAttribute("VERIFIED_APPLICATION") == null) {
+            return ResponseEntity.status(403).body(Map.of("success", false, "message", "Session Expired. Please track again."));
         }
 
-        ErpApplication app = appOpt.get();
-        Map<String, Object> data = new HashMap<>();
+        com.erp.montfortuganda.admission.dto.VerifiedApplicationSession verifiedSession =
+                (com.erp.montfortuganda.admission.dto.VerifiedApplicationSession) session.getAttribute("VERIFIED_APPLICATION");
 
-        // Campus & System info
-        data.put("branch_name", app.getBranch() != null ? app.getBranch().getBranchName() : "");
-        data.put("branch_location", app.getBranch() != null && app.getBranch().getBranchLocation() != null
-                ? app.getBranch().getBranchLocation() : "Uganda");
-        data.put("ref_number", app.getApplicationNo());
-        data.put("date_of_registration", app.getCreatedAt() != null ? app.getCreatedAt().toLocalDate().toString() : "");
-        data.put("status", app.getApplicationStatus().name());
-        data.put("scholarship_status", "None");
-
-        // Student Info
-        data.put("student_name", app.getFirstName());
-        data.put("middle_name", app.getMiddleName() != null ? app.getMiddleName() : "");
-        data.put("student_surname", app.getLastName());
-        data.put("gender", app.getGender() != null ? app.getGender().name() : "");
-        data.put("dob", app.getDateOfBirth() != null ? app.getDateOfBirth().toString() : "");
-        data.put("nationality", app.getNationality());
-
-        // Class Info
-        data.put("academic_year", String.valueOf(app.getAcademicYearId()));
-        data.put("term", "Term I"); // Placeholder
-
-        String appliedClass = "";
-        String classCode = "";
-        String level = "";
-        if (app.getBranchClassId() != null) {
-            Optional<SchoolClass> sc = classRepository.findById(app.getBranchClassId().intValue());
-            if (sc.isPresent()) {
-                appliedClass = sc.get().getClassName();
-                classCode = sc.get().getClassCode();
-                if (sc.get().getLevel() != null) {
-                    level = sc.get().getLevel().getLevelName();
-                }
-            }
+        if (!verifiedSession.isValid()) {
+            session.invalidate();
+            return ResponseEntity.status(403).body(Map.of("success", false, "message", "Session Expired. Please track again."));
         }
-        data.put("applied_class", appliedClass);
-        data.put("class_code", classCode);
-        data.put("level", level);
-        data.put("primary_email", app.getPrimaryEmail());
-        data.put("primary_mobile", app.getPrimaryMobile());
 
-        // Family Info
-        data.put("father_name", app.getFatherName());
-        data.put("father_contact", app.getFatherContact());
-        data.put("father_email", app.getFatherEmail());
-        data.put("father_occupation", app.getFatherOccupation());
-        data.put("father_education", app.getFatherEducation());
-        data.put("father_age", app.getFatherAge());
+        // 2. Add Cache-Control Headers to protect PII
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setCacheControl("no-store, no-cache, must-revalidate, max-age=0");
+        headers.setPragma("no-cache");
+        headers.setExpires(0);
 
-        data.put("mother_name", app.getMotherName());
-        data.put("mother_contact", app.getMotherContact());
-        data.put("mother_email", app.getMotherEmail());
-        data.put("mother_occupation", app.getMotherOccupation());
-        data.put("mother_education", app.getMotherEducation());
-        data.put("mother_age", app.getMotherAge());
+        Map<String, Object> response = applicationService.getApplicationDetails(verifiedSession.getApplicationId());
 
-        data.put("guardian_name", app.getGuardianName());
-        data.put("guardian_relation", app.getGuardianRelation());
-        data.put("guardian_contact", app.getGuardianMobile() != null ? app.getGuardianMobile() : app.getGuardianContact());
-        data.put("guardian_email", app.getGuardianEmail());
-        data.put("guardian_occupation", app.getGuardianOccupation());
-        data.put("guardian_education", app.getGuardianEducation());
-        data.put("guardian_age", app.getGuardianAge());
-        data.put("guardian_location", app.getGuardianLocation());
-
-        // Address
-        data.put("address_house", app.getAddressHouse());
-        data.put("address_street", app.getAddressStreet());
-        data.put("address_village", app.getAddressVillage());
-        data.put("address_district", app.getAddressDistrict());
-        data.put("address_state", app.getAddressState());
-        data.put("address_postal", app.getAddressPostal());
-
-        // Academic Info
-        data.put("former_school", app.getPreviousSchool() != null ? app.getPreviousSchool() : app.getFormerSchool());
-        data.put("former_school_code", app.getFormerSchoolCode());
-        data.put("former_school_lin", app.getFormerSchoolLin());
-        data.put("ple_ref", app.getPleRef());
-        data.put("ple_score", app.getPleScore());
-        data.put("uce_ref", app.getUceRef());
-        data.put("uce_score", app.getUceScore());
-        data.put("subject_marks", app.getSubjectMarks());
-        data.put("more_info", app.getMoreInfo());
-
-        data.put("photo_path", app.getPhotoPath());
-
-        response.put("success", true);
-        response.put("data", data);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok().headers(headers).body(response);
     }
-
+    
     // Secured Endpoint: Approve/Reject workflows
     @PostMapping("/superadmin/applications/{id}/status")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('BRANCH_ADMIN')")

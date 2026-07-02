@@ -96,218 +96,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 // ========================================================
-// ERP CALENDAR ARCHITECTURE PLUGINS & WRAPPERS
-// ========================================================
-
-/**
- * Factory method for initializing an ERP-grade Flatpickr calendar.
- * @param {string} selector - The CSS selector for the input field.
- * @param {Object} customConfig - Field-specific Flatpickr configurations.
- */
-function createErpCalendar(selector, customConfig = {}) {
-    if (typeof flatpickr === "undefined") return;
-
-    /** @type {any} */
-    const defaultERPConfig = {
-        dateFormat: "Y-m-d",
-        disableMobile: true, // Force consistent desktop UI
-        allowInput: true,    // Allow manual keyboard typing
-
-        // Custom Configuration Properties
-        footerActions: ['today', 'clear', 'close'],
-        minYear: 1950,
-        maxYear: new Date().getFullYear() + 10,
-
-        onReady: function(selectedDates, dateStr, instance) {
-            if (instance.calendarContainer) {
-                instance.calendarContainer.classList.add('erp-calendar-theme');
-            }
-
-            const defaultYearWrapper = instance.currentYearElement.parentNode;
-            if (defaultYearWrapper) {
-                defaultYearWrapper.style.display = "none";
-            }
-
-            // Inject custom isolated DOM elements
-            buildYearDropdown(instance, this.config.minYear, this.config.maxYear);
-
-            if (this.config.footerActions && this.config.footerActions.length > 0) {
-                buildActionFooter(instance, this.config.footerActions);
-            }
-
-            attachBlurParser(instance);
-        },
-        onYearChange: function(selectedDates, dateStr, instance) {
-            if (instance.customYearSelect) {
-                instance.customYearSelect.value = instance.currentYear.toString();
-            }
-        },
-        onMonthChange: function(selectedDates, dateStr, instance) {
-            if (instance.customYearSelect) {
-                instance.customYearSelect.value = instance.currentYear.toString();
-            }
-        }
-    };
-
-    const finalConfig = Object.assign({}, defaultERPConfig, customConfig);
-    return flatpickr(selector, finalConfig);
-}
-
-/**
- * Dynamically builds and synchronizes a custom Year Dropdown with STRICT height and inner scrolling.
- * @param {any} instance - The Flatpickr instance
- * @param {number} minYear - The minimum bound
- * @param {number} maxYear - The maximum bound
- */
-function buildYearDropdown(instance, minYear, maxYear) {
-    const container = document.createElement("div");
-    container.className = "erp-year-dropdown-container";
-
-    const toggle = document.createElement("div");
-    toggle.className = "erp-year-dropdown-toggle";
-    toggle.textContent = instance.currentYear.toString();
-
-    const list = document.createElement("ul");
-    list.className = "erp-year-dropdown-list";
-
-    const start = maxYear || new Date().getFullYear();
-    const end = minYear || 1950;
-
-    // Build the custom list of years
-    for (let y = start; y >= end; y--) {
-        const li = document.createElement("li");
-        li.textContent = y.toString();
-        li.setAttribute("data-year", y.toString());
-
-        li.addEventListener("click", function(e) {
-            e.stopPropagation(); // Stop calendar from closing
-            e.preventDefault();
-            const selectedYear = parseInt(this.getAttribute("data-year"), 10);
-            instance.changeYear(selectedYear); // Tell Flatpickr to update
-            toggle.textContent = selectedYear.toString();
-            list.classList.remove("show"); // Close dropdown
-        });
-
-        list.appendChild(li);
-    }
-
-    // Toggle Dropdown logic
-    toggle.addEventListener("click", function(e) {
-        e.stopPropagation();
-        e.preventDefault();
-
-        // Close other open custom dropdowns if they exist
-        document.querySelectorAll('.erp-year-dropdown-list').forEach(el => {
-            if (el !== list) el.classList.remove('show');
-        });
-
-        list.classList.toggle("show");
-
-        if (list.classList.contains("show")) {
-            // Auto-scroll the inner scrollbar to the currently selected year!
-            const activeLi = Array.from(list.children).find(li => li.textContent === instance.currentYear.toString());
-            if (activeLi) {
-                list.scrollTop = activeLi.offsetTop - (list.offsetHeight / 2) + (activeLi.offsetHeight / 2);
-            }
-        }
-    });
-
-    // Close when clicking anywhere else on the screen
-    document.addEventListener("click", function(e) {
-        if (!container.contains(e.target)) {
-            list.classList.remove("show");
-        }
-    });
-
-    container.appendChild(toggle);
-    container.appendChild(list);
-
-    // Bind to instance
-    instance.customYearSelect = toggle;
-
-    // Architect Trick: Monkey-patch the 'value' property so the rest of our architecture doesn't break!
-    Object.defineProperty(instance.customYearSelect, "value", {
-        set: function(val) { this.textContent = val; },
-        get: function() { return this.textContent; }
-    });
-
-    if (instance.monthNav) {
-        instance.monthNav.appendChild(container);
-    }
-}
-
-/**
- * Builds the configurable Quick Actions Footer
- * @param {any} instance - The Flatpickr instance
- * @param {string[]} actions - Array of action names ('today', 'clear', 'close')
- */
-function buildActionFooter(instance, actions) {
-    const footer = document.createElement("div");
-    footer.className = "erp-calendar-footer";
-
-    actions.forEach(action => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "erp-footer-btn erp-btn-" + action;
-
-        if (action === 'today') {
-            btn.textContent = "Today";
-            btn.addEventListener("click", () => {
-                instance.setDate(new Date(), true);
-                instance.close();
-            });
-        } else if (action === 'clear') {
-            btn.textContent = "Clear";
-            btn.addEventListener("click", () => instance.clear());
-        } else if (action === 'close') {
-            btn.textContent = "Close";
-            btn.addEventListener("click", () => instance.close());
-        }
-        footer.appendChild(btn);
-    });
-
-    instance.calendarContainer.appendChild(footer);
-}
-
-/**
- * Safely parses manual keyboard entries (DD/MM/YYYY or DD-MM-YYYY) on blur
- * and strictly enforces Min/Max bounds.
- * @param {any} instance - The Flatpickr instance
- */
-function attachBlurParser(instance) {
-    instance.input.addEventListener("blur", function(e) {
-        const typedVal = e.target.value.trim();
-        if (!typedVal) return;
-
-        const euDateMatch = typedVal.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-        if (euDateMatch) {
-            const day = parseInt(euDateMatch[1], 10);
-            const month = parseInt(euDateMatch[2], 10) - 1; // JS months are 0-indexed
-            const year = parseInt(euDateMatch[3], 10);
-
-            // Build local Date object from keyboard input
-            const typedDate = new Date(year, month, day);
-
-            // SECURITY CHECK: If they typed a date in the future, force it to Max Date
-            if (instance.config.maxDate) {
-                // Convert config maxDate back to a comparable JS Date
-                const max = new Date(instance.config.maxDate);
-                max.setHours(23, 59, 59, 999); // Allow any time during the max day
-
-                if (typedDate > max) {
-                    showAlert('Invalid Date', 'You cannot select a date in the future.', 'warning');
-                    instance.setDate(max, true); // Clamp back to today
-                    return;
-                }
-            }
-
-            // If it passes validation, accept the typed date
-            instance.setDate(typedDate, true);
-        }
-    });
-}
-
-// ========================================================
 // EXISTING UTILITIES AND VALIDATION
 // ========================================================
 
@@ -598,7 +386,7 @@ function handleClassChange() {
         dynExam.appendChild(tmpl.content.cloneNode(true));
     }
 
-    if (!code.startsWith("N") && code !== "") {
+    if (code !== "") {
         dynSubj.classList.remove("hidden-element");
         if (document.getElementById("subjectsBody").children.length === 0) addSubjectRow();
     }
@@ -738,7 +526,24 @@ async function handleFormSubmit(e) {
                     console.warn("File upload issue:", uploadErr);
                 }
             }
+            try {
+                const sessionForm = new URLSearchParams();
+                sessionForm.append("ref_number", result.applicationNo);
+                sessionForm.append("dob", payload.dateOfBirth || "");
 
+                const sessionRes = await fetch('/api/public/applications/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: sessionForm
+                });
+
+                const sessionData = await sessionRes.json();
+                if (sessionData.success && sessionData.guest_auth_token) {
+                    sessionStorage.setItem('guest_auth_token', sessionData.guest_auth_token);
+                }
+            } catch (sessionErr) {
+                console.warn("Could not generate guest print session:", sessionErr);
+            }
             document.getElementById("final-ref-number").textContent = String(result.applicationNo);
             goToStep(7);
 

@@ -30,7 +30,7 @@ body { margin: 0; padding: 0; min-height: 100vh; background-color: #0f172a; }
 #montfort-portal-wrapper .icon-circle { width: 60px; height: 60px; background: #fffbeb; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px auto; color: #d4af37; font-size: 2rem; box-shadow: 0 4px 10px rgba(212,175,55,0.2); }
 #montfort-portal-wrapper .form-header-title h1 { margin: 0 0 5px; font-size: 1.8rem; color: #0f172a; font-weight: 700; }
 #montfort-portal-wrapper .form-header-title p { color: #64748b; font-size: 0.95rem; margin: 0; }
-
+#montfort-portal-wrapper .form-group{ margin: 5px 0; }
 #montfort-portal-wrapper .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #475569; text-transform: uppercase; margin-bottom: 8px; }
 #montfort-portal-wrapper .input-group { position: relative; display: flex; align-items: center; }
 #montfort-portal-wrapper .input-group i { position: absolute; left: 14px; color: #94a3b8; font-size: 1.2rem; }
