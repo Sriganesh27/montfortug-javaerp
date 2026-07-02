@@ -15,7 +15,7 @@ body{
 
 #montfort-portal-wrapper .slide {
     position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    object-fit: cover; /* This makes the <img> stretch perfectly! */
+    object-fit: cover;
     opacity: 0; transition: opacity 2.5s ease-in-out, transform 8s linear; transform: scale(1);
 }
 
@@ -24,13 +24,11 @@ body{
 
 #montfort-portal-wrapper .hidden-element { display: none !important; }
 
-/* --- UTILITY CLASSES (Strict Separation of Concerns) --- */
 #montfort-portal-wrapper .honeypot-field { position: absolute; left: -9999px; opacity: 0; display: block; }
 #montfort-portal-wrapper .full-width-grid { grid-column: 1 / -1; }
 #montfort-portal-wrapper .text-muted-small { font-size: 0.9rem; color: #64748b; }
 #montfort-portal-wrapper .file-selected-text { color: #0f172a; font-weight: 600; }
 
-/* NEW HINT TEXT CLASS */
 #montfort-portal-wrapper .form-hint-text {
     display: block;
     margin-top: 5px;
@@ -38,20 +36,19 @@ body{
     color: #64748b;
 }
 
-/* --- PREMIUM OFFICIAL HEADER --- */
 #montfort-portal-wrapper .portal-header {
     width: 100%;
     padding: 16px 0;
     background: rgba(15, 23, 42, 0.98);
     backdrop-filter: blur(10px);
-    border-bottom: 2px solid #d4af37; /* Distinctive Gold Accent Line */
+    border-bottom: 2px solid #d4af37;
     box-shadow: 0 10px 30px rgba(0,0,0,0.3);
     margin-bottom: 40px;
     position: relative;
     z-index: 10;
 }
 #montfort-portal-wrapper .header-container {
-    max-width: 900px; /* Slightly wider than the form card to frame it nicely */
+    max-width: 900px;
     margin: 0 auto;
     padding: 0 20px;
     display: flex;
@@ -64,7 +61,7 @@ body{
     gap: 16px;
 }
 #montfort-portal-wrapper .brand-logo {
-    height: 54px; /* Larger, prouder logo */
+    height: 54px;
     width: 54px;
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
@@ -74,14 +71,14 @@ body{
     justify-content: center;
 }
 #montfort-portal-wrapper .brand-title {
-    color: #ffffff; /* Pure white main title */
+    color: #ffffff;
     font-size: 1.25rem;
     font-weight: 700;
     letter-spacing: 0.3px;
     line-height: 1.2;
 }
 #montfort-portal-wrapper .brand-subtitle {
-    color: #d4af37; /* Gold Subtitle */
+    color: #d4af37;
     font-size: 0.75rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -98,7 +95,7 @@ body{
     gap: 8px;
     padding: 10px 22px;
     border-radius: 30px;
-    background: #d4af37; /* Solid gold CTA button */
+    background: #d4af37;
     transition: all 0.2s;
 }
 #montfort-portal-wrapper .btn-track:hover {
@@ -112,7 +109,6 @@ body{
 #montfort-portal-wrapper .form-document-card { max-width: 950px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; box-shadow: 0 20px 40px -5px rgba(0,0,0,0.3), 0 8px 10px -2px rgba(0,0,0,0.1); position: relative; padding: 35px 45px 45px 45px; overflow: hidden; }
 #montfort-portal-wrapper .card-top-accent { position: absolute; top: 0; left: 0; right: 0; height: 5px; background: linear-gradient(90deg, #d4af37, #fde073); }
 
-/* VISUAL STEPPER  */
 #montfort-portal-wrapper .stepper-wrapper { display: flex; justify-content: space-between; margin-bottom: 35px; position: relative; }
 #montfort-portal-wrapper .stepper-wrapper::before { content: ""; position: absolute; top: 16px; left: 0; width: 100%; height: 2px; background: #e2e8f0; z-index: 1; }
 #montfort-portal-wrapper .stepper-item { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; flex: 1; cursor: pointer; }
@@ -123,12 +119,10 @@ body{
 #montfort-portal-wrapper .stepper-item.completed .step-name { color: #0f172a; }
 #montfort-portal-wrapper .stepper-item.active .step-counter { background: #d4af37; border-color: #d4af37; color: #0f172a; box-shadow: 0 0 0 4px rgba(212,175,55,0.2); }
 #montfort-portal-wrapper .stepper-item.active .step-name { color: #d4af37; }
+
 /* VALIDATION ERRORS */
-#montfort-portal-wrapper .error-border {
-    border-color: #ef4444 !important;
-    background-color: #fef2f2 !important;
-}
-/* Grid & Layout Alignments */
+#montfort-portal-wrapper .form-control.error-border, #montfort-portal-wrapper .custom-select.error-border, #montfort-portal-wrapper .error-border { border-color: #ef4444 !important; background-color: #fef2f2 !important; box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important; outline: none !important; }
+
 #montfort-portal-wrapper .form-header-title { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9; }
 #montfort-portal-wrapper .form-header-title.text-center { text-align: center; }
 #montfort-portal-wrapper .form-header-title h1 { font-size: 1.8rem; font-weight: 700; color: #0f172a; margin: 0 0 5px 0; letter-spacing: -0.5px; }
@@ -141,16 +135,13 @@ body{
 #montfort-portal-wrapper .text-center { text-align: center; }
 #montfort-portal-wrapper .align-items-end { align-items: flex-end; }
 
-/* Compacted Grids */
 #montfort-portal-wrapper .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; margin-bottom: 16px; }
 #montfort-portal-wrapper .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px 20px; margin-bottom: 16px; }
 
-/* Form Controls - Sleeker 46px Height */
 #montfort-portal-wrapper .form-group { margin-bottom: 16px; display: flex; flex-direction: column; justify-content: flex-end; }
-/* Kill bottom margin if inside a grid, let the grid gap handle spacing */
 #montfort-portal-wrapper .grid-2 .form-group, #montfort-portal-wrapper .grid-3 .form-group { margin-bottom: 0; }
 
-#montfort-portal-wrapper .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2;}
+#montfort-portal-wrapper .form-group label { display: block; font-size: 0.7rem; font-weight: 600; color: #475569; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.2;}
 #montfort-portal-wrapper .form-control {
     width: 100%; height: 46px; border: 2px solid transparent; border-radius: 6px; padding: 0 14px;
     font-size: 0.95rem; font-family: inherit; background-color: #f8fafc; color: #1e293b; font-weight: 500;
@@ -176,18 +167,6 @@ body{
 }
 #montfort-portal-wrapper .hidden-radio:checked + .segment-label { background-color: #ffffff !important; color: #0f172a !important; box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important; }
 
-/* ULTRA-SLIM FILE DROPZONE */
-#montfort-portal-wrapper .file-dropzone {
-    position: relative; border: 2px dashed #cbd5e1; border-radius: 6px; background-color: #f8fafc; padding: 0 15px;
-    display: flex; flex-direction: row; align-items: center; justify-content: center; height: 46px;
-    transition: all 0.2s; cursor: pointer; overflow: hidden; box-sizing: border-box; gap: 10px;
-}
-#montfort-portal-wrapper .file-dropzone:hover { border-color: #d4af37; background-color: #fffbeb; }
-#montfort-portal-wrapper .file-dropzone i { font-size: 1.15rem; color: #94a3b8; margin: 0; }
-#montfort-portal-wrapper .file-dropzone span { font-size: 0.85rem; color: #64748b; font-weight: 500; }
-#montfort-portal-wrapper .file-dropzone input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-
-/* Buttons */
 #montfort-portal-wrapper .form-actions { margin-top: 40px; padding-top: 25px; border-top: 1px solid #f1f5f9; display: flex; }
 #montfort-portal-wrapper .right-align { justify-content: flex-end; }
 #montfort-portal-wrapper .space-between { justify-content: space-between; }
@@ -201,7 +180,6 @@ body{
 #montfort-portal-wrapper .btn-text:hover { color: #b3922c; transform: none; }
 #montfort-portal-wrapper .btn-large { font-size: 1.05rem; padding: 14px 35px; border-radius: 30px; }
 
-/* Tables & Instructions */
 #montfort-portal-wrapper .instruction-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; color: #334155; border-left: 4px solid #d4af37; }
 #montfort-portal-wrapper .instruction-box h3 { margin-top: 0; font-size: 1.05rem; color: #0f172a; font-weight: 700; }
 #montfort-portal-wrapper .instruction-box ul { list-style: none; padding: 0; margin: 12px 0 0 0; }
@@ -222,7 +200,6 @@ body{
 #montfort-portal-wrapper .btn-icon { background: #fef2f2; color: #ef4444; font-size: 0.95rem; padding: 6px; border-radius: 4px; }
 #montfort-portal-wrapper .btn-icon:hover { background: #fee2e2; color: #b91c1c; }
 
-/* Review & Success */
 #montfort-portal-wrapper .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; border-left: 4px solid #d4af37; }
 #montfort-portal-wrapper .review-item { display: flex; flex-direction: column; }
 #montfort-portal-wrapper .review-item strong { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
@@ -237,22 +214,19 @@ body{
 #montfort-portal-wrapper .ref-number-box { background: #f0fdf4; border: 2px dashed #10b981; padding: 25px; border-radius: 8px; margin: 25px auto; max-width: 400px; }
 #montfort-portal-wrapper .ref-label { display: block; color: #047857; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1.5px; font-size: 0.85rem; }
 #montfort-portal-wrapper .ref-number { display: block; font-size: 2rem; font-weight: 800; color: #064e3b; letter-spacing: 2px; }
-/* --- LAYOUT POLISH --- */
 
-/* 1. Slim down the form card from 950px to 800px for a tighter, premium look */
+/* --- LAYOUT POLISH --- */
 #montfort-portal-wrapper .header-container,
 #montfort-portal-wrapper .form-document-card {
     max-width: 800px !important;
 }
 
-/* 2. Add distinct borders and a pure white background to inputs so they don't float */
 #montfort-portal-wrapper .form-control,
 #montfort-portal-wrapper .table-input {
     border: 1px solid #cbd5e1 !important;
     background-color: #ffffff !important;
 }
 
-/* 3. Add a beautiful gold glowing border when typing */
 #montfort-portal-wrapper .form-control:focus,
 #montfort-portal-wrapper .table-input:focus {
     border-color: #d4af37 !important;
@@ -260,27 +234,149 @@ body{
     outline: none !important;
 }
 
-/* 4. Anchor the Subject Marks table with a subtle header background */
 #montfort-portal-wrapper .data-table th {
     background-color: #f1f5f9 !important;
     border-top: 1px solid #e2e8f0 !important;
     border-bottom: 2px solid #e2e8f0 !important;
 }
 
-/* 5. Improve the File Dropzone contrast */
-#montfort-portal-wrapper .file-dropzone {
-    background-color: #f8fafc !important;
-    border: 1px dashed #94a3b8 !important;
-}
-/* Fix Subject Grades Table Column Layout */
 #montfort-portal-wrapper .data-table th:nth-child(1) { width: 45%; }
 #montfort-portal-wrapper .data-table th:nth-child(2) { width: 25%; }
 #montfort-portal-wrapper .data-table th:nth-child(3) { width: 20%; }
 #montfort-portal-wrapper .data-table th.action-column { width: 10%; text-align: center; }
 #montfort-portal-wrapper .data-table td.text-center { text-align: center; }
-/* Responsive */
+
 @media (max-width: 768px) {
     #montfort-portal-wrapper .form-document-card { padding: 25px 20px; border-radius: 0; }
     #montfort-portal-wrapper .grid-2, #montfort-portal-wrapper .grid-3, #montfort-portal-wrapper .review-grid { grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px;}
     #montfort-portal-wrapper .step-name { display: none; }
+}
+
+
+/* =========================================
+   NEWLY ADDED FIXES (Merged Perfectly)
+   ========================================= */
+
+/* UNEDITABLE COUNTRY CODE PREFIX */
+#montfort-portal-wrapper .phone-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+#montfort-portal-wrapper .phone-input-container .country-code-box {
+    position: absolute;
+    left: 1px;
+    top: 1px;
+    bottom: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #e2e8f0;
+    color: #475569;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0 12px;
+    border-right: 1px solid #cbd5e1;
+    border-radius: 5px 0 0 5px;
+    pointer-events: none; /* Completely un-clickable */
+    user-select: none; /* Cannot highlight text */
+    z-index: 5;
+}
+#montfort-portal-wrapper .form-control.phone-padded {
+    padding-left: 68px !important; /* Make room for the grey box */
+}
+
+/* =======================================================
+   PASSPORT PREVIEW & DROPZONE UI FIXES
+   ======================================================= */
+#montfort-portal-wrapper .file-dropzone {
+    position: relative; /* Crucial for stretching the invisible input */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8fafc !important;
+    border: 2px dashed #cbd5e1 !important;
+    border-radius: 8px;
+    height: auto !important;
+    min-height: 80px !important;
+    padding: 25px 15px !important;
+    overflow: hidden !important;
+    transition: all 0.2s ease;
+}
+
+/* Nice gold glow when the user hovers over the dropzone */
+#montfort-portal-wrapper .file-dropzone:hover {
+    background-color: #f1f5f9 !important;
+    border-color: #d4af37 !important;
+}
+
+/* THE MAGIC TRICK: Hide the ugly button, make the whole box clickable! */
+#montfort-portal-wrapper .file-dropzone input[type="file"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0; /* Completely invisible! */
+    cursor: pointer;
+    z-index: 10;
+}
+
+#montfort-portal-wrapper .passport-preview {
+    width: 120px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+    margin-top: 15px;
+    position: relative;
+    z-index: 1; /* Keeps it visually behind the invisible clickable layer */
+}
+
+/* Style the Document List to look like modern cards */
+#montfort-portal-wrapper .file-list-preview {
+    margin-top: 15px;
+    font-size: 0.7rem;
+    color: #475569;
+    text-align: left;
+    width: 100%;
+    position: relative; /* REQUIRED */
+    z-index: 20;        /* MUST BE HIGHER THAN 10 */
+}
+#montfort-portal-wrapper .file-list-preview ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+#montfort-portal-wrapper .file-list-preview li {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+/* Add these new styles for the beautiful red delete button */
+#montfort-portal-wrapper .file-list-preview .btn-remove-file {
+    margin-left: auto; /* Pushes the trash can perfectly to the far right */
+    background: #fef2f2;
+    color: #ef4444;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+#montfort-portal-wrapper .file-list-preview .btn-remove-file:hover {
+    background: #ef4444;
+    color: #ffffff;
 }

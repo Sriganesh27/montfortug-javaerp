@@ -54,18 +54,26 @@ document.addEventListener("DOMContentLoaded", () => {
     // ENTERPRISE CALENDAR INITIALIZATION
     // ========================================================
     const currentYear = new Date().getFullYear();
+
+    // For Registration Date (Max allowed is today)
     const exactToday = new Date();
     exactToday.setHours(23, 59, 59, 999);
-    // 1. Date of Birth Picker (Targets the existing HTML name)
+
+    // For Date of Birth (Max allowed is Dec 31st of Current Year - 4)
+    const maxDobYear = currentYear - 4;
+    const exactMaxDob = new Date(maxDobYear, 11, 31, 23, 59, 59, 999);
+
+    // 1. Date of Birth Picker
     createErpCalendar("input[name='dob']", {
-        maxDate: exactToday,
+        maxDate: exactMaxDob,      // Blocks any date younger than Dec 31 of (Year-4)
         minYear: currentYear - 25,
-        maxYear: currentYear,
+        maxYear: maxDobYear,       // Updates the dropdown so it stops at (Year-4)
         footerActions: ['today', 'clear', 'close']
     });
 
-    // 2. Admission/Registration Date Picker (Targets the existing HTML name)
+    // 2. Admission/Registration Date Picker
     createErpCalendar("input[name='dateOfRegistration']", {
+        defaultDate: "today",      // Automatically fills in today! (Still fully editable)
         maxDate: exactToday,
         minYear: currentYear - 5,
         maxYear: currentYear,
@@ -99,15 +107,108 @@ document.addEventListener("DOMContentLoaded", () => {
 // EXISTING UTILITIES AND VALIDATION
 // ========================================================
 
+// We create a master storage object to remember ALL selected files
+const accumulatedDocs = new DataTransfer();
+
+// --- NEW: Event Listener to handle clicking the Trash Can ---
+document.addEventListener('click', function(e) {
+    const removeBtn = e.target.closest('.btn-remove-file');
+    if (removeBtn) {
+        e.preventDefault();
+        e.stopPropagation(); // Prevents the file dialog from opening when clicking trash
+
+        const fileNameToRemove = removeBtn.getAttribute('data-filename');
+        const dropzone = removeBtn.closest('.file-dropzone');
+        const inputElement = dropzone.querySelector('input[type="file"]');
+
+        if (inputElement && inputElement.multiple) {
+            // Find and remove the specific file from our master list
+            for (let i = 0; i < accumulatedDocs.files.length; i++) {
+                if (accumulatedDocs.files[i].name === fileNameToRemove) {
+                    accumulatedDocs.items.remove(i);
+                    break;
+                }
+            }
+            // Update the actual HTML input
+            inputElement.files = accumulatedDocs.files;
+
+            // Force the UI to refresh and show the updated list
+            inputElement.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+});
+
 function handleFileUploadUI(e) {
     if (e.target.type === "file") {
-        const file = e.target.files[0];
-        const span = e.target.closest('.file-dropzone').querySelector('span');
-        if (file) {
-            span.textContent = file.name;
+        const dropzone = e.target.closest('.file-dropzone');
+        const span = dropzone.querySelector('span');
+
+        if (e.target.multiple) {
+            const existingNames = Array.from(accumulatedDocs.files).map(f => f.name);
+            for (let i = 0; i < e.target.files.length; i++) {
+                if (!existingNames.includes(e.target.files[i].name)) {
+                    accumulatedDocs.items.add(e.target.files[i]);
+                }
+            }
+            e.target.files = accumulatedDocs.files;
+        }
+
+        const files = e.target.files;
+        const oldPreview = dropzone.querySelector('.passport-preview, .file-list-preview');
+        if (oldPreview) oldPreview.remove();
+
+        if (files && files.length > 0) {
+            span.textContent = files.length === 1 ? files[0].name : files.length + " files selected";
             span.classList.add("file-selected-text");
-            if (e.target.id === "photoInput" && file.size > 51200) {
+
+            if (e.target.id === "photoInput" && files[0].size > 51200) {
                 showAlert('Warning', 'Photo is larger than 50KB. The system might reject it.', 'warning');
+            }
+
+            if (e.target.id === "photoInput" && files[0].type.startsWith("image/")) {
+                const img = document.createElement("img");
+                img.src = URL.createObjectURL(files[0]);
+                img.className = "passport-preview";
+                dropzone.appendChild(img);
+            }
+            // Multiple Files Preview List
+            else if (files.length > 0) {
+                const list = document.createElement("div");
+                list.className = "file-list-preview";
+
+                const ul = document.createElement("ul");
+
+                for(let i=0; i<files.length; i++) {
+                    const li = document.createElement("li");
+
+                    // Create Icon
+                    const icon = document.createElement("i");
+                    icon.className = "bi bi-file-earmark-check text-success";
+
+                    // Create Safe Text Node for Filename
+                    const textNode = document.createTextNode(" " + files[i].name + " ");
+
+                    // Create Delete Button
+                    const btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "btn-remove-file";
+                    btn.setAttribute("data-filename", files[i].name);
+
+                    // Create Trash Icon
+                    const trashIcon = document.createElement("i");
+                    trashIcon.className = "bi bi-trash3";
+
+                    // Assemble all pieces securely
+                    btn.appendChild(trashIcon);
+                    li.appendChild(icon);
+                    li.appendChild(textNode);
+                    li.appendChild(btn);
+
+                    ul.appendChild(li);
+                }
+
+                list.appendChild(ul);
+                dropzone.appendChild(list);
             }
         } else {
             span.textContent = "Choose a file or drag it here";
@@ -131,17 +232,23 @@ function startJavascriptSlider() {
 function validateAndGoTo(targetStepNumber) {
     const activeStepDiv = document.querySelector(".form-step.active-step");
     if (!activeStepDiv) { goToStep(targetStepNumber); return; }
-
     const currentStep = parseInt(activeStepDiv.id.replace("step-", ""));
     if (targetStepNumber < currentStep) {
         goToStep(targetStepNumber);
         return;
     }
-
     const requiredInputs = activeStepDiv.querySelectorAll("input[required], select[required]");
     let isValid = true;
     let firstInvalid = null;
-
+    // Remove red borders automatically as user types
+    requiredInputs.forEach(input => {
+        input.addEventListener("input", function() {
+            this.classList.remove("error-border");
+        }, { once: true });
+        input.addEventListener("change", function() {
+            this.classList.remove("error-border");
+        }, { once: true });
+    });
     requiredInputs.forEach(input => {
         if (input.checkValidity && !input.checkValidity()) {
             isValid = false;
@@ -151,19 +258,29 @@ function validateAndGoTo(targetStepNumber) {
             input.classList.remove("error-border");
         }
     });
+    // CUSTOM LOGIC: Guardian Conditional Validation (Step 4)
+    if (currentStep === 4) {
+        const guardianName = document.querySelector("[name='guardianName']");
+        const guardianRelation = document.querySelector("[name='guardianRelation']");
 
+        if (guardianName && guardianName.value.trim() !== "") {
+            if (!guardianRelation || guardianRelation.value === "") {
+                isValid = false;
+                guardianRelation.classList.add("error-border");
+                guardianRelation.addEventListener("change", function() { this.classList.remove("error-border"); }, { once: true });
+                if (!firstInvalid) firstInvalid = guardianRelation;
+            }
+        }
+    }
     if (!isValid) {
         showAlert('Missing Fields', 'Please fill in all required fields marked in red.', 'warning')
             .then(() => { if (firstInvalid && firstInvalid.focus) firstInvalid.focus(); });
         return;
     }
-
     if (targetStepNumber > currentStep + 1) {
-        showAlert('Notice', 'Please complete the form steps in order.', 'info');
-        goToStep(currentStep + 1);
-        return;
+        validateAndGoTo(currentStep + 1);
+        if (document.querySelector(".form-step.active-step").id !== "step-" + (currentStep + 1)) return;
     }
-
     goToStep(targetStepNumber);
 }
 
@@ -538,6 +655,7 @@ async function handleFormSubmit(e) {
                 });
 
                 const sessionData = await sessionRes.json();
+                sessionData.guest_auth_token = undefined;
                 if (sessionData.success && sessionData.guest_auth_token) {
                     sessionStorage.setItem('guest_auth_token', sessionData.guest_auth_token);
                 }
@@ -568,3 +686,28 @@ async function handleFormSubmit(e) {
         if (btnSpinner) btnSpinner.classList.add("hidden-element");
     }
 }
+// =======================================================
+// CSP-SAFE: ENFORCE +256 PREFIX ON PHONE FIELDS
+// =======================================================
+document.addEventListener("DOMContentLoaded", function() {
+    // Select all the visible display inputs
+    const displayInputs = document.querySelectorAll('.phone-padded');
+
+    displayInputs.forEach(displayInput => {
+        displayInput.addEventListener('input', function() {
+            // Find the hidden input that matches this display input
+            const hiddenId = this.id.replace('_display', '_hidden');
+            const hiddenInput = document.getElementById(hiddenId);
+
+            if (hiddenInput) {
+                if (this.id === 'primaryMobile_display') {
+                    // Primary is required, so always prepend +256
+                    hiddenInput.value = '+256 ' + this.value;
+                } else {
+                    // Others are optional, so only prepend if they typed something
+                    hiddenInput.value = this.value ? '+256 ' + this.value : '';
+                }
+            }
+        });
+    });
+});
