@@ -6,7 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 @Entity
-@Table(name = "erp_school_classes")
+@Table(name = "erp_classes")
 @Data
 public class SchoolClass {
     @Id

@@ -83,8 +83,6 @@ public class ErpApplication {
     // ==========================================
     // 3. ACADEMIC & ENROLLMENT HISTORY
     // ==========================================
-    @Column(name = "class_code", length = 20) private String classCode = "";
-    @Column(name = "level", length = 20) private String level = "";
     @Column(name = "term", length = 20) private String term = "";
     @Column(name = "date_of_registration", length = 20) private String dateOfRegistration = "";
     @Column(name = "scholarship_status", length = 50) private String scholarshipStatus = "";
@@ -160,7 +158,14 @@ public class ErpApplication {
     @Column(name = "created_at", updatable = false) private LocalDateTime createdAt = LocalDateTime.now();
     @Column(name = "updated_at") private LocalDateTime updatedAt = LocalDateTime.now();
     @Column(name = "status") private Integer status = 1;
+    // ==========================================
+    // 8.5 STUDENT RECORD LINKAGE
+    // ==========================================
+    @Column(name = "student_id")
+    private Long studentId;
 
+    @Column(name = "student_created", nullable = false)
+    private Boolean studentCreated = false;
     // ==========================================
     // 9. RELATIONSHIPS
     // ==========================================

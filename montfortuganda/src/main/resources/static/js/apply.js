@@ -607,7 +607,8 @@ async function handleFormSubmit(e) {
         uceScore: form.querySelector("[name='uceScore']") && form.querySelector("[name='uceScore']").value ? parseFloat(form.querySelector("[name='uceScore']").value) : null,
         subjectMarks: form.querySelector("[name='subjectMarks']") ? form.querySelector("[name='subjectMarks']").value : "",
         scholarshipStatus: form.querySelector("[name='scholarshipStatus']") ? form.querySelector("[name='scholarshipStatus']").value : "",
-        moreInfo: form.querySelector("[name='moreInfo']") ? form.querySelector("[name='moreInfo']").value : ""
+        moreInfo: form.querySelector("[name='moreInfo']") ? form.querySelector("[name='moreInfo']").value : "",
+        term: form.querySelector("input[name='term']:checked") ? form.querySelector("input[name='term']:checked").value : null
     };
 
     try {

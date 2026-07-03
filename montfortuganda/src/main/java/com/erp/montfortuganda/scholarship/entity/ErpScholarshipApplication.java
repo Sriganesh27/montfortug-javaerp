@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import com.erp.montfortuganda.student.entity.ErpStudent;
 
 @Data
 @Entity
@@ -18,7 +19,7 @@ public class ErpScholarshipApplication {
     private Long branchId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "student_id", referencedColumnName = "StudentID", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
+    @JoinColumn(name = "student_id", referencedColumnName = "student_id", foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT))
     private ErpStudent student;
 
     @ManyToOne(fetch = FetchType.LAZY)

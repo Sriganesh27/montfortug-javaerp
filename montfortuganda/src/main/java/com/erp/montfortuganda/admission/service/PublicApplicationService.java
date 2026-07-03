@@ -104,7 +104,7 @@ public class PublicApplicationService {
         app.setSubjectMarks(dto.getSubjectMarks());
         app.setScholarshipStatus(dto.getScholarshipStatus());
         app.setMoreInfo(dto.getMoreInfo());
-
+        app.setTerm(dto.getTerm());
         app.setApplicationStatus(ErpApplication.ApplicationStatus.SUBMITTED);
 
         ErpApplicationStatusHistory history = new ErpApplicationStatusHistory();
@@ -337,13 +337,19 @@ public class PublicApplicationService {
         data.put("term", app.getTerm());
 
         if (app.getBranchClassId() != null) {
-            classRepository.findById(app.getBranchClassId().intValue()).ifPresent(sc -> data.put("applied_class", sc.getClassName()));
+            classRepository.findById(app.getBranchClassId().intValue()).ifPresent(sc -> {
+                data.put("applied_class", sc.getClassName());
+                data.put("class_code", sc.getClassCode());
+                if (sc.getLevel() != null) {
+                    data.put("level", sc.getLevel().getLevelName());
+                }
+            });
         } else {
             data.put("applied_class", "");
+            data.put("class_code", "");
+            data.put("level", "");
         }
 
-        data.put("class_code", app.getClassCode());
-        data.put("level", app.getLevel());
         data.put("photo_path", app.getPhotoPath());
         data.put("primary_email", app.getPrimaryEmail());
         data.put("primary_mobile", app.getPrimaryMobile());

@@ -82,7 +82,7 @@ public class ScholarshipServiceImpl implements ScholarshipService {
             String studentName = "Unknown";
 
             if (app.getStudent() != null) {
-                studentName = app.getStudent().getName() + " " + app.getStudent().getSurname();
+                studentName = app.getStudent().getFirstName() + " " + app.getStudent().getLastName();
             } else if (app.getApplication() != null) {
                 studentName = app.getApplication().getFirstName() + " " + app.getApplication().getLastName();
             }

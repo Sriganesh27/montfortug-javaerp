@@ -86,4 +86,5 @@ public class ApplicationCreateDTO {
     private String subjectMarks;
     private String scholarshipStatus;
     private String moreInfo;
+    private String term;
 }
