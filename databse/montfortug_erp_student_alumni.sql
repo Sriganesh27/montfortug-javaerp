@@ -23,20 +23,33 @@ DROP TABLE IF EXISTS `erp_student_alumni`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_alumni` (
-  `alumni_id` int(11) NOT NULL AUTO_INCREMENT,
+  `alumni_id` bigint(20) NOT NULL AUTO_INCREMENT,
   `student_id` bigint(20) NOT NULL,
-  `admission_no` varchar(50) DEFAULT NULL,
-  `branch_id` int(11) DEFAULT NULL,
-  `completion_year` varchar(50) DEFAULT NULL,
+  `branch_id` int(11) NOT NULL,
+  `admission_no` varchar(50) NOT NULL,
+  `graduation_year` int(11) NOT NULL,
+  `graduation_date` date DEFAULT NULL,
+  `final_class` varchar(50) DEFAULT NULL,
+  `final_stream` varchar(50) DEFAULT NULL,
+  `final_grade` varchar(50) DEFAULT NULL,
+  `certificate_number` varchar(100) DEFAULT NULL,
   `notes` text DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  `version` bigint(20) NOT NULL DEFAULT 0,
   `created_by` bigint(20) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`alumni_id`),
-  KEY `fk_alumni_student` (`student_id`),
+  UNIQUE KEY `uk_alumni_student` (`student_id`),
   KEY `idx_alumni_branch` (`branch_id`),
-  CONSTRAINT `fk_alumni_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  KEY `idx_alumni_admission` (`admission_no`),
+  KEY `idx_alumni_grad_year` (`graduation_year`),
+  KEY `idx_alumni_graduation_date` (`graduation_date`),
+  KEY `idx_alumni_certificate` (`certificate_number`),
+  CONSTRAINT `fk_alumni_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_alumni_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -57,4 +70,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-03 16:09:02
+-- Dump completed on 2026-07-04 14:11:56

@@ -23,27 +23,32 @@ DROP TABLE IF EXISTS `erp_student_archives`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_archives` (
-  `archive_id` int(11) NOT NULL AUTO_INCREMENT,
-  `AdmissionNo` int(11) NOT NULL,
-  `StudentID` varchar(50) DEFAULT NULL,
+  `archive_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `version` bigint(20) NOT NULL DEFAULT 0,
+  `student_id` bigint(20) NOT NULL,
   `branch_id` int(11) NOT NULL,
-  `AdmissionYear` int(11) DEFAULT NULL,
-  `Name` varchar(100) DEFAULT NULL,
-  `MiddleName` varchar(100) DEFAULT NULL,
-  `Surname` varchar(100) NOT NULL,
-  `DateOfBirth` date DEFAULT NULL,
-  `gender` varchar(10) DEFAULT NULL,
-  `Nationality` varchar(100) DEFAULT 'Ugandan',
-  `Status` varchar(50) DEFAULT 'Archived',
-  `archive_reason` varchar(100) NOT NULL COMMENT 'e.g., Transferred, Graduated, Dropped Out',
+  `admission_no` varchar(50) NOT NULL,
+  `archive_status` enum('ARCHIVED','RESTORED') NOT NULL DEFAULT 'ARCHIVED',
+  `archive_reason` enum('GRADUATED','TRANSFERRED','WITHDRAWN','EXPELLED','DECEASED','DROPPED_OUT','OTHER') NOT NULL,
   `date_of_leaving` date NOT NULL,
-  `comments` text DEFAULT NULL,
-  `archived_by_user_id` int(11) DEFAULT NULL COMMENT 'The admin who archived this record',
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `restored_by` bigint(20) DEFAULT NULL,
+  `restored_at` datetime DEFAULT NULL,
+  `restore_reason` varchar(255) DEFAULT NULL,
+  `remarks` text DEFAULT NULL,
+  `created_by` bigint(20) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`archive_id`),
-  KEY `branch_id` (`branch_id`),
-  KEY `AdmissionNo` (`AdmissionNo`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  KEY `idx_archive_student` (`student_id`),
+  KEY `idx_archive_branch` (`branch_id`),
+  KEY `idx_archive_admission` (`admission_no`),
+  KEY `idx_archive_status` (`archive_status`),
+  KEY `idx_archive_reason` (`archive_reason`),
+  KEY `idx_archive_leaving_date` (`date_of_leaving`),
+  CONSTRAINT `fk_archive_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_archive_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -64,4 +69,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-03 15:11:43
+-- Dump completed on 2026-07-04 14:11:51

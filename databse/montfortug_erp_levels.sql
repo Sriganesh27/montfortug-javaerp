@@ -16,29 +16,34 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `erp_student_alumni`
+-- Table structure for table `erp_levels`
 --
 
-DROP TABLE IF EXISTS `erp_student_alumni`;
+DROP TABLE IF EXISTS `erp_levels`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `erp_student_alumni` (
-  `alumni_id` int(11) NOT NULL AUTO_INCREMENT,
-  `AdmissionNo` int(11) DEFAULT NULL,
-  `branch_id` int(11) DEFAULT NULL,
-  `CompletionYear` varchar(50) DEFAULT NULL,
-  `Notes` text DEFAULT NULL,
-  PRIMARY KEY (`alumni_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+CREATE TABLE `erp_levels` (
+  `level_id` int(11) NOT NULL AUTO_INCREMENT,
+  `level_name` varchar(255) NOT NULL,
+  `display_order` int(11) NOT NULL,
+  `status` int(11) DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_by` varchar(255) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`level_id`),
+  UNIQUE KEY `level_name` (`level_name`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `erp_student_alumni`
+-- Dumping data for table `erp_levels`
 --
 
-LOCK TABLES `erp_student_alumni` WRITE;
-/*!40000 ALTER TABLE `erp_student_alumni` DISABLE KEYS */;
-/*!40000 ALTER TABLE `erp_student_alumni` ENABLE KEYS */;
+LOCK TABLES `erp_levels` WRITE;
+/*!40000 ALTER TABLE `erp_levels` DISABLE KEYS */;
+INSERT INTO `erp_levels` VALUES (1,'Nursery',1,1,'2026-06-29 14:35:26','2026-06-29 14:35:26',NULL,NULL),(2,'Primary',2,1,'2026-06-29 14:35:26','2026-06-29 14:35:26',NULL,NULL),(3,'Secondary',3,1,'2026-06-29 14:35:26','2026-06-29 14:35:26',NULL,NULL),(4,'Senior Secondary',4,1,'2026-06-29 14:49:30','2026-06-29 14:49:30',NULL,NULL);
+/*!40000 ALTER TABLE `erp_levels` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -50,4 +55,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-03 15:11:35
+-- Dump completed on 2026-07-04 14:11:46

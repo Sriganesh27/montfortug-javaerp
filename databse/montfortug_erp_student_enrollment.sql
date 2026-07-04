@@ -23,25 +23,46 @@ DROP TABLE IF EXISTS `erp_student_enrollment`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_enrollment` (
-  `enrollment_id` int(11) NOT NULL AUTO_INCREMENT,
+  `enrollment_id` bigint(20) NOT NULL AUTO_INCREMENT,
   `student_id` bigint(20) NOT NULL,
   `admission_no` varchar(50) NOT NULL,
   `branch_id` int(11) NOT NULL,
-  `academic_year` varchar(50) DEFAULT NULL,
-  `term` varchar(20) DEFAULT NULL,
-  `class_name` varchar(50) DEFAULT NULL,
-  `level_name` varchar(50) DEFAULT NULL,
-  `stream_name` varchar(50) DEFAULT NULL,
-  `residence` varchar(50) DEFAULT NULL,
-  `entry_status` varchar(50) DEFAULT NULL,
+  `academic_year_id` bigint(20) NOT NULL,
+  `class_id` bigint(20) NOT NULL,
+  `section_id` bigint(20) DEFAULT NULL,
+  `stream_id` bigint(20) DEFAULT NULL,
+  `house_id` bigint(20) DEFAULT NULL,
+  `hostel_id` bigint(20) DEFAULT NULL,
+  `bed_id` bigint(20) DEFAULT NULL,
+  `roll_no` varchar(20) DEFAULT NULL,
+  `admission_type` enum('NEW','TRANSFER','READMISSION') NOT NULL DEFAULT 'NEW',
+  `promotion_type` enum('NEW','PROMOTED','RETAINED','TRANSFERRED') NOT NULL DEFAULT 'NEW',
+  `enrollment_status` enum('ACTIVE','PROMOTED','TRANSFERRED','WITHDRAWN','GRADUATED','SUSPENDED','EXPELLED') NOT NULL DEFAULT 'ACTIVE',
+  `joining_date` date NOT NULL,
+  `leaving_date` date DEFAULT NULL,
+  `class_teacher_id` bigint(20) DEFAULT NULL,
+  `fee_structure_id` bigint(20) DEFAULT NULL,
+  `scholarship_id` bigint(20) DEFAULT NULL,
+  `approved_by` bigint(20) DEFAULT NULL,
+  `approved_at` datetime DEFAULT NULL,
+  `is_locked` tinyint(1) NOT NULL DEFAULT 0,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  `remarks` text DEFAULT NULL,
   `created_by` bigint(20) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `version` bigint(20) NOT NULL DEFAULT 0,
   PRIMARY KEY (`enrollment_id`),
-  KEY `fk_enrollment_student` (`student_id`),
+  UNIQUE KEY `uk_student_current` (`student_id`),
+  KEY `idx_enrollment_student` (`student_id`),
   KEY `idx_enrollment_branch` (`branch_id`),
-  CONSTRAINT `fk_enrollment_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  KEY `idx_enrollment_admission` (`admission_no`),
+  KEY `idx_enrollment_year` (`academic_year_id`),
+  KEY `idx_enrollment_class` (`class_id`),
+  KEY `idx_enrollment_status` (`enrollment_status`),
+  CONSTRAINT `fk_enrollment_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_enrollment_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -62,4 +83,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-03 16:09:08
+-- Dump completed on 2026-07-04 14:12:21

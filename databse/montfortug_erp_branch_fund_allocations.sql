@@ -16,40 +16,39 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `erp_student_documents`
+-- Table structure for table `erp_branch_fund_allocations`
 --
 
-DROP TABLE IF EXISTS `erp_student_documents`;
+DROP TABLE IF EXISTS `erp_branch_fund_allocations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `erp_student_documents` (
-  `document_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
-  `document_type` varchar(100) NOT NULL,
-  `document_number` varchar(100) DEFAULT NULL,
-  `file_name` varchar(255) NOT NULL,
-  `file_path` varchar(500) NOT NULL,
-  `file_type` varchar(50) DEFAULT NULL,
-  `file_size` bigint(20) DEFAULT NULL,
-  `verification_status` varchar(30) DEFAULT 'PENDING',
-  `remarks` text DEFAULT NULL,
-  `uploaded_by` bigint(20) DEFAULT NULL,
-  `uploaded_at` timestamp NULL DEFAULT current_timestamp(),
-  `verified_by` bigint(20) DEFAULT NULL,
-  `verified_at` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`document_id`),
-  KEY `fk_student_documents` (`student_id`),
-  CONSTRAINT `fk_student_documents` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE
+CREATE TABLE `erp_branch_fund_allocations` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint(20) NOT NULL,
+  `donation_id` bigint(20) DEFAULT NULL,
+  `amount_allocated_ugx` decimal(15,2) NOT NULL,
+  `purpose` varchar(255) DEFAULT 'Branch Scholarship Pool',
+  `academic_year` varchar(20) NOT NULL,
+  `allocated_by_user_id` bigint(20) NOT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `created_by` varchar(255) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
+  `allocated_amount_ugx` decimal(38,2) NOT NULL,
+  `term` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKq42vuybrj74gyw9csy6angbis` (`donation_id`),
+  CONSTRAINT `FKq42vuybrj74gyw9csy6angbis` FOREIGN KEY (`donation_id`) REFERENCES `web_donations` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `erp_student_documents`
+-- Dumping data for table `erp_branch_fund_allocations`
 --
 
-LOCK TABLES `erp_student_documents` WRITE;
-/*!40000 ALTER TABLE `erp_student_documents` DISABLE KEYS */;
-/*!40000 ALTER TABLE `erp_student_documents` ENABLE KEYS */;
+LOCK TABLES `erp_branch_fund_allocations` WRITE;
+/*!40000 ALTER TABLE `erp_branch_fund_allocations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `erp_branch_fund_allocations` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -61,4 +60,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-03 15:11:47
+-- Dump completed on 2026-07-04 14:12:16

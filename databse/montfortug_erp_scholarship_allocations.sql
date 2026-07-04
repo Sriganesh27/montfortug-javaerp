@@ -16,44 +16,40 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `erp_student_academichistory`
+-- Table structure for table `erp_scholarship_allocations`
 --
 
-DROP TABLE IF EXISTS `erp_student_academichistory`;
+DROP TABLE IF EXISTS `erp_scholarship_allocations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `erp_student_academichistory` (
-  `history_id` int(11) NOT NULL AUTO_INCREMENT,
+CREATE TABLE `erp_scholarship_allocations` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint(20) NOT NULL,
   `student_id` bigint(20) NOT NULL,
-  `admission_no` varchar(50) NOT NULL,
-  `branch_id` int(11) NOT NULL,
-  `former_school` varchar(255) DEFAULT NULL,
-  `lin` varchar(100) DEFAULT NULL,
-  `combination` varchar(100) DEFAULT NULL,
-  `ple_index_number` varchar(100) DEFAULT NULL,
-  `ple_aggregate` varchar(50) DEFAULT NULL,
-  `uce_index_number` varchar(100) DEFAULT NULL,
-  `uce_result` varchar(100) DEFAULT NULL,
-  `former_school_code` varchar(50) DEFAULT NULL,
-  `subject_marks` longtext DEFAULT NULL,
-  `previous_marks_doc` varchar(255) DEFAULT NULL,
-  `created_by` bigint(20) DEFAULT NULL,
+  `donation_id` bigint(20) NOT NULL,
+  `amount_allocated_ugx` decimal(15,2) NOT NULL,
+  `terms_covered` varchar(100) NOT NULL,
+  `academic_year` varchar(20) NOT NULL,
+  `allocated_by_user_id` bigint(20) NOT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`history_id`),
-  KEY `fk_academichistory_student` (`student_id`),
-  KEY `idx_academichistory_branch` (`branch_id`),
-  CONSTRAINT `fk_academichistory_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON DELETE CASCADE
+  `created_by` varchar(255) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
+  `allocated_amount_ugx` decimal(38,2) NOT NULL,
+  `term` varchar(50) NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FKs8cxscphnnfi82r2h9153yyw3` (`donation_id`),
+  CONSTRAINT `FKs8cxscphnnfi82r2h9153yyw3` FOREIGN KEY (`donation_id`) REFERENCES `web_donations` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `erp_student_academichistory`
+-- Dumping data for table `erp_scholarship_allocations`
 --
 
-LOCK TABLES `erp_student_academichistory` WRITE;
-/*!40000 ALTER TABLE `erp_student_academichistory` DISABLE KEYS */;
-/*!40000 ALTER TABLE `erp_student_academichistory` ENABLE KEYS */;
+LOCK TABLES `erp_scholarship_allocations` WRITE;
+/*!40000 ALTER TABLE `erp_scholarship_allocations` DISABLE KEYS */;
+/*!40000 ALTER TABLE `erp_scholarship_allocations` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -65,4 +61,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-03 16:09:12
+-- Dump completed on 2026-07-04 14:12:02

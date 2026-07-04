@@ -23,17 +23,37 @@ DROP TABLE IF EXISTS `erp_student_accounts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_accounts` (
-  `account_id` int(11) NOT NULL AUTO_INCREMENT,
-  `AdmissionNo` int(11) NOT NULL,
+  `account_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `student_id` bigint(20) NOT NULL,
+  `admission_no` varchar(50) NOT NULL,
   `branch_id` int(11) NOT NULL,
-  `username` varchar(100) DEFAULT NULL,
-  `password` varchar(255) DEFAULT NULL,
-  `is_active` int(11) DEFAULT 1,
+  `username` varchar(100) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `account_status` enum('ACTIVE','LOCKED','DISABLED','SUSPENDED') NOT NULL DEFAULT 'ACTIVE',
+  `password_changed` tinyint(1) NOT NULL DEFAULT 0,
+  `password_reset_required` tinyint(1) NOT NULL DEFAULT 0,
+  `failed_attempts` int(11) NOT NULL DEFAULT 0,
+  `account_locked` tinyint(1) NOT NULL DEFAULT 0,
+  `last_login` datetime DEFAULT NULL,
+  `last_login_ip` varchar(100) DEFAULT NULL,
+  `last_login_device` varchar(255) DEFAULT NULL,
+  `last_password_change` datetime DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  `remarks` text DEFAULT NULL,
+  `version` bigint(20) NOT NULL DEFAULT 0,
+  `created_by` bigint(20) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`account_id`),
-  UNIQUE KEY `username` (`username`),
-  KEY `branch_id` (`branch_id`,`AdmissionNo`),
-  CONSTRAINT `erp_student_accounts_ibfk_1` FOREIGN KEY (`branch_id`, `AdmissionNo`) REFERENCES `erp_students` (`branch_id`, `AdmissionNo`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  UNIQUE KEY `uk_student_username` (`username`),
+  UNIQUE KEY `uk_student_account` (`student_id`),
+  KEY `idx_student_account_student` (`student_id`),
+  KEY `idx_student_account_branch` (`branch_id`),
+  KEY `idx_student_account_admission` (`admission_no`),
+  CONSTRAINT `fk_student_account_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_student_account_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -54,4 +74,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-03 15:11:39
+-- Dump completed on 2026-07-04 14:12:19

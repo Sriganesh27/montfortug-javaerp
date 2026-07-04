@@ -25,22 +25,35 @@ DROP TABLE IF EXISTS `erp_student_documents`;
 CREATE TABLE `erp_student_documents` (
   `document_id` bigint(20) NOT NULL AUTO_INCREMENT,
   `student_id` bigint(20) NOT NULL,
+  `admission_no` varchar(50) NOT NULL,
+  `branch_id` int(11) NOT NULL,
   `document_type` varchar(100) NOT NULL,
+  `document_name` varchar(150) NOT NULL,
   `document_number` varchar(100) DEFAULT NULL,
   `file_name` varchar(255) NOT NULL,
+  `original_file_name` varchar(255) DEFAULT NULL,
   `file_path` varchar(500) NOT NULL,
-  `file_type` varchar(50) DEFAULT NULL,
+  `file_extension` varchar(20) DEFAULT NULL,
+  `mime_type` varchar(100) DEFAULT NULL,
   `file_size` bigint(20) DEFAULT NULL,
-  `verification_status` varchar(30) DEFAULT 'PENDING',
+  `document_status` enum('PENDING','VERIFIED','REJECTED','EXPIRED') DEFAULT 'PENDING',
   `remarks` text DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
   `uploaded_by` bigint(20) DEFAULT NULL,
   `uploaded_at` timestamp NULL DEFAULT current_timestamp(),
   `verified_by` bigint(20) DEFAULT NULL,
   `verified_at` timestamp NULL DEFAULT NULL,
+  `created_by` bigint(20) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   PRIMARY KEY (`document_id`),
-  KEY `fk_student_documents` (`student_id`),
-  CONSTRAINT `fk_student_documents` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  KEY `idx_student_documents_student` (`student_id`),
+  KEY `idx_student_documents_branch` (`branch_id`),
+  KEY `idx_student_documents_status` (`document_status`),
+  KEY `idx_student_documents_type` (`document_type`),
+  CONSTRAINT `fk_student_documents_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
+  CONSTRAINT `fk_student_documents_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -61,4 +74,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-03 16:09:14
+-- Dump completed on 2026-07-04 14:11:48

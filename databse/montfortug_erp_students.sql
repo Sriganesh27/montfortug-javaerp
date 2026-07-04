@@ -27,6 +27,7 @@ CREATE TABLE `erp_students` (
   `application_id` bigint(20) DEFAULT NULL,
   `branch_id` int(11) NOT NULL,
   `admission_no` varchar(50) NOT NULL,
+  `learner_lin` varchar(50) DEFAULT NULL,
   `admission_year` int(11) NOT NULL,
   `student_code` varchar(50) NOT NULL,
   `first_name` varchar(100) NOT NULL,
@@ -36,6 +37,9 @@ CREATE TABLE `erp_students` (
   `gender` varchar(20) DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
   `nationality` varchar(100) DEFAULT NULL,
+  `blood_group_id` bigint(20) DEFAULT NULL,
+  `religion_id` bigint(20) DEFAULT NULL,
+  `category_id` bigint(20) DEFAULT NULL,
   `house_no` varchar(50) DEFAULT NULL,
   `street` varchar(150) DEFAULT NULL,
   `village` varchar(100) DEFAULT NULL,
@@ -78,4 +82,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-03 15:11:49
+-- Dump completed on 2026-07-04 14:12:08

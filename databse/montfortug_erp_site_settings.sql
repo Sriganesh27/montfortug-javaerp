@@ -16,38 +16,33 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `erp_student_accounts`
+-- Table structure for table `erp_site_settings`
 --
 
-DROP TABLE IF EXISTS `erp_student_accounts`;
+DROP TABLE IF EXISTS `erp_site_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `erp_student_accounts` (
-  `account_id` int(11) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
-  `admission_no` varchar(50) NOT NULL,
-  `branch_id` int(11) NOT NULL,
-  `username` varchar(100) DEFAULT NULL,
-  `password` varchar(255) DEFAULT NULL,
-  `is_active` int(11) DEFAULT 1,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  PRIMARY KEY (`account_id`),
-  UNIQUE KEY `username` (`username`),
-  KEY `fk_accounts_student` (`student_id`),
-  KEY `idx_accounts_branch` (`branch_id`),
-  CONSTRAINT `fk_accounts_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+CREATE TABLE `erp_site_settings` (
+  `setting_id` int(11) NOT NULL AUTO_INCREMENT,
+  `setting_key` varchar(100) DEFAULT NULL,
+  `setting_value` text DEFAULT NULL,
+  `created_at` datetime(6) DEFAULT NULL,
+  `created_by` varchar(255) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`setting_id`),
+  UNIQUE KEY `setting_key` (`setting_key`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `erp_student_accounts`
+-- Dumping data for table `erp_site_settings`
 --
 
-LOCK TABLES `erp_student_accounts` WRITE;
-/*!40000 ALTER TABLE `erp_student_accounts` DISABLE KEYS */;
-/*!40000 ALTER TABLE `erp_student_accounts` ENABLE KEYS */;
+LOCK TABLES `erp_site_settings` WRITE;
+/*!40000 ALTER TABLE `erp_site_settings` DISABLE KEYS */;
+INSERT INTO `erp_site_settings` VALUES (1,'academic_year','2026-2027',NULL,NULL,NULL,NULL);
+/*!40000 ALTER TABLE `erp_site_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -59,4 +54,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-03 16:09:06
+-- Dump completed on 2026-07-04 14:11:52

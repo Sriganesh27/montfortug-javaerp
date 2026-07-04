@@ -16,39 +16,39 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Table structure for table `erp_student_academichistory`
+-- Table structure for table `erp_scholarship_applications`
 --
 
-DROP TABLE IF EXISTS `erp_student_academichistory`;
+DROP TABLE IF EXISTS `erp_scholarship_applications`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `erp_student_academichistory` (
-  `HistoryID` int(11) NOT NULL AUTO_INCREMENT,
-  `AdmissionNo` int(11) NOT NULL,
-  `branch_id` int(11) NOT NULL,
-  `FormerSchool` varchar(255) DEFAULT NULL,
-  `LIN` varchar(100) DEFAULT NULL,
-  `Combination` varchar(100) DEFAULT NULL,
-  `PLEIndexNumber` varchar(100) DEFAULT NULL,
-  `PLEAggregate` varchar(50) DEFAULT NULL,
-  `UCEIndexNumber` varchar(100) DEFAULT NULL,
-  `UCEResult` varchar(100) DEFAULT NULL,
-  `FormerSchoolCode` varchar(50) DEFAULT NULL,
-  `SubjectMarks` longtext DEFAULT NULL,
-  `PreviousMarksDoc` varchar(255) DEFAULT NULL,
-  PRIMARY KEY (`HistoryID`),
-  KEY `branch_id` (`branch_id`,`AdmissionNo`),
-  CONSTRAINT `erp_student_academichistory_ibfk_1` FOREIGN KEY (`branch_id`, `AdmissionNo`) REFERENCES `erp_students` (`branch_id`, `AdmissionNo`) ON DELETE CASCADE
+CREATE TABLE `erp_scholarship_applications` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint(20) NOT NULL,
+  `student_id` varchar(50) DEFAULT NULL,
+  `amount_requested_ugx` decimal(38,2) NOT NULL,
+  `term_requested` varchar(50) NOT NULL,
+  `category` varchar(100) NOT NULL,
+  `status` varchar(50) DEFAULT 'Pending',
+  `academic_year` varchar(20) NOT NULL,
+  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `created_by` varchar(255) DEFAULT NULL,
+  `updated_at` datetime(6) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
+  `application_id` bigint(20) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `FK484j4qcdg1w0qthelr4bwxbhy` (`application_id`),
+  CONSTRAINT `FK484j4qcdg1w0qthelr4bwxbhy` FOREIGN KEY (`application_id`) REFERENCES `erp_applications_legacy` (`app_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
--- Dumping data for table `erp_student_academichistory`
+-- Dumping data for table `erp_scholarship_applications`
 --
 
-LOCK TABLES `erp_student_academichistory` WRITE;
-/*!40000 ALTER TABLE `erp_student_academichistory` DISABLE KEYS */;
-/*!40000 ALTER TABLE `erp_student_academichistory` ENABLE KEYS */;
+LOCK TABLES `erp_scholarship_applications` WRITE;
+/*!40000 ALTER TABLE `erp_scholarship_applications` DISABLE KEYS */;
+/*!40000 ALTER TABLE `erp_scholarship_applications` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
@@ -60,4 +60,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-03 15:11:45
+-- Dump completed on 2026-07-04 14:12:05
