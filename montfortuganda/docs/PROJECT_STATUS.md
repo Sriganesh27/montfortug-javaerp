@@ -1,6 +1,14 @@
 # PROJECT STATUS
 *Status: In Progress*
-*Last Updated: 03-07-2026*
+*Last Updated: 04-07-2026*
+
+## Log: 04-07-2026
+- **Phase 1: Student Module Entity Architecture Completed (Finalized)**
+- Generated remaining Java Entities (`ErpStudentHostel`, `ErpStudentMedical`, `ErpStudentTransport`, `ErpStudentFeeLedger`, etc.) with Smart Entity defensive logic.
+- **Database Architecture Finalized:** Created Master SQL tables for Transport and Hostel.
+- **Admission Module Architecture:** Designed the normalized SQL tables for the 14-step workflow (`erp_application_interviews`, `erp_application_fees`).
+- **Unified Scholarship Architecture:** Architected `erp_internal_scholarships` to handle both new applicants and existing students securely, replacing legacy tables.
+- Conducted the Enterprise Daily Project Audit, identifying architectural violations in `PublicApplicationController`.
 
 ## Log: 03-07-2026
 - **Phase 1: Student Module Entity Architecture Completed**
@@ -26,6 +34,7 @@ We have completed the Enterprise Security Audit and generated all necessary arch
 - [ ] **Admission Module:** Implement the 7-phase Admission Module Master Plan (draft saved in docs).
 - [ ] **Backend:** Implement `VerifiedApplicationSession.java` and `GlobalExceptionHandler.java`.
 - [ ] **Backend:** Refactor `PublicApplicationController.java` to use session authorization, session fixation protection, and rate-limiting.
+- [ ] **Backend:** Refactor `PublicApplicationController` to remove direct Repository calls (move to Service layer).
 - [ ] **Backend:** Refactor `PublicApplicationService.java` to absorb mapping logic.
 - [ ] **Frontend:** Add DOB verification input to `status.html`.
 - [ ] **Frontend:** Refactor `status.js`, `apply.js`, and `print_application.js` to rely on the backend session and utilize cosmetic URLs.

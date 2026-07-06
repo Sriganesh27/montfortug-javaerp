@@ -39,4 +39,9 @@ public class User extends AuditableEntity {
 
     @Column(name = "is_active", columnDefinition = "integer default 1")
     private Integer isActive = 1;
+    // ==========================================
+    // MAPPINGS
+    // ==========================================
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<ErpUserRole> userRoles = new java.util.ArrayList<>();
 }

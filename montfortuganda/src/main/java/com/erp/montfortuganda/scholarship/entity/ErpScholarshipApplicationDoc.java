@@ -1,4 +1,4 @@
-package com.erp.montfortuganda.admission.entity;
+package com.erp.montfortuganda.scholarship.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -9,6 +9,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -16,31 +17,16 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @DynamicUpdate
-@Table(name = "erp_application_documents")
-@EqualsAndHashCode(exclude = "application")
-@ToString(exclude = "application")
-public class ErpApplicationDocument implements Serializable {
+@Table(name = "erp_scholarship_application_docs")
+@EqualsAndHashCode(exclude = "scholarshipApplication")
+@ToString(exclude = "scholarshipApplication")
+public class ErpScholarshipApplicationDoc implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public enum DocumentType {
-        PHOTO,
-        BIRTH_CERTIFICATE,
-        REPORT_CARD,
-        TRANSFER_LETTER,
-        PASSPORT,
-        NATIONAL_ID,
-        IMMUNIZATION_CARD,
-        RECOMMENDATION_LETTER,
-        OTHER
-    }
-
-    public enum VerificationStatus {
-        PENDING,
-        VERIFIED,
-        REJECTED
-    }
+    public enum DocumentType { INCOME_STATEMENT, SPORTS_CERTIFICATE, RECOMMENDATION, OTHER }
+    public enum VerificationStatus { PENDING, VERIFIED, REJECTED }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,11 +36,11 @@ public class ErpApplicationDocument implements Serializable {
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
-            name = "application_id",
+            name = "scholarship_app_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_application_document_application")
+            foreignKey = @ForeignKey(name = "fk_scholarship_doc_app")
     )
-    private ErpApplication application;
+    private ErpScholarshipApplication scholarshipApplication;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -68,12 +54,12 @@ public class ErpApplicationDocument implements Serializable {
 
     @NotBlank
     @Size(max = 255)
-    @Column(name = "original_file_name", nullable = false, length = 255)
+    @Column(name = "original_file_name", nullable = false)
     private String originalFileName;
 
     @NotBlank
     @Size(max = 255)
-    @Column(name = "stored_file_name", nullable = false, length = 255)
+    @Column(name = "stored_file_name", nullable = false)
     private String storedFileName;
 
     @NotBlank
@@ -91,7 +77,6 @@ public class ErpApplicationDocument implements Serializable {
     @Column(name = "file_hash", length = 64)
     private String fileHash;
 
-    // Kept as Long to prevent circular dependencies until the User Module is built
     @Column(name = "uploaded_by")
     private Long uploadedBy;
 
@@ -102,7 +87,7 @@ public class ErpApplicationDocument implements Serializable {
     @Column(name = "version", nullable = false)
     private Long version;
 
-    @Column(name = "uploaded_at", updatable = false)
+    @Column(name = "uploaded_at", nullable = false, updatable = false)
     private LocalDateTime uploadedAt;
 
     @Column(name = "updated_at", nullable = false)
@@ -110,17 +95,10 @@ public class ErpApplicationDocument implements Serializable {
 
     @PrePersist
     private void onCreate() {
-        if (active == null) {
-            active = true;
-        }
-
+        if (active == null) active = true;
         LocalDateTime now = LocalDateTime.now();
-        if (uploadedAt == null) {
-            uploadedAt = now;
-        }
-        if (updatedAt == null) {
-            updatedAt = now;
-        }
+        if (uploadedAt == null) uploadedAt = now;
+        if (updatedAt == null) updatedAt = now;
     }
 
     @PreUpdate

@@ -8,8 +8,8 @@ import lombok.ToString;
 import java.util.ArrayList;
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true, exclude = "branchLevels")
-@ToString(exclude = "branchLevels")
+@EqualsAndHashCode(callSuper = true, exclude = {"branchLevels", "sections"})
+@ToString(exclude = {"branchLevels", "sections"})
 @Entity
 @Table(name = "erp_branches")
 @Data
@@ -58,5 +58,26 @@ public class Branch extends AuditableEntity {
         branchLevel.setCreatedBy(createdBy);
         this.branchLevels.add(branchLevel);
     }
+    // ==========================================
+    // SECTIONS (e.g., A, B, North, South)
+    // ==========================================
 
+    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<ErpSection> sections = new java.util.ArrayList<>();
+
+    public void addSection(ErpSection section) {
+        sections.add(section);
+        section.setBranch(this);
+    }
+    // ==========================================
+    // DEPARTMENTS
+    // ==========================================
+
+    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<ErpDepartment> departments = new java.util.ArrayList<>();
+
+    public void addDepartment(ErpDepartment department) {
+        departments.add(department);
+        department.setBranch(this);
+    }
 }

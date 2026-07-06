@@ -32,4 +32,11 @@ public class SchoolClass {
 
     @Column(name = "status", columnDefinition = "integer default 1")
     private Integer status = 1;
+    @OneToMany(mappedBy = "schoolClass", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<ErpSection> sections = new java.util.ArrayList<>();
+
+    public void addSection(ErpSection section) {
+        sections.add(section);
+        section.setSchoolClass(this);
+    }
 }

@@ -89,7 +89,7 @@ public class ScholarshipServiceImpl implements ScholarshipService {
 
             // BUG FIX: Stopped hardcoding Total Fees to BigDecimal.ZERO!
             dtos.add(new PendingStudentDTO(
-                    app.getId(),
+                    app.getScholarshipAppId(),
                     studentName,
                     "Campus " + app.getBranchId(),
                     app.getBranchId(),

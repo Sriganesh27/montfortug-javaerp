@@ -2,8 +2,8 @@
 *Status: Verified*
 
 ## Architecture Debt
-* **Description:** Controllers injecting Repositories.
-* **Priority:** HIGH
+* **Description:** Controllers directly injecting Repositories (specifically `PublicApplicationController` calling `BranchRepository`, etc.). Must move logic to Service Layer.
+* **Priority:** CRITICAL
 
 ## Security Debt
 * **Description:** Lack of file magic byte validation.

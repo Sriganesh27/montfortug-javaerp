@@ -4,16 +4,25 @@ import com.erp.montfortuganda.admission.dto.ApplicationCreateDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationResponseDTO;
 import com.erp.montfortuganda.admission.entity.ErpApplication;
 import com.erp.montfortuganda.admission.entity.ErpApplicationStatusHistory;
+import com.erp.montfortuganda.admission.entity.ErpApplicationDocument;
 import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
 import com.erp.montfortuganda.school.Branch;
 import com.erp.montfortuganda.school.BranchRepository;
+import com.erp.montfortuganda.school.LevelRepository;
+import com.erp.montfortuganda.school.SchoolClassRepository;
+import com.erp.montfortuganda.notification.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.LocalDateTime;
-import org.springframework.beans.factory.annotation.Autowired;
-import com.erp.montfortuganda.notification.service.EmailService;
-import com.erp.montfortuganda.school.SchoolClassRepository;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class PublicApplicationService {
@@ -21,8 +30,11 @@ public class PublicApplicationService {
     private final ErpApplicationRepository applicationRepository;
     private final BranchRepository branchRepository;
     private final SchoolClassRepository classRepository;
+    private final LevelRepository levelRepository;
+
     @Autowired
     private EmailService emailService;
+
     @Transactional
     public ApplicationResponseDTO submitApplication(ApplicationCreateDTO dto) {
 
@@ -58,7 +70,6 @@ public class PublicApplicationService {
             app.setDateOfRegistration("");
         }
 
-
         app.setNationality(dto.getNationality());
         app.setAdmissionType(dto.getAdmissionType());
         app.setPreviousSchool(dto.getPreviousSchool());
@@ -66,6 +77,7 @@ public class PublicApplicationService {
         app.setGuardianName(dto.getGuardianName());
         app.setGuardianMobile(dto.getGuardianMobile());
         app.setGuardianEmail(dto.getGuardianEmail());
+
         // Map Extended Data Fields
         app.setAddressHouse(dto.getAddressHouse());
         app.setAddressStreet(dto.getAddressStreet());
@@ -174,9 +186,14 @@ public class PublicApplicationService {
                 // Safely transfer the file
                 photo.transferTo(targetFile);
 
-                com.erp.montfortuganda.admission.entity.ErpApplicationDocument doc = new com.erp.montfortuganda.admission.entity.ErpApplicationDocument();
+                ErpApplicationDocument doc = new ErpApplicationDocument();
                 doc.setApplication(app);
-                doc.setDocumentType("PHOTO");
+
+                // FIXED: Use the strict Enum and store metadata!
+                doc.setDocumentType(ErpApplicationDocument.DocumentType.PHOTO);
+                doc.setFileSize(photo.getSize());
+                doc.setContentType(photo.getContentType());
+
                 doc.setOriginalFileName(photo.getOriginalFilename());
                 doc.setStoredFileName(photoName);
                 doc.setFilePath("/" + uploadDir + photoName);
@@ -198,9 +215,14 @@ public class PublicApplicationService {
                         // Safely transfer the file
                         file.transferTo(targetFile);
 
-                        com.erp.montfortuganda.admission.entity.ErpApplicationDocument doc = new com.erp.montfortuganda.admission.entity.ErpApplicationDocument();
+                        ErpApplicationDocument doc = new ErpApplicationDocument();
                         doc.setApplication(app);
-                        doc.setDocumentType("DOCUMENT");
+
+                        // FIXED: Use the strict Enum and store metadata!
+                        doc.setDocumentType(ErpApplicationDocument.DocumentType.OTHER);
+                        doc.setFileSize(file.getSize());
+                        doc.setContentType(file.getContentType());
+
                         doc.setOriginalFileName(file.getOriginalFilename());
                         doc.setStoredFileName(docName);
                         doc.setFilePath("/" + uploadDir + docName);
@@ -215,6 +237,7 @@ public class PublicApplicationService {
             throw new RuntimeException("Failed to upload files: " + e.getMessage(), e);
         }
     }
+
     private String generateUploadDirectory(ErpApplication app, String trustedRefNumber) {
         String schoolCode = app.getBranch() != null && app.getBranch().getSchoolCode() != null ? app.getBranch().getSchoolCode() : "UNKNOWN";
         String branchName = app.getBranch() != null && app.getBranch().getBranchName() != null ? app.getBranch().getBranchName() : "Branch";
@@ -250,6 +273,7 @@ public class PublicApplicationService {
         // Fallback for any unknown file types
         return ".bin";
     }
+
     private ApplicationResponseDTO mapToResponseDTO(ErpApplication app) {
         ApplicationResponseDTO dto = new ApplicationResponseDTO();
         dto.setApplicationId(app.getApplicationId());
@@ -263,11 +287,10 @@ public class PublicApplicationService {
         dto.setCreatedAt(app.getCreatedAt());
         return dto;
     }
-    // ... inject SchoolClassRepository in constructor ...
 
-    public java.util.Map<String, Object> verifyAndGetStatus(String refNumber, String dobString) {
-        java.util.Map<String, Object> response = new java.util.HashMap<>();
-        java.util.Optional<ErpApplication> appOpt = applicationRepository.findByApplicationNo(refNumber);
+    public Map<String, Object> verifyAndGetStatus(String refNumber, String dobString) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<ErpApplication> appOpt = applicationRepository.findByApplicationNo(refNumber);
 
         if (appOpt.isEmpty()) {
             response.put("success", false);
@@ -283,7 +306,7 @@ public class PublicApplicationService {
             return response;
         }
 
-        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        Map<String, Object> data = new HashMap<>();
         String fullName = app.getFirstName();
         if (app.getMiddleName() != null && !app.getMiddleName().trim().isEmpty()) fullName += " " + app.getMiddleName();
         if (app.getLastName() != null) fullName += " " + app.getLastName();
@@ -291,7 +314,7 @@ public class PublicApplicationService {
 
         String appliedClass = String.valueOf(app.getBranchClassId());
         if (app.getBranchClassId() != null) {
-            java.util.Optional<com.erp.montfortuganda.school.SchoolClass> sc = classRepository.findById(app.getBranchClassId().intValue());
+            Optional<com.erp.montfortuganda.school.SchoolClass> sc = classRepository.findById(app.getBranchClassId().intValue());
             if (sc.isPresent()) {
                 appliedClass = sc.get().getClassName();
             }
@@ -306,9 +329,9 @@ public class PublicApplicationService {
         return response;
     }
 
-    public java.util.Map<String, Object> getApplicationDetails(Long applicationId) {
-        java.util.Map<String, Object> response = new java.util.HashMap<>();
-        java.util.Optional<ErpApplication> appOpt = applicationRepository.findById(applicationId);
+    public Map<String, Object> getApplicationDetails(Long applicationId) {
+        Map<String, Object> response = new HashMap<>();
+        Optional<ErpApplication> appOpt = applicationRepository.findById(applicationId);
 
         if (appOpt.isEmpty()) {
             response.put("success", false);
@@ -317,10 +340,8 @@ public class PublicApplicationService {
         }
 
         ErpApplication app = appOpt.get();
-        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        Map<String, Object> data = new HashMap<>();
 
-        // ... (Mapping code for branch_name, dob, address, parents, etc.)
-        // This is identical to the huge map block from your original controller.
         data.put("ref_number", app.getApplicationNo());
         data.put("status", app.getApplicationStatus().name());
         data.put("branch_name", app.getBranch() != null ? app.getBranch().getBranchName() : "");
@@ -397,5 +418,71 @@ public class PublicApplicationService {
         response.put("success", true);
         response.put("data", data);
         return response;
+    }
+
+    // -------------------------------------------------------------------------
+    // CONTROLLER REFACTORING: Public Data Lookups
+    // These methods securely fetch unauthenticated public data without exposing
+    // your raw JPA Repositories to the Controller layer!
+    // -------------------------------------------------------------------------
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getPublicBranches() {
+        List<Map<String, Object>> branchList = new ArrayList<>();
+        for (Branch b : branchRepository.findAll()) {
+            Map<String, Object> branchMap = new HashMap<>();
+            branchMap.put("branchId", b.getBranchId());
+            branchMap.put("branchName", b.getBranchName());
+            branchMap.put("branchLocation", b.getBranchLocation());
+            branchMap.put("schoolCode", b.getSchoolCode());
+            branchMap.put("branchLevels", extractBranchLevelsList(b.getBranchLevels()));
+            branchList.add(branchMap);
+        }
+        return branchList;
+    }
+
+    private List<Map<String, Object>> extractBranchLevelsList(List<com.erp.montfortuganda.school.BranchLevel> branchLevels) {
+        List<Map<String, Object>> branchLevelsList = new ArrayList<>();
+        if (branchLevels != null) {
+            for (com.erp.montfortuganda.school.BranchLevel bl : branchLevels) {
+                Map<String, Object> blMap = new HashMap<>();
+                Map<String, Object> levelMap = new HashMap<>();
+                if (bl.getLevel() != null) {
+                    levelMap.put("levelId", bl.getLevel().getLevelId());
+                    levelMap.put("levelName", bl.getLevel().getLevelName());
+                }
+                blMap.put("level", levelMap);
+                branchLevelsList.add(blMap);
+            }
+        }
+        return branchLevelsList;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getPublicLevels() {
+        List<Map<String, Object>> levelList = new ArrayList<>();
+        for (com.erp.montfortuganda.school.Level lvl : levelRepository.findAll()) {
+            Map<String, Object> levelMap = new HashMap<>();
+            levelMap.put("levelId", lvl.getLevelId());
+            levelMap.put("levelName", lvl.getLevelName());
+            levelList.add(levelMap);
+        }
+        return levelList;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getPublicClasses() {
+        List<Map<String, Object>> classList = new ArrayList<>();
+        for (com.erp.montfortuganda.school.SchoolClass sc : classRepository.findAll()) {
+            Map<String, Object> classMap = new HashMap<>();
+            classMap.put("classId", sc.getClassId());
+            classMap.put("classCode", sc.getClassCode());
+            classMap.put("className", sc.getClassName());
+            if (sc.getLevel() != null) {
+                classMap.put("levelId", sc.getLevel().getLevelId());
+            }
+            classList.add(classMap);
+        }
+        return classList;
     }
 }
