@@ -1,7 +1,7 @@
 package com.erp.montfortuganda.auth.service;
 
 import com.erp.montfortuganda.auth.User;
-import com.erp.montfortuganda.auth.UserRepository;
+import com.erp.montfortuganda.auth.repository.UserRepository;
 import com.erp.montfortuganda.auth.dto.UserDTO;
 import com.erp.montfortuganda.school.Branch;
 import com.erp.montfortuganda.school.BranchRepository;

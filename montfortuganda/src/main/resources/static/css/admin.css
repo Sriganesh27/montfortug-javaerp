@@ -1,0 +1,134 @@
+/* ========================================= */
+/* --- STRICTLY SCOPED ADMIN CSS ---         */
+/* ========================================= */
+
+#admin-branch-dashboard-view {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 1.25rem;
+    animation: fadeIn 0.4s ease-out;
+}
+
+#admin-branch-dashboard-view .view-header h2 {
+    font-size: clamp(1.5rem, 2.5vw, 1.875rem);
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.025em;
+    margin: 0;
+}
+
+#admin-branch-dashboard-view .text-subtitle {
+    color: #64748b;
+    font-size: clamp(0.85rem, 1.5vw, 1rem);
+    margin-top: 0.35rem;
+}
+
+/* ----------------------------------------- */
+/* 1. DASHBOARD HOME CARDS                   */
+/* ----------------------------------------- */
+
+#admin-branch-dashboard-view .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+}
+
+#admin-branch-dashboard-view .stat-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+#admin-branch-dashboard-view .stat-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+}
+
+#admin-branch-dashboard-view .stat-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1.2rem, 2vw, 1.5rem);
+    margin-right: 1.25rem;
+}
+
+#admin-branch-dashboard-view .icon-blue { background: #eff6ff; color: #2563eb; }
+#admin-branch-dashboard-view .icon-green { background: #ecfdf5; color: #059669; }
+#admin-branch-dashboard-view .icon-orange { background: #fffbeb; color: #d97706; }
+
+#admin-branch-dashboard-view .stat-details h3 {
+    margin: 0;
+    font-size: clamp(0.7rem, 1.2vw, 0.8rem);
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+#admin-branch-dashboard-view .stat-details h1 {
+    margin: 0.25rem 0 0 0;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: #0f172a;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+}
+
+/* ----------------------------------------- */
+/* 2. DATA TABLE                             */
+/* ----------------------------------------- */
+
+#admin-branch-dashboard-view .table-container {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    overflow: hidden;
+}
+
+#admin-branch-dashboard-view .erp-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+#admin-branch-dashboard-view .erp-table th {
+    background: #f8fafc;
+    padding: 0.875rem 1.5rem;
+    text-align: left;
+    font-size: clamp(0.65rem, 1vw, 0.75rem);
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#admin-branch-dashboard-view .erp-table td {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+    font-weight: 500;
+}
+
+#admin-branch-dashboard-view .erp-table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+#admin-branch-dashboard-view .erp-table tbody tr:hover {
+    background-color: #f8fafc;
+}

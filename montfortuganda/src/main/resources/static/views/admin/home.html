@@ -1,0 +1,63 @@
+<div id="admin-branch-dashboard-view">
+
+    <div class="view-header">
+        <h2>Branch Dashboard</h2>
+        <p class="text-subtitle" id="ba-dashboard-subtitle">Welcome back! Fetching live statistics...</p>
+    </div>
+
+    <!-- Reusing your exact Enterprise Grid from superadmin.css -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon icon-blue"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="stat-details">
+                <h3>Total Applications</h3>
+                <h1 id="ba-statTotalApps">0</h1>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon icon-orange"><i class="bi bi-hourglass-split"></i></div>
+            <div class="stat-details">
+                <h3>Pending Verification</h3>
+                <h1 id="ba-statPending">0</h1>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon icon-green"><i class="bi bi-check-circle"></i></div>
+            <div class="stat-details">
+                <h3>Approved / Enrolled</h3>
+                <h1 id="ba-statApproved">0</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reusing your standard ERP Table structure -->
+    <div class="table-container mt-4">
+        <div class="table-header d-flex justify-content-between align-items-center mb-3">
+            <h3>Recent Applications</h3>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table erp-table">
+                <thead>
+                <tr>
+                    <th>APP. NO</th>
+                    <th>STUDENT NAME</th>
+                    <th>APPLIED CLASS</th>
+                    <th>STATUS</th>
+                    <th>SUBMITTED</th>
+                </tr>
+                </thead>
+                <tbody id="ba-applicationsTableBody">
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        <i class="bi bi-arrow-repeat spin"></i> Loading data...
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>

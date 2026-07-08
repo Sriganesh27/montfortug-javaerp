@@ -42,8 +42,7 @@ public class PublicApplicationService {
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Branch ID"));
 
         String yearString = String.valueOf(java.time.LocalDateTime.now().getYear());
-        long currentCount = applicationRepository.countByBranchAndYear(branch.getBranchId(), dto.getAcademicYearId());
-        String sequence = String.format("%03d", currentCount + 1); // 3 digits as requested
+        long currentCount = applicationRepository.countApplicationsByBranchAndAcademicYear(branch.getBranchId(), dto.getAcademicYearId());        String sequence = String.format("%03d", currentCount + 1); // 3 digits as requested
         String applicationNo = "APP-" + yearString + "-" + branch.getSchoolCode() + "-" + sequence;
 
         // Guarantee uniqueness even if the database count is mismatched

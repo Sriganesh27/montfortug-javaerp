@@ -1,7 +1,7 @@
 package com.erp.montfortuganda.auth.config;
 
 import com.erp.montfortuganda.auth.User;
-import com.erp.montfortuganda.auth.UserRepository;
+import com.erp.montfortuganda.auth.repository.UserRepository;
 import org.jspecify.annotations.NonNull;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;

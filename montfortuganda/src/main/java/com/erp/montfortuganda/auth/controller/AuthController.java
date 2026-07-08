@@ -1,7 +1,7 @@
 package com.erp.montfortuganda.auth.controller;
 
 import com.erp.montfortuganda.auth.User;
-import com.erp.montfortuganda.auth.UserRepository;
+import com.erp.montfortuganda.auth.repository.UserRepository;
 import com.erp.montfortuganda.auth.dto.AuthRequest;
 import com.erp.montfortuganda.auth.dto.AuthResponse;
 import com.erp.montfortuganda.auth.jwt.JwtUtil;

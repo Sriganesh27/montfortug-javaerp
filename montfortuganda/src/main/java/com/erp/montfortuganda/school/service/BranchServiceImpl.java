@@ -7,7 +7,10 @@ import com.erp.montfortuganda.school.LevelRepository;
 import com.erp.montfortuganda.school.dto.BranchDTO;
 import com.erp.montfortuganda.school.dto.LevelDTO;
 import com.erp.montfortuganda.auth.User;
-import com.erp.montfortuganda.auth.UserRepository;
+import com.erp.montfortuganda.auth.repository.UserRepository;
+import com.erp.montfortuganda.auth.ErpRole;
+import com.erp.montfortuganda.auth.ErpUserRole;
+import com.erp.montfortuganda.auth.repository.ErpRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,14 +26,16 @@ public class BranchServiceImpl implements BranchService {
     private final FileStorageService fileStorageService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ErpRoleRepository erpRoleRepository; // NEW: Added to fields
 
     @Autowired
-    public BranchServiceImpl(BranchRepository branchRepository, LevelRepository levelRepository, FileStorageService fileStorageService, UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public BranchServiceImpl(BranchRepository branchRepository, LevelRepository levelRepository, FileStorageService fileStorageService, UserRepository userRepository, PasswordEncoder passwordEncoder, ErpRoleRepository erpRoleRepository) { // NEW: Added to constructor
         this.branchRepository = branchRepository;
         this.levelRepository = levelRepository;
         this.fileStorageService = fileStorageService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.erpRoleRepository = erpRoleRepository; // NEW: Initialized
     }
 
     @Override
@@ -130,9 +135,19 @@ public class BranchServiceImpl implements BranchService {
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole("School Admin");
+        user.setRole("BRANCH_ADMIN"); // Legacy string fallback
         user.setAssignedBranch(branch);
         user.setIsActive(1);
+
+        // --- NEW RBAC MAPPING ---
+        erpRoleRepository.findByRoleCode("BRANCH_ADMIN").ifPresent(role -> {
+            ErpUserRole userRole = new ErpUserRole();
+            userRole.setRole(role);
+            userRole.setActive(true);
+            user.addRole(userRole);
+        });
+        // ------------------------
+
         userRepository.save(user);
     }
 

@@ -63,6 +63,27 @@
                 </li>
             </ul>
         </li>
+        <!-- ============================================== -->
+        <!-- BRANCH / SCHOOL ADMIN SIDEBAR                  -->
+        <!-- ============================================== -->
 
+        <li data-role="BRANCH_ADMIN">
+            <a href="/admin/home.html" class="active" data-tooltip="Dashboard">
+                <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
+            </a>
+        </li>
+
+        <!-- ADMISSIONS MODULE -->
+        <li data-role="SCHOOL_ADMIN" class="has-dropdown">
+            <a href="#" class="dropdown-toggle" data-tooltip="Admissions">
+                <div class="dropdown-label">
+                    <i class="bi bi-people-fill"></i> <span>Admissions</span>
+                </div>
+            </a>
+            <ul class="sidebar-dropdown">
+                <li data-role="SCHOOL_ADMIN"><a href="/admin/applications.html">View Applications</a></li>
+                <li data-role="SCHOOL_ADMIN"><a href="/admin/interviews.html">Interviews</a></li>
+            </ul>
+        </li>
     </ul>
 </nav>
