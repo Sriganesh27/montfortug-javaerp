@@ -11,4 +11,5 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     // Spring Boot sees the name "findByUsername" and automatically writes a SQL query:
     // SELECT * FROM erp_users WHERE username = ?
     Optional<User> findByUsername(String username);
+    boolean existsByUsername(String username);
 }

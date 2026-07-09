@@ -1,7 +1,7 @@
 package com.erp.montfortuganda.school.service;
 
 import com.erp.montfortuganda.school.Branch;
-import com.erp.montfortuganda.school.BranchRepository;
+import com.erp.montfortuganda.school.repository.BranchRepository;
 import com.erp.montfortuganda.school.Level;
 import com.erp.montfortuganda.school.LevelRepository;
 import com.erp.montfortuganda.school.dto.BranchDTO;
@@ -26,16 +26,16 @@ public class BranchServiceImpl implements BranchService {
     private final FileStorageService fileStorageService;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ErpRoleRepository erpRoleRepository; // NEW: Added to fields
+    private final ErpRoleRepository erpRoleRepository;
 
     @Autowired
-    public BranchServiceImpl(BranchRepository branchRepository, LevelRepository levelRepository, FileStorageService fileStorageService, UserRepository userRepository, PasswordEncoder passwordEncoder, ErpRoleRepository erpRoleRepository) { // NEW: Added to constructor
+    public BranchServiceImpl(BranchRepository branchRepository, LevelRepository levelRepository, FileStorageService fileStorageService, UserRepository userRepository, PasswordEncoder passwordEncoder, ErpRoleRepository erpRoleRepository) {
         this.branchRepository = branchRepository;
         this.levelRepository = levelRepository;
         this.fileStorageService = fileStorageService;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.erpRoleRepository = erpRoleRepository; // NEW: Initialized
+        this.erpRoleRepository = erpRoleRepository;
     }
 
     @Override
@@ -61,7 +61,9 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional
     public BranchDTO updateBranch(Integer id, BranchDTO dto, MultipartFile photo, List<MultipartFile> documents) {
-        Branch branch = branchRepository.findById(id).orElseThrow(() -> new RuntimeException("Branch not found"));
+        // FIXED: Using method parameter id
+        Branch branch = branchRepository.findById(id.longValue())
+                .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
         branch.setBranchName(dto.getBranchName());
         branch.setSchoolCode(dto.getSchoolCode());
         branch.setBranchLocation(dto.getBranchLocation());
@@ -73,11 +75,9 @@ public class BranchServiceImpl implements BranchService {
         List<Integer> newLevelIds = dto.getLevelIds();
         if (newLevelIds == null) newLevelIds = new java.util.ArrayList<>();
 
-        // 1. Remove unchecked levels
         List<Integer> finalNewLevelIds = newLevelIds;
         branch.getBranchLevels().removeIf(bl -> !finalNewLevelIds.contains(bl.getLevel().getLevelId()));
 
-        // 2. Add newly checked levels
         List<Integer> existingLevelIds = branch.getBranchLevels().stream()
                 .map(bl -> bl.getLevel().getLevelId())
                 .toList();
@@ -95,7 +95,9 @@ public class BranchServiceImpl implements BranchService {
     @Override
     @Transactional
     public void toggleBranchActive(Integer id) {
-        Branch branch = branchRepository.findById(id).orElseThrow(() -> new RuntimeException("Branch not found"));
+        // FIXED: Using method parameter id
+        Branch branch = branchRepository.findById(id.longValue())
+                .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
         branch.setIsActive(branch.getIsActive() == 1 ? 0 : 1);
         branchRepository.save(branch);
     }
@@ -120,6 +122,7 @@ public class BranchServiceImpl implements BranchService {
     private void assignLevelsToBranch(Branch branch, List<Integer> levelIds) {
         if (levelIds == null || levelIds.isEmpty()) return;
         levelIds.stream().distinct().forEach(levelId -> {
+            // Level is likely still using Integer ID
             Level level = levelRepository.findById(levelId).orElseThrow(() -> new IllegalArgumentException("Invalid Level ID"));
             branch.addLevel(level, "SUPER_ADMIN");
         });
@@ -135,25 +138,24 @@ public class BranchServiceImpl implements BranchService {
         User user = new User();
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(password));
-        user.setRole("BRANCH_ADMIN"); // Legacy string fallback
+        user.setRole("BRANCH_ADMIN");
         user.setAssignedBranch(branch);
         user.setIsActive(1);
 
-        // --- NEW RBAC MAPPING ---
         erpRoleRepository.findByRoleCode("BRANCH_ADMIN").ifPresent(role -> {
             ErpUserRole userRole = new ErpUserRole();
             userRole.setRole(role);
             userRole.setActive(true);
             user.addRole(userRole);
         });
-        // ------------------------
 
         userRepository.save(user);
     }
 
     private BranchDTO mapToDTO(Branch branch) {
         BranchDTO dto = new BranchDTO();
-        dto.setBranchId(branch.getBranchId());
+        // FIXED: Cast Long ID back to Integer for the DTO
+        dto.setBranchId(branch.getBranchId() != null ? branch.getBranchId().intValue() : null);
         dto.setBranchName(branch.getBranchName());
         dto.setSchoolCode(branch.getSchoolCode());
 

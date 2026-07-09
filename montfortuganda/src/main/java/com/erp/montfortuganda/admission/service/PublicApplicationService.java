@@ -7,7 +7,7 @@ import com.erp.montfortuganda.admission.entity.ErpApplicationStatusHistory;
 import com.erp.montfortuganda.admission.entity.ErpApplicationDocument;
 import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
 import com.erp.montfortuganda.school.Branch;
-import com.erp.montfortuganda.school.BranchRepository;
+import com.erp.montfortuganda.school.repository.BranchRepository;
 import com.erp.montfortuganda.school.LevelRepository;
 import com.erp.montfortuganda.school.SchoolClassRepository;
 import com.erp.montfortuganda.notification.service.EmailService;
@@ -38,11 +38,13 @@ public class PublicApplicationService {
     @Transactional
     public ApplicationResponseDTO submitApplication(ApplicationCreateDTO dto) {
 
-        Branch branch = branchRepository.findById(dto.getBranchId().intValue())
+        // FIXED: Removed .longValue() so it matches the Integer parameter exactly
+        Branch branch = branchRepository.findById(dto.getBranchId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Branch ID"));
 
         String yearString = String.valueOf(java.time.LocalDateTime.now().getYear());
-        long currentCount = applicationRepository.countApplicationsByBranchAndAcademicYear(branch.getBranchId(), dto.getAcademicYearId());        String sequence = String.format("%03d", currentCount + 1); // 3 digits as requested
+        long currentCount = applicationRepository.countApplicationsByBranchAndAcademicYear(branch.getBranchId(), dto.getAcademicYearId());
+        String sequence = String.format("%03d", currentCount + 1); // 3 digits as requested
         String applicationNo = "APP-" + yearString + "-" + branch.getSchoolCode() + "-" + sequence;
 
         // Guarantee uniqueness even if the database count is mismatched
@@ -313,8 +315,8 @@ public class PublicApplicationService {
 
         String appliedClass = String.valueOf(app.getBranchClassId());
         if (app.getBranchClassId() != null) {
-            Optional<com.erp.montfortuganda.school.SchoolClass> sc = classRepository.findById(app.getBranchClassId().intValue());
-            if (sc.isPresent()) {
+            // FIXED: Removed .longValue() so it matches the Integer parameter exactly
+            Optional<com.erp.montfortuganda.school.SchoolClass> sc = classRepository.findById(app.getBranchClassId().intValue());            if (sc.isPresent()) {
                 appliedClass = sc.get().getClassName();
             }
         }
@@ -357,6 +359,7 @@ public class PublicApplicationService {
         data.put("term", app.getTerm());
 
         if (app.getBranchClassId() != null) {
+            // FIXED: Removed .longValue() so it matches the Integer parameter exactly
             classRepository.findById(app.getBranchClassId().intValue()).ifPresent(sc -> {
                 data.put("applied_class", sc.getClassName());
                 data.put("class_code", sc.getClassCode());

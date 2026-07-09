@@ -573,7 +573,6 @@ function initBranchesView() {
 
                     // NEW: Map checkboxes to a list of level IDs and validate!
                     const selectedLevels = Array.from(viewContainer.querySelectorAll('.level-cb:checked')).map(cb => cb.value);
-
                     if (selectedLevels.length === 0) {
                         if (typeof Swal !== 'undefined') Swal.fire('Validation Error', 'Please select at least one education level.', 'warning');
                         return;
@@ -648,8 +647,44 @@ function initAddBranchView() {
     const viewContainer = document.querySelector('#superadmin-add-branch-view');
     if (!viewContainer) return;
 
-    // Changes "Click or drag photo here" to the actual file name when selected!
+    // --- SPA FIX 1: CLONE & RESET THE FORM ---
+    // Clones the form to destroy all old hidden 'submit' listeners from previous branches!
+    const oldForm = viewContainer.querySelector('#add-branch-full-form');
+    let form = oldForm;
+    if (oldForm) {
+        form = oldForm.cloneNode(true);
+        oldForm.parentNode.replaceChild(form, oldForm);
+        form.reset(); // Safely clears out all text fields
+    }
+
+    // --- SPA FIX 2: CLEAR INCHARGE TABLE & FIX ADD BUTTON ---
+    const tbody = viewContainer.querySelector('#incharge-tbody');
+    if (tbody) tbody.innerHTML = ''; // Wipes out old rows from previous branches!
+
+    const addRowBtn = viewContainer.querySelector('#addInchargeRowBtn');
+    const template = viewContainer.querySelector('#incharge-row-template');
+
+    if (addRowBtn && template && tbody) {
+        // Clone button to prevent multiple 'click' listeners from stacking up!
+        const newAddRowBtn = addRowBtn.cloneNode(true);
+        addRowBtn.parentNode.replaceChild(newAddRowBtn, addRowBtn);
+
+        newAddRowBtn.addEventListener('click', () => {
+            const clone = template.content.cloneNode(true);
+            clone.querySelector('.remove-incharge-btn').addEventListener('click', function() {
+                this.closest('tr').remove();
+            });
+            tbody.appendChild(clone);
+        });
+    }
+
+    // --- SPA FIX 3: FIX FILE UPLOAD UI ---
+    viewContainer.querySelectorAll('.upload-title').forEach(span => {
+        span.textContent = "Click or drag file here"; // Reset text
+    });
+
     viewContainer.querySelectorAll('.file-hidden-input').forEach(input => {
+        // Because the form was cloned above, old listeners are gone. We re-attach them cleanly!
         input.addEventListener('change', function(e) {
             let fileName = "Click or drag file here";
             if (e.target.files && e.target.files.length > 1) {
@@ -662,9 +697,13 @@ function initAddBranchView() {
         });
     });
 
+    // --- SPA FIX 4: BACK BUTTON FIX ---
     const backBtn = viewContainer.querySelector('#backToBranchesBtn');
     if (backBtn) {
-        backBtn.addEventListener('click', () => {
+        const newBackBtn = backBtn.cloneNode(true);
+        backBtn.parentNode.replaceChild(newBackBtn, backBtn);
+
+        newBackBtn.addEventListener('click', () => {
             const mainContent = document.getElementById('main-content-area');
             window.history.pushState({ view: 'branches', title: 'Manage Branches' }, "", "/superadmin/branches");
             const pageTitleElement = document.getElementById('pageTitle');
@@ -673,33 +712,12 @@ function initAddBranchView() {
         });
     }
 
-    const tbody = viewContainer.querySelector('#incharge-tbody');
-    const template = viewContainer.querySelector('#incharge-row-template');
-    const addRowBtn = viewContainer.querySelector('#addInchargeRowBtn');
-
-    if (addRowBtn && template && tbody) {
-        addRowBtn.addEventListener('click', () => {
-            const clone = template.content.cloneNode(true);
-            clone.querySelector('.remove-incharge-btn').addEventListener('click', function() {
-                this.closest('tr').remove();
-            });
-            tbody.appendChild(clone);
-        });
-    }
-
-    viewContainer.querySelectorAll('.remove-incharge-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            this.closest('tr').remove();
-        });
-    });
-
-    const form = viewContainer.querySelector('#add-branch-full-form');
+    // --- FINALLY: BIND THE CLEAN SUBMIT LISTENER ---
     if (form) {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // --- ✨ THE FIX STARTS HERE ✨ ---
-            // Grab the submit button and instantly disable it to prevent double clicks!
+            // Grab the submit button and instantly disable it to prevent double clicks
             const submitBtn = form.querySelector('button[type="submit"]');
             let originalBtnText = "";
             if (submitBtn) {
@@ -707,7 +725,6 @@ function initAddBranchView() {
                 submitBtn.disabled = true;
                 submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
             }
-            // ---------------------------------
 
             const incharges = extractInchargeDetails(viewContainer, 'incharge-tbody', 'incharge-name', 'incharge-role', 'incharge-phone');
             const inchargeJson = JSON.stringify(incharges);
@@ -719,8 +736,12 @@ function initAddBranchView() {
             formData.append("branchLocation", viewContainer.querySelector('#add-location').value);
             formData.append("contactDetails", viewContainer.querySelector('#add-contact').value);
 
-            const branchTypes = Array.from(viewContainer.querySelectorAll('.type-cb:checked')).map(cb => cb.value);
-            formData.append("branchType", branchTypes.join(", "));
+            // Fetch checked levels
+            const selectedLevels = Array.from(viewContainer.querySelectorAll('.level-cb:checked')).map(cb => cb.value);
+            selectedLevels.forEach(levelId => {
+                formData.append("levelIds", levelId);
+            });
+
             formData.append("inchargeDetails", inchargeJson);
 
             const photoFile = viewContainer.querySelector('#add-photo').files[0];
@@ -735,7 +756,6 @@ function initAddBranchView() {
                 const file = docFiles[i];
                 if (!allowedTypes.includes(file.type)) {
                     showErrorMessage(`Upload blocked: "${file.name}" is not a JPG, PNG, or PDF.`);
-                    // ✨ FIX: Turn button back on if upload blocked
                     if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; }
                     return;
                 }
@@ -756,7 +776,6 @@ function initAddBranchView() {
             try {
                 await apiMultipart('/superadmin/branches', 'POST', formData);
 
-                // Pure JS Password generation reverse-engineered from your backend
                 const branchName = viewContainer.querySelector('#add-schoolName').value;
                 const schoolCode = viewContainer.querySelector('#add-schoolCode').value;
                 const foundationDate = viewContainer.querySelector('#add-foundationDate').value;
@@ -768,16 +787,13 @@ function initAddBranchView() {
                 const generatedUsername = schoolCode.toLowerCase() + "@montfort.ug";
                 const generatedPassword = namePrefix.toUpperCase() + "@" + schoolCode + year;
 
-                // Clone the success template using strict DOM methods
                 const successTemplate = document.getElementById('branch-success-content-template');
                 const successClone = successTemplate.content.cloneNode(true);
 
-                // Inject the generated text securely
                 successClone.querySelector('.success-branch-name').textContent = branchName;
                 successClone.querySelector('.cred-username').textContent = generatedUsername;
                 successClone.querySelector('.cred-password').textContent = generatedPassword;
 
-                // Fire the custom Modal!
                 showPremiumModal({
                     title: 'Branch Created!',
                     type: 'success',
@@ -785,7 +801,8 @@ function initAddBranchView() {
                     confirmText: 'Go to Manage Branches',
                     onConfirm: (modal) => {
                         modal.close();
-                        if (backBtn) backBtn.click();
+                        const finalBackBtn = viewContainer.querySelector('#backToBranchesBtn');
+                        if (finalBackBtn) finalBackBtn.click();
                     }
                 });
 
@@ -802,7 +819,6 @@ function initAddBranchView() {
         });
     }
 }
-
 // ---------------------------------------------------------
 // 4. GLOBAL SYSTEM STATS LOGIC (UPGRADED)
 // ---------------------------------------------------------

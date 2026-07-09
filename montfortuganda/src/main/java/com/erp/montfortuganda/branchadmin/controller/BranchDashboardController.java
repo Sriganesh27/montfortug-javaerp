@@ -9,7 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.security.Principal;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/branchadmin/dashboard")
@@ -25,7 +25,7 @@ public class BranchDashboardController {
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<ApiResponse<Object>> getDashboardStats(Principal principal) {
+    public ResponseEntity<ApiResponse<Object>> getDashboardStats(Authentication principal) {
         CurrentUserContext ctx = currentUserService.getCurrentUserContext(principal);
         return ResponseEntity.ok(
                 ApiResponse.success("Stats fetched successfully", dashboardService.getDashboardStats(ctx))

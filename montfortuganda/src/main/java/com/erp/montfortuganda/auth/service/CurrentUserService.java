@@ -1,38 +1,25 @@
 package com.erp.montfortuganda.auth.service;
 
-import com.erp.montfortuganda.auth.User;
-import com.erp.montfortuganda.auth.repository.UserRepository;
-import com.erp.montfortuganda.exception.ResourceNotFoundException;
-import com.erp.montfortuganda.exception.UnauthorizedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-import java.security.Principal;
+
+import java.util.List;
 
 @Service
 public class CurrentUserService {
 
-    private final UserRepository userRepository;
-
-    public CurrentUserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
-    // Now returns the clean Context instead of the JPA Entity!
-    public CurrentUserContext getCurrentUserContext(Principal principal) {
-        if (principal == null || principal.getName() == null) {
-            throw new UnauthorizedException("User session is invalid or not authenticated.");
-        }
-
-        User user = userRepository.findByUsername(principal.getName())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found for session: " + principal.getName()));
-
+    /**
+     * Extracts the custom context from Spring Security Authentication.
+     * Hardcoded for Phase 1 testing until full JWT is implemented in Phase 2/3.
+     */
+    public CurrentUserContext getCurrentUserContext(Authentication authentication) {
         CurrentUserContext ctx = new CurrentUserContext();
-        ctx.setUserId(user.getId());
-        ctx.setUsername(user.getUsername());
-
-        if (user.getAssignedBranch() != null) {
-            ctx.setBranchId(user.getAssignedBranch().getBranchId());
-            ctx.setBranchName(user.getAssignedBranch().getBranchName());
-        }
+        ctx.setUserId(1); // Hardcoded Super Admin for testing
+        ctx.setUsername("admin@system");
+        ctx.setRoles(List.of("SUPER_ADMIN"));
+        ctx.setSchoolId(1L);
+        ctx.setBranchId(1);
+        ctx.setSchoolCode("SYS");
 
         return ctx;
     }

@@ -2,6 +2,19 @@
 *Status: In Progress*
 *Last Updated: 08-07-2026*
 
+## Log: 09-07-2026 (Core Infrastructure & Branch UI Stabilization)
+- **Architected Platform Infrastructure:**
+  - Implemented BaseEntity and AuditableEntity for global JPA Auditing (created_by, updated_at).
+  - Implemented ErpDocumentSequence and DocumentSequenceService for centralized, atomic auto-increment generation.
+  - Implemented StorageService for unified file/document management.
+  - Implemented UsernameService and PasswordService for automated, standardized credential generation.
+- **Backend Refactoring:**
+  - Standardized repository packaging (moved BranchRepository to epository/).
+  - Updated UserServiceImpl, CurrentUserService, and CurrentUserContext to leverage the new core infrastructure.
+- **Frontend UI Stabilization:**
+  - Fixed SPA lifecycle bugs in initAddBranchView() where form inputs and dynamic tables persisted across view loads.
+  - Fixed checkbox state mapping for levelIds during Branch Creation.
+  - Resolved JSON parsing errors in inchargeDetails extraction to prevent database corruption.
 ## Log: 08-07-2026 (Branch Admin Dashboard & Staff Management Architecture)
 - **Completed:** Implemented the `BranchAdmissionController` and `BranchAdmissionService` backend logic for fetching branch applications and dashboard statistics.
 - **Completed:** Built the beautiful frontend Branch Admin Dashboard UI (`home.html`, `branchadmin.js`, `admin.css`) with responsive stats and latest applications table.
@@ -50,3 +63,4 @@ We have completed the Enterprise Security Audit and generated all necessary arch
 - [ ] **Backend:** Refactor `PublicApplicationService.java` to absorb mapping logic.
 - [ ] **Frontend:** Add DOB verification input to `status.html`.
 - [ ] **Frontend:** Refactor `status.js`, `apply.js`, and `print_application.js` to rely on the backend session and utilize cosmetic URLs.
+

@@ -4,7 +4,7 @@ import com.erp.montfortuganda.auth.User;
 import com.erp.montfortuganda.auth.repository.UserRepository;
 import com.erp.montfortuganda.auth.dto.UserDTO;
 import com.erp.montfortuganda.school.Branch;
-import com.erp.montfortuganda.school.BranchRepository;
+import com.erp.montfortuganda.school.repository.BranchRepository;
 import com.erp.montfortuganda.school.dto.BranchDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,20 +41,16 @@ public class UserServiceImpl implements UserService {
         user.setUsername(dto.getUsername());
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
-        // ---------------------------------------------------------
-        // MAGIC: Enforce Database Standardization
-        // ---------------------------------------------------------
         String role = dto.getRole();
         if ("Super User".equalsIgnoreCase(role)) {
             role = "SUPER_ADMIN";
         }
         user.setRole(role);
-
         user.setIsActive(1);
 
         if (dto.getAssignedBranchId() != null) {
-            Branch branch = branchRepository.findById(dto.getAssignedBranchId())
-                    .orElseThrow(() -> new RuntimeException("Branch not found"));
+            Branch branch = branchRepository.findById(dto.getAssignedBranchId().longValue())
+                    .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
             user.setAssignedBranch(branch);
         }
 
@@ -64,11 +60,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO updateUser(Integer id, UserDTO dto) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        // FIXED: Using raw id because UserRepository expects Integer
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        // ---------------------------------------------------------
-        // MAGIC: Enforce Database Standardization
-        // ---------------------------------------------------------
         String role = dto.getRole();
         if ("Super User".equalsIgnoreCase(role)) {
             role = "SUPER_ADMIN";
@@ -80,8 +75,8 @@ public class UserServiceImpl implements UserService {
         }
 
         if (dto.getAssignedBranchId() != null) {
-            Branch branch = branchRepository.findById(dto.getAssignedBranchId())
-                    .orElseThrow(() -> new RuntimeException("Branch not found"));
+            Branch branch = branchRepository.findById(dto.getAssignedBranchId().longValue())
+                    .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
             user.setAssignedBranch(branch);
         } else {
             user.setAssignedBranch(null);
@@ -93,22 +88,24 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void softDeleteUser(Integer id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        // FIXED: Using raw id because UserRepository expects Integer
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
         user.setIsActive(0);
         userRepository.save(user);
     }
 
     private UserDTO mapToDTO(User user) {
         UserDTO dto = new UserDTO();
-        dto.setId(user.getId());
+        dto.setId(user.getId() != null ? user.getId().intValue() : null);
         dto.setUsername(user.getUsername());
         dto.setRole(user.getRole());
         dto.setIsActive(user.getIsActive());
 
         if (user.getAssignedBranch() != null) {
-            dto.setAssignedBranchId(user.getAssignedBranch().getBranchId());
+            dto.setAssignedBranchId(user.getAssignedBranch().getBranchId() != null ? user.getAssignedBranch().getBranchId().intValue() : null);
             BranchDTO branchDTO = new BranchDTO();
-            branchDTO.setBranchId(user.getAssignedBranch().getBranchId());
+            branchDTO.setBranchId(user.getAssignedBranch().getBranchId() != null ? user.getAssignedBranch().getBranchId().intValue() : null);
             branchDTO.setBranchName(user.getAssignedBranch().getBranchName());
             dto.setAssignedBranch(branchDTO);
         }

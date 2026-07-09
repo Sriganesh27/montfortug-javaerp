@@ -1,7 +1,36 @@
-# Development Roadmap
-*Status: Recommendation*
+# ENTERPRISE ROADMAP
 
-* **Phase 1 (Completed):** Initial DB schemas, JWT auth, basic frontend forms.
-* **Phase 2 (In Progress):** Architectural cleanup (Remove repo from controllers, add DTO validation).
-* **Phase 3 (Pending):** Scholarship fund allocation engine.
-* **Phase 4 (Future):** Advanced reporting and analytics.
+## Phase 1 — Staff Foundation (Current)
+- [x] Department
+- [x] Designation
+- [x] Employee
+- [x] User Mapping
+
+## Phase 2 — Admission Operations
+- [ ] Admission Verification
+- [ ] Assign Admission Officer
+- [ ] Document Verification
+- [ ] Application Approval
+- [ ] Interview Scheduling
+- [ ] Interview Result
+- [ ] Admission Decision
+
+## Phase 3 — Student Enrollment
+- [ ] Approved Application
+- [ ] Generate Admission Number
+- [ ] Generate Student Record
+- [ ] Assign Class
+- [ ] Fee Structure
+- [ ] Guardian Mapping
+
+## Phase 4 — Core School Operations (Pending real admissions)
+- [ ] Student Management
+- [ ] Attendance
+- [ ] Academics
+- [ ] Exams
+- [ ] Finance
+- [ ] Library
+- [ ] Transport
+- [ ] Inventory
+- [ ] HR Payroll
+- [ ] Reports
