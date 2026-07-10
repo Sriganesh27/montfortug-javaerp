@@ -62,7 +62,7 @@ public class BranchServiceImpl implements BranchService {
     @Transactional
     public BranchDTO updateBranch(Integer id, BranchDTO dto, MultipartFile photo, List<MultipartFile> documents) {
         // FIXED: Using method parameter id
-        Branch branch = branchRepository.findById(id.longValue())
+        Branch branch = branchRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
         branch.setBranchName(dto.getBranchName());
         branch.setSchoolCode(dto.getSchoolCode());
@@ -96,7 +96,7 @@ public class BranchServiceImpl implements BranchService {
     @Transactional
     public void toggleBranchActive(Integer id) {
         // FIXED: Using method parameter id
-        Branch branch = branchRepository.findById(id.longValue())
+        Branch branch = branchRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
         branch.setIsActive(branch.getIsActive() == 1 ? 0 : 1);
         branchRepository.save(branch);

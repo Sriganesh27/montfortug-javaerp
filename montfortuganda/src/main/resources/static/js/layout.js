@@ -73,12 +73,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
 
         document.getElementById('logoutBtn').addEventListener('click', async function() {
-            // 1. Tell the backend to destroy the secure cookie
-            await fetch('/api/auth/logout', { method: 'POST' });
+            // 1. Tell the backend to destroy the secure cookie securely
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (e) {
+                console.warn("Logout API failed, forcing local logout");
+            }
 
             // 2. Clear local UI variables and redirect
             localStorage.clear();
-            window.location.href = '/login';
+            window.location.href = '/login.html';
         });
 
         const sidebarToggleBtn = document.getElementById('sidebarToggle');

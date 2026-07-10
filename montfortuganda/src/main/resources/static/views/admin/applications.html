@@ -1,0 +1,118 @@
+<div id="ba-applications-view">
+
+    <!-- 1. MAIN TABLE VIEW -->
+    <div id="ba-appTableComponent">
+        <div class="view-header">
+            <h2>Manage Applications</h2>
+            <div class="action-btn-group">
+                <button type="button" class="btn-primary" id="ba-exportAppsBtn"><i class="bi bi-cloud-download"></i> Export List</button>
+            </div>
+        </div>
+
+        <div class="card mb-3 p-3">
+            <div class="ba-flex-panel">
+                <div class="form-group ba-flex-1">
+                    <label>Search Keyword</label>
+                    <input type="text" id="ba-appSearchKeyword" class="detail-input w-100" placeholder="App No or Student Name...">
+                </div>
+                <div class="form-group ba-flex-1">
+                    <label>Status</label>
+                    <select id="ba-appSearchStatus" class="detail-input w-100">
+                        <option value="">All Statuses</option>
+                        <option value="SUBMITTED">Submitted</option>
+                        <option value="UNDER_REVIEW">Under Review</option>
+                        <option value="WAITLISTED">Waitlisted</option>
+                        <option value="APPROVED">Approved</option>
+                        <option value="REJECTED">Rejected</option>
+                    </select>
+                </div>
+                <div class="form-group ba-pagination-controls">
+                    <button type="button" id="ba-appSearchBtn" class="btn-primary"><i class="bi bi-search"></i> Search</button>
+                    <button type="button" id="ba-appResetBtn" class="btn-secondary"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="data-table" id="ba-appTable">
+                    <thead>
+                    <tr>
+                        <th data-sort="applicationNo">App No. <i class="bi bi-arrow-down-up"></i></th>
+                        <th data-sort="studentName">Student Name <i class="bi bi-arrow-down-up"></i></th>
+                        <th data-sort="className">Class <i class="bi bi-arrow-down-up"></i></th>
+                        <th data-sort="submittedDate">Date Submitted <i class="bi bi-arrow-down-up"></i></th>
+                        <th>Status</th>
+                        <th class="col-action align-center">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="ba-appTableBody"></tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Footer -->
+            <div class="ba-pagination-footer">
+                <div class="ba-pagination-controls">
+                    <select id="ba-appPageSize" class="detail-input w-auto">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                    </select>
+                    <span id="ba-appPageInfo" class="text-muted">Showing 0 of 0</span>
+                </div>
+                <div class="ba-pagination-controls">
+                    <button type="button" id="ba-appPrevPageBtn" class="btn-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i> Prev</button>
+                    <button type="button" id="ba-appNextPageBtn" class="btn-secondary btn-sm" disabled>Next <i class="bi bi-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. INLINE DETAIL VIEW (Hidden by default) -->
+    <div id="ba-appDetailComponent" class="hidden">
+        <div class="view-header">
+            <h2>Application: <span id="view-appNoHeader"></span></h2>
+            <div class="action-btn-group">
+                <button type="button" id="ba-backToAppTableBtn" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back</button>
+                <button type="button" id="ba-printAppBtn" class="btn-primary"><i class="bi bi-printer"></i> Print</button>
+                <button type="button" id="ba-updateAppStatusBtn" class="btn-success"><i class="bi bi-check-circle"></i> Update Status</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="detail-grid p-4">
+                <!-- We can expand this with all student fields later -->
+                <div class="form-group">
+                    <label>Student Full Name</label>
+                    <span class="detail-text text-strong" id="view-studentName"></span>
+                </div>
+                <div class="form-group">
+                    <label>Class Applied For</label>
+                    <span class="detail-text" id="view-className"></span>
+                </div>
+                <div class="form-group">
+                    <label>Current Status</label>
+                    <span class="detail-text" id="view-appStatus"></span>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <span class="detail-text" id="view-dob"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEMPLATES -->
+    <template id="tpl-app-row">
+        <tr>
+            <td class="td-appno"><strong></strong></td>
+            <td class="td-name"></td>
+            <td class="td-class"></td>
+            <td class="td-date"></td>
+            <td class="td-status"></td>
+            <td class="col-action align-center">
+                <button type="button" class="btn-icon btn-view" title="Review Application"><i class="bi bi-eye"></i> View File</button>
+            </td>
+        </tr>
+    </template>
+</div>

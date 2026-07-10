@@ -9,6 +9,8 @@ public enum ModuleCode {
     ADMISSION("ADM", "Admission", 5, true),
     INVOICE("INV", "Invoice", 8, true),
     RECEIPT("REC", "Receipt", 8, true),
+    DEPARTMENT("DEP", "Department", 3, false),
+    DESIGNATION("DSG", "Designation", 3, false),
     LIBRARY("LIB", "Library", 6, true);
 
     private final String code;

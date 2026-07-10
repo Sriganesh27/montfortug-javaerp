@@ -49,7 +49,7 @@ public class UserServiceImpl implements UserService {
         user.setIsActive(1);
 
         if (dto.getAssignedBranchId() != null) {
-            Branch branch = branchRepository.findById(dto.getAssignedBranchId().longValue())
+            Branch branch = branchRepository.findById(dto.getAssignedBranchId())
                     .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
             user.setAssignedBranch(branch);
         }
@@ -75,7 +75,7 @@ public class UserServiceImpl implements UserService {
         }
 
         if (dto.getAssignedBranchId() != null) {
-            Branch branch = branchRepository.findById(dto.getAssignedBranchId().longValue())
+            Branch branch = branchRepository.findById(dto.getAssignedBranchId())
                     .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
             user.setAssignedBranch(branch);
         } else {

@@ -23,23 +23,36 @@ DROP TABLE IF EXISTS `erp_scholarship_applications`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_scholarship_applications` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `branch_id` bigint(20) NOT NULL,
-  `student_id` varchar(50) DEFAULT NULL,
-  `amount_requested_ugx` decimal(38,2) NOT NULL,
-  `term_requested` varchar(50) NOT NULL,
-  `category` varchar(100) NOT NULL,
-  `status` varchar(50) DEFAULT 'Pending',
-  `academic_year` varchar(20) NOT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `created_by` varchar(255) DEFAULT NULL,
-  `updated_at` datetime(6) DEFAULT NULL,
-  `updated_by` varchar(255) DEFAULT NULL,
+  `scholarship_app_id` bigint(20) NOT NULL AUTO_INCREMENT,
   `application_id` bigint(20) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `FK484j4qcdg1w0qthelr4bwxbhy` (`application_id`),
-  CONSTRAINT `FK484j4qcdg1w0qthelr4bwxbhy` FOREIGN KEY (`application_id`) REFERENCES `erp_applications_legacy` (`app_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  `student_id` bigint(20) DEFAULT NULL,
+  `academic_year` varchar(20) NOT NULL,
+  `scholarship_type` enum('MERIT','NEED_BASED','SPORTS','STAFF_CHILD','SIBLING','DONOR','OTHER') DEFAULT 'OTHER',
+  `requested_percentage` decimal(5,2) NOT NULL,
+  `approved_percentage` decimal(5,2) DEFAULT NULL,
+  `approved_amount` decimal(12,2) DEFAULT NULL,
+  `valid_until` date DEFAULT NULL,
+  `parent_income_declared` decimal(15,2) DEFAULT NULL,
+  `reason` varchar(500) DEFAULT NULL,
+  `reviewer_remarks` varchar(500) DEFAULT NULL,
+  `status` enum('PENDING_DOCS','PENDING_REVIEW','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING_DOCS',
+  `reviewed_by` bigint(20) DEFAULT NULL,
+  `approved_at` datetime DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_by` bigint(20) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  PRIMARY KEY (`scholarship_app_id`),
+  UNIQUE KEY `uk_scholarship_application` (`application_id`),
+  UNIQUE KEY `uk_scholarship_student` (`student_id`),
+  KEY `idx_scholarship_application` (`application_id`),
+  KEY `idx_scholarship_student` (`student_id`),
+  KEY `idx_scholarship_status` (`status`),
+  KEY `idx_scholarship_year` (`academic_year`),
+  CONSTRAINT `fk_scholarship_application` FOREIGN KEY (`application_id`) REFERENCES `erp_applications` (`application_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_scholarship_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -60,4 +73,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-04 14:12:05
+-- Dump completed on 2026-07-11  0:29:38

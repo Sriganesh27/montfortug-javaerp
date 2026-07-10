@@ -37,7 +37,7 @@ public class UserController {
         }
 
         // FIXED: Using request.getBranchId() with proper generic inference
-        Branch branch = branchRepository.findById(request.getBranchId().longValue())
+        Branch branch = branchRepository.findById(request.getBranchId())
                 .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
 
         User newUser = new User();

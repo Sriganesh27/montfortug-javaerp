@@ -280,3 +280,171 @@
     outline: 2px solid #93C5FD;
     outline-offset: 2px;
 }
+/* ========================================================
+   GLOBAL UI FOUNDATION
+   Extracts from SuperAdmin to allow reuse across SPAs
+======================================================== */
+
+/* --- 1. UTILITY CLASSES (Matching Bootstrap behavior) --- */
+.w-100 { width: 100% !important; }
+.w-auto { width: auto !important; }
+.mb-3 { margin-bottom: 1rem !important; }
+.p-3 { padding: 1rem !important; }
+.p-4 { padding: 1.5rem !important; }
+.border-top { border-top: 1px solid #e2e8f0 !important; }
+.align-center, .text-center { text-align: center !important; }
+.text-danger { color: #dc2626 !important; }
+
+/* --- 2. SHARED HEADERS & CARDS --- */
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.view-header h2 {
+    font-size: clamp(1.5rem, 2.5vw, 1.875rem);
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.025em;
+    margin: 0;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    margin-top: 1.5rem;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+/* --- 3. PREMIUM BUTTONS --- */
+.btn-primary, .btn-success, .btn-secondary, .btn-danger {
+    padding: 0.625rem 1.25rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+    font-weight: 500;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid transparent;
+}
+
+.btn-large {
+    padding: 0.85rem 1.75rem !important;
+    font-size: 1.05rem !important;
+}
+
+.btn-primary { background: #0f172a; color: #ffffff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); }
+.btn-primary:hover { background: #1e293b; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transform: translateY(-1px); }
+
+.btn-success { background: #10b981; color: #ffffff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); }
+.btn-success:hover { background: #059669; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); transform: translateY(-1px); }
+
+.btn-secondary { background: transparent; color: #64748b; border: 1px solid #cbd5e1; }
+.btn-secondary:hover { background: #f8fafc; color: #0f172a; border-color: #94a3b8; }
+
+.btn-danger { background: #ef4444; color: #ffffff; }
+.btn-danger:hover { background: #dc2626; }
+
+/* --- 4. DATA TABLES --- */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    width: 100%;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+.data-table th {
+    background: #f8fafc;
+    padding: 0.875rem 1.5rem;
+    text-align: left;
+    font-size: clamp(0.65rem, 1vw, 0.75rem);
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.data-table td {
+    padding: 1rem 1.5rem;
+    text-align: left;
+    border-bottom: 1px solid #f1f5f9;
+    color: #0f172a;
+    font-size: clamp(0.75rem, 1.5vw, 0.875rem);
+    font-weight: 500;
+}
+
+.data-table tbody tr:hover { background-color: #f8fafc; }
+
+/* --- 5. FORMS & GRID LAYOUTS --- */
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    margin-bottom: 0;
+}
+
+label {
+    display: inline-block;
+    font-weight: 600;
+    font-size: clamp(0.75rem, 1.2vw, 0.85rem);
+    color: #334155;
+    margin: 0.5rem 0.5rem 0.5rem 0;
+}
+
+/* Explicitly targeting the detail-input class your HTML uses */
+.detail-input {
+    width: 100%; /* Can be overridden by .w-auto */
+    padding: 0.85rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #0f172a;
+    outline: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+}
+
+.detail-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}

@@ -229,7 +229,14 @@ function initBranchesView() {
     const viewContainer = document.querySelector('#superadmin-branches-view');
     if (!viewContainer) return;
 
-    const tableBody = viewContainer.querySelector('#sa-branchesTableBody');
+    // --- SPA FIX: Clone tableBody to prevent duplicate event listeners on row click ---
+    let tableBody = viewContainer.querySelector('#sa-branchesTableBody');
+    if (tableBody) {
+        const newTableBody = tableBody.cloneNode(true);
+        tableBody.parentNode.replaceChild(newTableBody, tableBody);
+        tableBody = newTableBody;
+    }
+
     const tableView = viewContainer.querySelector('#sa-branchTableView');
     const detailView = viewContainer.querySelector('#sa-branchDetailView');
 
@@ -251,6 +258,7 @@ function initBranchesView() {
         viewContainer.querySelector('#edit-incharge-tbody').appendChild(clone);
     }
 
+    // SPA FIX: Clone Add Person button to clear old event listeners
     const addPersonBtn = viewContainer.querySelector('#edit-addInchargeRowBtn');
     if (addPersonBtn) {
         const newBtn = addPersonBtn.cloneNode(true);
@@ -259,8 +267,7 @@ function initBranchesView() {
     }
 
     async function loadBranches() {
-        const tbody = viewContainer.querySelector('#sa-branchesTableBody');
-        if (tbody) renderFetchingMessage(tbody, 10, 'Fetching branches...');
+        if (tableBody) renderFetchingMessage(tableBody, 10, 'Fetching branches...');
         try {
             const json = await apiGet('/superadmin/branches');
             const branches = json.data;
@@ -330,8 +337,13 @@ function initBranchesView() {
         });
     }
 
-    const backBtn = viewContainer.querySelector('#sa-backToTableBtn');
+    // --- SPA FIX: Clone Back Button ---
+    let backBtn = viewContainer.querySelector('#sa-backToTableBtn');
     if (backBtn) {
+        const newBackBtn = backBtn.cloneNode(true);
+        backBtn.parentNode.replaceChild(newBackBtn, backBtn);
+        backBtn = newBackBtn;
+
         backBtn.addEventListener('click', () => {
             detailView.classList.add('hidden');
             tableView.classList.remove('hidden');
@@ -363,7 +375,21 @@ function initBranchesView() {
                 if (inchargeEditTbody) inchargeEditTbody.textContent = '';
 
                 try {
-                    const incharges = JSON.parse(branch.inchargeDetails || '[]');
+                    let incharges = [];
+                    let rawData = branch.inchargeDetails;
+
+                    if (rawData && rawData !== 'null' && rawData !== '[object Object]') {
+                        try {
+                            incharges = JSON.parse(rawData);
+                        } catch (parseError) {
+                            console.warn("Corrupted legacy incharge data ignored:", rawData);
+                        }
+                    }
+
+                    if (!Array.isArray(incharges)) {
+                        incharges = [];
+                    }
+
                     if (incharges.length === 0) {
                         const emptyDiv = document.createElement('div');
                         emptyDiv.className = 'view-incharge-empty';
@@ -391,7 +417,7 @@ function initBranchesView() {
                 } catch(e) {
                     const errorDiv = document.createElement('div');
                     errorDiv.className = 'view-incharge-error';
-                    errorDiv.textContent = 'Invalid format.';
+                    errorDiv.textContent = 'Failed to load details.';
                     inchargeView.appendChild(errorDiv);
                 }
 
@@ -416,7 +442,7 @@ function initBranchesView() {
                     docDiv.textContent = "No document uploaded.";
                 }
 
-                // --- NEW: Load Stats & Audit Logs ---
+                // --- Load Stats & Audit Logs ---
                 try {
                     const statsRes = await apiGet(`/superadmin/branches/${id}/stats`).catch(() => null);
                     if(statsRes && statsRes.data) {
@@ -434,7 +460,6 @@ function initBranchesView() {
                     if (logTbody && logTemplate) {
                         logTbody.textContent = ''; // Clear old logs
                         const logsRes = await apiGet(`/superadmin/branches/${id}/logs`).catch(() => null);
-                        // Use mocked data if backend endpoint throws 404
                         const logs = (logsRes && logsRes.data) ? logsRes.data : [
                             { date: 'Today, 10:30 AM', user: 'School Admin', action: 'Logged into portal' },
                             { date: 'Yesterday, 4:15 PM', user: 'System', action: 'Automated weekly backup completed' }
@@ -453,7 +478,6 @@ function initBranchesView() {
                         }
                     }
                 } catch(e) { console.error("Stats Error:", e); }
-                // --- END NEW ---
 
                 tableView.classList.add('hidden');
                 detailView.classList.remove('hidden');
@@ -467,9 +491,27 @@ function initBranchesView() {
         }
     }
 
-    const editBtn = viewContainer.querySelector('#sa-editBranchBtn');
-    const saveBtn = viewContainer.querySelector('#sa-saveBranchBtn');
-    const cancelEditBtn = viewContainer.querySelector('#sa-cancelEditBtn');
+    // --- SPA FIX: Clone Edit, Save, and Cancel Buttons ---
+    let editBtn = viewContainer.querySelector('#sa-editBranchBtn');
+    if (editBtn) {
+        const newBtn = editBtn.cloneNode(true);
+        editBtn.parentNode.replaceChild(newBtn, editBtn);
+        editBtn = newBtn;
+    }
+
+    let saveBtn = viewContainer.querySelector('#sa-saveBranchBtn');
+    if (saveBtn) {
+        const newBtn = saveBtn.cloneNode(true);
+        saveBtn.parentNode.replaceChild(newBtn, saveBtn);
+        saveBtn = newBtn;
+    }
+
+    let cancelEditBtn = viewContainer.querySelector('#sa-cancelEditBtn');
+    if (cancelEditBtn) {
+        const newBtn = cancelEditBtn.cloneNode(true);
+        cancelEditBtn.parentNode.replaceChild(newBtn, cancelEditBtn);
+        cancelEditBtn = newBtn;
+    }
 
     if (editBtn) {
         editBtn.addEventListener('click', async () => {
@@ -482,13 +524,12 @@ function initBranchesView() {
             viewContainer.querySelector('#edit-branchLocation').value = viewContainer.querySelector('#view-branchLocation').textContent;
             viewContainer.querySelector('#edit-contactDetails').value = viewContainer.querySelector('#view-contactDetails').textContent;
 
-            // NEW: Fetch full branch details from API to get the mapped levels
+            // Fetch full branch details from API to get the mapped levels
             try {
                 const json = await apiGet('/superadmin/branches');
                 const branch = json.data.find(b => b.branchId === currentDetailBranchId);
                 const branchLevelIds = branch.levelIds || [];
 
-                // Tick the appropriate checkboxes based on the branch's levelIds
                 viewContainer.querySelectorAll('.level-cb').forEach(cb => {
                     cb.checked = branchLevelIds.includes(parseInt(cb.value));
                 });
@@ -508,9 +549,13 @@ function initBranchesView() {
         });
     }
 
-    // NEW: Branch Admin Password Reset
-    const resetPwdBtn = viewContainer.querySelector('#sa-resetBranchAdminPwdBtn');
+    // --- SPA FIX: Clone Branch Admin Password Reset Button ---
+    let resetPwdBtn = viewContainer.querySelector('#sa-resetBranchAdminPwdBtn');
     if (resetPwdBtn) {
+        const newBtn = resetPwdBtn.cloneNode(true);
+        resetPwdBtn.parentNode.replaceChild(newBtn, resetPwdBtn);
+        resetPwdBtn = newBtn;
+
         resetPwdBtn.addEventListener('click', () => {
             showPremiumModal({
                 title: 'Reset Admin Password',
@@ -535,9 +580,13 @@ function initBranchesView() {
         });
     }
 
-    // NEW: Data Backup Logic using Premium Modal
-    const backupBtn = viewContainer.querySelector('#sa-backupBranchBtn');
+    // --- SPA FIX: Clone Data Backup Button ---
+    let backupBtn = viewContainer.querySelector('#sa-backupBranchBtn');
     if (backupBtn) {
+        const newBtn = backupBtn.cloneNode(true);
+        backupBtn.parentNode.replaceChild(newBtn, backupBtn);
+        backupBtn = newBtn;
+
         backupBtn.addEventListener('click', () => {
             confirmAction(
                 'Export Branch Data',
@@ -571,14 +620,12 @@ function initBranchesView() {
                     formData.append("branchLocation", viewContainer.querySelector('#edit-branchLocation').value);
                     formData.append("contactDetails", viewContainer.querySelector('#edit-contactDetails').value);
 
-                    // NEW: Map checkboxes to a list of level IDs and validate!
                     const selectedLevels = Array.from(viewContainer.querySelectorAll('.level-cb:checked')).map(cb => cb.value);
                     if (selectedLevels.length === 0) {
                         if (typeof Swal !== 'undefined') Swal.fire('Validation Error', 'Please select at least one education level.', 'warning');
                         return;
                     }
 
-                    // Append each selected level ID
                     selectedLevels.forEach(levelId => {
                         formData.append("levelIds", levelId);
                     });
@@ -589,7 +636,7 @@ function initBranchesView() {
                     const photoFile = viewContainer.querySelector('#edit-schoolPhoto').files[0];
                     const docFile = viewContainer.querySelector('#edit-govDocument').files[0];
                     if(photoFile) formData.append("photo", photoFile);
-                    if(docFile) formData.append("document", docFile);
+                    if(docFile) formData.append("documents", docFile);
 
                     showLoader();
                     try {
@@ -615,8 +662,13 @@ function initBranchesView() {
         if (cancelEditBtn) cancelEditBtn.classList.add('hidden');
     }
 
-    const printBtn = viewContainer.querySelector('#sa-printBranchBtn');
+    // --- SPA FIX: Clone Print Button ---
+    let printBtn = viewContainer.querySelector('#sa-printBranchBtn');
     if (printBtn) {
+        const newBtn = printBtn.cloneNode(true);
+        printBtn.parentNode.replaceChild(newBtn, printBtn);
+        printBtn = newBtn;
+
         printBtn.addEventListener('click', () => {
             const printContent = viewContainer.querySelector('#printable-area').cloneNode(true);
             const originalChildren = Array.from(document.body.childNodes);
@@ -640,9 +692,10 @@ function initBranchesView() {
 // ---------------------------------------------------------
 // 3. ADD BRANCH PAGE LOGIC (DYNAMIC TABLE & JSON)
 // ---------------------------------------------------------
+// ---------------------------------------------------------
+// 3. ADD BRANCH PAGE LOGIC (DYNAMIC TABLE & JSON)
+// ---------------------------------------------------------
 function initAddBranchView() {
-
-    void populateDynamicLevels('add-branchLevels');
 
     const viewContainer = document.querySelector('#superadmin-add-branch-view');
     if (!viewContainer) return;
@@ -656,6 +709,9 @@ function initAddBranchView() {
         oldForm.parentNode.replaceChild(form, oldForm);
         form.reset(); // Safely clears out all text fields
     }
+
+    // --- FETCH LEVELS *AFTER* THE FORM IS CLONED! ---
+    void populateDynamicLevels('add-branchLevels');
 
     // --- SPA FIX 2: CLEAR INCHARGE TABLE & FIX ADD BUTTON ---
     const tbody = viewContainer.querySelector('#incharge-tbody');

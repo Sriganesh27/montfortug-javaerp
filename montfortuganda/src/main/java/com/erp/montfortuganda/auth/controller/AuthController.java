@@ -94,7 +94,7 @@ public class AuthController {
     public ResponseEntity<?> logout() {
         ResponseCookie cookie = ResponseCookie.from("jwt_token", "")
                 .httpOnly(true)
-                .secure(false)
+                .secure(true) //
                 .path("/")
                 .maxAge(0)
                 .sameSite("Strict")
@@ -102,6 +102,6 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
-                .body("Logged out successfully");
+                .body(Map.of("message", "Logged out successfully"));
     }
 }

@@ -39,7 +39,7 @@ public class PublicApplicationService {
     public ApplicationResponseDTO submitApplication(ApplicationCreateDTO dto) {
 
         // FIXED: Removed .longValue() so it matches the Integer parameter exactly
-        Branch branch = branchRepository.findById(dto.getBranchId())
+        Branch branch = branchRepository.findById(dto.getBranchId().intValue())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid Branch ID"));
 
         String yearString = String.valueOf(java.time.LocalDateTime.now().getYear());

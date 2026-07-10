@@ -110,11 +110,38 @@
     </tr>
 </template>
 
+<!-- Core Layout & Admin Logic -->
 <script src="/js/api.js"></script>
 <script src="/js/layout.js"></script>
 <script src="/js/global.js"></script>
 <script src="/js/superadmin.js"></script>
+<script src="/js/framework/api.js"></script>
 <script src="/js/branchadmin.js"></script>
+
+<!-- 1. Load Custom Framework Core -->
+<script src="/js/framework/events.js"></script>
+<script src="/js/framework/toast.js"></script>
+<script src="/js/framework/validator.js"></script>
+<script src="/js/framework/modal.js"></script>
+<script src="/js/framework/query-builder.js"></script>
+<script src="/js/framework/crud-table.js"></script>
+<script src="/js/framework/crud-form.js"></script>
+
+<!-- 2. Load API Repositories -->
+<script src="/js/repositories/DepartmentRepository.js"></script>
+<script src="/js/repositories/DesignationRepository.js"></script>
+<script src="/js/repositories/ApplicationRepository.js"></script>
+
+<!-- 3. Load Views -->
+<script src="/js/views/DesiginationView.js"></script>
+<script src="/js/views/DepartmentView.js"></script>
+
+<!-- 4. Load Business Logic Modules -->
+<script src="/js/modules/departments.js"></script>
+<script src="/js/modules/designations.js"></script>
+<script src="/js/modules/applications.js"></script>
+
+<!-- Vendor Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>
 </html>

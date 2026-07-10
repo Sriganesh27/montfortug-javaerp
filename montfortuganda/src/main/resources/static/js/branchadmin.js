@@ -3,27 +3,165 @@
 // ==========================================
 
 document.addEventListener('viewLoaded', function(e) {
-    // When layout.js loads the admin home page
-    if (e.detail.role === 'admin' && (e.detail.view === 'home' || e.detail.view === 'dashboard')) {
+    if (e.detail.role !== 'admin') return;
+
+    const view = e.detail.view;
+
+    // 1. Dashboard View
+    if (view === 'home' || view === 'dashboard') {
         void initBranchDashboardView();
+    }
+
+    // 2. Departments View
+    else if (view === 'departments' || view === 'manage-departments') {
+        initDepartmentsView();
+    }
+
+    // 3. Add Designation View
+    else if (view === 'add-designation') {
+        initAddDesignationView();
+    }
+
+    // 4. Applications View
+    else if (view === 'applications' || view === 'view-applications') {
+        initApplicationsView();
+    }
+
+    // 5. Designations View
+    else if (view === 'designations' || view === 'manage-designations') {
+        initDesignationsView();
     }
 });
 
-async function initBranchDashboardView() {
+function initDepartmentsView() {
+    const addDeptBtn = document.getElementById('ba-addDeptBtn');
+    const searchBtn = document.getElementById('ba-searchBtn');
+    const resetBtn = document.getElementById('ba-resetSearchBtn');
 
-    // 1. Fetch Dashboard Stats
+    if (addDeptBtn) {
+        addDeptBtn.addEventListener('click', async () => {
+            if (typeof loadView === 'function') {
+                const mainContent = document.getElementById('mainContent');
+                window.history.pushState({ view: 'add-department' }, "", '/admin/add-department');
+                await loadView('admin', 'add-department', mainContent);
+            } else {
+                window.location.href = '/admin/add-department';
+            }
+        });
+    }
+
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            const keyword = document.getElementById('ba-searchKeyword')?.value || '';
+            console.log("Searching departments for:", keyword);
+        });
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            console.log("Resetting department search");
+        });
+    }
+}
+
+function initAddDesignationView() {
+    // Note: 'Desig' is just an abbreviation for Designation. You can safely ignore IDE spellcheck warnings for these IDs.
+    const backBtn = document.getElementById('ba-backToDesigsBtn');
+    const saveBtn = document.getElementById('ba-saveNewDesigBtn');
+
+    if (backBtn) {
+        backBtn.addEventListener('click', async () => {
+            if (typeof loadView === 'function') {
+                const mainContent = document.getElementById('mainContent');
+                window.history.pushState({ view: 'designations' }, "", '/admin/designations');
+                await loadView('admin', 'designations', mainContent);
+            } else {
+                window.location.href = '/admin/designations';
+            }
+        });
+    }
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            console.log("Saving designation securely...");
+            const overlay = document.getElementById('ba-addDesigOverlay');
+            if (overlay) overlay.classList.remove('hidden');
+
+            setTimeout(() => {
+                if (overlay) overlay.classList.add('hidden');
+                if (typeof showSuccessMessage === 'function') showSuccessMessage("Designation added successfully");
+            }, 1000);
+        });
+    }
+}
+
+function initApplicationsView() {
+    const searchBtn = document.getElementById('ba-searchBtn');
+    const resetBtn = document.getElementById('ba-resetSearchBtn');
+    const prevBtn = document.getElementById('ba-appPrevPageBtn');
+    const nextBtn = document.getElementById('ba-appNextPageBtn');
+
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            console.log("Searching applications...");
+        });
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            console.log("Resetting application search...");
+        });
+    }
+
+    if (prevBtn) {
+        prevBtn.addEventListener('click', () => {
+            console.log("Loading previous page...");
+        });
+    }
+
+    if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+            console.log("Loading next page...");
+        });
+    }
+}
+
+function initDesignationsView() {
+    const searchBtn = document.getElementById('ba-searchBtn');
+    const addDesigBtn = document.getElementById('ba-addDesigBtn');
+
+    if (addDesigBtn) {
+        addDesigBtn.addEventListener('click', async () => {
+            if (typeof loadView === 'function') {
+                const mainContent = document.getElementById('mainContent');
+                window.history.pushState({ view: 'add-designation' }, "", '/admin/add-designation');
+                await loadView('admin', 'add-designation', mainContent);
+            } else {
+                window.location.href = '/admin/add-designation';
+            }
+        });
+    }
+
+    if (searchBtn) {
+        searchBtn.addEventListener('click', () => {
+            console.log("Searching designations...");
+        });
+    }
+}
+
+async function initBranchDashboardView() {
     try {
         const statsRes = await apiGet('/branchadmin/dashboard/stats');
 
         if (statsRes && statsRes.data) {
             const stats = statsRes.data;
 
-            // Reusing your global 'animateValue' function from layout.js / superadmin.js
-            animateValue(document.getElementById('ba-statTotalApps'), 0, stats.totalApplications || 0, 1200, false);
-            animateValue(document.getElementById('ba-statPending'), 0, stats.pendingVerification || 0, 1200, false);
-            animateValue(document.getElementById('ba-statApproved'), 0, (stats.selected + stats.enrolled) || 0, 1200, false);
+            if (typeof animateValue === 'function') {
+                animateValue(document.getElementById('ba-statTotalApps'), 0, stats.totalApplications || 0, 1200, false);
+                animateValue(document.getElementById('ba-statPending'), 0, stats.pendingVerification || 0, 1200, false);
+                animateValue(document.getElementById('ba-statApproved'), 0, (stats.selected + stats.enrolled) || 0, 1200, false);
+            }
 
-            // Update the subtitle dynamically
             const subtitle = document.getElementById('ba-dashboard-subtitle');
             if (subtitle) {
                 subtitle.textContent = `Welcome back! Here is your live summary for ${stats.branchName}.`;
@@ -36,13 +174,12 @@ async function initBranchDashboardView() {
         }
     }
 
-    // 2. Fetch Paginated Data Table
     try {
         const appsRes = await apiGet('/admission/branch/applications?page=0&size=10');
         const tbody = document.getElementById('ba-applicationsTableBody');
 
         if (tbody && appsRes && appsRes.data && appsRes.data.content) {
-            tbody.textContent = ''; // Clear loader securely
+            tbody.textContent = '';
             const applications = appsRes.data.content;
 
             if (applications.length === 0) {
@@ -50,19 +187,27 @@ async function initBranchDashboardView() {
             } else {
                 applications.forEach(app => {
                     const tr = document.createElement('tr');
-
-                    // Format date generically
                     const dateStr = new Date(app.submittedDate).toLocaleDateString();
 
-                    // Note: Using standard Bootstrap classes for badges (assuming you use BS5)
-                    tr.innerHTML = `
-                        <td><strong>${app.applicationNo}</strong></td>
-                        <td>${app.studentName}</td>
-                        <td>${app.className}</td>
-                        <td><span class="badge ${getErpBadgeClass(app.status)}">${app.status}</span></td>
-                        <td>${dateStr}</td>
-                    `;
-                    tbody.appendChild(tr);
+                    const tdAppNo = document.createElement('td');
+                    tdAppNo.innerHTML = `<strong>${app.applicationNo}</strong>`;
+
+                    const tdName = document.createElement('td');
+                    tdName.textContent = app.studentName;
+
+                    const tdClass = document.createElement('td');
+                    tdClass.textContent = app.className;
+
+                    const tdStatus = document.createElement('td');
+                    const badge = document.createElement('span');
+                    badge.className = `badge ${getErpBadgeClass(app.status)}`;
+                    badge.textContent = app.status;
+                    tdStatus.appendChild(badge);
+
+                    const tdDate = document.createElement('td');
+                    tdDate.textContent = dateStr;
+
+                    tr.append(tdAppNo, tdName, tdClass, tdStatus, tdDate);
                 });
             }
         }
@@ -71,7 +216,6 @@ async function initBranchDashboardView() {
     }
 }
 
-// Utility to match the standard colors of your ERP
 function getErpBadgeClass(status) {
     switch(status) {
         case 'APPROVED':

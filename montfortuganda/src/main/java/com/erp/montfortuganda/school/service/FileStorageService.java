@@ -17,8 +17,8 @@ public class FileStorageService {
     public String saveFile(String code, String name, String loc, String type, MultipartFile file) {
         if (file == null || file.isEmpty()) return null;
 
-        if (file.getSize() > 102400) {
-            throw new RuntimeException("File exceeds maximum allowed size of 100KB");
+        if (file.getSize() > 10485760) {
+            throw new RuntimeException("File exceeds maximum allowed size of 10MB");
         }
 
         try {

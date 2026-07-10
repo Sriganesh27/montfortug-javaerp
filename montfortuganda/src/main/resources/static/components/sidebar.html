@@ -68,21 +68,49 @@
         <!-- ============================================== -->
 
         <li data-role="BRANCH_ADMIN">
-            <a href="/admin/home.html" class="active" data-tooltip="Dashboard">
+            <a href="/home.html" class="active" data-tooltip="Dashboard">
                 <i class="bi bi-speedometer2"></i> <span>Dashboard</span>
             </a>
         </li>
 
         <!-- ADMISSIONS MODULE -->
-        <li data-role="SCHOOL_ADMIN" class="has-dropdown">
+        <li data-role="BRANCH_ADMIN" class="has-dropdown">
             <a href="#" class="dropdown-toggle" data-tooltip="Admissions">
                 <div class="dropdown-label">
                     <i class="bi bi-people-fill"></i> <span>Admissions</span>
                 </div>
             </a>
             <ul class="sidebar-dropdown">
-                <li data-role="SCHOOL_ADMIN"><a href="/admin/applications.html">View Applications</a></li>
-                <li data-role="SCHOOL_ADMIN"><a href="/admin/interviews.html">Interviews</a></li>
+                <li data-role="BRANCH_ADMIN"><a href="/applications.html">View Applications</a></li>
+                <li data-role="BRANCH_ADMIN"><a href="/interviews.html">Interviews</a></li>
+            </ul>
+        </li>
+
+        <!-- ORGANIZATION SETUP -->
+        <li data-role="BRANCH_ADMIN" class="has-dropdown">
+            <a href="#" class="dropdown-toggle" data-tooltip="Organization Setup">
+                <div class="dropdown-label">
+                    <i class="bi bi-diagram-3"></i> <span>Organization Setup</span>
+                </div>
+            </a>
+            <ul class="sidebar-dropdown">
+                <li data-role="BRANCH_ADMIN"><a href="/add-department.html">Add Department</a></li>
+                <li data-role="BRANCH_ADMIN"><a href="/departments.html">Manage Departments</a></li>
+                <li data-role="BRANCH_ADMIN"><a href="/add-designation.html">Add Designation</a></li>
+                <li data-role="BRANCH_ADMIN"><a href="/designations.html">Manage Designations</a></li>
+            </ul>
+        </li>
+
+        <!-- STAFF MANAGEMENT -->
+        <li data-role="BRANCH_ADMIN" class="has-dropdown">
+            <a href="#" class="dropdown-toggle" data-tooltip="Staff Management">
+                <div class="dropdown-label">
+                    <i class="bi bi-person-badge"></i> <span>Staff Management</span>
+                </div>
+            </a>
+            <ul class="sidebar-dropdown">
+                <li data-role="BRANCH_ADMIN"><a href="/employee/add.html">Onboard Employee</a></li>
+                <li data-role="BRANCH_ADMIN"><a href="/employee/manage.html">Manage Directory</a></li>
             </ul>
         </li>
     </ul>

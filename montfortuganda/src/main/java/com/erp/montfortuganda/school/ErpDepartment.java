@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
+import com.erp.montfortuganda.school.enums.DepartmentType;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -58,9 +59,10 @@ public class ErpDepartment implements Serializable {
     @Column(name = "department_name", nullable = false, length = 100)
     private String departmentName;
 
-    @NotNull
-    @Column(name = "is_academic", nullable = false)
-    private Boolean isAcademic = true;
+    @Enumerated(EnumType.STRING)
+    private DepartmentType departmentType;
+
+    private Integer displayOrder = 99;
 
     @Size(max = 500)
     @Column(name = "description", length = 500)
@@ -92,7 +94,7 @@ public class ErpDepartment implements Serializable {
 
     @PrePersist
     private void onCreate() {
-        if (isAcademic == null) isAcademic = true;
+        if (departmentType == null) departmentType = DepartmentType.ACADEMIC;
         if (active == null) active = true;
         if (status == null) status = Status.ACTIVE;
 

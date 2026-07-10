@@ -1,0 +1,136 @@
+<div id="ba-designations-view">
+
+    <div id="ba-desigTableComponent">
+        <div class="view-header">
+            <h2>Manage Designations</h2>
+        </div>
+
+        <div class="card mb-3 p-3">
+            <div class="ba-flex-panel">
+                <div class="form-group ba-flex-1">
+                    <label>Search Keyword</label>
+                    <input type="text" id="sa-desigSearchKeyword" class="detail-input w-100" placeholder="Name...">
+                </div>
+                <div class="form-group ba-flex-1">
+                    <label>Department Filter</label>
+                    <select id="sa-desigSearchDept" class="detail-input w-100">
+                        <option value="">All Departments</option>
+                    </select>
+                </div>
+                <div class="form-group ba-flex-1">
+                    <label>Status</label>
+                    <select id="sa-desigSearchStatus" class="detail-input w-100">
+                        <option value="">All Statuses</option>
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select>
+                </div>
+                <div class="form-group ba-pagination-controls">
+                    <button type="button" id="sa-desigSearchBtn" class="btn-primary"><i class="bi bi-search"></i> Search</button>
+                    <button type="button" id="sa-desigResetBtn" class="btn-secondary"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table class="data-table" id="ba-desigTable">
+                    <thead>
+                    <tr>
+                        <th data-sort="NAME">Designation <i class="bi bi-arrow-down-up"></i></th>
+                        
+                        <th data-sort="displayOrder">Order <i class="bi bi-arrow-down-up"></i></th>
+                        <th>Status</th>
+                        <th>Employees</th>
+                        <th class="col-action align-center">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="ba-desigTableBody"></tbody>
+                </table>
+            </div>
+
+            <div class="ba-pagination-footer">
+                <div class="ba-pagination-controls">
+                    <select id="sa-desigPageSize" class="detail-input w-auto">
+                        <option value="10">10</option>
+                        <option value="20" selected>20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                    <span id="sa-desigPageInfo" class="text-muted">Showing 0 of 0</span>
+                </div>
+                <div class="ba-pagination-controls">
+                    <button type="button" id="sa-desigPrevPageBtn" class="btn-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i> Prev</button>
+                    <button type="button" id="sa-desigNextPageBtn" class="btn-secondary btn-sm" disabled>Next <i class="bi bi-chevron-right"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- INLINE EDIT COMPONENT -->
+    <div id="ba-desigFormComponent" class="hidden">
+        <div class="view-header">
+            <h2>Edit Designation: <span id="view-desigNameHeader"></span></h2>
+            <div class="action-btn-group">
+                <button type="button" id="ba-backToDesigTableBtn" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back</button>
+                <button type="button" id="ba-saveDesigBtn" class="btn-success"><i class="bi bi-save"></i> Update Details</button>
+            </div>
+        </div>
+
+        <div class="card ba-form-container">
+            <div id="ba-desigFormOverlay" class="ba-form-overlay hidden">
+                <h4><i class="bi bi-arrow-repeat spin"></i> Updating securely...</h4>
+            </div>
+
+            <div class="detail-grid p-3" id="ba-desigFormFields">
+                <input type="hidden" id="edit-desigId">
+
+                <div class="form-group">
+                    <label>Parent Department <span class="text-danger">*</span></label>
+                    <select class="detail-input" id="edit-desigDeptId">
+                        <option value="">-- Select Active Department --</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Designation Name <span class="text-danger">*</span></label>
+                    <input type="text" class="detail-input" id="edit-desigName" maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label>Display Order</label>
+                    <input type="number" class="detail-input" id="edit-desigOrder" value="100" min="1" max="999">
+                </div>
+
+                <div class="form-group">
+                    <label>Description</label>
+                    <input type="text" class="detail-input" id="edit-desigDesc" maxlength="500">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <template id="tpl-desig-loading">
+        <tr><td colspan="6" class="text-center py-5"><h4><i class="bi bi-hourglass-split spin"></i> Loading data...</h4></td></tr>
+    </template>
+
+    <template id="tpl-desig-empty">
+        <tr><td colspan="6" class="text-center py-5 text-muted"><h4>No Records Found</h4></td></tr>
+    </template>
+
+    <template id="tpl-desig-row">
+        <tr>
+            <td class="td-name"><strong></strong></td>
+            
+            <td class="td-order"></td>
+            <td class="td-status"></td>
+            <td class="td-emp"></td>
+            <td class="col-action align-center">
+                <button type="button" class="btn-icon btn-edit" title="Edit"><i class="bi bi-pencil"></i></button>
+                <button type="button" class="btn-icon btn-delete text-danger hidden" title="Deactivate"><i class="bi bi-trash"></i></button>
+            </td>
+        </tr>
+    </template>
+</div>
+
+

@@ -24,7 +24,7 @@ public class DocumentSequenceService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public String generateNumber(Long branchId, ModuleCode moduleCode) {
+    public String generateNumber(Integer branchId, ModuleCode moduleCode) {
 
         Branch branch = branchRepository.findById(branchId)
                 .orElseThrow(() -> new IllegalArgumentException("Branch not found"));
@@ -46,7 +46,7 @@ public class DocumentSequenceService {
 
         if (seq == null) {
             seq = new ErpDocumentSequence();
-            seq.setBranchId(branchId);
+            seq.setBranchId(branchId.longValue());
             seq.setModuleCode(moduleCode.getCode());
             seq.setRunningYear(currentYear);
             seq.setCurrentSequence(0L);

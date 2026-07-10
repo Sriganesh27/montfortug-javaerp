@@ -30,10 +30,12 @@ CREATE TABLE `erp_application_status_history` (
   `changed_by` bigint(20) DEFAULT NULL,
   `changed_at` datetime DEFAULT current_timestamp(),
   `remarks` text DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT 1,
+  `version` bigint(20) NOT NULL DEFAULT 0,
   PRIMARY KEY (`history_id`),
-  KEY `fk_application_history` (`application_id`),
-  CONSTRAINT `fk_application_history` FOREIGN KEY (`application_id`) REFERENCES `erp_applications` (`application_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  KEY `fk_application_status_history_application` (`application_id`),
+  CONSTRAINT `fk_application_status_history_application` FOREIGN KEY (`application_id`) REFERENCES `erp_applications` (`application_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -42,7 +44,7 @@ CREATE TABLE `erp_application_status_history` (
 
 LOCK TABLES `erp_application_status_history` WRITE;
 /*!40000 ALTER TABLE `erp_application_status_history` DISABLE KEYS */;
-INSERT INTO `erp_application_status_history` VALUES (1,1,NULL,'SUBMITTED',NULL,'2026-07-01 09:44:32','Application submitted by user'),(2,2,NULL,'SUBMITTED',NULL,'2026-07-01 09:54:17','Application submitted by user'),(3,3,NULL,'SUBMITTED',NULL,'2026-07-01 10:02:58','Application submitted by user'),(4,4,NULL,'SUBMITTED',NULL,'2026-07-01 10:07:18','Application submitted by user'),(5,5,NULL,'SUBMITTED',NULL,'2026-07-01 10:32:19','Application submitted by user'),(6,6,NULL,'SUBMITTED',NULL,'2026-07-01 12:00:45','Application submitted by user'),(7,7,NULL,'SUBMITTED',NULL,'2026-07-01 12:24:40','Application submitted by user'),(8,8,NULL,'SUBMITTED',NULL,'2026-07-01 12:37:37','Application submitted by user'),(9,9,NULL,'SUBMITTED',NULL,'2026-07-01 13:24:50','Application submitted by user'),(10,10,NULL,'SUBMITTED',NULL,'2026-07-02 07:54:55','Application submitted by user'),(11,11,NULL,'SUBMITTED',NULL,'2026-07-02 08:10:26','Application submitted by user'),(12,12,NULL,'SUBMITTED',NULL,'2026-07-02 09:24:02','Application submitted by user'),(13,13,NULL,'SUBMITTED',NULL,'2026-07-02 09:24:11','Application submitted by user'),(14,14,NULL,'SUBMITTED',NULL,'2026-07-02 15:15:53','Application submitted by user'),(15,15,NULL,'SUBMITTED',NULL,'2026-07-02 15:39:42','Application submitted by user'),(16,16,NULL,'SUBMITTED',NULL,'2026-07-02 17:28:33','Application submitted by user'),(17,17,NULL,'SUBMITTED',NULL,'2026-07-03 09:58:26','Application submitted by user'),(18,18,NULL,'SUBMITTED',NULL,'2026-07-03 10:27:24','Application submitted by user');
+INSERT INTO `erp_application_status_history` VALUES (1,1,NULL,'SUBMITTED',NULL,'2026-07-01 09:44:32','Application submitted by user',1,0),(2,2,NULL,'SUBMITTED',NULL,'2026-07-01 09:54:17','Application submitted by user',1,0),(3,3,NULL,'SUBMITTED',NULL,'2026-07-01 10:02:58','Application submitted by user',1,0),(4,4,NULL,'SUBMITTED',NULL,'2026-07-01 10:07:18','Application submitted by user',1,0),(5,5,NULL,'SUBMITTED',NULL,'2026-07-01 10:32:19','Application submitted by user',1,0),(6,6,NULL,'SUBMITTED',NULL,'2026-07-01 12:00:45','Application submitted by user',1,0),(7,7,NULL,'SUBMITTED',NULL,'2026-07-01 12:24:40','Application submitted by user',1,0),(8,8,NULL,'SUBMITTED',NULL,'2026-07-01 12:37:37','Application submitted by user',1,0),(9,9,NULL,'SUBMITTED',NULL,'2026-07-01 13:24:50','Application submitted by user',1,0),(10,10,NULL,'SUBMITTED',NULL,'2026-07-02 07:54:55','Application submitted by user',1,0),(11,11,NULL,'SUBMITTED',NULL,'2026-07-02 08:10:26','Application submitted by user',1,0),(12,12,NULL,'SUBMITTED',NULL,'2026-07-02 09:24:02','Application submitted by user',1,0),(13,13,NULL,'SUBMITTED',NULL,'2026-07-02 09:24:11','Application submitted by user',1,0),(14,14,NULL,'SUBMITTED',NULL,'2026-07-02 15:15:53','Application submitted by user',1,0),(15,15,NULL,'SUBMITTED',NULL,'2026-07-02 15:39:42','Application submitted by user',1,0),(16,16,NULL,'SUBMITTED',NULL,'2026-07-02 17:28:33','Application submitted by user',1,0),(17,17,NULL,'SUBMITTED',NULL,'2026-07-03 09:58:26','Application submitted by user',1,0),(18,18,NULL,'SUBMITTED',NULL,'2026-07-03 10:27:24','Application submitted by user',1,0);
 /*!40000 ALTER TABLE `erp_application_status_history` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -55,4 +57,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-04 14:11:45
+-- Dump completed on 2026-07-11  0:29:51

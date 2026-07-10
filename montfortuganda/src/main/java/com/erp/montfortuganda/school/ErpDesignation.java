@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serial;
@@ -21,21 +23,14 @@ import java.time.LocalDateTime;
                         name = "uk_designation_code",
                         columnNames = "designation_code"
                 ),
-                @UniqueConstraint(
-                        name = "uk_designation_name",
-                        columnNames = "designation_name"
-                )
-        }
+                }
 )
 public class ErpDesignation implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public enum Status {
-        ACTIVE,
-        INACTIVE
-    }
+    public enum Status { ACTIVE, INACTIVE }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,18 +38,20 @@ public class ErpDesignation implements Serializable {
     private Long designationId;
 
     @NotBlank
-    @Size(max = 20)
-    @Column(name = "designation_code", nullable = false, unique = true, length = 20)
+    @Size(max = 30)
+    @Column(name = "designation_code", nullable = false, unique = true, length = 30)
     private String designationCode;
 
     @NotBlank
     @Size(max = 100)
-    @Column(name = "designation_name", nullable = false, unique = true, length = 100)
+    @Column(name = "designation_name", nullable = false, length = 100)
     private String designationName;
 
     @Size(max = 500)
     @Column(name = "description", length = 500)
     private String description;
+
+    private Integer displayOrder = 99;
 
     @NotNull
     @Enumerated(EnumType.STRING)
@@ -82,20 +79,12 @@ public class ErpDesignation implements Serializable {
 
     @PrePersist
     private void onCreate() {
-
-        if (active == null)
-            active = true;
-
-        if (status == null)
-            status = Status.ACTIVE;
+        if (active == null) active = true;
+        if (status == null) status = Status.ACTIVE;
 
         LocalDateTime now = LocalDateTime.now();
-
-        if (createdAt == null)
-            createdAt = now;
-
-        if (updatedAt == null)
-            updatedAt = now;
+        if (createdAt == null) createdAt = now;
+        if (updatedAt == null) updatedAt = now;
     }
 
     @PreUpdate
@@ -103,3 +92,4 @@ public class ErpDesignation implements Serializable {
         updatedAt = LocalDateTime.now();
     }
 }
+
