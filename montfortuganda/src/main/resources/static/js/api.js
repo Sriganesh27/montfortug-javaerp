@@ -25,6 +25,12 @@ async function handleResponse(response) {
     if (!response.ok) {
         // Handle 401 Unauthorized globally
         if (response.status === 401) {
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('username');
+            localStorage.removeItem('user_branch');
+            localStorage.removeItem('school_id');
+            localStorage.removeItem('branch_id');
+            localStorage.removeItem('permissions');
             if (typeof window.showSessionTimeoutModal === 'function') {
                 window.showSessionTimeoutModal({
                     title: "Session Expired",
@@ -38,7 +44,16 @@ async function handleResponse(response) {
             throw new Error("Session expired. Please log in again.");
         }
         const errorData = await response.json().catch(() => null);
-        const errorMessage = errorData?.message || `HTTP Error: ${response.status}`;
+        let errorMessage = errorData?.message || `HTTP Error: ${response.status}`;
+        
+        // Extract Spring Boot validation field errors if they exist
+        if (errorData?.errors && typeof errorData.errors === 'object') {
+            const fieldErrors = Object.entries(errorData.errors)
+                .map(([field, msg]) => `${field}: ${msg}`)
+                .join('\n');
+            errorMessage += `\n\n${fieldErrors}`;
+        }
+        
         throw new Error(errorMessage);
     }
 

@@ -1,5 +1,6 @@
 package com.erp.montfortuganda.exception;
 
+import com.erp.montfortuganda.common.dto.ApiResponse;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,16 +59,7 @@ public class GlobalExceptionHandler {
     }
 
     // -------------------------------------------------------------------------
-    // 3. Database Level Violations (e.g., Unique Key conflicts)
-    // -------------------------------------------------------------------------
-    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
-    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolationException(org.springframework.dao.DataIntegrityViolationException ex) {
-        logger.error("Data integrity violation: ", ex);
-        return buildErrorResponse(HttpStatus.BAD_REQUEST, "A database constraint was violated (e.g., duplicate entry or missing required data).");
-    }
-
-    // -------------------------------------------------------------------------
-    // 4. Standard Application Errors
+    // 3. Standard Application Errors
     // -------------------------------------------------------------------------
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleEntityNotFoundException(EntityNotFoundException ex) {
@@ -91,7 +83,7 @@ public class GlobalExceptionHandler {
     }
 
     // -------------------------------------------------------------------------
-    // 5. Fallback for absolutely everything else
+    // 4. Fallback for absolutely everything else
     // -------------------------------------------------------------------------
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGlobalException(Exception ex) {
@@ -107,5 +99,29 @@ public class GlobalExceptionHandler {
         errorResponse.put("success", false);
         errorResponse.put("message", message);
         return ResponseEntity.status(status).body(errorResponse);
+    }
+
+    // -------------------------------------------------------------------------
+    // 5. Custom Architecture / New API Format Errors (ApiResponse format)
+    // -------------------------------------------------------------------------
+
+    @ExceptionHandler(BranchAccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBranchAccessDenied(BranchAccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLocking(org.springframework.orm.ObjectOptimisticLockingFailureException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("Record was modified by another user. Please refresh and try again."));
+    }
+
+    // Merged the two DataIntegrityViolationException handlers into this single one
+    @ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(org.springframework.dao.DataIntegrityViolationException ex) {
+        logger.error("Data integrity violation: ", ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("A database constraint was violated (e.g., duplicate entry or missing data)."));
     }
 }

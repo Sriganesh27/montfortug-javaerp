@@ -37,6 +37,12 @@ const Api = (function() {
             return data;
         } catch (error) {
             if (error.message === 'UnauthorizedError') {
+                localStorage.removeItem('user_role');
+                localStorage.removeItem('username');
+                localStorage.removeItem('user_branch');
+                localStorage.removeItem('school_id');
+                localStorage.removeItem('branch_id');
+                localStorage.removeItem('permissions');
                 window.location.href = '/login?expired=true';
             }
             throw error;

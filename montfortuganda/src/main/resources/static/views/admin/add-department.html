@@ -1,0 +1,52 @@
+    <div id="ba-add-dept-view">
+        <div class="view-header">
+            <div>
+                <h2>Add New Department</h2>
+                <p class="text-muted">Register a new academic or non-academic department in the system</p>
+            </div>
+            <div>
+                <button id="backToDepartmentsBtn" class="btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Departments
+                </button>
+            </div>
+        </div>
+
+        <div class="card form-card mx-auto">
+            <div class="card-header border-bottom">
+                <h3 class="card-title">Department Information</h3>
+            </div>
+            <div class="card-body">
+                <form id="add-dept-form">
+
+                    <div class="ba-detail-grid">
+                        <div class="form-group">
+                            <label for="add-deptCode">Department Code <span class="text-danger">*</span></label>
+                            <input type="text" id="add-deptCode" class="detail-input w-100" placeholder="e.g. DEPT_SCI" required maxlength="20">
+                        </div>
+                        <div class="form-group">
+                            <label for="add-deptName">Department Name <span class="text-danger">*</span></label>
+                            <input type="text" id="add-deptName" class="detail-input w-100" placeholder="e.g. Science Department" required maxlength="100">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-isAcademic">Department Type <span class="text-danger">*</span></label>
+                        <select id="add-isAcademic" class="detail-input w-100" required>
+                            <option value="true">Academic Department</option>
+                            <option value="false">Non-Academic / Administrative</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-deptDescription">Description</label>
+                        <textarea id="add-deptDescription" class="detail-input w-100" rows="4" placeholder="Brief description of the department's role..."></textarea>
+                    </div>
+
+                    <div class="form-actions border-top pt-4">
+                        <button type="reset" class="btn-secondary">Reset Form</button>
+                        <button type="submit" class="btn-primary"><i class="bi bi-save"></i> Save Department</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>

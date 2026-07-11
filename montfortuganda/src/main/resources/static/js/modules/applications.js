@@ -92,17 +92,18 @@ const ApplicationsController = (function() {
         init: () => {
             view = cacheDOM();
 
-            // Connect to our global CrudTable (Notice we pass dummy DOM IDs for table to let CrudTable auto-discover using view object)
+            // Connect to our global CrudTable
             table = new CrudTable(
                 {
-                    tableBody: document.getElementById('ba-appTableBody'),
+                    tbody: document.getElementById('ba-appTableBody'),
                     pageSize: document.getElementById('ba-appPageSize'),
                     pageInfo: document.getElementById('ba-appPageInfo'),
-                    prevBtn: document.getElementById('ba-appPrevPageBtn'),
-                    nextBtn: document.getElementById('ba-appNextPageBtn'),
-                    loadingTemplate: 'tpl-desig-loading', // reuse loading
-                    emptyTemplate: 'tpl-desig-empty',     // reuse empty
-                    rowTemplate: 'tpl-app-row'
+                    btnPrev: document.getElementById('ba-appPrevPageBtn'),
+                    btnNext: document.getElementById('ba-appNextPageBtn'),
+                    table: document.getElementById('ba-appTable'),
+                    tplLoading: document.getElementById('global-table-fetching-template'),
+                    tplEmpty: document.getElementById('global-table-empty-template'),
+                    tplRow: document.getElementById('tpl-app-row')
                 },
                 {
                     onPageChange: (dir) => { state.page += dir; loadData(); },

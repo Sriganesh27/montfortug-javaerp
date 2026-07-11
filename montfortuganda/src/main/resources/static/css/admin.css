@@ -1,7 +1,6 @@
 /* ========================================= */
 /* --- STRICTLY SCOPED BRANCH ADMIN CSS ---  */
 /* ========================================= */
-
 /* ----------------------------------------- */
 /* 1. BASE LAYOUT & HEADERS                  */
 /* ----------------------------------------- */
@@ -14,57 +13,59 @@
 #ba-employees-view {
     max-width: 1600px;
     margin: 0 auto;
-    padding: 1.25rem;
+    padding: 0.75rem; /* REDUCED from 1.25rem */
     animation: fadeIn 0.4s ease-out;
 }
-
 /* ----------------------------------------- */
 /* 2. DASHBOARD HOME CARDS                   */
 /* ----------------------------------------- */
 #admin-branch-dashboard-view .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    margin-top: 2.5rem;
+    gap: 1rem; /* REDUCED from 1.5rem */
+    margin-top: 1.5rem; /* REDUCED from 2.5rem */
 }
-
 #admin-branch-dashboard-view .stat-card {
     background: #ffffff;
-    border-radius: 12px;
-    padding: 1.5rem;
+    border-radius: 8px; /* REDUCED from 12px */
+    padding: 1rem; /* REDUCED from 1.5rem */
     display: flex;
     align-items: center;
     border: 1px solid #e2e8f0;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
 }
-
 #admin-branch-dashboard-view .stat-card:hover {
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     border-color: #cbd5e1;
     transform: translateY(-2px);
 }
-
 #admin-branch-dashboard-view .stat-icon {
-    width: 56px; height: 56px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: clamp(1.2rem, 2vw, 1.5rem); margin-right: 1.25rem;
+    width: 48px; /* REDUCED from 56px */
+    height: 48px; /* REDUCED from 56px */
+    border-radius: 8px; /* REDUCED from 12px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
+    margin-right: 1rem; /* REDUCED from 1.25rem */
 }
-
 #admin-branch-dashboard-view .icon-blue { background: #eff6ff; color: #2563eb; }
 #admin-branch-dashboard-view .icon-green { background: #ecfdf5; color: #059669; }
 #admin-branch-dashboard-view .icon-orange { background: #fffbeb; color: #d97706; }
-
 #admin-branch-dashboard-view .stat-details h3 {
-    margin: 0; font-size: clamp(0.7rem, 1.2vw, 0.8rem);
-    color: #64748b; text-transform: uppercase; font-weight: 600;
+    margin: 0;
+    font-size: clamp(0.7rem, 1.2vw, 0.8rem);
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
 }
-
 #admin-branch-dashboard-view .stat-details h1 {
-    margin: 0.25rem 0 0 0; font-size: clamp(1.5rem, 3vw, 2rem);
-    color: #0f172a; font-weight: 700;
+    margin: 0.15rem 0 0 0; /* REDUCED from 0.25rem */
+    font-size: clamp(1.25rem, 2.5vw, 1.75rem); /* REDUCED slightly */
+    color: #0f172a;
+    font-weight: 700;
 }
-
 /* ----------------------------------------- */
 /* 3. BRANCH ADMIN SPECIFIC MODALS & PANELS  */
 /* ----------------------------------------- */
@@ -77,26 +78,22 @@
     align-items: center;
     justify-content: center;
 }
-
 .ba-modal-box {
     background-color: #ffffff;
     width: 400px;
-    padding: 20px;
-    border-radius: 8px;
+    padding: 15px; /* REDUCED from 20px */
+    border-radius: 6px; /* REDUCED from 8px */
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
-
 .ba-modal-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
+    gap: 8px; /* REDUCED from 10px */
+    margin-top: 15px; /* REDUCED from 20px */
 }
-
 .ba-form-container {
     position: relative;
 }
-
 .ba-form-overlay {
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
@@ -106,44 +103,145 @@
     align-items: center;
     justify-content: center;
 }
-
 .ba-form-locked {
     pointer-events: none;
     opacity: 0.5;
 }
-
 .ba-flex-panel {
-    display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px;
+    display: flex;
+    gap: 10px; /* REDUCED from 15px */
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 12px; /* REDUCED from 20px */
 }
-
 .ba-flex-1 {
-    flex: 1; min-width: 150px;
+    flex: 1;
+    min-width: 150px;
 }
-
 /* ----------------------------------------- */
-/* 4. PAGINATION UI (Matches layout.css)     */
+/* 4. PAGINATION UI                          */
 /* ----------------------------------------- */
 .ba-pagination-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: clamp(15px, 2vw, 20px) clamp(20px, 3vw, 30px);
+    padding: 10px 15px; /* REDUCED from clamp logic */
     border-top: 1px solid #e2e8f0;
     background: #ffffff;
-    border-bottom-left-radius: 12px;
-    border-bottom-right-radius: 12px;
+    border-bottom-left-radius: 8px; /* Match card radius */
+    border-bottom-right-radius: 8px;
     flex-wrap: wrap;
-    gap: 15px;
+    gap: 10px; /* REDUCED from 15px */
 }
-
 .ba-pagination-controls {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px; /* REDUCED from 12px */
 }
-
 .ba-pagination-controls span.text-muted {
     color: #64748b;
-    font-size: clamp(0.85rem, 1vw, 0.95rem);
+    font-size: 0.85rem;
     font-weight: 500;
+}
+/* ----------------------------------------- */
+/* 5. MODULE UTILITIES & FORMS               */
+/* ----------------------------------------- */
+.filter-grid-layout {
+    grid-template-columns: 1fr 1fr 1fr auto;
+    align-items: end;
+}
+#ba-departments-view .ba-filter-grid,
+#ba-designations-view .ba-filter-grid {
+    display: grid;
+    gap: 10px; /* REDUCED from 15px */
+}
+.btn-filter-search {
+    margin-bottom: 4px; /* REDUCED from 5px */
+}
+.required-mark {
+    color: #ef4444; /* Standard danger red */
+    margin-left: 2px;
+}
+/* --- ADD DEPARTMENT & DESIGNATION FORM STYLES --- */
+#ba-add-dept-view .form-card,
+#ba-add-desig-view .form-card {
+    max-width: 600px;
+    margin: 0 auto;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Lighter shadow */
+}
+#ba-add-dept-view .form-card .card-body,
+#ba-add-desig-view .form-card .card-body {
+    padding: 1rem 1.25rem; /* REDUCED from 1.5rem 2rem */
+}
+/* Shared 2-Column Detail Grid for both List Views and Add Forms */
+#ba-departments-view .ba-detail-grid,
+#ba-designations-view .ba-detail-grid,
+#ba-add-dept-view .ba-detail-grid,
+#ba-add-desig-view .ba-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem 1rem; /* REDUCED from 1rem 1.5rem */
+    margin-bottom: 1rem; /* REDUCED from 1.25rem */
+}
+#ba-departments-view .ba-detail-full-width,
+#ba-designations-view .ba-detail-full-width {
+    grid-column: span 2;
+}
+/* Remove compounding margins inside the grid */
+#ba-add-dept-view .ba-detail-grid .form-group,
+#ba-add-desig-view .ba-detail-grid .form-group {
+    margin-bottom: 0;
+}
+/* Standard tight form group spacing */
+#ba-add-dept-view .form-group,
+#ba-add-desig-view .form-group {
+    margin-bottom: 0.75rem; /* REDUCED from 1.25rem */
+}
+/* Crisp, professional labels */
+#ba-add-dept-view .form-group label,
+#ba-add-desig-view .form-group label {
+    display: block;
+    margin-bottom: 0.25rem; /* REDUCED from 0.4rem */
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+}
+/* Sleek, dense enterprise inputs */
+#ba-add-dept-view .detail-input,
+#ba-add-desig-view .detail-input {
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    color: #0f172a;
+    border-radius: 4px;
+    padding: 0.4rem 0.6rem; /* REDUCED from 0.5rem 0.75rem */
+    font-size: 0.85rem;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
+    transition: all 0.2s ease;
+}
+#ba-add-dept-view .detail-input::placeholder,
+#ba-add-desig-view .detail-input::placeholder {
+    color: #94a3b8;
+}
+#ba-add-dept-view .detail-input:hover,
+#ba-add-desig-view .detail-input:hover {
+    background-color: #f1f5f9;
+    border-color: #94a3b8;
+}
+#ba-add-dept-view .detail-input:focus,
+#ba-add-desig-view .detail-input:focus {
+    background-color: #ffffff;
+    border-color: #d4af37;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+    outline: none;
+}
+#ba-add-dept-view textarea.detail-input,
+#ba-add-desig-view textarea.detail-input {
+    min-height: 60px; /* REDUCED from 80px */
+    resize: vertical;
+}
+#ba-add-dept-view .form-actions,
+#ba-add-desig-view .form-actions {
+    margin-top: 0.5rem;
+    padding-top: 1rem; /* REDUCED from 1.25rem */
+    border-top: 1px solid #e2e8f0;
 }

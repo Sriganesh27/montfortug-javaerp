@@ -1,6 +1,13 @@
 # Changelog
 *Status: Verified*
 
+## 11-07-2026 (Staff Management Completion & UI Compaction)
+* Architecture: Fully completed the Staff Management module (Department, Designation, and Employee) across both frontend and backend.
+* Architecture: Deleted all old/legacy department, designation, and employee code and replaced it completely with the new architecture.
+* Security: Created HashGen utility for secure BCrypt password provisioning.
+* UI/UX: Adopted Strict Non-Breaking strategy. Compacted and dense-optimized `admin.css` and `global.css` for a high-density enterprise dashboard layout.
+* UI/UX: Enforced strict ID-scoping on global foundation CSS to prevent style leakage outside of Branch Admin boundaries.
+
 ## 09-07-2026 (Core Infrastructure & Branch UI Stabilization)
 * Backend: Implemented core platform infrastructure including BaseEntity, AuditableEntity (JPA Auditing), and global services (StorageService, DocumentSequenceService, UsernameService, PasswordService).
 * Backend: Refactored BranchRepository packaging and integrated CurrentUserService with the new core infrastructure.
