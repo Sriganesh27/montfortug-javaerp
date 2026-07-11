@@ -1,7 +1,4 @@
 const API_ENDPOINTS = {
-    DEPARTMENTS: '/departments',
-    DESIGNATIONS: '/designations',
-    EMPLOYEES: '/employees'
 };
 
 const Api = (function() {

@@ -69,15 +69,4 @@ public class Branch extends AuditableEntity {
         sections.add(section);
         section.setBranch(this);
     }
-    // ==========================================
-    // DEPARTMENTS
-    // ==========================================
-
-    @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, orphanRemoval = true)
-    private java.util.List<ErpDepartment> departments = new java.util.ArrayList<>();
-
-    public void addDepartment(ErpDepartment department) {
-        departments.add(department);
-        department.setBranch(this);
-    }
 }

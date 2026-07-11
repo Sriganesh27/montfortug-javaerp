@@ -12,88 +12,13 @@ document.addEventListener('viewLoaded', function(e) {
         void initBranchDashboardView();
     }
 
-    // 2. Departments View
-    else if (view === 'departments' || view === 'manage-departments') {
-        initDepartmentsView();
-    }
-
-    // 3. Add Designation View
-    else if (view === 'add-designation') {
-        initAddDesignationView();
-    }
-
-    // 4. Applications View
+    // 2. Applications View
     else if (view === 'applications' || view === 'view-applications') {
         initApplicationsView();
     }
-
-    // 5. Designations View
-    else if (view === 'designations' || view === 'manage-designations') {
-        initDesignationsView();
-    }
 });
 
-function initDepartmentsView() {
-    const addDeptBtn = document.getElementById('ba-addDeptBtn');
-    const searchBtn = document.getElementById('ba-searchBtn');
-    const resetBtn = document.getElementById('ba-resetSearchBtn');
 
-    if (addDeptBtn) {
-        addDeptBtn.addEventListener('click', async () => {
-            if (typeof loadView === 'function') {
-                const mainContent = document.getElementById('mainContent');
-                window.history.pushState({ view: 'add-department' }, "", '/admin/add-department');
-                await loadView('admin', 'add-department', mainContent);
-            } else {
-                window.location.href = '/admin/add-department';
-            }
-        });
-    }
-
-    if (searchBtn) {
-        searchBtn.addEventListener('click', () => {
-            const keyword = document.getElementById('ba-searchKeyword')?.value || '';
-            console.log("Searching departments for:", keyword);
-        });
-    }
-
-    if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            console.log("Resetting department search");
-        });
-    }
-}
-
-function initAddDesignationView() {
-    // Note: 'Desig' is just an abbreviation for Designation. You can safely ignore IDE spellcheck warnings for these IDs.
-    const backBtn = document.getElementById('ba-backToDesigsBtn');
-    const saveBtn = document.getElementById('ba-saveNewDesigBtn');
-
-    if (backBtn) {
-        backBtn.addEventListener('click', async () => {
-            if (typeof loadView === 'function') {
-                const mainContent = document.getElementById('mainContent');
-                window.history.pushState({ view: 'designations' }, "", '/admin/designations');
-                await loadView('admin', 'designations', mainContent);
-            } else {
-                window.location.href = '/admin/designations';
-            }
-        });
-    }
-
-    if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
-            console.log("Saving designation securely...");
-            const overlay = document.getElementById('ba-addDesigOverlay');
-            if (overlay) overlay.classList.remove('hidden');
-
-            setTimeout(() => {
-                if (overlay) overlay.classList.add('hidden');
-                if (typeof showSuccessMessage === 'function') showSuccessMessage("Designation added successfully");
-            }, 1000);
-        });
-    }
-}
 
 function initApplicationsView() {
     const searchBtn = document.getElementById('ba-searchBtn');
@@ -122,29 +47,6 @@ function initApplicationsView() {
     if (nextBtn) {
         nextBtn.addEventListener('click', () => {
             console.log("Loading next page...");
-        });
-    }
-}
-
-function initDesignationsView() {
-    const searchBtn = document.getElementById('ba-searchBtn');
-    const addDesigBtn = document.getElementById('ba-addDesigBtn');
-
-    if (addDesigBtn) {
-        addDesigBtn.addEventListener('click', async () => {
-            if (typeof loadView === 'function') {
-                const mainContent = document.getElementById('mainContent');
-                window.history.pushState({ view: 'add-designation' }, "", '/admin/add-designation');
-                await loadView('admin', 'add-designation', mainContent);
-            } else {
-                window.location.href = '/admin/add-designation';
-            }
-        });
-    }
-
-    if (searchBtn) {
-        searchBtn.addEventListener('click', () => {
-            console.log("Searching designations...");
         });
     }
 }
