@@ -20,26 +20,26 @@ public class StorageService {
     private String baseUploadDir;
 
     // Uses immutable Database IDs instead of volatile names or document numbers
-    // Example: uploads/staff/school_1/branch_5/employee_15/photo.jpg
-    public String storeEntityDocument(MultipartFile file, Long schoolId, Long branchId,
-                                      String moduleFolderName, String entityPrefix, Long entityDbId, DocumentType type) {
+    // Example: uploads/MBSG-Montfort School,Kampala/staff/15-John Doe/photo.jpg
+    public String storeEntityDocument(MultipartFile file, String schoolPath, String modulePath, String entityPath, DocumentType type) {
 
         if (file == null || file.isEmpty()) {
             throw new IllegalArgumentException("Cannot store empty file");
         }
 
-        if (schoolId == null || branchId == null || entityDbId == null) {
+        if (schoolPath == null || modulePath == null || entityPath == null) {
             throw new IllegalArgumentException("Invalid storage hierarchy parameters");
         }
 
         try {
-            String safeModule = sanitize(moduleFolderName); // e.g. "staff"
-            String safePrefix = sanitize(entityPrefix); // e.g. "employee"
+            // We use sanitize but we allow spaces and commas since the user explicitly requested "schoolname,location" and "id-name"
+            String safeSchool = sanitizePathSegment(schoolPath); 
+            String safeModule = sanitizePathSegment(modulePath);
+            String safeEntity = sanitizePathSegment(entityPath); 
 
-            String relativePath = safeModule + File.separator
-                    + "school_" + schoolId + File.separator
-                    + "branch_" + branchId + File.separator
-                    + safePrefix + "_" + entityDbId + File.separator;
+            String relativePath = safeSchool + File.separator
+                    + safeModule + File.separator
+                    + safeEntity + File.separator;
 
             Path uploadPath = Paths.get(baseUploadDir).resolve(relativePath).normalize().toAbsolutePath();
             if (!uploadPath.startsWith(Paths.get(baseUploadDir).normalize().toAbsolutePath())) {
@@ -67,9 +67,10 @@ public class StorageService {
         }
     }
 
-    private String sanitize(String input) {
+    private String sanitizePathSegment(String input) {
         if (input == null || input.trim().isEmpty()) return "unknown";
-        return input.trim().replaceAll("[^a-zA-Z0-9.\\-]", "_");
+        // Allow alphanumeric, space, dot, hyphen, comma, and underscore.
+        return input.trim().replaceAll("[^a-zA-Z0-9.\\- ,_]", "_");
     }
 
     private String getSafeExtension(String originalFilename) {

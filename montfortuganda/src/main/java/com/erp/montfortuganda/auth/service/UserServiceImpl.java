@@ -6,6 +6,8 @@ import com.erp.montfortuganda.auth.dto.UserDTO;
 import com.erp.montfortuganda.school.Branch;
 import com.erp.montfortuganda.school.repository.BranchRepository;
 import com.erp.montfortuganda.school.dto.BranchDTO;
+import com.erp.montfortuganda.auth.ErpRole;
+import com.erp.montfortuganda.auth.repository.ErpRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private ErpRoleRepository roleRepository;
+
     @Override
     public List<UserDTO> getAllUsers() {
         return userRepository.findAll().stream().map(this::mapToDTO).collect(Collectors.toList());
@@ -42,7 +47,15 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
 
         String role = dto.getRole();
-        if ("Super User".equalsIgnoreCase(role)) {
+        if (dto.getRoleId() != null) {
+            ErpRole erpRole = roleRepository.findById(dto.getRoleId())
+                    .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + dto.getRoleId()));
+            role = erpRole.getRoleCode();
+        }
+        
+        if (role == null || role.trim().isEmpty()) {
+            role = "ROLE_EMPLOYEE";
+        } else if ("Super User".equalsIgnoreCase(role)) {
             role = "SUPER_ADMIN";
         }
         user.setRole(role);

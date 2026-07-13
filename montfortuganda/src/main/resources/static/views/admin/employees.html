@@ -1,0 +1,174 @@
+<div id="ba-employees-view" class="fade-in">
+    <!-- Header -->
+    <div class="view-header">
+        <div>
+            <h2>Manage Employees</h2>
+            <p class="text-muted">View and manage branch employees</p>
+        </div>
+        <button id="btn-add-employee" class="btn-primary">
+            <i class="bi bi-person-plus-fill"></i> Add Employee
+        </button>
+    </div>
+
+    <!-- MAIN TABLE VIEW -->
+    <div id="emp-tableView">
+        <!-- Filter Card -->
+        <div class="card mb-3 p-3">
+            <div class="ba-flex-panel">
+                <div class="form-group ba-flex-1">
+                    <label>Search Employees</label>
+                    <input type="text" id="emp-searchInput" class="detail-input w-100" placeholder="Search by name, email, or code...">
+                </div>
+                <div class="form-group ba-flex-1">
+                    <label>Category</label>
+                    <select id="emp-categoryFilter" class="detail-input w-100">
+                        <option value="">All Categories</option>
+                        <option value="TEACHING">Teaching</option>
+                        <option value="NON_TEACHING">Non-Teaching</option>
+                        <option value="MANAGEMENT">Management</option>
+                        <option value="SUPPORT_STAFF">Support Staff</option>
+                    </select>
+                </div>
+                <div class="form-group ba-flex-1">
+                    <label>Status</label>
+                    <select id="emp-statusFilter" class="detail-input w-100">
+                        <option value="">All Statuses</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="ON_LEAVE">On Leave</option>
+                        <option value="SUSPENDED">Suspended</option>
+                        <option value="TERMINATED">Terminated</option>
+                    </select>
+                </div>
+                <div class="form-group ba-pagination-controls">
+                    <button id="emp-searchBtn" class="btn-primary"><i class="bi bi-search"></i> Search</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table Card -->
+        <div class="card">
+            <div class="table-responsive">
+                <table id="emp-tableComponent" class="data-table">
+                    <thead>
+                    <tr>
+                        <th data-sort="employeeNo">Code <i class="bi bi-arrow-down-up"></i></th>
+                        <th data-sort="fullName">Name <i class="bi bi-arrow-down-up"></i></th>
+                        <th data-sort="employeeCategory">Category <i class="bi bi-arrow-down-up"></i></th>
+                        <th>Email / Phone</th>
+                        <th data-sort="employmentStatus">Status <i class="bi bi-arrow-down-up"></i></th>
+                        <th class="col-action align-center">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="emp-tableBody">
+                    <!-- Rows rendered via CrudTable -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- CrudTable Pagination Footer -->
+            <div class="ba-pagination-footer">
+                <div class="ba-pagination-controls">
+                    <select id="emp-pageSize" class="detail-input w-auto">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    <span id="emp-pageInfo" class="text-muted">Showing page 1 of 1</span>
+                </div>
+                <div class="ba-pagination-controls">
+                    <button id="btn-emp-prev" class="btn-secondary btn-sm" disabled>
+                        <i class="bi bi-chevron-left"></i> Prev
+                    </button>
+                    <button id="btn-emp-next" class="btn-secondary btn-sm" disabled>
+                        Next <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DETAIL VIEW -->
+    <div id="emp-detailView" class="hidden">
+        <div class="view-header">
+            <h2>Employee: <span id="detail-empNameHeader"></span></h2>
+            <div class="action-btn-group">
+                <button id="emp-backToTableBtn" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back</button>
+                <button id="emp-editBtn" class="btn-primary"><i class="bi bi-pencil"></i> Edit Details</button>
+                <button id="emp-cancelEditBtn" class="btn-secondary hidden">Cancel</button>
+                <button id="emp-saveBtn" class="btn-success hidden"><i class="bi bi-save"></i> Save Changes</button>
+            </div>
+        </div>
+        <div class="card">
+            <div class="detail-grid p-4" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>Employee Code</label>
+                    <span id="view-empCode" class="detail-text text-strong font-monospace text-muted"></span>
+                    <input type="text" id="edit-empCode" class="detail-input hidden w-100" disabled title="Code is auto-generated">
+                </div>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <span id="view-empName" class="detail-text text-strong"></span>
+                    <div id="edit-empNameContainer" class="hidden" style="display:flex; gap:10px;">
+                        <input type="text" id="edit-empFirstName" class="detail-input w-100" placeholder="First Name">
+                        <input type="text" id="edit-empLastName" class="detail-input w-100" placeholder="Last Name">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Official Email</label>
+                    <span id="view-empEmail" class="detail-text text-strong"></span>
+                    <input type="email" id="edit-empEmail" class="detail-input hidden w-100">
+                </div>
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <span id="view-empPhone" class="detail-text text-strong"></span>
+                    <input type="text" id="edit-empPhone" class="detail-input hidden w-100">
+                </div>
+                <div class="form-group">
+                    <label>Category</label>
+                    <span id="view-empCategory" class="detail-text text-strong"></span>
+                    <select id="edit-empCategory" class="detail-input hidden w-100">
+                        <option value="TEACHING">Teaching</option>
+                        <option value="NON_TEACHING">Non-Teaching</option>
+                        <option value="MANAGEMENT">Management</option>
+                        <option value="SUPPORT_STAFF">Support Staff</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <span id="view-empDob" class="detail-text text-strong"></span>
+                    <input type="date" id="edit-empDob" class="detail-input hidden w-100">
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <span id="view-empDepartment" class="detail-text text-strong"></span>
+                    <select id="edit-empDepartment" class="detail-input hidden w-100">
+                        <option value="">-- None --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Designation</label>
+                    <span id="view-empDesignation" class="detail-text text-strong"></span>
+                    <select id="edit-empDesignation" class="detail-input hidden w-100">
+                        <option value="">-- None --</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- TEMPLATES -->
+<template id="tpl-emp-row">
+    <tr>
+        <td class="col-code font-monospace text-muted"></td>
+        <td class="col-name text-primary cursor-pointer"><strong></strong></td>
+        <td class="col-category"></td>
+        <td class="col-contact"><small class="d-block email-val"></small><small class="text-muted phone-val"></small></td>
+        <td><span class="status-badge badge"></span></td>
+        <td class="col-action align-center">
+            <button class="btn-primary btn-sm view-more-btn me-1" title="View Details"><i class="bi bi-eye"></i></button>
+            <button class="btn-danger btn-sm delete-btn" title="Terminate"><i class="bi bi-trash"></i></button>
+        </td>
+    </tr>
+</template>

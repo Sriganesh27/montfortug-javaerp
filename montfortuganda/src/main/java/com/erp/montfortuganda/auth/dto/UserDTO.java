@@ -13,8 +13,9 @@ public class UserDTO {
 
     private String password; // Only used for creation/update payloads
 
-    @NotBlank(message = "Role is required")
-    private String role;
+    private Long roleId; // Can be used to resolve the role code securely
+
+    private String role; // Legacy string role, optional if roleId is provided
 
     private Integer assignedBranchId;
     private BranchDTO assignedBranch;

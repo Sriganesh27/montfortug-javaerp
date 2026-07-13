@@ -1,6 +1,6 @@
 package com.erp.montfortuganda.exception;
 
-import com.erp.montfortuganda.common.dto.ApiResponse;
+import com.erp.montfortuganda.common.response.ApiResponse;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,6 +89,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleGlobalException(Exception ex) {
         // Log the actual error to the console for debugging
         logger.error("Unhandled server exception occurred: ", ex);
+        
+        try {
+            java.io.PrintWriter pw = new java.io.PrintWriter(new java.io.FileWriter("D:\\\\Java\\\\montforterp\\\\ERP-Java\\\\montfortuganda\\\\debug_error.log", true));
+            pw.println("----- NEW ERROR -----");
+            ex.printStackTrace(pw);
+            pw.close();
+        } catch (Exception e) {}
 
         // Do not expose stack traces to the frontend. Use a generic message.
         return buildErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected internal server error occurred.");

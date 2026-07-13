@@ -70,6 +70,43 @@ public class EmailService {
         }
     }
 
+    @Async
+    public void sendEmployeeWelcomeEmail(com.erp.montfortuganda.employee.entity.ErpEmployee emp, String username, String plainTextPassword) {
+        try {
+            if (emp.getOfficialEmail() == null || emp.getOfficialEmail().trim().isEmpty()) {
+                return;
+            }
+
+            Context context = new Context();
+            String schoolName = "Montfort School";
+            if (emp.getBranch() != null && emp.getBranch().getBranchName() != null) {
+                schoolName = emp.getBranch().getBranchName();
+            }
+
+            context.setVariable("schoolName", schoolName);
+            context.setVariable("employeeName", emp.getFirstName() + " " + emp.getLastName());
+            context.setVariable("username", username);
+            context.setVariable("tempPassword", plainTextPassword);
+            context.setVariable("currentYear", Year.now().getValue());
+            context.setVariable("frontendUrl", frontendUrl);
+
+            String htmlContent = templateEngine.process("email/employee-welcome", context);
+
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(emp.getOfficialEmail());
+            helper.setSubject("Welcome to " + schoolName + " - Your Account Details");
+            helper.setText(htmlContent, true);
+
+            mailSender.send(message);
+            System.out.println("Welcome email sent successfully to: " + emp.getOfficialEmail());
+
+        } catch (Exception e) {
+            System.err.println("Failed to send welcome email to " + emp.getOfficialEmail() + ": " + e.getMessage());
+        }
+    }
+
     /**
      * Helper method to build the strictly formatted school name: (code)name, location
      */

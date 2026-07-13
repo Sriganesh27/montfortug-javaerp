@@ -1,4 +1,4 @@
-package com.erp.montfortuganda.common.dto;
+package com.erp.montfortuganda.common.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

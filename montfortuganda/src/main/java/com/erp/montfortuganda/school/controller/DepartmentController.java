@@ -1,7 +1,7 @@
 package com.erp.montfortuganda.school.controller;
 
-import com.erp.montfortuganda.common.dto.ApiResponse;
-import com.erp.montfortuganda.common.dto.PagedResponse;
+import com.erp.montfortuganda.common.response.ApiResponse;
+import com.erp.montfortuganda.common.response.PagedResponse;
 import com.erp.montfortuganda.model.enums.RecordStatus;
 import com.erp.montfortuganda.school.dto.DepartmentDTO;
 import com.erp.montfortuganda.school.service.DepartmentDeletionService;

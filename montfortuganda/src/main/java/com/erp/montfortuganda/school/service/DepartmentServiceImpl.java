@@ -2,7 +2,7 @@ package com.erp.montfortuganda.school.service;
 
 import com.erp.montfortuganda.auth.service.BranchAccessService;
 import com.erp.montfortuganda.auth.service.CurrentUserService;
-import com.erp.montfortuganda.common.dto.PagedResponse;
+import com.erp.montfortuganda.common.response.PagedResponse;
 import com.erp.montfortuganda.exception.ResourceNotFoundException;
 import com.erp.montfortuganda.model.enums.RecordStatus;
 import com.erp.montfortuganda.school.dto.DepartmentDTO;
