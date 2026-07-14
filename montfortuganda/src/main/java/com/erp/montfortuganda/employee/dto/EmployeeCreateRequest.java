@@ -106,6 +106,19 @@ public class EmployeeCreateRequest {
     @Size(max = 20)
     private String postalCode;
 
+    @Size(max = 100)
+    private String addressCounty;
+
+    @Size(max = 100)
+    private String addressSubCounty;
+
+    @Size(max = 100)
+    private String addressParish;
+
+    private String skills;
+    private String languagesSpoken;
+    private String subReligion;
+
     // --- EMPLOYMENT INFO ---
     @NotNull(message = "Employee category is required")
     private EmployeeCategory employeeCategory;

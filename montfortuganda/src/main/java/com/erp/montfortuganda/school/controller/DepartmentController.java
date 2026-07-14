@@ -47,10 +47,8 @@ public class DepartmentController {
             @RequestParam(required = false) RecordStatus status,
             @RequestParam(required = false) Boolean active,
             @RequestParam(required = false) Boolean isAcademic,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            Pageable pageable) {
 
-        Pageable pageable = PageRequest.of(page, size);
         PagedResponse<DepartmentDTO> result = departmentService.searchDepartments(
                 keyword, branchId, status, active, isAcademic, pageable);
 

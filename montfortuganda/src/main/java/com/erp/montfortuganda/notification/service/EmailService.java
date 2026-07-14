@@ -26,6 +26,9 @@ public class EmailService {
     @Value("${app.frontend.url:http://localhost:8080}")
     private String frontendUrl;
 
+    @Value("${spring.mail.username:no-reply@montfortuganda.com}")
+    private String fromEmail;
+
     @Async
     public void sendApplicationReceipt(ErpApplication app) {
         try {
@@ -55,6 +58,9 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
+            String schoolName = buildSchoolName(app);
+            helper.setFrom(fromEmail, schoolName);
+            helper.setReplyTo(fromEmail, schoolName + " Admissions");
             helper.setTo(app.getPrimaryEmail());
             helper.setSubject("Application Received - " + app.getApplicationNo());
             helper.setText(htmlContent, true);
@@ -95,6 +101,8 @@ public class EmailService {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
+            helper.setFrom(fromEmail, schoolName + " HR");
+            helper.setReplyTo(fromEmail, schoolName + " HR");
             helper.setTo(emp.getOfficialEmail());
             helper.setSubject("Welcome to " + schoolName + " - Your Account Details");
             helper.setText(htmlContent, true);

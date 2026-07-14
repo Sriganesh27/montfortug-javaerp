@@ -23,4 +23,12 @@ public class EmployeeResponse {
     private EmploymentMode employmentMode;
     private EmploymentStatus status;
     private LocalDate joiningDate;
+
+    private String addressCounty;
+    private String addressSubCounty;
+    private String addressParish;
+    private String skills;
+    private String languagesSpoken;
+    private String religion;
+    private String subReligion;
 }

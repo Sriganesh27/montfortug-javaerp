@@ -54,6 +54,7 @@ CREATE TABLE `erp_students` (
   `created_by` bigint(20) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `version` bigint(20) NOT NULL DEFAULT 0,
   PRIMARY KEY (`student_id`),
   UNIQUE KEY `admission_no` (`admission_no`),
   UNIQUE KEY `student_code` (`student_code`),
@@ -82,4 +83,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-11  0:30:13
+-- Dump completed on 2026-07-14 12:46:22

@@ -99,6 +99,9 @@ public class    EmployeeQualificationRequest {
     @Size(max = 1000)
     private String employeeQualificationRemarks;
 
+    private String qualificationGrade;
+    private String customLevel;
+
     // --- SYSTEM ---
     @Min(value = 1, message = "Display order must be at least 1")
     private Integer displayOrder = 1;

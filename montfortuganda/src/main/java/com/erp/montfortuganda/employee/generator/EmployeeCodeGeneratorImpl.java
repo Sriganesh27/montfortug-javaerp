@@ -72,7 +72,7 @@ public class EmployeeCodeGeneratorImpl implements EmployeeCodeGenerator {
         return switch (category) {
             case TEACHING -> "T";
             case NON_TEACHING -> "NT";
-            case MANAGEMENT -> "MGT";
+            case MANAGEMENT_TEACHING, MANAGEMENT_NON_TEACHING -> "MGT";
             case SUPPORT_STAFF -> "SS";
         };
     }

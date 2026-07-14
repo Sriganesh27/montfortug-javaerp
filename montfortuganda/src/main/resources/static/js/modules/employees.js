@@ -20,14 +20,49 @@ const EmpCollections = {
         { placeholder: 'Email', className: 'c-email', type: 'email', dataKey: 'email' }
     ],
     qualFields: [
-        { placeholder: 'Level', className: 'q-level', dataKey: 'qualificationLevel' },
-        { placeholder: 'Institution', className: 'q-inst', dataKey: 'institution' },
+        { 
+            placeholder: 'Level', 
+            className: 'q-level', 
+            dataKey: 'qualificationLevel',
+            type: 'select',
+            options: [
+                { value: 'PRIMARY', text: 'Primary' },
+                { value: 'SECONDARY', text: 'Secondary' },
+                { value: 'SENIOR_SECONDARY', text: 'Senior Secondary' },
+                { value: 'CERTIFICATE', text: 'Certificate' },
+                { value: 'DIPLOMA', text: 'Diploma' },
+                { value: 'GRADUATION', text: 'Graduation' },
+                { value: 'POST_GRADUATION', text: 'Post Graduation' },
+                { value: 'DR_PHD', text: 'Dr (PHD)' },
+                { value: 'OTHER', text: 'Other' }
+            ]
+        },
+        { placeholder: 'Custom Level (If Other)', className: 'q-custom', dataKey: 'customLevel' },
+        { placeholder: 'Subject / Specialization', className: 'q-inst', dataKey: 'institution' },
+        { placeholder: 'Division / Grade', className: 'q-grade', dataKey: 'qualificationGrade' },
         { placeholder: 'Year', className: 'q-year', type: 'number', dataKey: 'passingYear' },
         { placeholder: 'Upload Cert', className: 'q-file', type: 'file', dataKey: 'fileData' }
     ],
     expFields: [
-        { placeholder: 'Company', className: 'e-company', dataKey: 'companyName' },
-        { placeholder: 'Role', className: 'e-role', dataKey: 'jobRole' },
+        { placeholder: 'Organisation', className: 'e-company', dataKey: 'companyName' },
+        { 
+            placeholder: 'Type', 
+            className: 'e-type', 
+            dataKey: 'employeeExperienceType',
+            type: 'select',
+            options: [
+                { value: 'FULL_TIME', text: 'Full Time' },
+                { value: 'PART_TIME', text: 'Part Time' },
+                { value: 'CONTRACT', text: 'Contract' },
+                { value: 'TEMPORARY', text: 'Temporary' },
+                { value: 'INTERNSHIP', text: 'Internship' },
+                { value: 'CONSULTANT', text: 'Consultant' },
+                { value: 'VOLUNTEER', text: 'Volunteer' },
+                { value: 'SELF_EMPLOYED', text: 'Self Employed' },
+                { value: 'OTHER', text: 'Other' }
+            ]
+        },
+        { placeholder: 'Post Held', className: 'e-role', dataKey: 'jobRole' },
         { placeholder: 'Start Date', className: 'e-start', type: 'date', dataKey: 'startDate' },
         { placeholder: 'End Date', className: 'e-end', type: 'date', dataKey: 'endDate' },
         { placeholder: 'Upload Doc', className: 'e-file', type: 'file', dataKey: 'fileData' }
@@ -49,10 +84,21 @@ const EmpCollections = {
             const span = document.createElement('span');
             span.className = `detail-text d-block ${isEditMode ? 'hidden' : ''}`;
 
-            const input = document.createElement('input');
-            input.type = field.type || 'text';
+            let input;
+            if (field.type === 'select') {
+                input = document.createElement('select');
+                field.options.forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.text;
+                    input.appendChild(option);
+                });
+            } else {
+                input = document.createElement('input');
+                input.type = field.type || 'text';
+                input.placeholder = field.placeholder;
+            }
             input.className = `detail-input w-100 ${field.className} ${isEditMode ? '' : 'hidden'}`;
-            input.placeholder = field.placeholder;
 
             if (data && data[field.dataKey]) {
                 if(field.type === 'date' && data[field.dataKey]) {
@@ -444,6 +490,8 @@ function initEmployeesView() {
                     dateOfBirth: valOrNull('#edit-empDob'),
                     maritalStatus: valOrNull('#edit-empMaritalStatus'),
                     bloodGroup: valOrNull('#edit-empBloodGroup'),
+                    religion: valOrNull('#edit-empReligion'),
+                    subReligion: valOrNull('#edit-empSubReligion'),
 
                     officialEmail: valOrNull('#edit-empEmail'),
                     personalEmail: valOrNull('#edit-empPersonalEmail'),
@@ -472,8 +520,13 @@ function initEmployeesView() {
                     addressCountry: valOrNull('#edit-empCountry'),
                     addressState: valOrNull('#edit-empState'),
                     addressDistrict: valOrNull('#edit-empDistrict'),
+                    addressCounty: valOrNull('#edit-empCounty'),
+                    addressSubCounty: valOrNull('#edit-empSubCounty'),
+                    addressParish: valOrNull('#edit-empParish'),
                     addressVillage: valOrNull('#edit-empVillage'),
                     addressStreet: valOrNull('#edit-empStreet'),
+                    skills: valOrNull('#edit-empSkills'),
+                    languagesSpoken: valOrNull('#edit-empLanguages'),
 
                     contacts: EmpCollections.gather(viewContainer, '#contacts-container', 'contact-row', row => ({
                         contactName: row.querySelector('.c-name').value.trim() || null,
@@ -681,6 +734,8 @@ function initAddEmployeeView() {
                     dateOfBirth: dobVal,
                     maritalStatus: valOrNull('#add-empMaritalStatus') || valOrNull('#edit-empMaritalStatus'),
                     bloodGroup: valOrNull('#add-empBloodGroup') || valOrNull('#edit-empBloodGroup'),
+                    religion: valOrNull('#add-empReligion') || valOrNull('#edit-empReligion'),
+                    subReligion: valOrNull('#add-empSubReligion') || valOrNull('#edit-empSubReligion'),
 
                     officialEmail: valOrNull('#add-empEmail') || valOrNull('#edit-empEmail'),
                     personalEmail: valOrNull('#add-empPersonalEmail') || valOrNull('#edit-empPersonalEmail'),
@@ -709,8 +764,13 @@ function initAddEmployeeView() {
                     addressCountry: valOrNull('#add-empCountry') || valOrNull('#edit-empCountry'),
                     addressState: valOrNull('#add-empState') || valOrNull('#edit-empState'),
                     addressDistrict: valOrNull('#add-empDistrict') || valOrNull('#edit-empDistrict'),
+                    addressCounty: valOrNull('#add-empCounty') || valOrNull('#edit-empCounty'),
+                    addressSubCounty: valOrNull('#add-empSubCounty') || valOrNull('#edit-empSubCounty'),
+                    addressParish: valOrNull('#add-empParish') || valOrNull('#edit-empParish'),
                     addressVillage: valOrNull('#add-empVillage') || valOrNull('#edit-empVillage'),
                     addressStreet: valOrNull('#add-empStreet') || valOrNull('#edit-empStreet'),
+                    skills: valOrNull('#add-empSkills') || valOrNull('#edit-empSkills'),
+                    languagesSpoken: valOrNull('#add-empLanguages') || valOrNull('#edit-empLanguages'),
 
                     contacts: EmpCollections.gather(viewContainer, '#contacts-container', 'contact-row', row => ({
                         contactName: row.querySelector('.c-name').value.trim() || null,
@@ -774,3 +834,4 @@ function initAddEmployeeView() {
         });
     }
 }
+

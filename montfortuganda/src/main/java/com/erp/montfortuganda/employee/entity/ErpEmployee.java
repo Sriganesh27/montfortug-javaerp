@@ -190,6 +190,24 @@ public class ErpEmployee extends AuditableEntity {
     @Column(nullable = false)
     private Boolean active = true;
 
+    @Column(name = "address_county", length = 100)
+    private String addressCounty;
+
+    @Column(name = "address_sub_county", length = 100)
+    private String addressSubCounty;
+
+    @Column(name = "address_parish", length = 100)
+    private String addressParish;
+
+    @Column(name = "skills", columnDefinition = "TEXT")
+    private String skills;
+
+    @Column(name = "languages_spoken", columnDefinition = "TEXT")
+    private String languagesSpoken;
+
+    @Column(name = "sub_religion", length = 100)
+    private String subReligion;
+
     @Version
     @Column(nullable = false)
     private Long version = 0L;

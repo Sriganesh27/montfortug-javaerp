@@ -18,6 +18,9 @@ function getAuthHeaders(isMultipart = false) {
     return headers;
 }
 
+// Flag to prevent multiple session timeout modals
+let isSessionTimeoutShown = false;
+
 /**
  * Handle API responses globally
  */
@@ -31,15 +34,19 @@ async function handleResponse(response) {
             localStorage.removeItem('school_id');
             localStorage.removeItem('branch_id');
             localStorage.removeItem('permissions');
-            if (typeof window.showSessionTimeoutModal === 'function') {
-                window.showSessionTimeoutModal({
-                    title: "Session Expired",
-                    message: "Your secure dashboard session has expired.",
-                    buttonText: "Login Again",
-                    redirectUrl: "/login.html"
-                });
-            } else {
-                window.location.href = '/login.html';
+            
+            if (!isSessionTimeoutShown) {
+                isSessionTimeoutShown = true;
+                if (typeof window.showSessionTimeoutModal === 'function') {
+                    window.showSessionTimeoutModal({
+                        title: "Session Expired",
+                        message: "Your secure dashboard session has expired.",
+                        buttonText: "Login Again",
+                        redirectUrl: "/login.html"
+                    });
+                } else {
+                    window.location.href = '/login.html';
+                }
             }
             throw new Error("Session expired. Please log in again.");
         }

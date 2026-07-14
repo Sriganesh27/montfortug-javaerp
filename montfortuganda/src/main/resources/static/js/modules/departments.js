@@ -32,7 +32,7 @@ function initDepartmentsView() {
     const detailView = viewContainer.querySelector('#dept-detailView');
 
     // State for pagination and sorting
-    const state = { page: 0, size: 10, sort: 'departmentId,desc' };
+    const state = { page: 0, size: 10, sort: 'departmentId,asc' };
     let table;
 
     async function loadDepartments() {
@@ -67,6 +67,8 @@ function initDepartmentsView() {
                 statusBadge.className = `status-badge badge-${(dept.recordStatus || dept.status || 'ACTIVE').toLowerCase()}`;
 
                 rowNode.querySelector('.view-more-btn').addEventListener('click', () => openDeptDetail(dept.departmentId));
+                const editBtn = rowNode.querySelector('.edit-btn');
+                if (editBtn) editBtn.addEventListener('click', () => openDeptDetail(dept.departmentId, true));
                 rowNode.querySelector('.delete-btn').addEventListener('click', () => deleteDept(dept.departmentId));
 
                 return rowNode;
@@ -113,7 +115,7 @@ function initDepartmentsView() {
         });
     }
 
-    async function openDeptDetail(id) {
+    async function openDeptDetail(id, isEditMode = false) {
         currentDetailDeptId = id;
         showLoader();
         try {
@@ -287,3 +289,4 @@ function initAddDepartmentView() {
         });
     }
 }
+

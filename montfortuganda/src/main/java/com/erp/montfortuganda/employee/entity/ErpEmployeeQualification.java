@@ -87,6 +87,12 @@ public class ErpEmployeeQualification extends AuditableEntity {
     @Column(name = "employee_qualification_active", nullable = false)
     private Boolean employeeQualificationActive = true;
 
+    @Column(name = "qualification_grade", length = 100)
+    private String qualificationGrade;
+
+    @Column(name = "custom_level", length = 255)
+    private String customLevel;
+
     @Version
     @Column(nullable = false)
     private Long version = 0L;
