@@ -64,7 +64,14 @@ async function handleResponse(response) {
         throw new Error(errorMessage);
     }
 
-    const json = await response.json();
+    let text = await response.text();
+    let json;
+    try {
+        json = text ? JSON.parse(text) : null;
+    } catch(e) {
+        // Not JSON, return raw text directly
+        return text;
+    }
 
     // MAGIC FIX: If the backend returns raw JSON without a "data" property,
     // we automatically wrap it so superadmin.js never throws 'undefined' again!

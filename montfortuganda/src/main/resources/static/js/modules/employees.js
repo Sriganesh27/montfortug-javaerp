@@ -687,6 +687,26 @@ function initAddEmployeeView() {
         });
     }
 
+    const importBtn = viewContainer.querySelector('#btn-import-employee');
+    if (importBtn) {
+        const newImportBtn = importBtn.cloneNode(true);
+        importBtn.parentNode.replaceChild(newImportBtn, importBtn);
+        newImportBtn.addEventListener('click', () => {
+            if (typeof AppImporter !== 'undefined') {
+                AppImporter.open('employee', 'Import Employees', 'Upload the Excel file containing Employee records.', () => {
+                    const mainContent = document.getElementById('main-content-area');
+                    window.history.pushState({ view: 'employees', title: 'Manage Employees' }, "", "/admin/employees");
+                    const pageTitleElement = document.getElementById('pageTitle');
+                    if (pageTitleElement) pageTitleElement.textContent = "Manage Employees";
+                    void loadView('admin', 'employees', mainContent);
+                });
+            } else {
+                if (typeof AppToast !== 'undefined') AppToast.error('Importer module not found.');
+                console.warn('AppImporter is not defined.');
+            }
+        });
+    }
+
     if (form) {
         form.addEventListener('submit', async function(e) {
             e.preventDefault();

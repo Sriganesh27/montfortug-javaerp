@@ -110,13 +110,44 @@
     </tr>
 </template>
 
+<!-- IMPORT MODAL -->
+<div id="erp-import-modal" class="hidden">
+      <div id="erp-import-modal-box">
+          <h3 id="import-title">Import Data</h3>
+          <p id="import-desc" class="text-muted">Upload an Excel file to bulk import records.</p>
+          
+          <div id="import-file-group">
+              <input type="file" id="import-file-input" accept=".xlsx">
+          </div>
+          
+          <div id="import-progress-container" class="hidden">
+              <p id="import-status-text">Processing...</p>
+              <progress id="import-progress-bar" max="100" value="0"></progress>
+          </div>
+          
+          <div id="import-result-container" class="hidden">
+              <p id="import-result-msg"></p>
+              <button type="button" id="import-download-errors" class="hidden">
+                  <i class="bi bi-download"></i> Download Error Report
+              </button>
+          </div>
+          
+          <div id="import-actions">
+              <button type="button" id="import-btn-cancel">Close</button>
+              <button type="button" id="import-btn-upload">
+                  <i class="bi bi-upload"></i> Upload
+              </button>
+          </div>
+      </div>
+  </div>
+
 <!-- Core Layout & Admin Logic -->
 <script defer src="/js/api.js"></script>
 <script defer src="/js/layout.js"></script>
 <script defer src="/js/global.js"></script>
 <script defer src="/js/superadmin.js"></script>
-<script defer src="/js/framework/api.js"></script>
 <script defer src="/js/framework/crud-table.js"></script>
+<script defer src="/js/framework/importer.js"></script>
 <script defer src="/js/branchadmin.js"></script>
 
 <!-- 2. Load API Repositories -->
