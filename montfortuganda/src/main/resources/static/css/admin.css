@@ -517,3 +517,106 @@
 #import-btn-upload:hover {
     background-color: #1d4ed8;
 }
+
+/* ========================================================= */
+/* ADD EMPLOYEE VALIDATION — STRICTLY SCOPED                  */
+/* ========================================================= */
+
+#ba-add-employee-view .view-header .action-btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+#ba-add-employee-view .emp-required-field > label::after {
+    content: " *";
+    color: #ef4444;
+    font-weight: 700;
+}
+
+#ba-add-employee-view .emp-validation-summary {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #fca5a5;
+    border-left: 4px solid #ef4444;
+    border-radius: 4px;
+    background-color: #fef2f2;
+    color: #991b1b;
+}
+
+#ba-add-employee-view .emp-validation-summary.hidden {
+    display: none !important;
+}
+
+#ba-add-employee-view .emp-validation-summary strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+}
+
+#ba-add-employee-view .emp-validation-summary p {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+#ba-add-employee-view .form-group.emp-field-invalid > label {
+    color: #dc2626 !important;
+}
+
+#ba-add-employee-view .emp-child-field.emp-field-invalid {
+    position: relative;
+    padding-bottom: 1.45rem;
+}
+
+#ba-add-employee-view .form-group.emp-field-invalid::after,
+#ba-add-employee-view .emp-child-field.emp-field-invalid::after {
+    content: attr(data-error);
+    display: block;
+    margin-top: 0.25rem;
+    color: #dc2626;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+#ba-add-employee-view .emp-child-field.emp-field-invalid::after {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#ba-add-employee-view .detail-input.emp-input-invalid,
+#ba-add-employee-view input.emp-input-invalid,
+#ba-add-employee-view select.emp-input-invalid,
+#ba-add-employee-view textarea.emp-input-invalid {
+    border-color: #ef4444 !important;
+    background-color: #fff7f7;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+}
+
+#ba-add-employee-view .detail-input.emp-input-invalid:focus,
+#ba-add-employee-view input.emp-input-invalid:focus,
+#ba-add-employee-view select.emp-input-invalid:focus,
+#ba-add-employee-view textarea.emp-input-invalid:focus {
+    border-color: #dc2626 !important;
+    background-color: #ffffff;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+}
+
+#ba-add-employee-view .emp-child-row:has(.emp-input-invalid) {
+    border-color: #fca5a5;
+    background-color: #fffafa;
+}
+
+@media (max-width: 575.98px) {
+    #ba-add-employee-view .view-header .action-btn-group {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    #ba-add-employee-view .view-header .action-btn-group .btn {
+        width: 100%;
+    }
+}
+

@@ -1,9 +1,18 @@
 <div id="ba-add-employee-view">
-    <form id="add-emp-form">
+    <form id="add-emp-form" novalidate>
+        <div
+                id="add-emp-validation-summary"
+                class="emp-validation-summary hidden"
+                role="alert"
+                aria-live="assertive"
+        >
+            <strong>Please correct the highlighted fields.</strong>
+            <p id="add-emp-validation-summary-text"></p>
+        </div>
         <div id="emp-detailView">
             <div class="view-header mb-4 d-flex justify-content-between align-items-center">
                 <h2>Add New Employee</h2>
-                <div class="action-btn-group" style="display: flex; gap: 10px;">
+                <div class="action-btn-group">
                     <button type="button" id="btn-import-employee" class="btn btn-secondary"><i class="bi bi-upload"></i> Import Employees</button>
                     <button type="button" id="backToEmployeesBtn" class="btn btn-secondary me-2"><i class="bi bi-arrow-left"></i> Back</button>
                 </div>
@@ -15,7 +24,7 @@
                     <legend class="emp-legend">Personal Details</legend>
                     <div class="emp-grid emp-grid-4 mb-3">
                         <div class="form-group">
-                            <label class="text-muted small">Title</label>
+                            <label class="text-muted small" for="add-empTitle">Title</label>
                             <select id="add-empTitle" class="detail-input w-100">
                                 <option value="">--</option>
                                 <option value="Mr.">Mr.</option>
@@ -24,32 +33,32 @@
                                 <option value="Dr.">Dr.</option>
                             </select>
                         </div>
-                        <div class="form-group span-2-cols">
-                            <label class="text-muted small">Full Name</label>
+                        <div class="form-group emp-required-field span-2-cols">
+                            <label class="text-muted small" for="add-empFirstName">Full Name</label>
                             <div id="add-empNameContainer" class="emp-name-container d-flex gap-2">
-                                <input type="text" id="add-empFirstName" class="detail-input flex-fill" placeholder="First">
+                                <input type="text" id="add-empFirstName" class="detail-input flex-fill" placeholder="First" required aria-required="true" data-validation-label="First Name">
                                 <input type="text" id="add-empMiddleName" class="detail-input flex-fill" placeholder="Middle">
-                                <input type="text" id="add-empLastName" class="detail-input flex-fill" placeholder="Last">
+                                <input type="text" id="add-empLastName" class="detail-input flex-fill" placeholder="Last" required aria-required="true" data-validation-label="Last Name">
                             </div>
                         </div>
                     </div>
 
                     <div class="emp-grid emp-grid-4 mb-2">
-                        <div class="form-group">
-                            <label class="text-muted small">Gender</label>
-                            <select id="add-empGender" class="detail-input w-100">
+                        <div class="form-group emp-required-field">
+                            <label class="text-muted small" for="add-empGender">Gender</label>
+                            <select id="add-empGender" class="detail-input w-100" required aria-required="true" data-validation-label="Gender">
                                 <option value="">-- Select --</option>
                                 <option value="MALE">Male</option>
                                 <option value="FEMALE">Female</option>
                                 <option value="OTHER">Other</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="text-muted small">Date of Birth</label>
-                            <input type="date" id="add-empDob" class="detail-input w-100">
+                        <div class="form-group emp-required-field">
+                            <label class="text-muted small" for="add-empDob">Date of Birth</label>
+                            <input type="date" id="add-empDob" class="detail-input w-100" required aria-required="true" data-validation-label="Date of Birth">
                         </div>
                         <div class="form-group">
-                            <label class="text-muted small">Marital Status</label>
+                            <label class="text-muted small" for="add-empMaritalStatus">Marital Status</label>
                             <select id="add-empMaritalStatus" class="detail-input w-100">
                                 <option value="">-- Select --</option>
                                 <option value="SINGLE">Single</option>
@@ -58,7 +67,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="text-muted small">Blood Group</label>
+                            <label class="text-muted small" for="add-empBloodGroup">Blood Group</label>
                             <select id="add-empBloodGroup" class="detail-input w-100">
                                 <option value="">-- Select --</option>
                                 <option value="A_POSITIVE">A+</option>
@@ -74,7 +83,7 @@
                     </div>
                     <div class="emp-grid emp-grid-2 mb-2">
                         <div class="form-group">
-                            <label class="text-muted small">Religion</label>
+                            <label class="text-muted small" for="add-empReligion">Religion</label>
                             <select id="add-empReligion" class="detail-input w-100">
                                 <option value="">Select</option>
                                 <option value="CHRISTIANITY">Christianity</option>
@@ -84,7 +93,7 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="text-muted small">Sub-Religion (Denomination)</label>
+                            <label class="text-muted small" for="add-empSubReligion">Sub-Religion (Denomination)</label>
                             <input type="text" id="add-empSubReligion" class="detail-input w-100" placeholder="e.g. Catholic, Sunni">
                         </div>
                     </div>
@@ -94,24 +103,24 @@
                 <fieldset class="emp-fieldset">
                     <legend class="emp-legend">Employment Details</legend>
                     <div class="emp-grid emp-grid-2 mb-3 ">
-                        <div class="form-group">
-                            <label class="text-muted small">Department</label>
-                            <select id="add-empDepartment" class="detail-input w-100">
+                        <div class="form-group emp-required-field">
+                            <label class="text-muted small" for="add-empDepartment">Department</label>
+                            <select id="add-empDepartment" class="detail-input w-100" required aria-required="true" data-validation-label="Department">
                                 <option value="">-- None --</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="text-muted small">Designation</label>
-                            <select id="add-empDesignation" class="detail-input w-100">
+                        <div class="form-group emp-required-field">
+                            <label class="text-muted small" for="add-empDesignation">Designation</label>
+                            <select id="add-empDesignation" class="detail-input w-100" required aria-required="true" data-validation-label="Designation">
                                 <option value="">-- None --</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="emp-grid emp-grid-3 mb-2">
-                        <div class="form-group">
-                            <label class="text-muted small">Category</label>
-                            <select id="add-empCategory" class="detail-input w-100">
+                        <div class="form-group emp-required-field">
+                            <label class="text-muted small" for="add-empCategory">Category</label>
+                            <select id="add-empCategory" class="detail-input w-100" required aria-required="true" data-validation-label="Employee Category">
                                 <option value="TEACHING">Teaching</option>
                                 <option value="NON_TEACHING">Non-Teaching</option>
                                 <option value="MANAGEMENT_TEACHING">Management (Teaching)</option>
@@ -119,9 +128,9 @@
                                 <option value="SUPPORT_STAFF">Support Staff</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="text-muted small">Type</label>
-                            <select id="add-empType" class="detail-input w-100">
+                        <div class="form-group emp-required-field">
+                            <label class="text-muted small" for="add-empType">Type</label>
+                            <select id="add-empType" class="detail-input w-100" required aria-required="true" data-validation-label="Employee Type">
                                 <option value="TEMPORARY">Temporary</option>
                                 <option value="CONTRACT">Contract</option>
                                 <option value="PERMANENT">Permanent</option>
@@ -129,9 +138,9 @@
                                 <option value="PART_TIME">Part Time</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="text-muted small">Mode</label>
-                            <select id="add-empMode" class="detail-input w-100">
+                        <div class="form-group emp-required-field">
+                            <label class="text-muted small" for="add-empMode">Mode</label>
+                            <select id="add-empMode" class="detail-input w-100" required aria-required="true" data-validation-label="Employment Mode">
                                 <option value="FULL_TIME">Full Time</option>
                                 <option value="PART_TIME">Part Time</option>
                                 <option value="REMOTE">Remote</option>
@@ -140,16 +149,16 @@
                     </div>
 
                     <div class="emp-grid emp-grid-3 mb-2">
-                        <div class="form-group">
-                            <label class="text-muted small">Joining Date</label>
-                            <input type="date" id="add-empJoiningDate" class="detail-input w-100">
+                        <div class="form-group emp-required-field">
+                            <label class="text-muted small" for="add-empJoiningDate">Joining Date</label>
+                            <input type="date" id="add-empJoiningDate" class="detail-input w-100" required aria-required="true" data-validation-label="Joining Date">
                         </div>
                         <div class="form-group">
-                            <label class="text-muted small">Probation End Date</label>
+                            <label class="text-muted small" for="add-empProbationEndDate">Probation End Date</label>
                             <input type="date" id="add-empProbationEndDate" class="detail-input w-100">
                         </div>
                         <div class="form-group">
-                            <label class="text-muted small">Confirmation Date</label>
+                            <label class="text-muted small" for="add-empConfirmationDate">Confirmation Date</label>
                             <input type="date" id="add-empConfirmationDate" class="detail-input w-100">
                         </div>
                     </div>
@@ -158,10 +167,10 @@
                     <legend class="emp-legend">Login Account</legend>
 
                     <div class="form-group mb-3">
-                        <label class="d-flex align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2">
                             <input type="checkbox" id="add-generateLogin">
-                            <span>Generate login account</span>
-                        </label>
+                            <label for="add-generateLogin">Generate login account</label>
+                        </div>
 
                         <small class="text-muted">
                             The generated employee code will be used as the login ID.
@@ -171,7 +180,7 @@
                     <div id="add-loginOptions" class="hidden">
                         <div class="emp-grid emp-grid-2 mb-3">
                             <div class="form-group">
-                                <label class="text-muted small">Login Role</label>
+                                <label class="text-muted small" for="add-employeeRoleId">Login Role</label>
 
                                 <select
                                         id="add-employeeRoleId"
@@ -182,10 +191,10 @@
                             </div>
 
                             <div class="form-group">
-                                <label class="d-flex align-items-center gap-2 mt-4">
+                                <div class="d-flex align-items-center gap-2 mt-4">
                                     <input type="checkbox" id="add-sendLoginEmail">
-                                    <span>Send credentials by email</span>
-                                </label>
+                                    <label for="add-sendLoginEmail">Send credentials by email</label>
+                                </div>
                             </div>
                         </div>
 
@@ -198,26 +207,26 @@
                 <fieldset class="emp-fieldset">
                     <legend class="emp-legend">Identifications</legend>
                     <div class="emp-grid emp-grid-3 mb-3">
-                        <div class="form-group">
-                            <label class="text-muted small">Nationality</label>
-                            <input type="text" id="add-empNationality" class="detail-input w-100">
+                        <div class="form-group emp-required-field">
+                            <label class="text-muted small" for="add-empNationality">Nationality</label>
+                            <input type="text" id="add-empNationality" class="detail-input w-100" required aria-required="true" data-validation-label="Nationality">
                         </div>
                         <div class="form-group">
-                            <label class="text-muted small">National ID</label>
+                            <label class="text-muted small" for="add-empNationalId">National ID</label>
                             <input type="text" id="add-empNationalId" class="detail-input w-100">
                         </div>
                         <div class="form-group">
-                            <label class="text-muted small">TIN Number</label>
+                            <label class="text-muted small" for="add-empTin">TIN Number</label>
                             <input type="text" id="add-empTin" class="detail-input w-100">
                         </div>
                     </div>
                     <div class="emp-grid emp-grid-2 mb-2">
                         <div class="form-group">
-                            <label class="text-muted small">Passport No.</label>
+                            <label class="text-muted small" for="add-empPassportNo">Passport No.</label>
                             <input type="text" id="add-empPassportNo" class="detail-input w-100">
                         </div>
                         <div class="form-group">
-                            <label class="text-muted small">Work Permit No.</label>
+                            <label class="text-muted small" for="add-empWorkPermit">Work Permit No.</label>
                             <input type="text" id="add-empWorkPermit" class="detail-input w-100">
                         </div>
                     </div>
@@ -228,61 +237,61 @@
                     <legend class="emp-legend">Contact & Address</legend>
                     <div class="emp-grid emp-grid-2 mb-3">
                         <div class="form-group">
-                            <label class="text-muted small">Official Email</label>
-                            <input type="email" id="add-empEmail" class="detail-input w-100">
+                            <label class="text-muted small" for="add-empEmail">Official Email</label>
+                            <input type="email" id="add-empEmail" class="detail-input w-100" data-validation-label="Official Email">
                         </div>
                         <div class="form-group">
-                            <label class="text-muted small">Personal Email</label>
+                            <label class="text-muted small" for="add-empPersonalEmail">Personal Email</label>
                             <input type="email" id="add-empPersonalEmail" class="detail-input w-100">
                         </div>
-                        <div class="form-group">
-                            <label class="text-muted small">Mobile No</label>
-                            <input type="text" id="add-empPhone" class="detail-input w-100">
+                        <div class="form-group emp-required-field">
+                            <label class="text-muted small" for="add-empPhone">Mobile No</label>
+                            <input type="text" id="add-empPhone" class="detail-input w-100" required aria-required="true" data-validation-label="Mobile Number">
                         </div>
                         <div class="form-group">
-                            <label class="text-muted small">Alternate Phone</label>
+                            <label class="text-muted small" for="add-empAlternatePhone">Alternate Phone</label>
                             <input type="text" id="add-empAlternatePhone" class="detail-input w-100">
                         </div>
                     </div>
 
-                      <div class="emp-grid emp-grid-5 mb-3">
-                          <div class="form-group">
-                              <label class="text-muted small">District</label>
-                              <input type="text" id="add-empDistrict" class="detail-input w-100">
-                          </div>
-                          <div class="form-group">
-                              <label class="text-muted small">County</label>
-                              <input type="text" id="add-empCounty" class="detail-input w-100">
-                          </div>
-                          <div class="form-group">
-                              <label class="text-muted small">Sub-County (LC-III)</label>
-                              <input type="text" id="add-empSubCounty" class="detail-input w-100">
-                          </div>
-                          <div class="form-group">
-                              <label class="text-muted small">Parish (LC-II)</label>
-                              <input type="text" id="add-empParish" class="detail-input w-100">
-                          </div>
-                          <div class="form-group">
-                              <label class="text-muted small">Village (LC-I)</label>
-                              <input type="text" id="add-empVillage" class="detail-input w-100">
-                          </div>
-                      </div>
-                  </fieldset>
+                    <div class="emp-grid emp-grid-5 mb-3">
+                        <div class="form-group">
+                            <label class="text-muted small" for="add-empDistrict">District</label>
+                            <input type="text" id="add-empDistrict" class="detail-input w-100">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-muted small" for="add-empCounty">County</label>
+                            <input type="text" id="add-empCounty" class="detail-input w-100">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-muted small" for="add-empSubCounty">Sub-County (LC-III)</label>
+                            <input type="text" id="add-empSubCounty" class="detail-input w-100">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-muted small" for="add-empParish">Parish (LC-II)</label>
+                            <input type="text" id="add-empParish" class="detail-input w-100">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-muted small" for="add-empVillage">Village (LC-I)</label>
+                            <input type="text" id="add-empVillage" class="detail-input w-100">
+                        </div>
+                    </div>
+                </fieldset>
 
-                  <!-- Professional Profile -->
-                  <fieldset class="emp-fieldset">
-                      <legend class="emp-legend">Professional Profile</legend>
-                      <div class="emp-grid emp-grid-2 mb-3">
-                          <div class="form-group">
-                              <label class="text-muted small">Skills</label>
-                              <input type="text" id="add-empSkills" class="detail-input w-100" placeholder="e.g. Project Management, Accounting">
-                          </div>
-                          <div class="form-group">
-                              <label class="text-muted small">Languages Spoken</label>
-                              <input type="text" id="add-empLanguages" class="detail-input w-100" placeholder="e.g. English, Luganda, Swahili">
-                          </div>
-                      </div>
-                  </fieldset>
+                <!-- Professional Profile -->
+                <fieldset class="emp-fieldset">
+                    <legend class="emp-legend">Professional Profile</legend>
+                    <div class="emp-grid emp-grid-2 mb-3">
+                        <div class="form-group">
+                            <label class="text-muted small" for="add-empSkills">Skills</label>
+                            <input type="text" id="add-empSkills" class="detail-input w-100" placeholder="e.g. Project Management, Accounting">
+                        </div>
+                        <div class="form-group">
+                            <label class="text-muted small" for="add-empLanguages">Languages Spoken</label>
+                            <input type="text" id="add-empLanguages" class="detail-input w-100" placeholder="e.g. English, Luganda, Swahili">
+                        </div>
+                    </div>
+                </fieldset>
 
                 <!-- DYNAMIC SECTIONS (Now also fieldsets!) -->
 
@@ -293,7 +302,7 @@
                 </fieldset>
 
                 <fieldset class="emp-fieldset" id="experiences-section">
-                    <legend class="emp-legend"></i>Experiences</legend>
+                    <legend class="emp-legend">Experiences</legend>
                     <div id="experiences-container"></div>
                 </fieldset>
 
@@ -303,7 +312,7 @@
                 </fieldset>
 
                 <fieldset class="emp-fieldset" id="documents-section">
-                    <legend class="emp-legend"></i>Other Documents</legend>
+                    <legend class="emp-legend">Other Documents</legend>
                     <div id="documents-container"></div>
                 </fieldset>
             </div>

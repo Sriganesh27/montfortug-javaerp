@@ -1,6 +1,8 @@
 package com.erp.montfortuganda.exception;
 
 import com.erp.montfortuganda.common.response.ApiResponse;
+import com.erp.montfortuganda.employee.dto.response.EmployeeCreationErrorResponse;
+import com.erp.montfortuganda.employee.exception.EmployeeCreationException;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,5 +132,36 @@ public class GlobalExceptionHandler {
         logger.error("Data integrity violation: ", ex);
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error("A database constraint was violated (e.g., duplicate entry or missing data)."));
+    }
+    @ExceptionHandler(EmployeeCreationException.class)
+    public ResponseEntity<EmployeeCreationErrorResponse>
+    handleEmployeeCreationException(
+            EmployeeCreationException exception
+    ) {
+
+        logger.warn(
+                "Employee creation failed. "
+                        + "Stage: {}, "
+                        + "Error code: {}, "
+                        + "Field: {}, "
+                        + "Message: {}",
+                exception.getStage(),
+                exception.getErrorCode(),
+                exception.getField(),
+                exception.getMessage(),
+                exception
+        );
+
+        EmployeeCreationErrorResponse response =
+                EmployeeCreationErrorResponse.of(
+                        exception.getStage(),
+                        exception.getErrorCode(),
+                        exception.getMessage(),
+                        exception.getField()
+                );
+
+        return ResponseEntity
+                .status(exception.getHttpStatus())
+                .body(response);
     }
 }

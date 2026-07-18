@@ -63,4 +63,5 @@ public class EmployeeController {
         java.util.List<com.erp.montfortuganda.employee.dto.response.EmployeeListResponse> teachers = employeeService.getActiveTeachers();
         return ResponseEntity.ok(ApiResponse.success("Teachers fetched successfully", teachers));
     }
+
 }

@@ -52,7 +52,9 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.erp.montfortuganda.employee.enums.EmployeeCreationStage;
+import com.erp.montfortuganda.employee.exception.EmployeeCreationException;
+import java.lang.IllegalArgumentException;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
@@ -83,128 +85,212 @@ public class EmployeeServiceImpl implements EmployeeService {
     private final EmployeeDocumentRepository documentRepository;
 
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public EmployeeResponse createEmployee(
             EmployeeCreateRequest request
     ) {
-        Integer branchId =
-                branchAccessService.getAccessibleBranchId(null);
+        EmployeeCreationStage currentStage =
+                EmployeeCreationStage.VALIDATION;
 
-        Branch branch = branchRepository.findById(branchId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Branch not found"
+        try {
+            Integer branchId =
+                    branchAccessService
+                            .getAccessibleBranchId(null);
+
+            Branch branch =
+                    branchRepository.findById(branchId)
+                            .orElseThrow(() ->
+                                    EmployeeCreationException
+                                            .badRequest(
+                                                    EmployeeCreationStage.VALIDATION,
+                                                    "BRANCH_NOT_FOUND",
+                                                    "The selected branch could not be found.",
+                                                    "branchId"
+                                            )
+                            );
+
+            validator.validateCreation(
+                    request,
+                    branchId
+            );
+
+            currentStage =
+                    EmployeeCreationStage.EMPLOYEE_DETAILS;
+
+            ErpEmployee employee =
+                    new ErpEmployee();
+
+            BeanUtils.copyProperties(
+                    request,
+                    employee,
+                    "departmentId",
+                    "designationId",
+                    "reportingManagerId",
+                    "contacts",
+                    "qualifications",
+                    "experiences",
+                    "documents",
+                    "accountRequest",
+                    "officialEmail",
+                    "branch",
+                    "department",
+                    "designation",
+                    "reportingManager",
+                    "employeeId",
+                    "employeeNo",
+                    "active",
+                    "employmentStatus"
+            );
+
+            if (request.getDepartmentId() != null) {
+                employee.setDepartment(
+                        getDepartmentForBranch(
+                                request.getDepartmentId(),
+                                branchId
                         )
                 );
+            }
 
-        validator.validateCreation(request, branchId);
+            if (request.getDesignationId() != null) {
+                employee.setDesignation(
+                        designationRepository
+                                .findById(
+                                        request.getDesignationId()
+                                )
+                                .orElseThrow(() ->
+                                        EmployeeCreationException
+                                                .badRequest(
+                                                        EmployeeCreationStage.EMPLOYEE_DETAILS,
+                                                        "DESIGNATION_NOT_FOUND",
+                                                        "The selected designation could not be found.",
+                                                        "designationId"
+                                                )
+                                )
+                );
+            }
 
-        ErpEmployee employee = new ErpEmployee();
+            if (request.getReportingManagerId() != null) {
+                employee.setReportingManager(
+                        getReportingManagerForBranch(
+                                request.getReportingManagerId(),
+                                branchId,
+                                null
+                        )
+                );
+            }
 
-        BeanUtils.copyProperties(
-                request,
-                employee,
-                "departmentId",
-                "designationId",
-                "reportingManagerId",
-                "contacts",
-                "qualifications",
-                "experiences",
-                "documents",
-                "accountRequest",
-                "officialEmail",
-                "branch",
-                "department",
-                "designation",
-                "reportingManager",
-                "employeeId",
-                "employeeNo",
-                "active",
-                "employmentStatus"
-        );
-
-        if (request.getDepartmentId() != null) {
-            employee.setDepartment(
-                    getDepartmentForBranch(
-                            request.getDepartmentId(),
-                            branchId
+            employee.setOfficialEmail(
+                    normalizeEmail(
+                            request.getOfficialEmail()
                     )
             );
-        }
 
-        if (request.getDesignationId() != null) {
-            employee.setDesignation(
-                    designationRepository
-                            .findById(request.getDesignationId())
-                            .orElseThrow(() ->
-                                    new ResourceNotFoundException(
-                                            "Designation not found"
-                                    )
-                            )
+            employee.setMobileNo(
+                    request.getMobileNo()
             );
-        }
-        if (request.getReportingManagerId() != null) {
-            employee.setReportingManager(
-                    getReportingManagerForBranch(
-                            request.getReportingManagerId(),
+
+            employee.setEmployeeCategory(
+                    request.getEmployeeCategory()
+            );
+
+            employee.setBranch(branch);
+
+            employee.setEmploymentStatus(
+                    EmploymentStatus.ACTIVE
+            );
+
+            employee.setActive(true);
+
+            String generatedCode =
+                    codeGenerator.generateCode(
                             branchId,
-                            null
-                    )
+                            request.getEmployeeCategory(),
+                            request.getJoiningDate()
+                    );
+
+            employee.setEmployeeNo(
+                    generatedCode
             );
+
+            ErpEmployee saved =
+                    employeeRepository.save(employee);
+
+            currentStage =
+                    EmployeeCreationStage.CONTACTS;
+
+            syncContacts(
+                    request.getContacts(),
+                    saved
+            );
+
+            currentStage =
+                    EmployeeCreationStage.QUALIFICATIONS;
+
+            syncQualifications(
+                    request.getQualifications(),
+                    saved
+            );
+
+            currentStage =
+                    EmployeeCreationStage.EXPERIENCE;
+
+            syncExperiences(
+                    request.getExperiences(),
+                    saved
+            );
+
+            currentStage =
+                    EmployeeCreationStage.EMPLOYEE_DOCUMENTS;
+
+            syncDocuments(
+                    request.getDocuments(),
+                    saved
+            );
+
+            currentStage =
+                    EmployeeCreationStage.LOGIN_ACCOUNT;
+
+            createEmployeeAccountIfRequested(
+                    request,
+                    saved,
+                    branchId
+            );
+
+            currentStage =
+                    EmployeeCreationStage.FINAL_CHECK;
+
+            employeeRepository.flush();
+
+            currentStage =
+                    EmployeeCreationStage.COMPLETED;
+
+            return mapToResponse(saved);
+
+        } catch (EmployeeCreationException exception) {
+            throw exception;
+
+        } catch (
+                BadRequestException |
+                IllegalArgumentException exception
+        ) {
+            throw EmployeeCreationException
+                    .badRequest(
+                            currentStage,
+                            determineErrorCode(currentStage),
+                            exception.getMessage(),
+                            determineErrorField(currentStage)
+                    );
+
+        } catch (Exception exception) {
+            throw EmployeeCreationException
+                    .internalError(
+                            currentStage,
+                            determineErrorCode(currentStage),
+                            determineErrorMessage(currentStage),
+                            determineErrorField(currentStage),
+                            exception
+                    );
         }
-        employee.setOfficialEmail(
-                normalizeEmail(request.getOfficialEmail())
-        );
-
-        employee.setMobileNo(request.getMobileNo());
-        employee.setEmployeeCategory(
-                request.getEmployeeCategory()
-        );
-
-        employee.setBranch(branch);
-        employee.setEmploymentStatus(
-                EmploymentStatus.ACTIVE
-        );
-        employee.setActive(true);
-
-        String generatedCode = codeGenerator.generateCode(
-                branchId,
-                request.getEmployeeCategory(),
-                request.getJoiningDate()
-        );
-
-        employee.setEmployeeNo(generatedCode);
-
-        ErpEmployee saved =
-                employeeRepository.save(employee);
-
-        syncContacts(
-                request.getContacts(),
-                saved
-        );
-
-        syncQualifications(
-                request.getQualifications(),
-                saved
-        );
-
-        syncExperiences(
-                request.getExperiences(),
-                saved
-        );
-
-        syncDocuments(
-                request.getDocuments(),
-                saved
-        );
-
-        createEmployeeAccountIfRequested(
-                request,
-                saved,
-                branchId
-        );
-
-        return mapToResponse(saved);
     }
 
     @Override
@@ -1632,20 +1718,6 @@ public class EmployeeServiceImpl implements EmployeeService {
         return path.toString();
     }
 
-    private String appendFilePath(
-            String remarks,
-            String documentPath
-    ) {
-        String prefix =
-                remarks == null || remarks.isBlank()
-                        ? ""
-                        : remarks.trim() + " ";
-
-        return prefix
-                + "[File: "
-                + documentPath
-                + "]";
-    }
     private ErpEmployee getReportingManagerForBranch(
             Long managerId,
             Integer branchId,
@@ -1742,5 +1814,113 @@ public class EmployeeServiceImpl implements EmployeeService {
         return fileName.substring(
                 dotIndex + 1
         ).toLowerCase();
+    }
+    private String determineErrorCode(
+            EmployeeCreationStage stage
+    ) {
+        return switch (stage) {
+            case VALIDATION ->
+                    "EMPLOYEE_VALIDATION_FAILED";
+
+            case EMPLOYEE_DETAILS ->
+                    "EMPLOYEE_DETAILS_FAILED";
+
+            case CONTACTS ->
+                    "CONTACT_CREATION_FAILED";
+
+            case QUALIFICATIONS ->
+                    "QUALIFICATION_CREATION_FAILED";
+
+            case EXPERIENCE ->
+                    "EXPERIENCE_CREATION_FAILED";
+
+            case QUALIFICATION_FILES ->
+                    "QUALIFICATION_FILE_FAILED";
+
+            case EXPERIENCE_FILES ->
+                    "EXPERIENCE_FILE_FAILED";
+
+            case EMPLOYEE_DOCUMENTS ->
+                    "EMPLOYEE_DOCUMENT_FAILED";
+
+            case LOGIN_ACCOUNT ->
+                    "LOGIN_CREATION_FAILED";
+
+            case FINAL_CHECK ->
+                    "FINAL_VERIFICATION_FAILED";
+
+            case COMPLETED ->
+                    "EMPLOYEE_CREATION_FAILED";
+        };
+    }
+
+    private String determineErrorMessage(
+            EmployeeCreationStage stage
+    ) {
+        return switch (stage) {
+            case VALIDATION ->
+                    "Employee information could not be validated.";
+
+            case EMPLOYEE_DETAILS ->
+                    "Employee details could not be saved.";
+
+            case CONTACTS ->
+                    "Employee contacts could not be saved.";
+
+            case QUALIFICATIONS ->
+                    "Employee qualifications could not be saved.";
+
+            case EXPERIENCE ->
+                    "Employee experience could not be saved.";
+
+            case QUALIFICATION_FILES ->
+                    "A qualification document could not be saved.";
+
+            case EXPERIENCE_FILES ->
+                    "An experience document could not be saved.";
+
+            case EMPLOYEE_DOCUMENTS ->
+                    "An employee document could not be saved.";
+
+            case LOGIN_ACCOUNT ->
+                    "The employee login account could not be created.";
+
+            case FINAL_CHECK ->
+                    "Employee creation failed during final verification.";
+
+            case COMPLETED ->
+                    "Employee creation could not be completed.";
+        };
+    }
+
+    private String determineErrorField(
+            EmployeeCreationStage stage
+    ) {
+        return switch (stage) {
+            case VALIDATION,
+                 FINAL_CHECK,
+                 COMPLETED ->
+                    null;
+
+            case EMPLOYEE_DETAILS ->
+                    "employeeDetails";
+
+            case CONTACTS ->
+                    "contacts";
+
+            case QUALIFICATIONS,
+                 QUALIFICATION_FILES ->
+                    "qualifications";
+
+            case EXPERIENCE,
+                 EXPERIENCE_FILES ->
+                    "experiences";
+
+            case EMPLOYEE_DOCUMENTS ->
+                    "documents";
+
+            case LOGIN_ACCOUNT ->
+                    "accountRequest";
+        };
     }
 }

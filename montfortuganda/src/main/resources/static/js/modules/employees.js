@@ -165,14 +165,44 @@ async function collectQualifications(viewContainer) {
             continue;
         }
 
+        const qualificationNameRequired =
+            [
+                'CERTIFICATE',
+                'DIPLOMA',
+                'GRADUATION',
+                'POST_GRADUATION',
+                'DR_PHD'
+            ].includes(employeeQualificationLevel);
+
+        const specializationRequired =
+            employeeQualificationLevel ===
+            'SENIOR_SECONDARY';
+
         if (
             !employeeQualificationLevel ||
-            !employeeQualificationName ||
             !employeeQualificationInstitutionName ||
             !employeeQualificationCompletionYear
         ) {
             throw new Error(
-                'Each qualification requires level, qualification name, institution and completion year.'
+                'Each qualification requires level, institution and completion year.'
+            );
+        }
+
+        if (
+            qualificationNameRequired &&
+            !employeeQualificationName
+        ) {
+            throw new Error(
+                'Qualification name is required for the selected level.'
+            );
+        }
+
+        if (
+            specializationRequired &&
+            !employeeQualificationSpecialization
+        ) {
+            throw new Error(
+                'Specialization or subject combination is required for Senior Secondary.'
             );
         }
 
@@ -639,8 +669,8 @@ const EmpCollections = {
             const alias = aliases[field.dataKey];
 
             return alias &&
-                data[alias] !== undefined &&
-                data[alias] !== null
+            data[alias] !== undefined &&
+            data[alias] !== null
                 ? data[alias]
                 : null;
         };
@@ -815,52 +845,6 @@ const EmpCollections = {
         btn.innerHTML = btnText;
         btn.addEventListener('click', () => this.createRow(container, fieldsDef, rowClass, null, true));
         section.appendChild(btn);
-    },
-    gather: function(
-        viewContainer,
-        containerId,
-        rowClass,
-        extractFn
-    ) {
-        const container =
-            viewContainer.querySelector(containerId);
-
-        if (!container) return [];
-
-        const rows =
-            container.querySelectorAll(`.${rowClass}`);
-
-        const data = [];
-
-        rows.forEach((row, index) => {
-            const item = extractFn(row, index);
-
-            if (
-                item &&
-                Object.values(item).some(
-                    value =>
-                        value !== null &&
-                        value !== ''
-                )
-            ) {
-                data.push(item);
-            }
-        });
-
-        return data;
-    },
-    gatherAsync: async function(viewContainer, containerId, rowClass, extractFnAsync) {
-        const container = viewContainer.querySelector(containerId);
-        if (!container) return [];
-        const rows = Array.from(container.querySelectorAll(`.${rowClass}`));
-        const data = [];
-        for (const row of rows) {
-            const item = await extractFnAsync(row);
-            if (item && Object.values(item).some(v => v !== null && v !== '')) {
-                data.push(item);
-            }
-        }
-        return data;
     },
     fileToBase64: function(file) {
         return new Promise((resolve, reject) => {
@@ -1277,11 +1261,780 @@ function initEmployeesView() {
     void loadEmployees();
 }
 
+
+const AddEmployeeValidation = {
+    staticRequiredFields: [
+        {
+            selector: '#add-empFirstName',
+            message: 'First Name is required.'
+        },
+        {
+            selector: '#add-empLastName',
+            message: 'Last Name is required.'
+        },
+        {
+            selector: '#add-empGender',
+            message: 'Gender is required.'
+        },
+        {
+            selector: '#add-empDob',
+            message: 'Date of Birth is required.'
+        },
+        {
+            selector: '#add-empDepartment',
+            message: 'Department is required.'
+        },
+        {
+            selector: '#add-empDesignation',
+            message: 'Designation is required.'
+        },
+        {
+            selector: '#add-empCategory',
+            message: 'Employee Category is required.'
+        },
+        {
+            selector: '#add-empType',
+            message: 'Employee Type is required.'
+        },
+        {
+            selector: '#add-empMode',
+            message: 'Employment Mode is required.'
+        },
+        {
+            selector: '#add-empJoiningDate',
+            message: 'Joining Date is required.'
+        },
+        {
+            selector: '#add-empNationality',
+            message: 'Nationality is required.'
+        },
+        {
+            selector: '#add-empPhone',
+            message: 'Mobile Number is required.'
+        }
+    ],
+
+    getValue: function(field) {
+        if (!field) return '';
+
+        if (field.type === 'file') {
+            return field.files?.length
+                ? field.files[0]
+                : '';
+        }
+
+        if (field.type === 'checkbox') {
+            return field.checked;
+        }
+
+        return String(field.value || '').trim();
+    },
+
+    getErrorContainer: function(field) {
+        return field?.closest(
+            '.form-group, .emp-child-field'
+        ) || null;
+    },
+
+    setFieldError: function(field, message) {
+        if (!field) return;
+
+        const container =
+            this.getErrorContainer(field);
+
+        field.classList.add(
+            'emp-input-invalid'
+        );
+
+        field.setAttribute(
+            'aria-invalid',
+            'true'
+        );
+
+        if (container) {
+            container.classList.add(
+                'emp-field-invalid'
+            );
+
+            container.dataset.error =
+                message;
+        }
+    },
+
+    clearFieldError: function(field) {
+        if (!field) return;
+
+        const container =
+            this.getErrorContainer(field);
+
+        field.classList.remove(
+            'emp-input-invalid'
+        );
+
+        field.removeAttribute(
+            'aria-invalid'
+        );
+
+        if (container) {
+            container.classList.remove(
+                'emp-field-invalid'
+            );
+
+            delete container.dataset.error;
+        }
+    },
+
+    clearAll: function(viewContainer) {
+        viewContainer
+            .querySelectorAll(
+                '.emp-input-invalid'
+            )
+            .forEach(field => {
+                field.classList.remove(
+                    'emp-input-invalid'
+                );
+
+                field.removeAttribute(
+                    'aria-invalid'
+                );
+            });
+
+        viewContainer
+            .querySelectorAll(
+                '.emp-field-invalid'
+            )
+            .forEach(container => {
+                container.classList.remove(
+                    'emp-field-invalid'
+                );
+
+                delete container.dataset.error;
+            });
+
+        const summary =
+            viewContainer.querySelector(
+                '#add-emp-validation-summary'
+            );
+
+        const summaryText =
+            viewContainer.querySelector(
+                '#add-emp-validation-summary-text'
+            );
+
+        if (summary) {
+            summary.classList.add('hidden');
+        }
+
+        if (summaryText) {
+            summaryText.textContent = '';
+        }
+    },
+
+    addError: function(
+        errors,
+        field,
+        message
+    ) {
+        if (!field) return;
+
+        this.setFieldError(
+            field,
+            message
+        );
+
+        errors.push({
+            field,
+            message
+        });
+    },
+
+    hasAnyRowValue: function(row) {
+        return Array.from(
+            row.querySelectorAll(
+                'input, select, textarea'
+            )
+        ).some(field => {
+            if (field.type === 'file') {
+                return Boolean(
+                    field.files?.length
+                );
+            }
+
+            if (
+                field.type === 'checkbox' ||
+                field.type === 'radio'
+            ) {
+                return field.checked;
+            }
+
+            return Boolean(
+                String(
+                    field.value || ''
+                ).trim()
+            );
+        });
+    },
+
+    validateStaticFields: function(
+        viewContainer,
+        errors
+    ) {
+        this.staticRequiredFields.forEach(
+            rule => {
+                const field =
+                    viewContainer.querySelector(
+                        rule.selector
+                    );
+
+                if (
+                    !field ||
+                    this.getValue(field)
+                ) {
+                    return;
+                }
+
+                this.addError(
+                    errors,
+                    field,
+                    rule.message
+                );
+            }
+        );
+    },
+
+    validateDateOfBirth: function(
+        viewContainer,
+        errors
+    ) {
+        const field =
+            viewContainer.querySelector(
+                '#add-empDob'
+            );
+
+        const value =
+            this.getValue(field);
+
+        if (!value) return;
+
+        const birthDate =
+            new Date(`${value}T00:00:00`);
+
+        if (
+            Number.isNaN(
+                birthDate.getTime()
+            )
+        ) {
+            this.addError(
+                errors,
+                field,
+                'Enter a valid Date of Birth.'
+            );
+
+            return;
+        }
+
+        const today = new Date();
+
+        let age =
+            today.getFullYear() -
+            birthDate.getFullYear();
+
+        const monthDifference =
+            today.getMonth() -
+            birthDate.getMonth();
+
+        if (
+            monthDifference < 0 ||
+            (
+                monthDifference === 0 &&
+                today.getDate() <
+                birthDate.getDate()
+            )
+        ) {
+            age--;
+        }
+
+        if (age < 18) {
+            this.addError(
+                errors,
+                field,
+                'Employee must be at least 18 years old.'
+            );
+        }
+    },
+
+    validateLogin: function(
+        viewContainer,
+        errors
+    ) {
+        const sendEmail =
+            viewContainer.querySelector(
+                '#add-sendLoginEmail'
+            )?.checked ?? false;
+
+        if (!sendEmail) return;
+
+        const emailField =
+            viewContainer.querySelector(
+                '#add-empEmail'
+            );
+
+        const emailValue =
+            this.getValue(emailField);
+
+        if (!emailValue) {
+            this.addError(
+                errors,
+                emailField,
+                'Official Email is required when sending login credentials.'
+            );
+
+            return;
+        }
+
+        if (
+            !emailField.checkValidity()
+        ) {
+            this.addError(
+                errors,
+                emailField,
+                'Enter a valid Official Email address.'
+            );
+        }
+    },
+
+    validateContacts: function(
+        viewContainer,
+        errors
+    ) {
+        const rows =
+            viewContainer.querySelectorAll(
+                '#contacts-container .contact-row'
+            );
+
+        rows.forEach((row, index) => {
+            if (!this.hasAnyRowValue(row)) {
+                return;
+            }
+
+            const name =
+                row.querySelector('.c-name');
+
+            const relationship =
+                row.querySelector('.c-relation');
+
+            const mobile =
+                row.querySelector('.c-phone');
+
+            if (!this.getValue(name)) {
+                this.addError(
+                    errors,
+                    name,
+                    `Contact ${index + 1}: Name is required.`
+                );
+            }
+
+            if (!this.getValue(relationship)) {
+                this.addError(
+                    errors,
+                    relationship,
+                    `Contact ${index + 1}: Relationship is required.`
+                );
+            }
+
+            if (!this.getValue(mobile)) {
+                this.addError(
+                    errors,
+                    mobile,
+                    `Contact ${index + 1}: Mobile Number is required.`
+                );
+            }
+        });
+    },
+
+    validateQualifications: function(
+        viewContainer,
+        errors
+    ) {
+        const rows =
+            viewContainer.querySelectorAll(
+                '#qualifications-container .qual-row'
+            );
+
+        const qualificationNameLevels =
+            new Set([
+                'CERTIFICATE',
+                'DIPLOMA',
+                'GRADUATION',
+                'POST_GRADUATION',
+                'DR_PHD'
+            ]);
+
+        rows.forEach((row, index) => {
+            if (!this.hasAnyRowValue(row)) {
+                return;
+            }
+
+            const level =
+                row.querySelector('.q-level');
+
+            const name =
+                row.querySelector('.q-name');
+
+            const customLevel =
+                row.querySelector(
+                    '.q-custom-level'
+                );
+
+            const institution =
+                row.querySelector(
+                    '.q-institution'
+                );
+
+            const specializationField =
+                row.querySelector(
+                    '.q-specialization'
+                );
+
+            const year =
+                row.querySelector('.q-year');
+
+            const selectedLevel =
+                this.getValue(level);
+
+            if (!selectedLevel) {
+                this.addError(
+                    errors,
+                    level,
+                    `Qualification ${index + 1}: Level is required.`
+                );
+            }
+
+            if (
+                qualificationNameLevels.has(
+                    selectedLevel
+                ) &&
+                !this.getValue(name)
+            ) {
+                this.addError(
+                    errors,
+                    name,
+                    `Qualification ${index + 1}: Qualification Name is required for this level.`
+                );
+            }
+
+            if (
+                selectedLevel ===
+                'SENIOR_SECONDARY' &&
+                !this.getValue(
+                    specializationField
+                )
+            ) {
+                this.addError(
+                    errors,
+                    specializationField,
+                    `Qualification ${index + 1}: Specialization or subject combination is required.`
+                );
+            }
+
+            if (
+                selectedLevel === 'OTHER' &&
+                !this.getValue(customLevel)
+            ) {
+                this.addError(
+                    errors,
+                    customLevel,
+                    `Qualification ${index + 1}: Enter the custom qualification level.`
+                );
+            }
+
+            if (!this.getValue(institution)) {
+                this.addError(
+                    errors,
+                    institution,
+                    `Qualification ${index + 1}: Institution is required.`
+                );
+            }
+
+            if (!this.getValue(year)) {
+                this.addError(
+                    errors,
+                    year,
+                    `Qualification ${index + 1}: Completion Year is required.`
+                );
+            }
+        });
+    },
+
+    validateExperiences: function(
+        viewContainer,
+        errors
+    ) {
+        const rows =
+            viewContainer.querySelectorAll(
+                '#experiences-container .exp-row'
+            );
+
+        rows.forEach((row, index) => {
+            if (!this.hasAnyRowValue(row)) {
+                return;
+            }
+
+            const company =
+                row.querySelector('.e-company');
+
+            const type =
+                row.querySelector('.e-type');
+
+            const start =
+                row.querySelector('.e-start');
+
+            const end =
+                row.querySelector('.e-end');
+
+            if (!this.getValue(company)) {
+                this.addError(
+                    errors,
+                    company,
+                    `Experience ${index + 1}: Organisation is required.`
+                );
+            }
+
+            if (!this.getValue(type)) {
+                this.addError(
+                    errors,
+                    type,
+                    `Experience ${index + 1}: Employment Type is required.`
+                );
+            }
+
+            if (!this.getValue(start)) {
+                this.addError(
+                    errors,
+                    start,
+                    `Experience ${index + 1}: Start Date is required.`
+                );
+            }
+
+            if (
+                this.getValue(start) &&
+                this.getValue(end) &&
+                this.getValue(end) <
+                this.getValue(start)
+            ) {
+                this.addError(
+                    errors,
+                    end,
+                    `Experience ${index + 1}: End Date cannot be before Start Date.`
+                );
+            }
+        });
+    },
+
+    validateDocuments: function(
+        viewContainer,
+        errors
+    ) {
+        const rows =
+            viewContainer.querySelectorAll(
+                '#documents-container .doc-row'
+            );
+
+        rows.forEach((row, index) => {
+            if (!this.hasAnyRowValue(row)) {
+                return;
+            }
+
+            const type =
+                row.querySelector('.d-type');
+
+            const name =
+                row.querySelector('.d-name');
+
+            const file =
+                row.querySelector('.d-file');
+
+            const recordId =
+                getRowId(row);
+
+            if (!this.getValue(type)) {
+                this.addError(
+                    errors,
+                    type,
+                    `Document ${index + 1}: Document Type is required.`
+                );
+            }
+
+            if (!this.getValue(name)) {
+                this.addError(
+                    errors,
+                    name,
+                    `Document ${index + 1}: Document Name is required.`
+                );
+            }
+
+            if (
+                !recordId &&
+                !this.getValue(file)
+            ) {
+                this.addError(
+                    errors,
+                    file,
+                    `Document ${index + 1}: Upload a file for the new document.`
+                );
+            }
+        });
+    },
+
+    showSummary: function(
+        viewContainer,
+        errors
+    ) {
+        const summary =
+            viewContainer.querySelector(
+                '#add-emp-validation-summary'
+            );
+
+        const summaryText =
+            viewContainer.querySelector(
+                '#add-emp-validation-summary-text'
+            );
+
+        if (!summary || !summaryText) {
+            return;
+        }
+
+        const uniqueMessages =
+            [
+                ...new Set(
+                    errors.map(
+                        error => error.message
+                    )
+                )
+            ];
+
+        summaryText.textContent =
+            uniqueMessages.join(' • ');
+
+        summary.classList.remove(
+            'hidden'
+        );
+    },
+
+    validate: function(viewContainer) {
+        this.clearAll(viewContainer);
+
+        const errors = [];
+
+        this.validateStaticFields(
+            viewContainer,
+            errors
+        );
+
+        this.validateDateOfBirth(
+            viewContainer,
+            errors
+        );
+
+        this.validateLogin(
+            viewContainer,
+            errors
+        );
+
+        this.validateContacts(
+            viewContainer,
+            errors
+        );
+
+        this.validateQualifications(
+            viewContainer,
+            errors
+        );
+
+        this.validateExperiences(
+            viewContainer,
+            errors
+        );
+
+        this.validateDocuments(
+            viewContainer,
+            errors
+        );
+
+        if (errors.length === 0) {
+            return true;
+        }
+
+        this.showSummary(
+            viewContainer,
+            errors
+        );
+
+        const firstField =
+            errors[0].field;
+
+        firstField.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+        window.setTimeout(
+            () => firstField.focus(),
+            250
+        );
+
+        return false;
+    },
+
+    bindLiveClearing: function(
+        viewContainer
+    ) {
+        const clearHandler = event => {
+            const field = event.target;
+
+            if (
+                !field.matches(
+                    'input, select, textarea'
+                )
+            ) {
+                return;
+            }
+
+            this.clearFieldError(field);
+
+            const summary =
+                viewContainer.querySelector(
+                    '#add-emp-validation-summary'
+                );
+
+            if (summary) {
+                summary.classList.add(
+                    'hidden'
+                );
+            }
+        };
+
+        viewContainer.addEventListener(
+            'input',
+            clearHandler
+        );
+
+        viewContainer.addEventListener(
+            'change',
+            clearHandler
+        );
+    }
+};
+
 function initAddEmployeeView() {
     const viewContainer =
         document.querySelector('#ba-add-employee-view');
 
     if (!viewContainer) return;
+
+    AddEmployeeValidation.bindLiveClearing(
+        viewContainer
+    );
 
     async function loadAddSelectOptions() {
         try {
@@ -1521,9 +2274,14 @@ function initAddEmployeeView() {
                 today.getDate()
             );
 
+            const maxDobDateString =
+                maxDobDate
+                    .toISOString()
+                    .split('T')[0];
+
             createErpCalendar('#add-empDob', {
-                maxDate: maxDobDate,
-                defaultDate: maxDobDate
+                maxDate: maxDobDateString,
+                defaultDate: maxDobDateString
             });
 
             createErpCalendar(
@@ -1562,7 +2320,7 @@ function initAddEmployeeView() {
             joiningDateInput['_flatpickr']
         ) {
             joiningDateInput['_flatpickr']
-                .setDate(new Date());
+                .setDate(todayString);
         } else if (joiningDateInput) {
             joiningDateInput.value =
                 todayString;
@@ -1679,14 +2437,9 @@ function initAddEmployeeView() {
                         }
                     );
                 } else {
-                    if (
-                        typeof AppToast !==
-                        'undefined'
-                    ) {
-                        AppToast.error(
-                            'Importer module not found.'
-                        );
-                    }
+                    showErrorMessage(
+                        'Importer module not found.'
+                    );
 
                     console.warn(
                         'AppImporter is not defined.'
@@ -1703,49 +2456,22 @@ function initAddEmployeeView() {
         async function(event) {
             event.preventDefault();
 
+            if (
+                !AddEmployeeValidation.validate(
+                    viewContainer
+                )
+            ) {
+                showErrorMessage(
+                    'Please correct the highlighted fields.'
+                );
+
+                return;
+            }
+
             const dobValue =
                 viewContainer.querySelector(
                     '#add-empDob'
                 )?.value || null;
-
-            if (!dobValue) {
-                showErrorMessage(
-                    'Date of Birth is required.'
-                );
-                return;
-            }
-
-            const birthDate =
-                new Date(dobValue);
-
-            const today =
-                new Date();
-
-            let age =
-                today.getFullYear() -
-                birthDate.getFullYear();
-
-            const monthDifference =
-                today.getMonth() -
-                birthDate.getMonth();
-
-            if (
-                monthDifference < 0 ||
-                (
-                    monthDifference === 0 &&
-                    today.getDate() <
-                    birthDate.getDate()
-                )
-            ) {
-                age--;
-            }
-
-            if (age < 18) {
-                showErrorMessage(
-                    'Employee must be at least 18 years old.'
-                );
-                return;
-            }
 
             const valOrNull = selector => {
                 const element =
@@ -1775,24 +2501,6 @@ function initAddEmployeeView() {
 
             const officialEmail =
                 valOrNull('#add-empEmail');
-
-            if (
-                generateLogin &&
-                sendLoginEmail &&
-                !officialEmail
-            ) {
-                showErrorMessage(
-                    'Official email is required to send login credentials.'
-                );
-
-                viewContainer
-                    .querySelector(
-                        '#add-empEmail'
-                    )
-                    ?.focus();
-
-                return;
-            }
 
             const submitButton =
                 form.querySelector(
@@ -2067,6 +2775,10 @@ function initAddEmployeeView() {
 
                 form.reset();
 
+                AddEmployeeValidation.clearAll(
+                    viewContainer
+                );
+
                 const loginOptionsReset =
                     viewContainer.querySelector(
                         '#add-loginOptions'
@@ -2123,17 +2835,20 @@ function initAddEmployeeView() {
                         '#add-empJoiningDate'
                     );
 
+                const resetTodayString =
+                    new Date()
+                        .toISOString()
+                        .split('T')[0];
+
                 if (
                     joiningDateReset &&
                     joiningDateReset['_flatpickr']
                 ) {
                     joiningDateReset['_flatpickr']
-                        .setDate(new Date());
+                        .setDate(resetTodayString);
                 } else if (joiningDateReset) {
                     joiningDateReset.value =
-                        new Date()
-                            .toISOString()
-                            .split('T')[0];
+                        resetTodayString;
                 }
             } catch (error) {
                 console.error(error);
