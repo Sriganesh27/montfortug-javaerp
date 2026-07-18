@@ -1,9 +1,7 @@
-package com.erp.montfortuganda.auth;
+package com.erp.montfortuganda.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serial;
@@ -14,48 +12,62 @@ import java.time.LocalDateTime;
 @Entity
 @DynamicUpdate
 @Table(
-        name = "erp_role_permissions",
+        name = "erp_user_sessions",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_role_permission",
-                        columnNames = {"role_id", "permission_id"}
+                        name = "uk_session_token",
+                        columnNames = "session_token"
                 )
         }
 )
-@EqualsAndHashCode(exclude = {"role", "permission"})
-@ToString(exclude = {"role", "permission"})
-public class ErpRolePermission implements Serializable {
+public class ErpUserSession implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "role_permission_id")
-    private Long rolePermissionId;
+    @Column(name = "session_id")
+    private Long sessionId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
-            name = "role_id",
+            name = "user_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_rolepermission_role")
+            foreignKey = @ForeignKey(name = "fk_usersession_user")
     )
-    private ErpRole role;
+    private User user;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "permission_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_rolepermission_permission")
-    )
-    private ErpPermission permission;
+    @Column(name = "session_token", nullable = false, unique = true, length = 255)
+    private String sessionToken;
+
+    @Column(name = "login_time", nullable = false)
+    private LocalDateTime loginTime;
+
+    @Column(name = "last_activity_time", nullable = false)
+    private LocalDateTime lastActivityTime;
+
+    @Column(name = "expiry_time", nullable = false)
+    private LocalDateTime expiryTime;
+
+    @Column(name = "ip_address", length = 45)
+    private String ipAddress;
+
+    @Column(name = "device_name", length = 255)
+    private String deviceName;
+
+    @Column(name = "browser", length = 150)
+    private String browser;
+
+    @Column(name = "operating_system", length = 150)
+    private String operatingSystem;
 
     @Column(name = "active", nullable = false)
     private Boolean active = true;
 
     @Version
     @Column(name = "version", nullable = false)
-    private Long version;
+    private Long version = 0L;
 
     @Column(name = "created_by")
     private Long createdBy;
@@ -77,6 +89,14 @@ public class ErpRolePermission implements Serializable {
         }
 
         LocalDateTime now = LocalDateTime.now();
+
+        if (loginTime == null) {
+            loginTime = now;
+        }
+
+        if (lastActivityTime == null) {
+            lastActivityTime = now;
+        }
 
         if (createdAt == null) {
             createdAt = now;

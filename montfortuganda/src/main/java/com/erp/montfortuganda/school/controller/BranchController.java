@@ -1,6 +1,6 @@
 package com.erp.montfortuganda.school.controller;
 
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.repository.BranchRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

@@ -8,7 +8,7 @@ import com.erp.montfortuganda.employee.entity.ErpEmployee;
 import com.erp.montfortuganda.employee.enums.*;
 import com.erp.montfortuganda.employee.repository.EmployeeRepository;
 import com.erp.montfortuganda.school.repository.BranchRepository;
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

@@ -1,5 +1,18 @@
 /* global apiMultipart, apiGet, showErrorMessage, showSuccessMessage */
+function getRequiredBranchId() {
+    const branchId = Number.parseInt(
+        localStorage.getItem('user_branch'),
+        10
+    );
 
+    if (!Number.isInteger(branchId) || branchId <= 0) {
+        throw new Error(
+            'No valid branch is assigned to the current user.'
+        );
+    }
+
+    return branchId;
+}
 const AppImporter = (function() {
     let modalEl, titleEl, descEl, fileInput, uploadBtn, cancelBtn;
     let progressContainer, statusText, progressBar;
@@ -151,7 +164,7 @@ const AppImporter = (function() {
                 
                 try {
                     // Read real branchId from session
-                    const branchId = parseInt(localStorage.getItem('user_branch')) || 1;
+                    const branchId = getRequiredBranchId();
                     const res = await apiMultipart(`/import/${moduleName}?branchId=${branchId}&userId=0`, 'POST', formData);
                     const jobId = typeof res === 'object' ? (res.data || res.jobId) : res;
                     pollProgress(jobId, onSuccess);

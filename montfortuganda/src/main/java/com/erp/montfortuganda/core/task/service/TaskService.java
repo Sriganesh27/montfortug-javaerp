@@ -1,6 +1,6 @@
 package com.erp.montfortuganda.core.task.service;
 
-import com.erp.montfortuganda.auth.User;
+import com.erp.montfortuganda.auth.entity.User;
 import com.erp.montfortuganda.core.task.entity.ErpTask;
 import com.erp.montfortuganda.core.task.repository.ErpTaskRepository;
 import lombok.RequiredArgsConstructor;

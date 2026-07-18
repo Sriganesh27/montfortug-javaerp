@@ -1,6 +1,6 @@
 package com.erp.montfortuganda.core.task.repository;
 
-import com.erp.montfortuganda.auth.User;
+import com.erp.montfortuganda.auth.entity.User;
 import com.erp.montfortuganda.core.task.entity.ErpTask;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

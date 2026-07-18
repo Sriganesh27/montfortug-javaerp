@@ -1,6 +1,82 @@
 // ==========================================
-// GLOBAL TABLE UTILITIES
+// GLOBAL IDLE SESSION TIMEOUT
 // ==========================================
+const ERP_IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
+const ERP_LAST_ACTIVITY_KEY = 'erp_last_activity';
+
+let erpIdleTimer = null;
+let erpLogoutStarted = false;
+
+function clearLocalSessionData() {
+    localStorage.removeItem('user_role');
+    localStorage.removeItem('username');
+    localStorage.removeItem('user_branch');
+    localStorage.removeItem('school_id');
+    localStorage.removeItem('branch_id');
+    localStorage.removeItem('permissions');
+    localStorage.removeItem(ERP_LAST_ACTIVITY_KEY);
+}
+
+async function logoutDueToInactivity() {
+    if (erpLogoutStarted) return;
+    erpLogoutStarted = true;
+
+    clearTimeout(erpIdleTimer);
+
+    try {
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            credentials: 'include'
+        });
+    } catch (error) {
+        console.warn('Backend logout failed during inactivity timeout');
+    }
+
+    clearLocalSessionData();
+
+    if (typeof window.showSessionTimeoutModal === 'function') {
+        window.showSessionTimeoutModal({
+            title: 'Session Expired',
+            message: 'You were logged out because there was no activity for 1 hour.',
+            buttonText: 'Login Again',
+            redirectUrl: '/login.html'
+        });
+    } else {
+        window.location.href = '/login.html';
+    }
+}
+
+function scheduleIdleTimeout() {
+    clearTimeout(erpIdleTimer);
+
+    const lastActivity = Number(
+        localStorage.getItem(ERP_LAST_ACTIVITY_KEY) || Date.now()
+    );
+
+    const elapsed = Date.now() - lastActivity;
+    const remaining = ERP_IDLE_TIMEOUT_MS - elapsed;
+
+    if (remaining <= 0) {
+        void logoutDueToInactivity();
+        return;
+    }
+
+    erpIdleTimer = setTimeout(
+        logoutDueToInactivity,
+        remaining
+    );
+}
+
+function recordErpActivity() {
+    if (erpLogoutStarted) return;
+
+    localStorage.setItem(
+        ERP_LAST_ACTIVITY_KEY,
+        Date.now().toString()
+    );
+
+    scheduleIdleTimeout();
+}
 window.renderEmptyTableMessage = function(tbody, colSpan, message) {
     if (!tbody) return;
     tbody.textContent = '';
@@ -35,7 +111,33 @@ document.addEventListener('DOMContentLoaded', async function() {
         window.location.href = '/login';
         return;
     }
+    const activityEvents = [
+        'mousedown',
+        'keydown',
+        'scroll',
+        'touchstart'
+    ];
 
+    activityEvents.forEach(eventName => {
+        document.addEventListener(eventName, recordErpActivity, {
+            passive: true
+        });
+    });
+
+    if (!localStorage.getItem(ERP_LAST_ACTIVITY_KEY)) {
+        localStorage.setItem(
+            ERP_LAST_ACTIVITY_KEY,
+            Date.now().toString()
+        );
+    }
+
+    scheduleIdleTimeout();
+
+    window.addEventListener('storage', function(event) {
+        if (event.key === ERP_LAST_ACTIVITY_KEY) {
+            scheduleIdleTimeout();
+        }
+    });
     // Convert SUPER_ADMIN to superadmin for the secure clean URL
     let urlRole = 'admin'; // Default fallback
     let safeUserRole = userRole ? userRole.toUpperCase().replace(/\s+/g, '_') : '';
@@ -84,12 +186,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
 
             // 2. Clear local UI variables and redirect
-            localStorage.removeItem('user_role');
-            localStorage.removeItem('username');
-            localStorage.removeItem('user_branch');
-            localStorage.removeItem('school_id');
-            localStorage.removeItem('branch_id');
-            localStorage.removeItem('permissions');
+            erpLogoutStarted = true;
+            clearTimeout(erpIdleTimer);
+            clearLocalSessionData();
+
             window.location.href = '/login.html';
         });
 

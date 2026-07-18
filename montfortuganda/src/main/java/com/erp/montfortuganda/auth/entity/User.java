@@ -1,7 +1,7 @@
-package com.erp.montfortuganda.auth;
+package com.erp.montfortuganda.auth.entity;
 
 import com.erp.montfortuganda.model.AuditableEntity;
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
@@ -13,6 +13,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
+import lombok.AccessLevel;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,12 +70,15 @@ public class User extends AuditableEntity {
     // SECURITY MAPPINGS
     // ==========================================
 
+    @Setter(AccessLevel.NONE)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ErpUserRole> userRoles = new ArrayList<>();
 
+    @Setter(AccessLevel.NONE)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ErpUserSession> sessions = new ArrayList<>();
 
+    @Setter(AccessLevel.NONE)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ErpLoginHistory> loginHistory = new ArrayList<>();
 

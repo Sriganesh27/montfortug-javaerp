@@ -1,11 +1,11 @@
 package com.erp.montfortuganda.auth.controller;
 
-import com.erp.montfortuganda.auth.User;
+import com.erp.montfortuganda.auth.entity.User;
 import com.erp.montfortuganda.auth.repository.UserRepository;
 import com.erp.montfortuganda.auth.dto.UserRequest;
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.repository.BranchRepository;
-import com.erp.montfortuganda.auth.ErpUserRole;
+import com.erp.montfortuganda.auth.entity.ErpUserRole;
 import com.erp.montfortuganda.auth.repository.ErpRoleRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;

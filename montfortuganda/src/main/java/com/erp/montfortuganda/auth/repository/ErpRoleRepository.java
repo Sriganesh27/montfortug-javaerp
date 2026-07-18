@@ -1,6 +1,6 @@
 package com.erp.montfortuganda.auth.repository;
 
-import com.erp.montfortuganda.auth.ErpRole;
+import com.erp.montfortuganda.auth.entity.ErpRole;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

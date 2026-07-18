@@ -9,45 +9,122 @@ document.addEventListener('viewLoaded', function(e) {
         }
     }
 });
+function getRequiredBranchId() {
+    const branchId = Number.parseInt(
+        localStorage.getItem('user_branch'),
+        10
+    );
 
+    if (!Number.isInteger(branchId) || branchId <= 0) {
+        throw new Error(
+            'No valid branch is assigned to the current user.'
+        );
+    }
+
+    return branchId;
+}
 let currentDetailEmpId = null;
 
 const EmpCollections = {
     contactFields: [
-        { placeholder: 'Name', className: 'c-name', dataKey: 'contactName' },
-        { placeholder: 'Relation', className: 'c-relation', dataKey: 'relationship' },
-        { placeholder: 'Phone', className: 'c-phone', dataKey: 'phone' },
-        { placeholder: 'Email', className: 'c-email', type: 'email', dataKey: 'email' }
-    ],
-    qualFields: [
-        { 
-            placeholder: 'Level', 
-            className: 'q-level', 
-            dataKey: 'qualificationLevel',
+        {
+            placeholder: 'Name',
+            className: 'c-name',
+            dataKey: 'employeeContactName'
+        },
+        {
+            placeholder: 'Relationship',
+            className: 'c-relation',
+            dataKey: 'employeeContactRelationship',
             type: 'select',
             options: [
-                { value: 'PRIMARY', text: 'Primary' },
-                { value: 'SECONDARY', text: 'Secondary' },
-                { value: 'SENIOR_SECONDARY', text: 'Senior Secondary' },
-                { value: 'CERTIFICATE', text: 'Certificate' },
-                { value: 'DIPLOMA', text: 'Diploma' },
-                { value: 'GRADUATION', text: 'Graduation' },
-                { value: 'POST_GRADUATION', text: 'Post Graduation' },
-                { value: 'DR_PHD', text: 'Dr (PHD)' },
+                { value: '', text: '-- Select Relationship --' },
+                { value: 'FATHER', text: 'Father' },
+                { value: 'MOTHER', text: 'Mother' },
+                { value: 'BROTHER', text: 'Brother' },
+                { value: 'SISTER', text: 'Sister' },
+                { value: 'SPOUSE', text: 'Spouse' },
+                { value: 'SON', text: 'Son' },
+                { value: 'DAUGHTER', text: 'Daughter' },
+                { value: 'GUARDIAN', text: 'Guardian' },
+                { value: 'RELATIVE', text: 'Relative' },
+                { value: 'FRIEND', text: 'Friend' },
+                { value: 'MANAGER', text: 'Manager' },
+                { value: 'REFERENCE', text: 'Reference' },
                 { value: 'OTHER', text: 'Other' }
             ]
         },
-        { placeholder: 'Custom Level (If Other)', className: 'q-custom', dataKey: 'customLevel' },
-        { placeholder: 'Subject / Specialization', className: 'q-inst', dataKey: 'institution' },
-        { placeholder: 'Division / Grade', className: 'q-grade', dataKey: 'qualificationGrade' },
-        { placeholder: 'Year', className: 'q-year', type: 'number', dataKey: 'passingYear' },
-        { placeholder: 'Upload Cert', className: 'q-file', type: 'file', dataKey: 'fileData' }
+        {
+            placeholder: 'Phone',
+            className: 'c-phone',
+            dataKey: 'employeeContactMobile'
+        },
+        {
+            placeholder: 'Email',
+            className: 'c-email',
+            type: 'email',
+            dataKey: 'employeeContactEmail'
+        }
     ],
+        qualFields: [
+            {
+                placeholder: 'Qualification Level',
+                className: 'q-level',
+                dataKey: 'employeeQualificationLevel',
+                type: 'select',
+                options: [
+                    { value: '', text: '-- Select Level --' },
+                    { value: 'PRIMARY', text: 'Primary' },
+                    { value: 'SECONDARY', text: 'Secondary' },
+                    { value: 'SENIOR_SECONDARY', text: 'Senior Secondary' },
+                    { value: 'CERTIFICATE', text: 'Certificate' },
+                    { value: 'DIPLOMA', text: 'Diploma' },
+                    { value: 'GRADUATION', text: 'Graduation' },
+                    { value: 'POST_GRADUATION', text: 'Post Graduation' },
+                    { value: 'DR_PHD', text: 'Doctorate / PhD' },
+                    { value: 'OTHER', text: 'Other' }
+                ]
+            },
+            {
+                placeholder: 'Enter Other Qualification',
+                className: 'q-custom-level',
+                dataKey: 'employeeQualificationName',
+                conditional: 'other-level'
+            },
+            {
+                placeholder: 'Institution / School / College',
+                className: 'q-institution',
+                dataKey: 'employeeQualificationInstitutionName'
+            },
+            {
+                placeholder: 'Specialization / Subject',
+                className: 'q-specialization',
+                dataKey: 'employeeQualificationSpecialization',
+                conditional: 'specialization'
+            },
+            {
+                placeholder: 'Division / Grade',
+                className: 'q-grade',
+                dataKey: 'employeeQualificationGrade'
+            },
+            {
+                placeholder: 'Completion Year',
+                className: 'q-year',
+                type: 'number',
+                dataKey: 'employeeQualificationCompletionYear'
+            },
+            {
+                placeholder: 'Upload Certificate',
+                className: 'q-file',
+                type: 'file',
+                dataKey: 'fileData'
+            }
+        ],
     expFields: [
         { placeholder: 'Organisation', className: 'e-company', dataKey: 'companyName' },
-        { 
-            placeholder: 'Type', 
-            className: 'e-type', 
+        {
+            placeholder: 'Type',
+            className: 'e-type',
             dataKey: 'employeeExperienceType',
             type: 'select',
             options: [
@@ -68,48 +145,140 @@ const EmpCollections = {
         { placeholder: 'Upload Doc', className: 'e-file', type: 'file', dataKey: 'fileData' }
     ],
     docFields: [
-        { placeholder: 'Type', className: 'd-type', dataKey: 'documentType' },
-        { placeholder: 'Number', className: 'd-num', dataKey: 'documentNumber' },
-        { placeholder: 'Remarks', className: 'd-remarks', dataKey: 'remarks' },
-        { placeholder: 'Upload Doc', className: 'd-file', type: 'file', dataKey: 'fileData' }
+        {
+            placeholder: 'Document Type',
+            className: 'd-type',
+            dataKey: 'documentType',
+            type: 'select',
+            options: [
+                { value: '', text: '-- Select Document Type --' },
+                { value: 'NATIONAL_ID', text: 'National ID' },
+                { value: 'PASSPORT', text: 'Passport' },
+                { value: 'WORK_PERMIT', text: 'Work Permit' },
+                { value: 'VISA', text: 'Visa' },
+                { value: 'BIRTH_CERTIFICATE', text: 'Birth Certificate' },
+                { value: 'MARRIAGE_CERTIFICATE', text: 'Marriage Certificate' },
+                { value: 'ACADEMIC_CERTIFICATE', text: 'Academic Certificate' },
+                { value: 'EXPERIENCE_CERTIFICATE', text: 'Experience Certificate' },
+                { value: 'TEACHING_LICENSE', text: 'Teaching License' },
+                { value: 'PROFESSIONAL_LICENSE', text: 'Professional License' },
+                { value: 'MEDICAL_CERTIFICATE', text: 'Medical Certificate' },
+                { value: 'POLICE_CLEARANCE', text: 'Police Clearance' },
+                { value: 'EMPLOYMENT_CONTRACT', text: 'Employment Contract' },
+                { value: 'APPOINTMENT_LETTER', text: 'Appointment Letter' },
+                { value: 'RELIEVING_LETTER', text: 'Relieving Letter' },
+                { value: 'SALARY_CERTIFICATE', text: 'Salary Certificate' },
+                { value: 'TIN_CERTIFICATE', text: 'TIN Certificate' },
+                { value: 'NSSF_DOCUMENT', text: 'NSSF Document' },
+                { value: 'BANK_DOCUMENT', text: 'Bank Document' },
+                { value: 'CURRICULUM_VITAE', text: 'Curriculum Vitae' },
+                { value: 'RESUME', text: 'Resume' },
+                { value: 'PASSPORT_PHOTO', text: 'Passport Photo' },
+                { value: 'SIGNATURE', text: 'Signature' },
+                { value: 'CODE_OF_CONDUCT_AGREEMENT', text: 'Code of Conduct Agreement' },
+                { value: 'CONFIDENTIALITY_AGREEMENT', text: 'Confidentiality Agreement' },
+                { value: 'OTHER', text: 'Other' }
+            ]
+        },
+        {
+            placeholder: 'Number',
+            className: 'd-num',
+            dataKey: 'documentNumber'
+        },
+        {
+            placeholder: 'Remarks',
+            className: 'd-remarks',
+            dataKey: 'remarks'
+        },
+        {
+            placeholder: 'Upload Doc',
+            className: 'd-file',
+            type: 'file',
+            dataKey: 'fileData'
+        }
     ],
-    createRow: function(containerElement, fieldsDef, rowClass, data = null, isEditMode = false) {
-        if (!containerElement) return;
+    createRow: function(
+        containerElement,
+        fieldsDef,
+        rowClass,
+        data = null,
+        isEditMode = false
+    ) {
+        if (!containerElement || !Array.isArray(fieldsDef)) {
+            return null;
+        }
+
         const row = document.createElement('div');
-        row.className = `emp-child-row emp-grid-${fieldsDef.length}-cols mb-3 ${rowClass}`;
+
+        row.className =
+            `emp-child-row emp-grid-${fieldsDef.length}-cols mb-3 ${rowClass}`;
+
+        const conditionalFields = {};
 
         fieldsDef.forEach(field => {
             const wrapper = document.createElement('div');
+            wrapper.className = 'emp-child-field';
 
             const span = document.createElement('span');
-            span.className = `detail-text d-block ${isEditMode ? 'hidden' : ''}`;
+
+            span.className =
+                `detail-text d-block ${isEditMode ? 'hidden' : ''}`;
 
             let input;
+
             if (field.type === 'select') {
                 input = document.createElement('select');
-                field.options.forEach(opt => {
-                    const option = document.createElement('option');
-                    option.value = opt.value;
-                    option.textContent = opt.text;
+
+                field.options.forEach(optionDefinition => {
+                    const option =
+                        document.createElement('option');
+
+                    option.value =
+                        optionDefinition.value;
+
+                    option.textContent =
+                        optionDefinition.text;
+
                     input.appendChild(option);
                 });
             } else {
                 input = document.createElement('input');
-                input.type = field.type || 'text';
-                input.placeholder = field.placeholder;
-            }
-            input.className = `detail-input w-100 ${field.className} ${isEditMode ? '' : 'hidden'}`;
 
-            if (data && data[field.dataKey]) {
-                if(field.type === 'date' && data[field.dataKey]) {
-                    input.value = data[field.dataKey].split('T')[0];
-                    span.textContent = data[field.dataKey].split('T')[0];
+                input.type =
+                    field.type || 'text';
+
+                input.placeholder =
+                    field.placeholder;
+            }
+
+            input.className =
+                `detail-input w-100 ${field.className} ${isEditMode ? '' : 'hidden'}`;
+
+            if (data && data[field.dataKey] !== undefined &&
+                data[field.dataKey] !== null) {
+
+                const value = data[field.dataKey];
+
+                if (field.type === 'date' && value) {
+                    input.value =
+                        String(value).split('T')[0];
+
+                    span.textContent =
+                        String(value).split('T')[0];
                 } else {
-                    input.value = data[field.dataKey];
-                    span.textContent = data[field.dataKey];
+                    input.value = value;
+                    span.textContent = value;
                 }
             } else {
                 span.textContent = '-';
+            }
+
+            if (field.conditional) {
+                wrapper.dataset.conditional =
+                    field.conditional;
+
+                conditionalFields[field.conditional] =
+                    wrapper;
             }
 
             wrapper.appendChild(span);
@@ -117,14 +286,93 @@ const EmpCollections = {
             row.appendChild(wrapper);
         });
 
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = `btn-secondary text-danger btn-sm detail-input ${isEditMode ? '' : 'hidden'}`;
-        removeBtn.textContent = 'X';
-        removeBtn.addEventListener('click', () => row.remove());
-        row.appendChild(removeBtn);
+        const qualificationLevel =
+            row.querySelector('.q-level');
+
+        const updateQualificationVisibility = () => {
+            if (!qualificationLevel) return;
+
+            const selectedLevel =
+                qualificationLevel.value;
+
+            const otherWrapper =
+                conditionalFields['other-level'];
+
+            const specializationWrapper =
+                conditionalFields.specialization;
+
+            const showOther =
+                selectedLevel === 'OTHER';
+
+            const showSpecialization =
+                selectedLevel !== '' &&
+                selectedLevel !== 'PRIMARY' &&
+                selectedLevel !== 'SECONDARY';
+
+            if (otherWrapper) {
+                otherWrapper.classList.toggle(
+                    'hidden',
+                    !showOther
+                );
+
+                const otherInput =
+                    otherWrapper.querySelector(
+                        '.q-custom-level'
+                    );
+
+                if (!showOther && otherInput) {
+                    otherInput.value = '';
+                }
+            }
+
+            if (specializationWrapper) {
+                specializationWrapper.classList.toggle(
+                    'hidden',
+                    !showSpecialization
+                );
+
+                const specializationInput =
+                    specializationWrapper.querySelector(
+                        '.q-specialization'
+                    );
+
+                if (
+                    !showSpecialization &&
+                    specializationInput
+                ) {
+                    specializationInput.value = '';
+                }
+            }
+        };
+
+        if (qualificationLevel) {
+            qualificationLevel.addEventListener(
+                'change',
+                updateQualificationVisibility
+            );
+
+            updateQualificationVisibility();
+        }
+
+        const removeButton =
+            document.createElement('button');
+
+        removeButton.type = 'button';
+
+        removeButton.className =
+            `btn-secondary text-danger btn-sm detail-input ${isEditMode ? '' : 'hidden'}`;
+
+        removeButton.textContent = 'X';
+
+        removeButton.addEventListener(
+            'click',
+            () => row.remove()
+        );
+
+        row.appendChild(removeButton);
 
         containerElement.appendChild(row);
+
         return row;
     },
     initSection: function(viewContainer, sectionId, containerId, btnText, fieldsDef, rowClass, isEditMode = false) {
@@ -139,17 +387,37 @@ const EmpCollections = {
         btn.addEventListener('click', () => this.createRow(container, fieldsDef, rowClass, null, true));
         section.appendChild(btn);
     },
-    gather: function(viewContainer, containerId, rowClass, extractFn) {
-        const container = viewContainer.querySelector(containerId);
+    gather: function(
+        viewContainer,
+        containerId,
+        rowClass,
+        extractFn
+    ) {
+        const container =
+            viewContainer.querySelector(containerId);
+
         if (!container) return [];
-        const rows = container.querySelectorAll(`.${rowClass}`);
+
+        const rows =
+            container.querySelectorAll(`.${rowClass}`);
+
         const data = [];
-        rows.forEach(row => {
-            const item = extractFn(row);
-            if (item && Object.values(item).some(v => v !== null && v !== '')) {
+
+        rows.forEach((row, index) => {
+            const item = extractFn(row, index);
+
+            if (
+                item &&
+                Object.values(item).some(
+                    value =>
+                        value !== null &&
+                        value !== ''
+                )
+            ) {
                 data.push(item);
             }
         });
+
         return data;
     },
     gatherAsync: async function(viewContainer, containerId, rowClass, extractFnAsync) {
@@ -287,7 +555,7 @@ function initEmployeesView() {
 
     async function loadSelectOptions() {
         try {
-            const branchId = parseInt(localStorage.getItem('user_branch')) || 1;
+            const branchId = getRequiredBranchId();
             const [deptRes, designationRes] = await Promise.all([
                 apiGet(`/departments?branchId=${branchId}&size=100`),
                 apiGet(`/designations?branchId=${branchId}&size=100`)
@@ -528,21 +796,122 @@ function initEmployeesView() {
                     skills: valOrNull('#edit-empSkills'),
                     languagesSpoken: valOrNull('#edit-empLanguages'),
 
-                    contacts: EmpCollections.gather(viewContainer, '#contacts-container', 'contact-row', row => ({
-                        contactName: row.querySelector('.c-name').value.trim() || null,
-                        relationship: row.querySelector('.c-relation').value.trim() || null,
-                        phone: row.querySelector('.c-phone').value.trim() || null,
-                        email: row.querySelector('.c-email').value.trim() || null
-                    })),
-                    qualifications: await EmpCollections.gatherAsync(viewContainer, '#qualifications-container', 'qual-row', async row => ({
-                        employeeQualificationLevel: row.querySelector('.q-level').value.trim() || null,
-                        employeeQualificationName: row.querySelector('.q-level').value.trim() || 'N/A',
-                        employeeQualificationInstitutionName: row.querySelector('.q-inst').value.trim() || null,
-                        employeeQualificationCompletionYear: parseInt(row.querySelector('.q-year').value) || null,
-                        employeeQualificationPercentage: row.querySelector('.q-score')?.value?.trim() || null,
-                        fileData: await EmpCollections.fileToBase64(row.querySelector('.q-file')?.files[0]),
-                        fileName: row.querySelector('.q-file')?.files[0]?.name || null
-                    })),
+                    contacts: (() => {
+                        const rows = Array.from(
+                            viewContainer.querySelectorAll(
+                                '#contacts-container .contact-row'
+                            )
+                        );
+
+                        return rows
+                            .map((row, index) => ({
+                                employeeContactName:
+                                    row.querySelector('.c-name')
+                                        ?.value
+                                        ?.trim() || null,
+
+                                employeeContactRelationship:
+                                    row.querySelector('.c-relation')
+                                        ?.value
+                                        ?.trim() || null,
+
+                                employeeContactMobile:
+                                    row.querySelector('.c-phone')
+                                        ?.value
+                                        ?.trim() || null,
+
+                                employeeContactEmail:
+                                    row.querySelector('.c-email')
+                                        ?.value
+                                        ?.trim() || null,
+
+                                employeeContactType:
+                                    'EMERGENCY',
+
+                                employeeContactIsPrimary:
+                                    index === 0,
+
+                                employeeContactIsEmergency:
+                                    true
+                            }))
+                            .filter(contact =>
+                                contact.employeeContactName ||
+                                contact.employeeContactMobile
+                            );
+                    })(),
+                    qualifications:
+                        await EmpCollections.gatherAsync(
+                            viewContainer,
+                            '#qualifications-container',
+                            'qual-row',
+                            async row => {
+                                const level =
+                                    row.querySelector('.q-level')
+                                        ?.value
+                                        ?.trim() || null;
+
+                                const customLevel =
+                                    row.querySelector(
+                                        '.q-custom-level'
+                                    )
+                                        ?.value
+                                        ?.trim() || null;
+
+                                const qualificationName =
+                                    level === 'OTHER'
+                                        ? customLevel
+                                        : level;
+
+                                return {
+                                    employeeQualificationLevel:
+                                    level,
+
+                                    employeeQualificationName:
+                                    qualificationName,
+
+                                    employeeQualificationInstitutionName:
+                                        row.querySelector(
+                                            '.q-institution'
+                                        )
+                                            ?.value
+                                            ?.trim() || null,
+
+                                    employeeQualificationSpecialization:
+                                        row.querySelector(
+                                            '.q-specialization'
+                                        )
+                                            ?.value
+                                            ?.trim() || null,
+
+                                    employeeQualificationGrade:
+                                        row.querySelector(
+                                            '.q-grade'
+                                        )
+                                            ?.value
+                                            ?.trim() || null,
+
+                                    employeeQualificationCompletionYear:
+                                        Number.parseInt(
+                                            row.querySelector(
+                                                '.q-year'
+                                            )?.value,
+                                            10
+                                        ) || null,
+
+                                    fileData:
+                                        await EmpCollections.fileToBase64(
+                                            row.querySelector(
+                                                '.q-file'
+                                            )?.files[0]
+                                        ),
+
+                                    fileName:
+                                        row.querySelector(
+                                            '.q-file'
+                                        )?.files[0]?.name || null
+                                };
+                            }
+                        ),
                     experiences: await EmpCollections.gatherAsync(viewContainer, '#experiences-container', 'exp-row', async row => ({
                         companyName: row.querySelector('.e-company').value.trim() || null,
                         jobRole: row.querySelector('.e-role').value.trim() || null,
@@ -594,264 +963,1089 @@ function initEmployeesView() {
 }
 
 function initAddEmployeeView() {
-    const viewContainer = document.querySelector('#ba-add-employee-view');
+    const viewContainer =
+        document.querySelector('#ba-add-employee-view');
+
     if (!viewContainer) return;
 
     async function loadAddSelectOptions() {
         try {
-            const branchId = parseInt(localStorage.getItem('user_branch')) || 1;
-            const [deptRes, designationRes] = await Promise.all([
-                apiGet(`/departments?branchId=${branchId}&size=100`),
-                apiGet(`/designations?branchId=${branchId}&size=100`)
-            ]);
+            const branchId = getRequiredBranchId();
 
-            const deptSelect = viewContainer.querySelector('#add-empDepartment');
-            const designationSelect = viewContainer.querySelector('#add-empDesignation');
+            const [deptRes, designationRes] =
+                await Promise.all([
+                    apiGet(
+                        `/departments?branchId=${branchId}&size=100`
+                    ),
+                    apiGet(
+                        `/designations?branchId=${branchId}&size=100`
+                    )
+                ]);
 
-            if(deptSelect) {
-                deptSelect.innerHTML = '<option value="">-- Select Department --</option>';
-                deptRes.data.content.forEach(d => {
-                    deptSelect.innerHTML += `<option value="${d.departmentId}">${d.departmentName}</option>`;
+            const deptSelect =
+                viewContainer.querySelector(
+                    '#add-empDepartment'
+                );
+
+            const designationSelect =
+                viewContainer.querySelector(
+                    '#add-empDesignation'
+                );
+
+            if (deptSelect) {
+                deptSelect.innerHTML =
+                    '<option value="">-- Select Department --</option>';
+
+                deptRes.data.content.forEach(department => {
+                    deptSelect.innerHTML += `
+                        <option value="${department.departmentId}">
+                            ${department.departmentName}
+                        </option>
+                    `;
                 });
             }
-            if(designationSelect) {
-                designationSelect.innerHTML = '<option value="">-- Select Designation --</option>';
-                designationRes.data.content.forEach(d => {
-                    designationSelect.innerHTML += `<option value="${d.id}">${d.designationName}</option>`;
+
+            if (designationSelect) {
+                designationSelect.innerHTML =
+                    '<option value="">-- Select Designation --</option>';
+
+                designationRes.data.content.forEach(designation => {
+                    designationSelect.innerHTML += `
+                        <option value="${designation.id}">
+                            ${designation.designationName}
+                        </option>
+                    `;
                 });
             }
-        } catch (e) {
-            console.warn("Could not load departments/designations", e);
+        } catch (error) {
+            console.warn(
+                'Could not load departments/designations',
+                error
+            );
         }
     }
 
-    const oldForm = viewContainer.querySelector('#add-emp-form');
+    const oldForm =
+        viewContainer.querySelector('#add-emp-form');
+
     let form = oldForm;
+
     if (oldForm) {
         form = oldForm.cloneNode(true);
-        oldForm.parentNode.replaceChild(form, oldForm);
+
+        oldForm.parentNode.replaceChild(
+            form,
+            oldForm
+        );
+
         form.reset();
 
-        viewContainer.querySelectorAll('.detail-text').forEach(el => el.classList.add('hidden'));
-        viewContainer.querySelectorAll('.detail-input').forEach(el => el.classList.remove('hidden'));
+        const generateLoginCheckbox =
+            viewContainer.querySelector(
+                '#add-generateLogin'
+            );
 
-        viewContainer.querySelector('#contacts-container').innerHTML = '';
-        viewContainer.querySelector('#qualifications-container').innerHTML = '';
-        viewContainer.querySelector('#experiences-container').innerHTML = '';
-        viewContainer.querySelector('#documents-container').innerHTML = '';
+        const loginOptions =
+            viewContainer.querySelector(
+                '#add-loginOptions'
+            );
 
-        EmpCollections.initSection(viewContainer, '#contacts-section', '#contacts-container', '+ Add Contact', EmpCollections.contactFields, 'contact-row', true);
-        EmpCollections.initSection(viewContainer, '#qualifications-section', '#qualifications-container', '+ Add Qualification', EmpCollections.qualFields, 'qual-row', true);
-        EmpCollections.initSection(viewContainer, '#experiences-section', '#experiences-container', '+ Add Experience', EmpCollections.expFields, 'exp-row', true);
-        EmpCollections.initSection(viewContainer, '#documents-section', '#documents-container', '+ Add Document', EmpCollections.docFields, 'doc-row', true);
+        const sendLoginEmailCheckbox =
+            viewContainer.querySelector(
+                '#add-sendLoginEmail'
+            );
 
-        // Initialize calendars AFTER cloning the form
-        if (typeof createErpCalendar === 'function') {
+        const officialEmailInput =
+            viewContainer.querySelector(
+                '#add-empEmail'
+            );
+
+        if (generateLoginCheckbox && loginOptions) {
+            generateLoginCheckbox.addEventListener(
+                'change',
+                () => {
+                    const enabled =
+                        generateLoginCheckbox.checked;
+
+                    loginOptions.classList.toggle(
+                        'hidden',
+                        !enabled
+                    );
+
+                    if (
+                        !enabled &&
+                        sendLoginEmailCheckbox
+                    ) {
+                        sendLoginEmailCheckbox.checked =
+                            false;
+                    }
+                }
+            );
+        }
+
+        if (
+            sendLoginEmailCheckbox &&
+            officialEmailInput
+        ) {
+            sendLoginEmailCheckbox.addEventListener(
+                'change',
+                () => {
+                    if (
+                        sendLoginEmailCheckbox.checked &&
+                        !officialEmailInput.value.trim()
+                    ) {
+                        sendLoginEmailCheckbox.checked =
+                            false;
+
+                        showErrorMessage(
+                            'Enter the official email before enabling credential email.'
+                        );
+
+                        officialEmailInput.focus();
+                    }
+                }
+            );
+        }
+
+        viewContainer
+            .querySelectorAll('.detail-text')
+            .forEach(element => {
+                element.classList.add('hidden');
+            });
+
+        viewContainer
+            .querySelectorAll('.detail-input')
+            .forEach(element => {
+                element.classList.remove('hidden');
+            });
+
+        const contactsContainer =
+            viewContainer.querySelector(
+                '#contacts-container'
+            );
+
+        const qualificationsContainer =
+            viewContainer.querySelector(
+                '#qualifications-container'
+            );
+
+        const experiencesContainer =
+            viewContainer.querySelector(
+                '#experiences-container'
+            );
+
+        const documentsContainer =
+            viewContainer.querySelector(
+                '#documents-container'
+            );
+
+        if (contactsContainer) {
+            contactsContainer.innerHTML = '';
+        }
+
+        if (qualificationsContainer) {
+            qualificationsContainer.innerHTML = '';
+        }
+
+        if (experiencesContainer) {
+            experiencesContainer.innerHTML = '';
+        }
+
+        if (documentsContainer) {
+            documentsContainer.innerHTML = '';
+        }
+
+        EmpCollections.initSection(
+            viewContainer,
+            '#contacts-section',
+            '#contacts-container',
+            '+ Add Contact',
+            EmpCollections.contactFields,
+            'contact-row',
+            true
+        );
+
+        EmpCollections.initSection(
+            viewContainer,
+            '#qualifications-section',
+            '#qualifications-container',
+            '+ Add Qualification',
+            EmpCollections.qualFields,
+            'qual-row',
+            true
+        );
+
+        EmpCollections.initSection(
+            viewContainer,
+            '#experiences-section',
+            '#experiences-container',
+            '+ Add Experience',
+            EmpCollections.expFields,
+            'exp-row',
+            true
+        );
+
+        EmpCollections.initSection(
+            viewContainer,
+            '#documents-section',
+            '#documents-container',
+            '+ Add Document',
+            EmpCollections.docFields,
+            'doc-row',
+            true
+        );
+
+        if (
+            typeof createErpCalendar === 'function'
+        ) {
             const today = new Date();
-            const maxDobDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+
+            const maxDobDate = new Date(
+                today.getFullYear() - 18,
+                today.getMonth(),
+                today.getDate()
+            );
 
             createErpCalendar('#add-empDob', {
                 maxDate: maxDobDate,
                 defaultDate: maxDobDate
             });
-            createErpCalendar('#add-empJoiningDate');
-            createErpCalendar('#add-empProbationEndDate');
-            createErpCalendar('#add-empConfirmationDate');
-            createErpCalendar('#add-empPassportExpiry');
-            createErpCalendar('#add-empWorkPermitExpiry');
+
+            createErpCalendar(
+                '#add-empJoiningDate'
+            );
+
+            createErpCalendar(
+                '#add-empProbationEndDate'
+            );
+
+            createErpCalendar(
+                '#add-empConfirmationDate'
+            );
+
+            createErpCalendar(
+                '#add-empPassportExpiry'
+            );
+
+            createErpCalendar(
+                '#add-empWorkPermitExpiry'
+            );
         }
 
-        // Default Joining Date
-        const todayStr = new Date().toISOString().split('T')[0];
-        const joinInput = viewContainer.querySelector('#add-empJoiningDate');
-        if (joinInput && joinInput['_flatpickr']) {
-            joinInput['_flatpickr'].setDate(new Date());
-        } else if (joinInput) {
-            joinInput.value = todayStr;
+        const todayString =
+            new Date()
+                .toISOString()
+                .split('T')[0];
+
+        const joiningDateInput =
+            viewContainer.querySelector(
+                '#add-empJoiningDate'
+            );
+
+        if (
+            joiningDateInput &&
+            joiningDateInput['_flatpickr']
+        ) {
+            joiningDateInput['_flatpickr']
+                .setDate(new Date());
+        } else if (joiningDateInput) {
+            joiningDateInput.value =
+                todayString;
         }
 
-        // Populate dropdowns!
         void loadAddSelectOptions();
     }
 
-    const backBtn = viewContainer.querySelector('#backToEmployeesBtn');
-    if (backBtn) {
-        const newBackBtn = backBtn.cloneNode(true);
-        backBtn.parentNode.replaceChild(newBackBtn, backBtn);
-        newBackBtn.addEventListener('click', () => {
-            const mainContent = document.getElementById('main-content-area');
-            window.history.pushState({ view: 'employees', title: 'Manage Employees' }, "", "/admin/employees");
-            const pageTitleElement = document.getElementById('pageTitle');
-            if (pageTitleElement) pageTitleElement.textContent = "Manage Employees";
-            void loadView('admin', 'employees', mainContent);
-        });
-    }
+    const backButton =
+        viewContainer.querySelector(
+            '#backToEmployeesBtn'
+        );
 
-    const importBtn = viewContainer.querySelector('#btn-import-employee');
-    if (importBtn) {
-        const newImportBtn = importBtn.cloneNode(true);
-        importBtn.parentNode.replaceChild(newImportBtn, importBtn);
-        newImportBtn.addEventListener('click', () => {
-            if (typeof AppImporter !== 'undefined') {
-                AppImporter.open('employee', 'Import Employees', 'Upload the Excel file containing Employee records.', () => {
-                    const mainContent = document.getElementById('main-content-area');
-                    window.history.pushState({ view: 'employees', title: 'Manage Employees' }, "", "/admin/employees");
-                    const pageTitleElement = document.getElementById('pageTitle');
-                    if (pageTitleElement) pageTitleElement.textContent = "Manage Employees";
-                    void loadView('admin', 'employees', mainContent);
-                });
-            } else {
-                if (typeof AppToast !== 'undefined') AppToast.error('Importer module not found.');
-                console.warn('AppImporter is not defined.');
+    if (backButton) {
+        const newBackButton =
+            backButton.cloneNode(true);
+
+        backButton.parentNode.replaceChild(
+            newBackButton,
+            backButton
+        );
+
+        newBackButton.addEventListener(
+            'click',
+            () => {
+                const mainContent =
+                    document.getElementById(
+                        'main-content-area'
+                    );
+
+                window.history.pushState(
+                    {
+                        view: 'employees',
+                        title: 'Manage Employees'
+                    },
+                    '',
+                    '/admin/employees'
+                );
+
+                const pageTitleElement =
+                    document.getElementById(
+                        'pageTitle'
+                    );
+
+                if (pageTitleElement) {
+                    pageTitleElement.textContent =
+                        'Manage Employees';
+                }
+
+                void loadView(
+                    'admin',
+                    'employees',
+                    mainContent
+                );
             }
-        });
+        );
     }
 
-    if (form) {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
+    const importButton =
+        viewContainer.querySelector(
+            '#btn-import-employee'
+        );
 
-            const dobVal = viewContainer.querySelector('#add-empDob')?.value || viewContainer.querySelector('#edit-empDob')?.value;
-            if (!dobVal) {
-                showErrorMessage('Date of Birth is required.');
+    if (importButton) {
+        const newImportButton =
+            importButton.cloneNode(true);
+
+        importButton.parentNode.replaceChild(
+            newImportButton,
+            importButton
+        );
+
+        newImportButton.addEventListener(
+            'click',
+            () => {
+                if (
+                    typeof AppImporter !==
+                    'undefined'
+                ) {
+                    AppImporter.open(
+                        'employee',
+                        'Import Employees',
+                        'Upload the Excel file containing Employee records.',
+                        () => {
+                            const mainContent =
+                                document.getElementById(
+                                    'main-content-area'
+                                );
+
+                            window.history.pushState(
+                                {
+                                    view: 'employees',
+                                    title: 'Manage Employees'
+                                },
+                                '',
+                                '/admin/employees'
+                            );
+
+                            const pageTitleElement =
+                                document.getElementById(
+                                    'pageTitle'
+                                );
+
+                            if (pageTitleElement) {
+                                pageTitleElement.textContent =
+                                    'Manage Employees';
+                            }
+
+                            void loadView(
+                                'admin',
+                                'employees',
+                                mainContent
+                            );
+                        }
+                    );
+                } else {
+                    if (
+                        typeof AppToast !==
+                        'undefined'
+                    ) {
+                        AppToast.error(
+                            'Importer module not found.'
+                        );
+                    }
+
+                    console.warn(
+                        'AppImporter is not defined.'
+                    );
+                }
+            }
+        );
+    }
+
+    if (!form) return;
+
+    form.addEventListener(
+        'submit',
+        async function(event) {
+            event.preventDefault();
+
+            const dobValue =
+                viewContainer.querySelector(
+                    '#add-empDob'
+                )?.value || null;
+
+            if (!dobValue) {
+                showErrorMessage(
+                    'Date of Birth is required.'
+                );
                 return;
             }
 
-            const birthDate = new Date(dobVal);
-            const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const m = today.getMonth() - birthDate.getMonth();
-            if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            const birthDate =
+                new Date(dobValue);
+
+            const today =
+                new Date();
+
+            let age =
+                today.getFullYear() -
+                birthDate.getFullYear();
+
+            const monthDifference =
+                today.getMonth() -
+                birthDate.getMonth();
+
+            if (
+                monthDifference < 0 ||
+                (
+                    monthDifference === 0 &&
+                    today.getDate() <
+                    birthDate.getDate()
+                )
+            ) {
                 age--;
             }
 
             if (age < 18) {
-                showErrorMessage('Employee must be at least 18 years old.');
+                showErrorMessage(
+                    'Employee must be at least 18 years old.'
+                );
                 return;
             }
 
-            const valOrNull = (id) => {
-                const el = viewContainer.querySelector(id);
-                if (!el) return null;
-                const v = el.value.trim();
-                return v === "" ? null : v;
+            const valOrNull = selector => {
+                const element =
+                    viewContainer.querySelector(
+                        selector
+                    );
+
+                if (!element) return null;
+
+                const value =
+                    element.value.trim();
+
+                return value === ''
+                    ? null
+                    : value;
             };
 
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+            const generateLogin =
+                viewContainer.querySelector(
+                    '#add-generateLogin'
+                )?.checked ?? false;
+
+            const sendLoginEmail =
+                viewContainer.querySelector(
+                    '#add-sendLoginEmail'
+                )?.checked ?? false;
+
+            const officialEmail =
+                valOrNull('#add-empEmail');
+
+            if (
+                generateLogin &&
+                sendLoginEmail &&
+                !officialEmail
+            ) {
+                showErrorMessage(
+                    'Official email is required to send login credentials.'
+                );
+
+                viewContainer
+                    .querySelector(
+                        '#add-empEmail'
+                    )
+                    ?.focus();
+
+                return;
+            }
+
+            const submitButton =
+                form.querySelector(
+                    'button[type="submit"]'
+                );
+
+            if (!submitButton) return;
+
+            const originalButtonText =
+                submitButton.innerHTML;
+
+            submitButton.disabled = true;
+
+            submitButton.innerHTML =
+                '<i class="bi bi-hourglass-split"></i> Saving...';
 
             showLoader();
+
             try {
-                // FIXED ADD PAYLOAD
                 const payload = {
-                    title: valOrNull('#add-empTitle') || valOrNull('#edit-empTitle'),
-                    firstName: valOrNull('#add-empFirstName') || valOrNull('#edit-empFirstName'),
-                    middleName: valOrNull('#add-empMiddleName') || valOrNull('#edit-empMiddleName'),
-                    lastName: valOrNull('#add-empLastName') || valOrNull('#edit-empLastName'),
-                    gender: valOrNull('#add-empGender') || valOrNull('#edit-empGender'),
-                    dateOfBirth: dobVal,
-                    maritalStatus: valOrNull('#add-empMaritalStatus') || valOrNull('#edit-empMaritalStatus'),
-                    bloodGroup: valOrNull('#add-empBloodGroup') || valOrNull('#edit-empBloodGroup'),
-                    religion: valOrNull('#add-empReligion') || valOrNull('#edit-empReligion'),
-                    subReligion: valOrNull('#add-empSubReligion') || valOrNull('#edit-empSubReligion'),
+                    title:
+                        valOrNull(
+                            '#add-empTitle'
+                        ),
 
-                    officialEmail: valOrNull('#add-empEmail') || valOrNull('#edit-empEmail'),
-                    personalEmail: valOrNull('#add-empPersonalEmail') || valOrNull('#edit-empPersonalEmail'),
-                    mobileNo: valOrNull('#add-empPhone') || valOrNull('#edit-empPhone'),
-                    alternateMobile: valOrNull('#add-empAlternatePhone') || valOrNull('#edit-empAlternatePhone'),
+                    firstName:
+                        valOrNull(
+                            '#add-empFirstName'
+                        ),
 
-                    departmentId: valOrNull('#add-empDepartment') || valOrNull('#edit-empDepartment'),
-                    designationId: valOrNull('#add-empDesignation') || valOrNull('#edit-empDesignation'),
-                    employeeCategory: valOrNull('#add-empCategory') || valOrNull('#edit-empCategory'),
-                    employeeType: valOrNull('#add-empType') || valOrNull('#edit-empType'),
-                    employmentMode: valOrNull('#add-empMode') || valOrNull('#edit-empMode'),
-                    employmentStatus: 'ACTIVE',
+                    middleName:
+                        valOrNull(
+                            '#add-empMiddleName'
+                        ),
 
-                    joiningDate: valOrNull('#add-empJoiningDate') || valOrNull('#edit-empJoiningDate'),
-                    probationEndDate: valOrNull('#add-empProbationEndDate') || valOrNull('#edit-empProbationEndDate'),
-                    confirmationDate: valOrNull('#add-empConfirmationDate') || valOrNull('#edit-empConfirmationDate'),
+                    lastName:
+                        valOrNull(
+                            '#add-empLastName'
+                        ),
 
-                    nationality: valOrNull('#add-empNationality') || valOrNull('#edit-empNationality'),
-                    nationalId: valOrNull('#add-empNationalId') || valOrNull('#edit-empNationalId'),
-                    tinNumber: valOrNull('#add-empTin') || valOrNull('#edit-empTin'),
-                    passportNo: valOrNull('#add-empPassportNo') || valOrNull('#edit-empPassportNo'),
-                    passportExpiryDate: valOrNull('#add-empPassportExpiry') || valOrNull('#edit-empPassportExpiry'),
-                    workPermitNumber: valOrNull('#add-empWorkPermit') || valOrNull('#edit-empWorkPermit'),
-                    workPermitExpiryDate: valOrNull('#add-empWorkPermitExpiry') || valOrNull('#edit-empWorkPermitExpiry'),
+                    gender:
+                        valOrNull(
+                            '#add-empGender'
+                        ),
 
-                    addressCountry: valOrNull('#add-empCountry') || valOrNull('#edit-empCountry'),
-                    addressState: valOrNull('#add-empState') || valOrNull('#edit-empState'),
-                    addressDistrict: valOrNull('#add-empDistrict') || valOrNull('#edit-empDistrict'),
-                    addressCounty: valOrNull('#add-empCounty') || valOrNull('#edit-empCounty'),
-                    addressSubCounty: valOrNull('#add-empSubCounty') || valOrNull('#edit-empSubCounty'),
-                    addressParish: valOrNull('#add-empParish') || valOrNull('#edit-empParish'),
-                    addressVillage: valOrNull('#add-empVillage') || valOrNull('#edit-empVillage'),
-                    addressStreet: valOrNull('#add-empStreet') || valOrNull('#edit-empStreet'),
-                    skills: valOrNull('#add-empSkills') || valOrNull('#edit-empSkills'),
-                    languagesSpoken: valOrNull('#add-empLanguages') || valOrNull('#edit-empLanguages'),
+                    dateOfBirth:
+                    dobValue,
 
-                    contacts: EmpCollections.gather(viewContainer, '#contacts-container', 'contact-row', row => ({
-                        contactName: row.querySelector('.c-name').value.trim() || null,
-                        relationship: row.querySelector('.c-relation').value.trim() || null,
-                        phone: row.querySelector('.c-phone').value.trim() || null,
-                        email: row.querySelector('.c-email').value.trim() || null
-                    })),
-                    qualifications: await EmpCollections.gatherAsync(viewContainer, '#qualifications-container', 'qual-row', async row => ({
-                        employeeQualificationLevel: row.querySelector('.q-level').value.trim() || null,
-                        employeeQualificationName: row.querySelector('.q-level').value.trim() || 'N/A',
-                        employeeQualificationInstitutionName: row.querySelector('.q-inst').value.trim() || null,
-                        employeeQualificationCompletionYear: parseInt(row.querySelector('.q-year').value) || null,
-                        employeeQualificationPercentage: row.querySelector('.q-score')?.value?.trim() || null,
-                        fileData: await EmpCollections.fileToBase64(row.querySelector('.q-file')?.files[0]),
-                        fileName: row.querySelector('.q-file')?.files[0]?.name || null
-                    })),
-                    experiences: await EmpCollections.gatherAsync(viewContainer, '#experiences-container', 'exp-row', async row => ({
-                        companyName: row.querySelector('.e-company').value.trim() || null,
-                        jobRole: row.querySelector('.e-role').value.trim() || null,
-                        startDate: row.querySelector('.e-start').value || null,
-                        endDate: row.querySelector('.e-end').value || null,
-                        fileData: await EmpCollections.fileToBase64(row.querySelector('.e-file')?.files[0]),
-                        fileName: row.querySelector('.e-file')?.files[0]?.name || null
-                    })),
-                    documents: await EmpCollections.gatherAsync(viewContainer, '#documents-container', 'doc-row', async row => ({
-                        documentType: row.querySelector('.d-type').value.trim() || null,
-                        documentNumber: row.querySelector('.d-num').value.trim() || null,
-                        remarks: row.querySelector('.d-remarks').value.trim() || null,
-                        fileData: await EmpCollections.fileToBase64(row.querySelector('.d-file')?.files[0]),
-                        fileName: row.querySelector('.d-file')?.files[0]?.name || null
-                    })),
-                    
+                    maritalStatus:
+                        valOrNull(
+                            '#add-empMaritalStatus'
+                        ),
+
+                    bloodGroup:
+                        valOrNull(
+                            '#add-empBloodGroup'
+                        ),
+
+                    religion:
+                        valOrNull(
+                            '#add-empReligion'
+                        ),
+
+                    subReligion:
+                        valOrNull(
+                            '#add-empSubReligion'
+                        ),
+
+                    officialEmail:
+                    officialEmail,
+
+                    personalEmail:
+                        valOrNull(
+                            '#add-empPersonalEmail'
+                        ),
+
+                    mobileNo:
+                        valOrNull(
+                            '#add-empPhone'
+                        ),
+
+                    alternateMobile:
+                        valOrNull(
+                            '#add-empAlternatePhone'
+                        ),
+
+                    departmentId:
+                        valOrNull(
+                            '#add-empDepartment'
+                        ),
+
+                    designationId:
+                        valOrNull(
+                            '#add-empDesignation'
+                        ),
+
+                    employeeCategory:
+                        valOrNull(
+                            '#add-empCategory'
+                        ),
+
+                    employeeType:
+                        valOrNull(
+                            '#add-empType'
+                        ),
+
+                    employmentMode:
+                        valOrNull(
+                            '#add-empMode'
+                        ),
+
+                    employmentStatus:
+                        'ACTIVE',
+
+                    joiningDate:
+                        valOrNull(
+                            '#add-empJoiningDate'
+                        ),
+
+                    probationEndDate:
+                        valOrNull(
+                            '#add-empProbationEndDate'
+                        ),
+
+                    confirmationDate:
+                        valOrNull(
+                            '#add-empConfirmationDate'
+                        ),
+
+                    nationality:
+                        valOrNull(
+                            '#add-empNationality'
+                        ),
+
+                    nationalId:
+                        valOrNull(
+                            '#add-empNationalId'
+                        ),
+
+                    tinNumber:
+                        valOrNull(
+                            '#add-empTin'
+                        ),
+
+                    passportNo:
+                        valOrNull(
+                            '#add-empPassportNo'
+                        ),
+
+                    passportExpiryDate:
+                        valOrNull(
+                            '#add-empPassportExpiry'
+                        ),
+
+                    workPermitNumber:
+                        valOrNull(
+                            '#add-empWorkPermit'
+                        ),
+
+                    workPermitExpiryDate:
+                        valOrNull(
+                            '#add-empWorkPermitExpiry'
+                        ),
+
+                    addressCountry:
+                        valOrNull(
+                            '#add-empCountry'
+                        ),
+
+                    addressState:
+                        valOrNull(
+                            '#add-empState'
+                        ),
+
+                    addressDistrict:
+                        valOrNull(
+                            '#add-empDistrict'
+                        ),
+
+                    addressCounty:
+                        valOrNull(
+                            '#add-empCounty'
+                        ),
+
+                    addressSubCounty:
+                        valOrNull(
+                            '#add-empSubCounty'
+                        ),
+
+                    addressParish:
+                        valOrNull(
+                            '#add-empParish'
+                        ),
+
+                    addressVillage:
+                        valOrNull(
+                            '#add-empVillage'
+                        ),
+
+                    addressStreet:
+                        valOrNull(
+                            '#add-empStreet'
+                        ),
+
+                    skills:
+                        valOrNull(
+                            '#add-empSkills'
+                        ),
+
+                    languagesSpoken:
+                        valOrNull(
+                            '#add-empLanguages'
+                        ),
+
+                    contacts: (() => {
+                        const rows = Array.from(
+                            viewContainer.querySelectorAll(
+                                '#contacts-container .contact-row'
+                            )
+                        );
+
+                        return rows
+                            .map((row, index) => ({
+                                employeeContactName:
+                                    row.querySelector('.c-name')
+                                        ?.value
+                                        ?.trim() || null,
+
+                                employeeContactRelationship:
+                                    row.querySelector('.c-relation')
+                                        ?.value
+                                        ?.trim() || null,
+
+                                employeeContactMobile:
+                                    row.querySelector('.c-phone')
+                                        ?.value
+                                        ?.trim() || null,
+
+                                employeeContactEmail:
+                                    row.querySelector('.c-email')
+                                        ?.value
+                                        ?.trim() || null,
+
+                                employeeContactType:
+                                    'EMERGENCY',
+
+                                employeeContactIsPrimary:
+                                    index === 0,
+
+                                employeeContactIsEmergency:
+                                    true
+                            }))
+                            .filter(contact =>
+                                contact.employeeContactName ||
+                                contact.employeeContactMobile
+                            );
+                    })(),
+
+                    qualifications:
+                        await EmpCollections.gatherAsync(
+                            viewContainer,
+                            '#qualifications-container',
+                            'qual-row',
+                            async row => {
+                                const level =
+                                    row.querySelector('.q-level')
+                                        ?.value
+                                        ?.trim() || null;
+
+                                const customLevel =
+                                    row.querySelector(
+                                        '.q-custom-level'
+                                    )
+                                        ?.value
+                                        ?.trim() || null;
+
+                                const qualificationName =
+                                    level === 'OTHER'
+                                        ? customLevel
+                                        : level;
+
+                                return {
+                                    employeeQualificationLevel:
+                                    level,
+
+                                    employeeQualificationName:
+                                    qualificationName,
+
+                                    employeeQualificationInstitutionName:
+                                        row.querySelector(
+                                            '.q-institution'
+                                        )
+                                            ?.value
+                                            ?.trim() || null,
+
+                                    employeeQualificationSpecialization:
+                                        row.querySelector(
+                                            '.q-specialization'
+                                        )
+                                            ?.value
+                                            ?.trim() || null,
+
+                                    employeeQualificationGrade:
+                                        row.querySelector(
+                                            '.q-grade'
+                                        )
+                                            ?.value
+                                            ?.trim() || null,
+
+                                    employeeQualificationCompletionYear:
+                                        Number.parseInt(
+                                            row.querySelector(
+                                                '.q-year'
+                                            )?.value,
+                                            10
+                                        ) || null,
+
+                                    fileData:
+                                        await EmpCollections.fileToBase64(
+                                            row.querySelector(
+                                                '.q-file'
+                                            )?.files[0]
+                                        ),
+
+                                    fileName:
+                                        row.querySelector(
+                                            '.q-file'
+                                        )?.files[0]?.name || null
+                                };
+                            }
+                        ),
+
+                    experiences:
+                        await EmpCollections
+                            .gatherAsync(
+                                viewContainer,
+                                '#experiences-container',
+                                'exp-row',
+                                async row => ({
+                                    companyName:
+                                        row.querySelector(
+                                            '.e-company'
+                                        )
+                                            .value
+                                            .trim() ||
+                                        null,
+
+                                    employeeExperienceEmploymentType:
+                                        row.querySelector('.e-type')
+                                            ?.value
+                                            ?.trim() || null,
+
+                                    jobRole:
+                                        row.querySelector(
+                                            '.e-role'
+                                        )
+                                            .value
+                                            .trim() ||
+                                        null,
+
+                                    startDate:
+                                        row.querySelector(
+                                            '.e-start'
+                                        ).value ||
+                                        null,
+
+                                    endDate:
+                                        row.querySelector(
+                                            '.e-end'
+                                        ).value ||
+                                        null,
+
+                                    fileData:
+                                        await EmpCollections
+                                            .fileToBase64(
+                                                row.querySelector(
+                                                    '.e-file'
+                                                )
+                                                    ?.files[0]
+                                            ),
+
+                                    fileName:
+                                        row.querySelector(
+                                            '.e-file'
+                                        )
+                                            ?.files[0]
+                                            ?.name ||
+                                        null
+                                })
+                            ),
+
+                    documents:
+                        await EmpCollections
+                            .gatherAsync(
+                                viewContainer,
+                                '#documents-container',
+                                'doc-row',
+                                async row => ({
+                                    documentType:
+                                        row.querySelector(
+                                            '.d-type'
+                                        )
+                                            .value
+                                            .trim() ||
+                                        null,
+
+                                    documentNumber:
+                                        row.querySelector(
+                                            '.d-num'
+                                        )
+                                            .value
+                                            .trim() ||
+                                        null,
+
+                                    remarks:
+                                        row.querySelector(
+                                            '.d-remarks'
+                                        )
+                                            .value
+                                            .trim() ||
+                                        null,
+
+                                    fileData:
+                                        await EmpCollections
+                                            .fileToBase64(
+                                                row.querySelector(
+                                                    '.d-file'
+                                                )
+                                                    ?.files[0]
+                                            ),
+
+                                    fileName:
+                                        row.querySelector(
+                                            '.d-file'
+                                        )
+                                            ?.files[0]
+                                            ?.name ||
+                                        null
+                                })
+                            ),
+
                     accountRequest: {
-                        generateLogin: true,
-                        sendEmail: true
+                        generateLogin:
+                        generateLogin,
+
+                        roleId:
+                            viewContainer.querySelector(
+                                '#add-employeeRoleId'
+                            )?.value
+                                ? Number(
+                                    viewContainer.querySelector(
+                                        '#add-employeeRoleId'
+                                    ).value
+                                )
+                                : null,
+
+                        sendEmail:
+                        sendLoginEmail
                     }
                 };
 
-                const res = await apiPost('/branchadmin/employees', payload);
+                const response =
+                    await apiPost(
+                        '/branchadmin/employees',
+                        payload
+                    );
+
                 showPremiumModal({
-                    title: 'Employee Registered',
-                    type: 'success',
-                    contentText: `Employee ${res.data.firstName} ${res.data.lastName} registered successfully. Generated Code: ${res.data.employeeNo}`,
-                    confirmText: 'Done'
+                    title:
+                        'Employee Registered',
+
+                    type:
+                        'success',
+
+                    contentText:
+                        `Employee ${response.data.firstName} ${response.data.lastName} registered successfully. Generated Code: ${response.data.employeeNo}`,
+
+                    confirmText:
+                        'Done'
                 });
+
                 form.reset();
-                const joinInputReset = viewContainer.querySelector('#add-empJoiningDate');
-                if (joinInputReset && joinInputReset['_flatpickr']) {
-                    joinInputReset['_flatpickr'].setDate(new Date());
-                } else if (joinInputReset) {
-                    joinInputReset.value = new Date().toISOString().split('T')[0];
+
+                const loginOptionsReset =
+                    viewContainer.querySelector(
+                        '#add-loginOptions'
+                    );
+
+                if (loginOptionsReset) {
+                    loginOptionsReset.classList.add(
+                        'hidden'
+                    );
                 }
-            } catch (err) {
-                console.error(err);
-                showErrorMessage(err.message || 'Failed to register employee.');
+
+                const contactsContainerReset =
+                    viewContainer.querySelector(
+                        '#contacts-container'
+                    );
+
+                const qualificationsContainerReset =
+                    viewContainer.querySelector(
+                        '#qualifications-container'
+                    );
+
+                const experiencesContainerReset =
+                    viewContainer.querySelector(
+                        '#experiences-container'
+                    );
+
+                const documentsContainerReset =
+                    viewContainer.querySelector(
+                        '#documents-container'
+                    );
+
+                if (contactsContainerReset) {
+                    contactsContainerReset.innerHTML =
+                        '';
+                }
+
+                if (qualificationsContainerReset) {
+                    qualificationsContainerReset.innerHTML =
+                        '';
+                }
+
+                if (experiencesContainerReset) {
+                    experiencesContainerReset.innerHTML =
+                        '';
+                }
+
+                if (documentsContainerReset) {
+                    documentsContainerReset.innerHTML =
+                        '';
+                }
+
+                const joiningDateReset =
+                    viewContainer.querySelector(
+                        '#add-empJoiningDate'
+                    );
+
+                if (
+                    joiningDateReset &&
+                    joiningDateReset['_flatpickr']
+                ) {
+                    joiningDateReset['_flatpickr']
+                        .setDate(new Date());
+                } else if (joiningDateReset) {
+                    joiningDateReset.value =
+                        new Date()
+                            .toISOString()
+                            .split('T')[0];
+                }
+            } catch (error) {
+                console.error(error);
+
+                showErrorMessage(
+                    error.message ||
+                    'Failed to register employee.'
+                );
             } finally {
                 hideLoader();
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
+
+                submitButton.disabled =
+                    false;
+
+                submitButton.innerHTML =
+                    originalButtonText;
             }
-        });
-    }
+        }
+    );
 }
 

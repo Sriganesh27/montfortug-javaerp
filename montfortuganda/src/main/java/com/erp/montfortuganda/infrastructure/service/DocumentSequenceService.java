@@ -2,7 +2,7 @@ package com.erp.montfortuganda.infrastructure.service;
 
 import com.erp.montfortuganda.model.entity.ErpDocumentSequence;
 import com.erp.montfortuganda.infrastructure.enums.ModuleCode;
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.repository.BranchRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.LockModeType;

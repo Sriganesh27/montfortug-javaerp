@@ -1,6 +1,6 @@
 package com.erp.montfortuganda.admission.entity;
 
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

@@ -1,10 +1,10 @@
 // File: src/main/java/com/erp/montfortuganda/employee/entity/ErpEmployee.java
 package com.erp.montfortuganda.employee.entity;
 
-import com.erp.montfortuganda.auth.User;
+import com.erp.montfortuganda.auth.entity.User;
 import com.erp.montfortuganda.employee.enums.*;
 import com.erp.montfortuganda.model.AuditableEntity;
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.entity.Department;
 import com.erp.montfortuganda.school.entity.Designation;
 import jakarta.persistence.*;

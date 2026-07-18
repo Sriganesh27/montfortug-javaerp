@@ -23,44 +23,88 @@ public class EmployeeValidator {
 
     private final EmployeeRepository employeeRepository;
 
-    public void validateCreation(EmployeeCreateRequest request, Integer branchId) {
-        validateCoreFields(request, branchId);
-        
+    public void validateCreation(
+            EmployeeCreateRequest request,
+            Integer branchId
+    ) {
+        validateCommonFields(request);
+
+        String officialEmail = normalizeEmail(request.getOfficialEmail());
+
+        if (officialEmail != null &&
+                employeeRepository
+                        .existsByOfficialEmailIgnoreCaseAndBranch_BranchId(
+                                officialEmail,
+                                branchId
+                        )) {
+
+            throw new BadRequestException(
+                    "An employee with this email already exists in this branch."
+            );
+        }
+
         validateContacts(request.getContacts());
         validateQualifications(request.getQualifications());
         validateExperiences(request.getExperiences());
         validateDocuments(request.getDocuments());
     }
 
-    public void validateUpdate(Long employeeId, EmployeeCreateRequest request, Integer branchId) {
-        if (request.getReportingManagerId() != null && request.getReportingManagerId().equals(employeeId)) {
-            throw new BadRequestException("An employee cannot report to themselves.");
+    public void validateUpdate(
+            Long employeeId,
+            EmployeeCreateRequest request,
+            Integer branchId
+    ) {
+        if (request.getReportingManagerId() != null &&
+                request.getReportingManagerId().equals(employeeId)) {
+
+            throw new BadRequestException(
+                    "An employee cannot report to themselves."
+            );
         }
-        
-        validateCoreFields(request, branchId);
-        
+
+        validateCommonFields(request);
+
+        String officialEmail = normalizeEmail(request.getOfficialEmail());
+
+        if (officialEmail != null &&
+                employeeRepository
+                        .existsByOfficialEmailIgnoreCaseAndBranch_BranchIdAndEmployeeIdNot(
+                                officialEmail,
+                                branchId,
+                                employeeId
+                        )) {
+
+            throw new BadRequestException(
+                    "An employee with this email already exists in this branch."
+            );
+        }
+
         validateContacts(request.getContacts());
         validateQualifications(request.getQualifications());
         validateExperiences(request.getExperiences());
         validateDocuments(request.getDocuments());
     }
-    
-    private void validateCoreFields(EmployeeCreateRequest request, Integer branchId) {
+
+    private void validateCommonFields(EmployeeCreateRequest request) {
         if (request.getDateOfBirth() != null) {
-            int age = Period.between(request.getDateOfBirth(), LocalDate.now()).getYears();
+            int age = Period.between(
+                    request.getDateOfBirth(),
+                    LocalDate.now()
+            ).getYears();
+
             if (age < 18) {
-                throw new BadRequestException("Employee must be at least 18 years old.");
+                throw new BadRequestException(
+                        "Employee must be at least 18 years old."
+                );
             }
-        }
-        
-        if (request.getJoiningDate().isAfter(LocalDate.now())) {
-            throw new BadRequestException("Joining date cannot be in the future.");
         }
 
-        if (request.getOfficialEmail() != null && !request.getOfficialEmail().isEmpty()) {
-            if (employeeRepository.existsByOfficialEmailAndBranch_BranchId(request.getOfficialEmail(), branchId)) {
-                throw new BadRequestException("An employee with this email already exists in this branch.");
-            }
+        if (request.getJoiningDate() != null &&
+                request.getJoiningDate().isAfter(LocalDate.now())) {
+
+            throw new BadRequestException(
+                    "Joining date cannot be in the future."
+            );
         }
     }
     
@@ -80,7 +124,7 @@ public class EmployeeValidator {
         }
         
         if (contacts.size() == 1) {
-            EmployeeContactRequest singleContact = contacts.get(0);
+            EmployeeContactRequest singleContact = contacts.getFirst();
             if (Boolean.FALSE.equals(singleContact.getEmployeeContactIsPrimary()) || Boolean.FALSE.equals(singleContact.getEmployeeContactIsEmergency())) {
                 throw new BadRequestException("If there is only one contact, it must be both primary and emergency.");
             }
@@ -120,5 +164,12 @@ public class EmployeeValidator {
             return;
         }
         // Future business validations (e.g., mandatory document check) will go here.
+    }
+    private String normalizeEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+
+        return email.trim().toLowerCase();
     }
 }

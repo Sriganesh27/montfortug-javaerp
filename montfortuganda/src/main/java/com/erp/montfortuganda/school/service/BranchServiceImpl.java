@@ -1,15 +1,14 @@
 package com.erp.montfortuganda.school.service;
 
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.repository.BranchRepository;
-import com.erp.montfortuganda.school.Level;
-import com.erp.montfortuganda.school.LevelRepository;
+import com.erp.montfortuganda.school.entity.Level;
+import com.erp.montfortuganda.school.repository.LevelRepository;
 import com.erp.montfortuganda.school.dto.BranchDTO;
 import com.erp.montfortuganda.school.dto.LevelDTO;
-import com.erp.montfortuganda.auth.User;
+import com.erp.montfortuganda.auth.entity.User;
 import com.erp.montfortuganda.auth.repository.UserRepository;
-import com.erp.montfortuganda.auth.ErpRole;
-import com.erp.montfortuganda.auth.ErpUserRole;
+import com.erp.montfortuganda.auth.entity.ErpUserRole;
 import com.erp.montfortuganda.auth.repository.ErpRoleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;

@@ -1,7 +1,7 @@
 package com.erp.montfortuganda.student.entity;
 
 import com.erp.montfortuganda.admission.entity.ErpApplication;
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

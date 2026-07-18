@@ -1,6 +1,6 @@
 package com.erp.montfortuganda.core.task.entity;
 
-import com.erp.montfortuganda.auth.User;
+import com.erp.montfortuganda.auth.entity.User;
 import com.erp.montfortuganda.model.entity.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.Data;

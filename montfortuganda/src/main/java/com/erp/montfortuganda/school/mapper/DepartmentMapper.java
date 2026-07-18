@@ -30,23 +30,29 @@ public class DepartmentMapper {
     }
 
     public void updateEntityFromDto(DepartmentDTO dto, Department entity) {
-        if (dto == null || entity == null) return;
+        if (dto == null || entity == null) {
+            return;
+        }
 
-        entity.setDepartmentCode(dto.getDepartmentCode());
-        entity.setDepartmentName(dto.getDepartmentName());
+        entity.setDepartmentCode(dto.getDepartmentCode().trim().toUpperCase());
+        entity.setDepartmentName(dto.getDepartmentName().trim());
 
         if (dto.getIsAcademic() != null) {
             entity.setIsAcademic(dto.getIsAcademic());
         }
+
         if (dto.getDescription() != null) {
-            entity.setDescription(dto.getDescription());
+            entity.setDescription(dto.getDescription().trim());
         }
+
         if (dto.getStatus() != null) {
             entity.setStatus(dto.getStatus());
         }
+
         if (dto.getActive() != null) {
             entity.setActive(dto.getActive());
         }
+
         if (dto.getVersion() != null) {
             entity.setVersion(dto.getVersion());
         }

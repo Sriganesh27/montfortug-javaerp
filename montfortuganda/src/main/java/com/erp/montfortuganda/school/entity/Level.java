@@ -1,4 +1,4 @@
-package com.erp.montfortuganda.school;
+package com.erp.montfortuganda.school.entity;
 
 import com.erp.montfortuganda.model.AuditableEntity;
 import jakarta.persistence.*;

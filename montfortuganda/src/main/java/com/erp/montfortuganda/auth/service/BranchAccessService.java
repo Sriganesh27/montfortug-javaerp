@@ -1,7 +1,7 @@
 package com.erp.montfortuganda.auth.service;
 
 import com.erp.montfortuganda.exception.BranchAccessDeniedException;
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.repository.BranchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

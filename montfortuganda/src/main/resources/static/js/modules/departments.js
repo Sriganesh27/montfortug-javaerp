@@ -9,7 +9,20 @@ document.addEventListener('viewLoaded', function(e) {
         }
     }
 });
+function getRequiredBranchId() {
+    const branchId = Number.parseInt(
+        localStorage.getItem('user_branch'),
+        10
+    );
 
+    if (!Number.isInteger(branchId) || branchId <= 0) {
+        throw new Error(
+            'No valid branch is assigned to the current user.'
+        );
+    }
+
+    return branchId;
+}
 let currentDetailDeptId = null;
 
 function initDepartmentsView() {
@@ -38,7 +51,7 @@ function initDepartmentsView() {
     async function loadDepartments() {
         if (table) table.showLoading();
         try {
-            const branchId = parseInt(localStorage.getItem('user_branch')) || 1;
+            const branchId = getRequiredBranchId();
 
             // Build query params
             const searchVal = viewContainer.querySelector('#dept-searchInput').value.trim();
@@ -52,24 +65,68 @@ function initDepartmentsView() {
             const pageData = res.data;
 
             // Render Rows
+            let rowIndex = 0;
+
             table.render(pageData.content, (dept, rowNode) => {
-                rowNode.querySelector('.col-id').textContent = dept.departmentId;
-                rowNode.querySelector('.col-code').textContent = dept.departmentCode;
+                const currentPage = Number(pageData.pageNumber ?? state.page ?? 0);
+                const pageSize = Number(pageData.pageSize ?? state.size ?? 10);
+
+                const serialNumber =
+                    (currentPage * pageSize) + rowIndex + 1;
+
+                rowIndex++;
+
+                rowNode.querySelector('.col-id').textContent =
+                    serialNumber.toString();
+
+                rowNode.querySelector('.col-code').textContent =
+                    dept.departmentCode;
 
                 const nameNode = rowNode.querySelector('.col-name strong');
                 nameNode.textContent = dept.departmentName;
-                rowNode.querySelector('.col-name').addEventListener('click', () => openDeptDetail(dept.departmentId));
 
-                rowNode.querySelector('.col-type').textContent = dept.isAcademic ? 'Academic' : 'Non-Academic';
+                rowNode.querySelector('.col-name')
+                    .addEventListener(
+                        'click',
+                        () => void openDeptDetail(dept.departmentId)
+                    );
 
-                const statusBadge = rowNode.querySelector('.status-badge');
-                statusBadge.textContent = dept.recordStatus || dept.status || 'ACTIVE';
-                statusBadge.className = `status-badge badge-${(dept.recordStatus || dept.status || 'ACTIVE').toLowerCase()}`;
+                rowNode.querySelector('.col-type').textContent =
+                    dept.isAcademic ? 'Academic' : 'Non-Academic';
 
-                rowNode.querySelector('.view-more-btn').addEventListener('click', () => openDeptDetail(dept.departmentId));
+                const statusBadge =
+                    rowNode.querySelector('.status-badge');
+
+                statusBadge.textContent =
+                    dept.recordStatus || dept.status || 'ACTIVE';
+
+                statusBadge.className =
+                    `status-badge badge-${(
+                        dept.recordStatus ||
+                        dept.status ||
+                        'ACTIVE'
+                    ).toLowerCase()}`;
+
+                rowNode.querySelector('.view-more-btn')
+                    .addEventListener(
+                        'click',
+                        () => openDeptDetail(dept.departmentId)
+                    );
+
                 const editBtn = rowNode.querySelector('.edit-btn');
-                if (editBtn) editBtn.addEventListener('click', () => openDeptDetail(dept.departmentId, true));
-                rowNode.querySelector('.delete-btn').addEventListener('click', () => deleteDept(dept.departmentId));
+
+                if (editBtn) {
+                    editBtn.addEventListener(
+                        'click',
+                        () => openDeptDetail(dept.departmentId)
+                    );
+                }
+
+                rowNode.querySelector('.delete-btn')
+                    .addEventListener(
+                        'click',
+                        () => void deleteDept(dept.departmentId)
+                    );
 
                 return rowNode;
             });
@@ -100,9 +157,19 @@ function initDepartmentsView() {
             table: document.getElementById('dept-tableComponent')
         },
         {
-            onPageChange: (dir) => { state.page += dir; loadDepartments(); },
-            onSizeChange: (size) => { state.size = size; state.page = 0; loadDepartments(); },
-            onSort: (field) => { state.sort = field; loadDepartments(); }
+            onPageChange: (dir) => {
+                state.page += dir;
+                void loadDepartments();
+            },
+            onSizeChange: (size) => {
+                state.size = size;
+                state.page = 0;
+                void loadDepartments();
+            },
+            onSort: (field) => {
+                state.sort = field;
+                void loadDepartments();
+            }
         }
     );
 
@@ -111,11 +178,11 @@ function initDepartmentsView() {
     if (searchBtn) {
         searchBtn.addEventListener('click', () => {
             state.page = 0;
-            loadDepartments();
+            void loadDepartments();
         });
     }
 
-    async function openDeptDetail(id, isEditMode = false) {
+    async function openDeptDetail(id) {
         currentDetailDeptId = id;
         showLoader();
         try {
@@ -151,7 +218,7 @@ function initDepartmentsView() {
                 try {
                     await apiDelete(`/departments/${id}`);
                     showSuccessMessage('Department deleted successfully.');
-                    loadDepartments();
+                    await loadDepartments();
                 } catch (e) {
                     showErrorMessage('Failed to delete department.');
                 } finally {
@@ -170,7 +237,7 @@ function initDepartmentsView() {
         backBtn.addEventListener('click', () => {
             detailView.classList.add('hidden');
             tableView.classList.remove('hidden');
-            loadDepartments();
+            void loadDepartments();
         });
     }
 
@@ -199,7 +266,7 @@ function initDepartmentsView() {
     if (saveBtn) {
         saveBtn.addEventListener('click', async () => {
             const payload = {
-                branchId: parseInt(localStorage.getItem('user_branch')) || 1,
+                branchId: getRequiredBranchId(),
                 departmentCode: viewContainer.querySelector('#edit-deptCode').value,
                 departmentName: viewContainer.querySelector('#edit-deptName').value,
                 isAcademic: viewContainer.querySelector('#edit-isAcademic').value === 'true',
@@ -210,7 +277,7 @@ function initDepartmentsView() {
             try {
                 await apiPut(`/departments/${currentDetailDeptId}`, payload);
                 showSuccessMessage('Department updated successfully.');
-                openDeptDetail(currentDetailDeptId);
+                await openDeptDetail(currentDetailDeptId);
             } catch (e) {
                 showErrorMessage('Failed to update department.');
             } finally {
@@ -228,7 +295,7 @@ function initDepartmentsView() {
     }
 
     // Initial Load
-    loadDepartments();
+    void loadDepartments();
 }
 
 function initAddDepartmentView() {
@@ -267,7 +334,7 @@ function initAddDepartmentView() {
             submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
 
             const payload = {
-                branchId: parseInt(localStorage.getItem('user_branch')) || 1,
+                branchId: getRequiredBranchId(),
                 departmentCode: viewContainer.querySelector('#add-deptCode').value,
                 departmentName: viewContainer.querySelector('#add-deptName').value,
                 isAcademic: viewContainer.querySelector('#add-isAcademic').value === 'true',

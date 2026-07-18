@@ -14,7 +14,7 @@ import java.time.LocalDate;
 
 @Data
 public class EmployeeContactRequest {
-
+    private Long employeeContactId;
     @Size(max = 50)
     private String employeeContactCode;
 

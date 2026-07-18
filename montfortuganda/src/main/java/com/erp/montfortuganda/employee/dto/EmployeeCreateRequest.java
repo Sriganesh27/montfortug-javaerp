@@ -129,7 +129,6 @@ public class EmployeeCreateRequest {
     @NotNull(message = "Employment mode is required")
     private EmploymentMode employmentMode;
 
-    @NotNull(message = "Employment status is required")
     private EmploymentStatus employmentStatus;
 
     @NotNull(message = "Joining date is required")

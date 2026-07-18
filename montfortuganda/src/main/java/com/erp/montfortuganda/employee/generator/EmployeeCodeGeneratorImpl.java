@@ -3,7 +3,7 @@ package com.erp.montfortuganda.employee.generator;
 
 import com.erp.montfortuganda.employee.enums.EmployeeCategory;
 import com.erp.montfortuganda.employee.repository.EmployeeRepository;
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.repository.BranchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

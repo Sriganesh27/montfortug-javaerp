@@ -154,7 +154,46 @@
                         </div>
                     </div>
                 </fieldset>
+                <fieldset class="emp-fieldset">
+                    <legend class="emp-legend">Login Account</legend>
 
+                    <div class="form-group mb-3">
+                        <label class="d-flex align-items-center gap-2">
+                            <input type="checkbox" id="add-generateLogin">
+                            <span>Generate login account</span>
+                        </label>
+
+                        <small class="text-muted">
+                            The generated employee code will be used as the login ID.
+                        </small>
+                    </div>
+
+                    <div id="add-loginOptions" class="hidden">
+                        <div class="emp-grid emp-grid-2 mb-3">
+                            <div class="form-group">
+                                <label class="text-muted small">Login Role</label>
+
+                                <select
+                                        id="add-employeeRoleId"
+                                        class="detail-input w-100"
+                                >
+                                    <option value="">Default Employee Role</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="d-flex align-items-center gap-2 mt-4">
+                                    <input type="checkbox" id="add-sendLoginEmail">
+                                    <span>Send credentials by email</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <small class="text-muted">
+                            Official email is required when credentials are sent.
+                        </small>
+                    </div>
+                </fieldset>
                 <!-- SECTION 3: Identifications & Permits -->
                 <fieldset class="emp-fieldset">
                     <legend class="emp-legend">Identifications</legend>

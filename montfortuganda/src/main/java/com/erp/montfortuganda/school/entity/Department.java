@@ -2,7 +2,6 @@ package com.erp.montfortuganda.school.entity;
 
 import com.erp.montfortuganda.model.AuditableEntity;
 import com.erp.montfortuganda.model.enums.RecordStatus;
-import com.erp.montfortuganda.school.Branch;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -13,7 +12,14 @@ import lombok.EqualsAndHashCode;
 @Table(
         name = "erp_departments",
         uniqueConstraints = {
-                @UniqueConstraint(name = "uk_branch_dept_code", columnNames = {"branch_id", "department_code"})
+                @UniqueConstraint(
+                        name = "uk_branch_dept_code",
+                        columnNames = {"branch_id", "department_code"}
+                ),
+                @UniqueConstraint(
+                        name = "uk_branch_dept_name",
+                        columnNames = {"branch_id", "department_name"}
+                )
         }
 )
 public class Department extends AuditableEntity {

@@ -1,4 +1,4 @@
-package com.erp.montfortuganda.auth;
+package com.erp.montfortuganda.auth.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
@@ -14,41 +14,41 @@ import java.time.LocalDateTime;
 @Entity
 @DynamicUpdate
 @Table(
-        name = "erp_user_roles",
+        name = "erp_role_permissions",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_user_role",
-                        columnNames = {"user_id", "role_id"}
+                        name = "uk_role_permission",
+                        columnNames = {"role_id", "permission_id"}
                 )
         }
 )
-@EqualsAndHashCode(exclude = {"user", "role"})
-@ToString(exclude = {"user", "role"})
-public class ErpUserRole implements Serializable {
+@EqualsAndHashCode(exclude = {"role", "permission"})
+@ToString(exclude = {"role", "permission"})
+public class ErpRolePermission implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "user_role_id")
-    private Long userRoleId;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(
-            name = "user_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_userrole_user")
-    )
-    private User user;
+    @Column(name = "role_permission_id")
+    private Long rolePermissionId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "role_id",
             nullable = false,
-            foreignKey = @ForeignKey(name = "fk_userrole_role")
+            foreignKey = @ForeignKey(name = "fk_rolepermission_role")
     )
     private ErpRole role;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "permission_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_rolepermission_permission")
+    )
+    private ErpPermission permission;
 
     @Column(name = "active", nullable = false)
     private Boolean active = true;

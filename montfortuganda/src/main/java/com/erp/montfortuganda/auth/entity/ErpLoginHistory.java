@@ -1,7 +1,8 @@
-package com.erp.montfortuganda.auth;
+package com.erp.montfortuganda.auth.entity;
 
+import com.erp.montfortuganda.auth.enums.LoginStatus;
 import com.erp.montfortuganda.model.AuditableEntity;
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Size;
 import lombok.Data;

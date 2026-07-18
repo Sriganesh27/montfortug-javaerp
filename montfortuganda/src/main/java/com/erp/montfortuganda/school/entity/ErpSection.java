@@ -1,10 +1,12 @@
-package com.erp.montfortuganda.school;
+package com.erp.montfortuganda.school.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serial;
@@ -15,53 +17,56 @@ import java.time.LocalDateTime;
 @Entity
 @DynamicUpdate
 @Table(
-        name = "erp_subjects",
+        name = "erp_sections",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_subject_code",
-                        columnNames = {"subject_code"}
+                        name = "uk_branch_year_class_section",
+                        columnNames = {"branch_id", "academic_year_id", "class_id", "section_code"}
                 )
         }
 )
-public class ErpSubject implements Serializable {
+@EqualsAndHashCode(exclude = {"branch", "academicYear", "schoolClass"})
+@ToString(exclude = {"branch", "academicYear", "schoolClass"})
+public class ErpSection implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
     public enum Status { ACTIVE, INACTIVE }
-    public enum SubjectType { CORE, ELECTIVE, OPTIONAL }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "subject_id")
-    private Long subjectId;
+    @Column(name = "section_id")
+    private Long sectionId;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "branch_id", nullable = false, foreignKey = @ForeignKey(name = "fk_section_branch"))
+    private Branch branch;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "academic_year_id", nullable = false, foreignKey = @ForeignKey(name = "fk_section_year"))
+    private ErpAcademicYear academicYear;
+
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "class_id", nullable = false, foreignKey = @ForeignKey(name = "fk_section_class"))
+    private SchoolClass schoolClass;
 
     @NotBlank
     @Size(max = 20)
-    @Column(name = "subject_code", nullable = false, unique = true, length = 20)
-    private String subjectCode;
+    @Column(name = "section_code", nullable = false, length = 20)
+    private String sectionCode;
 
     @NotBlank
     @Size(max = 100)
-    @Column(name = "subject_name", nullable = false, length = 100)
-    private String subjectName;
-
-    @Size(max = 50)
-    @Column(name = "subject_short_name", length = 50)
-    private String subjectShortName;
+    @Column(name = "section_name", nullable = false, length = 100)
+    private String sectionName;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(name = "subject_type", nullable = false, length = 30)
-    private SubjectType subjectType = SubjectType.CORE;
-
-    @NotNull
-    @Column(name = "is_practical", nullable = false)
-    private Boolean isPractical = false;
-
-    @NotNull
-    @Column(name = "display_order", nullable = false)
-    private Integer displayOrder = 1;
+    @Column(name = "capacity", nullable = false)
+    private Integer capacity = 40;
 
     @Size(max = 500)
     @Column(name = "description", length = 500)
@@ -93,11 +98,9 @@ public class ErpSubject implements Serializable {
 
     @PrePersist
     private void onCreate() {
-        if (subjectType == null) subjectType = SubjectType.CORE;
-        if (isPractical == null) isPractical = false;
-        if (displayOrder == null) displayOrder = 1;
         if (active == null) active = true;
         if (status == null) status = Status.ACTIVE;
+        if (capacity == null) capacity = 40;
 
         LocalDateTime now = LocalDateTime.now();
         if (createdAt == null) createdAt = now;

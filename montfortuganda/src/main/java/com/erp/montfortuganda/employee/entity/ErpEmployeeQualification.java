@@ -1,7 +1,7 @@
 // File: src/main/java/com/erp/montfortuganda/employee/entity/ErpEmployeeQualification.java
 package com.erp.montfortuganda.employee.entity;
 
-import com.erp.montfortuganda.auth.User;
+import com.erp.montfortuganda.auth.entity.User;
 import com.erp.montfortuganda.employee.enums.QualificationLevel;
 import com.erp.montfortuganda.model.AuditableEntity;
 import jakarta.persistence.*;

@@ -6,10 +6,13 @@ import com.erp.montfortuganda.admission.entity.ErpApplication;
 import com.erp.montfortuganda.admission.entity.ErpApplicationStatusHistory;
 import com.erp.montfortuganda.admission.entity.ErpApplicationDocument;
 import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
-import com.erp.montfortuganda.school.Branch;
+import com.erp.montfortuganda.school.entity.Branch;
+import com.erp.montfortuganda.school.entity.BranchLevel;
+import com.erp.montfortuganda.school.entity.Level;
+import com.erp.montfortuganda.school.entity.SchoolClass;
 import com.erp.montfortuganda.school.repository.BranchRepository;
-import com.erp.montfortuganda.school.LevelRepository;
-import com.erp.montfortuganda.school.SchoolClassRepository;
+import com.erp.montfortuganda.school.repository.LevelRepository;
+import com.erp.montfortuganda.school.repository.SchoolClassRepository;
 import com.erp.montfortuganda.notification.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -316,7 +319,7 @@ public class PublicApplicationService {
         String appliedClass = String.valueOf(app.getBranchClassId());
         if (app.getBranchClassId() != null) {
             // FIXED: Removed .longValue() so it matches the Integer parameter exactly
-            Optional<com.erp.montfortuganda.school.SchoolClass> sc = classRepository.findById(app.getBranchClassId().intValue());            if (sc.isPresent()) {
+            Optional<SchoolClass> sc = classRepository.findById(app.getBranchClassId().intValue());            if (sc.isPresent()) {
                 appliedClass = sc.get().getClassName();
             }
         }
@@ -443,10 +446,10 @@ public class PublicApplicationService {
         return branchList;
     }
 
-    private List<Map<String, Object>> extractBranchLevelsList(List<com.erp.montfortuganda.school.BranchLevel> branchLevels) {
+    private List<Map<String, Object>> extractBranchLevelsList(List<BranchLevel> branchLevels) {
         List<Map<String, Object>> branchLevelsList = new ArrayList<>();
         if (branchLevels != null) {
-            for (com.erp.montfortuganda.school.BranchLevel bl : branchLevels) {
+            for (BranchLevel bl : branchLevels) {
                 Map<String, Object> blMap = new HashMap<>();
                 Map<String, Object> levelMap = new HashMap<>();
                 if (bl.getLevel() != null) {
@@ -463,7 +466,7 @@ public class PublicApplicationService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getPublicLevels() {
         List<Map<String, Object>> levelList = new ArrayList<>();
-        for (com.erp.montfortuganda.school.Level lvl : levelRepository.findAll()) {
+        for (Level lvl : levelRepository.findAll()) {
             Map<String, Object> levelMap = new HashMap<>();
             levelMap.put("levelId", lvl.getLevelId());
             levelMap.put("levelName", lvl.getLevelName());
@@ -475,7 +478,7 @@ public class PublicApplicationService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getPublicClasses() {
         List<Map<String, Object>> classList = new ArrayList<>();
-        for (com.erp.montfortuganda.school.SchoolClass sc : classRepository.findAll()) {
+        for (SchoolClass sc : classRepository.findAll()) {
             Map<String, Object> classMap = new HashMap<>();
             classMap.put("classId", sc.getClassId());
             classMap.put("classCode", sc.getClassCode());

@@ -3,7 +3,7 @@
 *Last Updated: 2026-06-30*
 
 ## Table: `erp_users`
-* **Entity Class:** `com.erp.montfortuganda.auth.User`
+* **Entity Class:** `com.erp.montfortuganda.auth.entity.User`
 * **Purpose:** Authentication credentials.
 * **Used By Services:** `UserDetailsServiceImpl`, `BranchServiceImpl`
 * **Used By Controllers:** `AuthController`, `SuperAdminApiController`
@@ -20,7 +20,7 @@
 | `updated_at` | LocalDateTime | No | No | Inherited from AuditableEntity. |
 
 ## Table: `erp_branches`
-* **Entity Class:** `com.erp.montfortuganda.school.Branch`
+* **Entity Class:** `com.erp.montfortuganda.school.entity.Branch`
 * **Purpose:** Multi-tenant master data.
 * **Used By Services:** `BranchService`
 * **Used By Controllers:** `BranchController`, `SuperAdminApiController`

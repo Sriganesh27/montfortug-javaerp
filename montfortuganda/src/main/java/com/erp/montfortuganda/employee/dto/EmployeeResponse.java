@@ -7,6 +7,8 @@ import com.erp.montfortuganda.employee.enums.EmploymentMode;
 import com.erp.montfortuganda.employee.enums.EmploymentStatus;
 import lombok.Data;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 public class EmployeeResponse {
@@ -31,4 +33,15 @@ public class EmployeeResponse {
     private String languagesSpoken;
     private String religion;
     private String subReligion;
+    private List<EmployeeContactDTO> contacts =
+            new ArrayList<>();
+
+    private List<EmployeeQualificationDTO> qualifications =
+            new ArrayList<>();
+
+    private List<EmployeeExperienceDTO> experiences =
+            new ArrayList<>();
+
+    private List<EmployeeDocumentDTO> documents =
+            new ArrayList<>();
 }

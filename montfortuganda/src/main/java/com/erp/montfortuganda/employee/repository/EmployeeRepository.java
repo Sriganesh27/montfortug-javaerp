@@ -28,7 +28,15 @@ public interface EmployeeRepository extends JpaRepository<ErpEmployee, Long>, Jp
     //boolean existsByEmployeeNoAndBranch_BranchId(String employeeNo, Integer branchId);
     
     // Checks for duplicate email (Matches officialEmail in old entity)
-    boolean existsByOfficialEmailAndBranch_BranchId(String officialEmail, Integer branchId);
+    boolean existsByOfficialEmailIgnoreCaseAndBranch_BranchId(
+            String officialEmail,
+            Integer branchId
+    );
+    boolean existsByOfficialEmailIgnoreCaseAndBranch_BranchIdAndEmployeeIdNot(
+            String officialEmail,
+            Integer branchId,
+            Long employeeId
+    );
 
     // Fetches the highest existing sequence
     @Query("SELECT MAX(e.employeeNo) FROM ErpEmployee e WHERE e.branch.branchId = :branchId AND e.employeeNo LIKE :prefix%")

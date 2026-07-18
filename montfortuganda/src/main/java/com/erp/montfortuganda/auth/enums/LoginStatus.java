@@ -1,4 +1,4 @@
-package com.erp.montfortuganda.auth;
+package com.erp.montfortuganda.auth.enums;
 
 public enum LoginStatus {
     SUCCESS,

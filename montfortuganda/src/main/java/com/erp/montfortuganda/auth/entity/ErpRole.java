@@ -1,4 +1,4 @@
-package com.erp.montfortuganda.auth;
+package com.erp.montfortuganda.auth.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
