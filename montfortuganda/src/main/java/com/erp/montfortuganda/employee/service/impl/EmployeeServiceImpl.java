@@ -623,23 +623,30 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         java.util.Map<Long, ErpEmployeeDocument> existingById =
                 existingDocuments.stream()
-                        .collect(java.util.stream.Collectors.toMap(
-                                ErpEmployeeDocument::getEmployeeDocumentId,
-                                document -> document
-                        ));
+                        .collect(
+                                java.util.stream.Collectors.toMap(
+                                        ErpEmployeeDocument::getEmployeeDocumentId,
+                                        document -> document
+                                )
+                        );
 
         java.util.Set<Long> receivedIds =
                 new java.util.HashSet<>();
 
         for (EmployeeDocumentRequest request : requests) {
+            boolean newDocument =
+                    request.getEmployeeDocumentId() == null;
+
             ErpEmployeeDocument document;
 
-            if (request.getEmployeeDocumentId() == null) {
-                document = new ErpEmployeeDocument();
+            if (newDocument) {
+                document =
+                        new ErpEmployeeDocument();
             } else {
-                document = existingById.get(
-                        request.getEmployeeDocumentId()
-                );
+                document =
+                        existingById.get(
+                                request.getEmployeeDocumentId()
+                        );
 
                 if (document == null) {
                     throw new BadRequestException(
@@ -659,23 +666,54 @@ public class EmployeeServiceImpl implements EmployeeService {
                     document
             );
 
-            document.setEmployeeDocumentActive(true);
+            boolean hasNewFile =
+                    request.getFileData() != null
+                            && !request.getFileData().isBlank()
+                            && request.getFileName() != null
+                            && !request.getFileName().isBlank();
 
-            document = documentRepository.save(document);
+            if (newDocument && !hasNewFile) {
+                throw new BadRequestException(
+                        "A file is required for new employee documents"
+                );
+            }
 
-            uploadDocumentFile(
-                    request,
-                    employee,
-                    document
-            );
+            if (hasNewFile) {
+                uploadDocumentFile(
+                        request,
+                        employee,
+                        document
+                );
+            } else {
+                /*
+                 * Existing document update without replacing its file.
+                 */
+                if (
+                        document.getEmployeeDocumentFileName() == null
+                                || document.getEmployeeDocumentFilePath() == null
+                ) {
+                    throw new BadRequestException(
+                            "Existing document file information is missing"
+                    );
+                }
+
+                documentRepository.save(
+                        document
+                );
+            }
         }
 
         for (ErpEmployeeDocument existing : existingDocuments) {
-            if (!receivedIds.contains(
-                    existing.getEmployeeDocumentId()
-            )) {
+            if (
+                    !receivedIds.contains(
+                            existing.getEmployeeDocumentId()
+                    )
+            ) {
                 existing.setEmployeeDocumentActive(false);
-                documentRepository.save(existing);
+
+                documentRepository.save(
+                        existing
+                );
             }
         }
     }
@@ -685,16 +723,20 @@ public class EmployeeServiceImpl implements EmployeeService {
             ErpEmployee employee,
             ErpEmployeeQualification qualification
     ) {
-        if (request.getFileData() == null
-                || request.getFileData().isBlank()
-                || request.getFileName() == null
-                || request.getFileName().isBlank()) {
+        if (
+                request.getFileData() == null
+                        || request.getFileData().isBlank()
+                        || request.getFileName() == null
+                        || request.getFileName().isBlank()
+        ) {
             return;
         }
 
         try {
             byte[] fileBytes =
-                    decodeBase64(request.getFileData());
+                    decodeBase64(
+                            request.getFileData()
+                    );
 
             String levelName =
                     request.getEmployeeQualificationLevel()
@@ -702,15 +744,18 @@ public class EmployeeServiceImpl implements EmployeeService {
                             ? request
                             .getEmployeeQualificationLevel()
                             .name()
+                            : "QUALIFICATION";
+
+            String safeOriginalName =
+                    request.getFileName()
                             .replaceAll(
-                                    "[^a-zA-Z0-9]",
+                                    "[^a-zA-Z0-9._-]",
                                     "_"
-                            )
-                            : "CERT";
+                            );
 
             String dynamicFileName =
                     levelName + "_"
-                            + request.getFileName();
+                            + safeOriginalName;
 
             MockMultipartFile multipartFile =
                     new MockMultipartFile(
@@ -729,23 +774,18 @@ public class EmployeeServiceImpl implements EmployeeService {
                             DocumentType.CERTIFICATE
                     );
 
-            String currentRemarks =
-                    qualification
-                            .getEmployeeQualificationRemarks();
-
-            qualification.setEmployeeQualificationRemarks(
-                    appendFilePath(
-                            currentRemarks,
+            qualification
+                    .setEmployeeQualificationDocumentFile(
                             documentPath
-                    )
-            );
+                    );
 
-            qualificationRepository.save(qualification);
+            qualificationRepository.save(
+                    qualification
+            );
 
         } catch (Exception exception) {
             log.error(
-                    "Failed to upload qualification file "
-                            + "for employee {}",
+                    "Failed to upload qualification file for employee {}",
                     employee.getEmployeeId(),
                     exception
             );
@@ -761,16 +801,20 @@ public class EmployeeServiceImpl implements EmployeeService {
             ErpEmployee employee,
             ErpEmployeeExperience experience
     ) {
-        if (request.getFileData() == null
-                || request.getFileData().isBlank()
-                || request.getFileName() == null
-                || request.getFileName().isBlank()) {
+        if (
+                request.getFileData() == null
+                        || request.getFileData().isBlank()
+                        || request.getFileName() == null
+                        || request.getFileName().isBlank()
+        ) {
             return;
         }
 
         try {
             byte[] fileBytes =
-                    decodeBase64(request.getFileData());
+                    decodeBase64(
+                            request.getFileData()
+                    );
 
             String companyName =
                     request.getCompanyName() != null
@@ -779,11 +823,18 @@ public class EmployeeServiceImpl implements EmployeeService {
                                     "[^a-zA-Z0-9]",
                                     "_"
                             )
-                            : "EXP";
+                            : "EXPERIENCE";
+
+            String safeOriginalName =
+                    request.getFileName()
+                            .replaceAll(
+                                    "[^a-zA-Z0-9._-]",
+                                    "_"
+                            );
 
             String dynamicFileName =
                     companyName + "_"
-                            + request.getFileName();
+                            + safeOriginalName;
 
             MockMultipartFile multipartFile =
                     new MockMultipartFile(
@@ -802,22 +853,18 @@ public class EmployeeServiceImpl implements EmployeeService {
                             DocumentType.OTHER
                     );
 
-            String currentRemarks =
-                    experience.getEmployeeExperienceRemarks();
-
-            experience.setEmployeeExperienceRemarks(
-                    appendFilePath(
-                            currentRemarks,
+            experience
+                    .setEmployeeExperienceExperienceCertificateFile(
                             documentPath
-                    )
-            );
+                    );
 
-            experienceRepository.save(experience);
+            experienceRepository.save(
+                    experience
+            );
 
         } catch (Exception exception) {
             log.error(
-                    "Failed to upload experience file "
-                            + "for employee {}",
+                    "Failed to upload experience file for employee {}",
                     employee.getEmployeeId(),
                     exception
             );
@@ -833,33 +880,53 @@ public class EmployeeServiceImpl implements EmployeeService {
             ErpEmployee employee,
             ErpEmployeeDocument document
     ) {
-        if (request.getFileData() == null
-                || request.getFileData().isBlank()
-                || request.getFileName() == null
-                || request.getFileName().isBlank()) {
-            return;
+        if (
+                request.getFileData() == null
+                        || request.getFileData().isBlank()
+                        || request.getFileName() == null
+                        || request.getFileName().isBlank()
+        ) {
+            throw new BadRequestException(
+                    "Employee document file is required"
+            );
         }
 
         try {
             byte[] fileBytes =
-                    decodeBase64(request.getFileData());
+                    decodeBase64(
+                            request.getFileData()
+                    );
+
+            String originalFileName =
+                    request.getFileName();
+
+            String safeOriginalName =
+                    originalFileName.replaceAll(
+                            "[^a-zA-Z0-9._-]",
+                            "_"
+                    );
 
             String typeName =
                     request.getDocumentType() != null
                             ? request
                             .getDocumentType()
                             .name()
-                            : "DOC";
+                            : "DOCUMENT";
 
             String dynamicFileName =
                     typeName + "_"
-                            + request.getFileName();
+                            + safeOriginalName;
+
+            String mimeType =
+                    extractMimeType(
+                            request.getFileData()
+                    );
 
             MockMultipartFile multipartFile =
                     new MockMultipartFile(
                             "file",
                             dynamicFileName,
-                            null,
+                            mimeType,
                             fileBytes
                     );
 
@@ -872,16 +939,45 @@ public class EmployeeServiceImpl implements EmployeeService {
                             DocumentType.OTHER
                     );
 
+            document.setEmployeeDocumentFileName(
+                    dynamicFileName
+            );
+
+            document.setEmployeeDocumentOriginalFileName(
+                    originalFileName
+            );
+
             document.setEmployeeDocumentFilePath(
                     documentPath
             );
 
-            documentRepository.save(document);
+            document.setEmployeeDocumentFileSize(
+                    (long) fileBytes.length
+            );
+
+            document.setEmployeeDocumentMimeType(
+                    mimeType
+            );
+
+            document.setEmployeeDocumentFileExtension(
+                    extractFileExtension(
+                            originalFileName
+                    )
+            );
+
+            /*
+             * Save only after all required document fields exist.
+             */
+            documentRepository.save(
+                    document
+            );
+
+        } catch (BadRequestException exception) {
+            throw exception;
 
         } catch (Exception exception) {
             log.error(
-                    "Failed to upload employee document "
-                            + "for employee {}",
+                    "Failed to upload employee document for employee {}",
                     employee.getEmployeeId(),
                     exception
             );
@@ -991,27 +1087,42 @@ public class EmployeeServiceImpl implements EmployeeService {
                 request.getEmployeeQualificationLevel()
         );
 
+        entity.setCustomLevel(
+                request.getEmployeeQualificationLevel()
+                        == com.erp.montfortuganda.employee.enums
+                        .QualificationLevel.OTHER
+                        ? trimToNull(request.getCustomLevel())
+                        : null
+        );
+
         entity.setEmployeeQualificationName(
-                request.getEmployeeQualificationName()
+                trimToNull(
+                        request.getEmployeeQualificationName()
+                )
         );
 
         entity.setEmployeeQualificationSpecialization(
-                request
-                        .getEmployeeQualificationSpecialization()
+                trimToNull(
+                        request.getEmployeeQualificationSpecialization()
+                )
         );
 
         entity.setEmployeeQualificationInstitutionName(
-                request
-                        .getEmployeeQualificationInstitutionName()
+                trimToNull(
+                        request.getEmployeeQualificationInstitutionName()
+                )
         );
 
         entity.setEmployeeQualificationBoardUniversity(
-                request
-                        .getEmployeeQualificationBoardUniversity()
+                trimToNull(
+                        request.getEmployeeQualificationBoardUniversity()
+                )
         );
 
         entity.setEmployeeQualificationCountry(
-                request.getEmployeeQualificationCountry()
+                trimToNull(
+                        request.getEmployeeQualificationCountry()
+                )
         );
 
         entity.setEmployeeQualificationStartYear(
@@ -1019,17 +1130,23 @@ public class EmployeeServiceImpl implements EmployeeService {
         );
 
         entity.setEmployeeQualificationCompletionYear(
-                request
-                        .getEmployeeQualificationCompletionYear()
+                request.getEmployeeQualificationCompletionYear()
         );
 
         entity.setEmployeeQualificationDurationMonths(
-                request
-                        .getEmployeeQualificationDurationMonths()
+                request.getEmployeeQualificationDurationMonths()
         );
 
         entity.setEmployeeQualificationGrade(
-                request.getEmployeeQualificationGrade()
+                trimToNull(
+                        request.getEmployeeQualificationGrade()
+                )
+        );
+
+        entity.setQualificationGrade(
+                trimToNull(
+                        request.getQualificationGrade()
+                )
         );
 
         entity.setEmployeeQualificationPercentage(
@@ -1041,17 +1158,27 @@ public class EmployeeServiceImpl implements EmployeeService {
         );
 
         entity.setEmployeeQualificationCertificateNumber(
-                request
-                        .getEmployeeQualificationCertificateNumber()
+                trimToNull(
+                        request.getEmployeeQualificationCertificateNumber()
+                )
         );
 
         entity.setEmployeeQualificationRegistrationNumber(
-                request
-                        .getEmployeeQualificationRegistrationNumber()
+                trimToNull(
+                        request.getEmployeeQualificationRegistrationNumber()
+                )
         );
 
         entity.setEmployeeQualificationRemarks(
-                request.getEmployeeQualificationRemarks()
+                trimToNull(
+                        request.getEmployeeQualificationRemarks()
+                )
+        );
+
+        entity.setEmployeeQualificationVerified(false);
+        entity.setEmployeeQualificationActive(
+                request.getActive() == null
+                        || request.getActive()
         );
 
         return entity;
@@ -1065,11 +1192,15 @@ public class EmployeeServiceImpl implements EmployeeService {
         entity.setEmployee(employee);
 
         entity.setEmployeeExperienceCompanyName(
-                request.getCompanyName()
+                trimToNull(
+                        request.getCompanyName()
+                )
         );
 
         entity.setEmployeeExperienceDesignation(
-                request.getJobRole()
+                trimToNull(
+                        request.getJobRole()
+                )
         );
 
         entity.setEmployeeExperienceEmploymentType(
@@ -1084,9 +1215,39 @@ public class EmployeeServiceImpl implements EmployeeService {
                 request.getEndDate()
         );
 
+        boolean currentJob =
+                request.getEndDate() == null;
+
         entity.setEmployeeExperienceCurrentJob(
-                request.getEndDate() == null
+                currentJob
         );
+
+        if (request.getStartDate() != null) {
+            java.time.LocalDate calculationEndDate =
+                    currentJob
+                            ? java.time.LocalDate.now()
+                            : request.getEndDate();
+
+            if (
+                    calculationEndDate != null
+                            && !calculationEndDate.isBefore(
+                            request.getStartDate()
+                    )
+            ) {
+                long totalMonths =
+                        java.time.temporal.ChronoUnit.MONTHS
+                                .between(
+                                        request.getStartDate()
+                                                .withDayOfMonth(1),
+                                        calculationEndDate
+                                                .withDayOfMonth(1)
+                                );
+
+                entity.setEmployeeExperienceTotalMonths(
+                        Math.toIntExact(totalMonths)
+                );
+            }
+        }
 
         entity.setEmployeeExperienceVerified(false);
         entity.setEmployeeExperienceActive(true);
@@ -1101,32 +1262,42 @@ public class EmployeeServiceImpl implements EmployeeService {
     ) {
         entity.setEmployee(employee);
 
-        if (request.getDocumentType() != null) {
-            entity.setEmployeeDocumentType(
-                    request.getDocumentType()
-            );
-        }
+        entity.setEmployeeDocumentType(
+                request.getDocumentType()
+        );
 
         entity.setEmployeeDocumentName(
-                request.getDocumentFileName()
+                trimToNull(
+                        request.getDocumentName()
+                )
         );
+
+        String description =
+                trimToNull(
+                        request.getDocumentNumber()
+                );
 
         entity.setEmployeeDocumentDescription(
-                request.getRemarks()
+                description
         );
 
-        entity.setEmployeeDocumentFileName(
-                request.getDocumentFileName()
+        entity.setEmployeeDocumentIssueDate(
+                request.getIssueDate()
         );
 
-        if (request.getDocumentStoragePath() != null
-                && !request.getDocumentStoragePath()
-                .isBlank()) {
+        entity.setEmployeeDocumentExpiryDate(
+                request.getExpiryDate()
+        );
 
-            entity.setEmployeeDocumentFilePath(
-                    request.getDocumentStoragePath()
-            );
-        }
+        entity.setEmployeeDocumentRemarks(
+                trimToNull(
+                        request.getRemarks()
+                )
+        );
+
+        entity.setEmployeeDocumentVerified(false);
+        entity.setEmployeeDocumentIsMandatory(false);
+        entity.setEmployeeDocumentActive(true);
 
         return entity;
     }
@@ -1516,5 +1687,60 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         return manager;
 
+    }
+    private String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String trimmed = value.trim();
+
+        return trimmed.isEmpty()
+                ? null
+                : trimmed;
+    }
+    private String extractMimeType(String fileData) {
+        if (
+                fileData == null
+                        || !fileData.startsWith("data:")
+                        || !fileData.contains(";")
+        ) {
+            return null;
+        }
+
+        int mimeEnd =
+                fileData.indexOf(';');
+
+        if (mimeEnd <= 5) {
+            return null;
+        }
+
+        return fileData.substring(
+                5,
+                mimeEnd
+        );
+    }
+
+    private String extractFileExtension(
+            String fileName
+    ) {
+        if (fileName == null) {
+            return null;
+        }
+
+        int dotIndex =
+                fileName.lastIndexOf('.');
+
+        if (
+                dotIndex < 0
+                        || dotIndex
+                        == fileName.length() - 1
+        ) {
+            return null;
+        }
+
+        return fileName.substring(
+                dotIndex + 1
+        ).toLowerCase();
     }
 }

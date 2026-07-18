@@ -13,18 +13,22 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class CurrentUserService {
 
     private final UserRepository userRepository;
 
-    public CurrentUserService(UserRepository userRepository) {
+    public CurrentUserService(
+            UserRepository userRepository
+    ) {
         this.userRepository = userRepository;
     }
 
-    @Transactional(readOnly = true)
     public CurrentUserContext getCurrentUserContext() {
         Authentication authentication =
-                SecurityContextHolder.getContext().getAuthentication();
+                SecurityContextHolder
+                        .getContext()
+                        .getAuthentication();
 
         return getCurrentUserContext(authentication);
     }
@@ -32,50 +36,72 @@ public class CurrentUserService {
     public CurrentUserContext getCurrentUserContext(
             Authentication authentication
     ) {
-
-        if (authentication == null
-                || !authentication.isAuthenticated()
-                || "anonymousUser".equals(authentication.getPrincipal())) {
-
+        if (
+                authentication == null ||
+                        !authentication.isAuthenticated() ||
+                        "anonymousUser".equals(
+                                authentication.getPrincipal()
+                        )
+        ) {
             throw new AuthenticationCredentialsNotFoundException(
                     "No authenticated user found"
             );
         }
 
-        String username = authentication.getName();
+        String username =
+                authentication.getName();
 
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() ->
-                        new AuthenticationCredentialsNotFoundException(
-                                "Authenticated user not found: " + username
+        User user =
+                userRepository
+                        .findByUsernameWithAssignedBranch(
+                                username
                         )
-                );
+                        .orElseThrow(() ->
+                                new AuthenticationCredentialsNotFoundException(
+                                        "Authenticated user not found: " +
+                                                username
+                                )
+                        );
 
-        CurrentUserContext ctx = new CurrentUserContext();
+        CurrentUserContext context =
+                new CurrentUserContext();
 
-        ctx.setUserId(user.getId());
-        ctx.setUsername(user.getUsername());
+        context.setUserId(user.getId());
+        context.setUsername(user.getUsername());
 
-        List<String> roles = authentication.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .distinct()
-                .toList();
+        List<String> roles =
+                authentication
+                        .getAuthorities()
+                        .stream()
+                        .map(
+                                GrantedAuthority::getAuthority
+                        )
+                        .distinct()
+                        .toList();
 
-        ctx.setRoles(roles);
+        context.setRoles(roles);
 
-        Branch branch = user.getAssignedBranch();
+        Branch branch =
+                user.getAssignedBranch();
 
         if (branch != null) {
-            ctx.setBranchId(branch.getBranchId());
-            ctx.setBranchName(branch.getBranchName());
-            ctx.setSchoolCode(branch.getSchoolCode());
+            context.setBranchId(
+                    branch.getBranchId()
+            );
+
+            context.setBranchName(
+                    branch.getBranchName()
+            );
+
+            context.setSchoolCode(
+                    branch.getSchoolCode()
+            );
         } else {
-            ctx.setBranchId(null);
-            ctx.setBranchName(null);
-            ctx.setSchoolCode(null);
+            context.setBranchId(null);
+            context.setBranchName(null);
+            context.setSchoolCode(null);
         }
 
-        return ctx;
+        return context;
     }
 }
