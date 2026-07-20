@@ -54,7 +54,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.erp.montfortuganda.employee.enums.EmployeeCreationStage;
 import com.erp.montfortuganda.employee.exception.EmployeeCreationException;
-import java.lang.IllegalArgumentException;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
@@ -91,7 +93,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     ) {
         EmployeeCreationStage currentStage =
                 EmployeeCreationStage.VALIDATION;
-
+        List<String> createdFilePaths =
+                new ArrayList<>();
+        registerFileRollbackCleanup(createdFilePaths);
         try {
             Integer branchId =
                     branchAccessService
@@ -228,15 +232,30 @@ public class EmployeeServiceImpl implements EmployeeService {
 
             syncQualifications(
                     request.getQualifications(),
-                    saved
+                    saved,
+                    createdFilePaths
             );
-
+            log.info(
+                    "Rollback-only after qualifications: {}",
+                    org.springframework.transaction.interceptor
+                            .TransactionAspectSupport
+                            .currentTransactionStatus()
+                            .isRollbackOnly()
+            );
             currentStage =
                     EmployeeCreationStage.EXPERIENCE;
 
             syncExperiences(
                     request.getExperiences(),
-                    saved
+                    saved,
+                    createdFilePaths
+            );
+            log.info(
+                    "Rollback-only after experiences: {}",
+                    org.springframework.transaction.interceptor
+                            .TransactionAspectSupport
+                            .currentTransactionStatus()
+                            .isRollbackOnly()
             );
 
             currentStage =
@@ -244,7 +263,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
             syncDocuments(
                     request.getDocuments(),
-                    saved
+                    saved,
+                    createdFilePaths
             );
 
             currentStage =
@@ -260,6 +280,13 @@ public class EmployeeServiceImpl implements EmployeeService {
                     EmployeeCreationStage.FINAL_CHECK;
 
             employeeRepository.flush();
+            log.info(
+                    "Transaction rollback-only after final flush: {}",
+                    org.springframework.transaction.interceptor
+                            .TransactionAspectSupport
+                            .currentTransactionStatus()
+                            .isRollbackOnly()
+            );
 
             currentStage =
                     EmployeeCreationStage.COMPLETED;
@@ -267,12 +294,15 @@ public class EmployeeServiceImpl implements EmployeeService {
             return mapToResponse(saved);
 
         } catch (EmployeeCreationException exception) {
+
             throw exception;
 
         } catch (
                 BadRequestException |
                 IllegalArgumentException exception
         ) {
+
+
             throw EmployeeCreationException
                     .badRequest(
                             currentStage,
@@ -282,6 +312,13 @@ public class EmployeeServiceImpl implements EmployeeService {
                     );
 
         } catch (Exception exception) {
+            log.error(
+                    "Employee creation failed at stage {}",
+                    currentStage,
+                    exception
+            );
+
+
             throw EmployeeCreationException
                     .internalError(
                             currentStage,
@@ -392,17 +429,20 @@ public class EmployeeServiceImpl implements EmployeeService {
 
         syncQualifications(
                 request.getQualifications(),
-                updated
+                updated,
+                new ArrayList<>()
         );
 
         syncExperiences(
                 request.getExperiences(),
-                updated
+                updated,
+                new ArrayList<>()
         );
 
         syncDocuments(
                 request.getDocuments(),
-                updated
+                updated,
+                new ArrayList<>()
         );
 
         return mapToResponse(updated);
@@ -441,6 +481,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
 
         userService.createUser(userDTO);
+
 
         if (Boolean.TRUE.equals(
                 request.getAccountRequest().getSendEmail()
@@ -533,7 +574,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private void syncQualifications(
             List<EmployeeQualificationRequest> requests,
-            ErpEmployee employee
+            ErpEmployee employee,
+            List<String> createdFilePaths
     ) {
         /*
          * Null means qualification data was not included in this request.
@@ -600,7 +642,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             uploadQualificationFile(
                     request,
                     employee,
-                    qualification
+                    qualification,
+                    createdFilePaths
             );
         }
 
@@ -622,7 +665,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private void syncExperiences(
             List<EmployeeExperienceRequest> requests,
-            ErpEmployee employee
+            ErpEmployee employee,
+            List<String> createdFilePaths
     ) {
         if (requests == null) {
             return;
@@ -679,7 +723,8 @@ public class EmployeeServiceImpl implements EmployeeService {
             uploadExperienceFile(
                     request,
                     employee,
-                    experience
+                    experience,
+                    createdFilePaths
             );
         }
 
@@ -695,7 +740,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     private void syncDocuments(
             List<EmployeeDocumentRequest> requests,
-            ErpEmployee employee
+            ErpEmployee employee,
+            List<String> createdFilePaths
     ) {
         if (requests == null) {
             return;
@@ -768,7 +814,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                 uploadDocumentFile(
                         request,
                         employee,
-                        document
+                        document,
+                        createdFilePaths
                 );
             } else {
                 /*
@@ -807,7 +854,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     private void uploadQualificationFile(
             EmployeeQualificationRequest request,
             ErpEmployee employee,
-            ErpEmployeeQualification qualification
+            ErpEmployeeQualification qualification,
+            List<String> createdFilePaths
     ) {
         if (
                 request.getFileData() == null
@@ -860,6 +908,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                             DocumentType.CERTIFICATE
                     );
 
+            createdFilePaths.add(documentPath);
+
             qualification
                     .setEmployeeQualificationDocumentFile(
                             documentPath
@@ -885,7 +935,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     private void uploadExperienceFile(
             EmployeeExperienceRequest request,
             ErpEmployee employee,
-            ErpEmployeeExperience experience
+            ErpEmployeeExperience experience,
+            List<String> createdFilePaths
     ) {
         if (
                 request.getFileData() == null
@@ -939,6 +990,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                             DocumentType.OTHER
                     );
 
+            createdFilePaths.add(documentPath);
+
             experience
                     .setEmployeeExperienceExperienceCertificateFile(
                             documentPath
@@ -964,7 +1017,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     private void uploadDocumentFile(
             EmployeeDocumentRequest request,
             ErpEmployee employee,
-            ErpEmployeeDocument document
+            ErpEmployeeDocument document,
+            List<String> createdFilePaths
     ) {
         if (
                 request.getFileData() == null
@@ -1024,6 +1078,8 @@ public class EmployeeServiceImpl implements EmployeeService {
                             buildEmployeePath(employee),
                             DocumentType.OTHER
                     );
+
+            createdFilePaths.add(documentPath);
 
             document.setEmployeeDocumentFileName(
                     dynamicFileName
@@ -1815,6 +1871,67 @@ public class EmployeeServiceImpl implements EmployeeService {
                 dotIndex + 1
         ).toLowerCase();
     }
+    private void cleanupCreatedFiles(
+            List<String> createdFilePaths
+    ) {
+        for (
+                int index = createdFilePaths.size() - 1;
+                index >= 0;
+                index--
+        ) {
+            String relativePath =
+                    createdFilePaths.get(index);
+
+            try {
+                storageService.deleteStoredFile(
+                        relativePath,
+                        false
+                );
+
+                log.info(
+                        "Deleted rolled-back employee file: {}",
+                        relativePath
+                );
+
+            } catch (Exception cleanupException) {
+                log.error(
+                        "Failed to delete rolled-back employee file: {}",
+                        relativePath,
+                        cleanupException
+                );
+            }
+        }
+    }
+
+    private void registerFileRollbackCleanup(
+            List<String> createdFilePaths
+    ) {
+        if (!TransactionSynchronizationManager
+                .isSynchronizationActive()) {
+            return;
+        }
+
+        TransactionSynchronizationManager
+                .registerSynchronization(
+                        new TransactionSynchronization() {
+                            @Override
+                            public void afterCompletion(
+                                    int status
+                            ) {
+                                if (
+                                        status
+                                                == TransactionSynchronization
+                                                .STATUS_ROLLED_BACK
+                                ) {
+                                    cleanupCreatedFiles(
+                                            createdFilePaths
+                                    );
+                                }
+                            }
+                        }
+                );
+    }
+
     private String determineErrorCode(
             EmployeeCreationStage stage
     ) {

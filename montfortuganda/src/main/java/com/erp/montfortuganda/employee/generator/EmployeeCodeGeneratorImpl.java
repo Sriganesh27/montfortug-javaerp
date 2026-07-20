@@ -1,79 +1,140 @@
-// File: src/main/java/com/erp/montfortuganda/employee/generator/EmployeeCodeGeneratorImpl.java
 package com.erp.montfortuganda.employee.generator;
 
 import com.erp.montfortuganda.employee.enums.EmployeeCategory;
-import com.erp.montfortuganda.employee.repository.EmployeeRepository;
+import com.erp.montfortuganda.employee.repository.EmployeeSequenceRepository;
 import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.repository.BranchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class EmployeeCodeGeneratorImpl implements EmployeeCodeGenerator {
 
-    private final EmployeeRepository employeeRepository;
+    private static final DateTimeFormatter YEAR_FORMAT =
+            DateTimeFormatter.ofPattern("yy");
+
+    private static final int MAX_SEQUENCE_NUMBER = 999;
+
+    private final EmployeeSequenceRepository employeeSequenceRepository;
     private final BranchRepository branchRepository;
 
     @Override
-    @Transactional(isolation = Isolation.READ_COMMITTED)
-    public String generateCode(Integer branchId, EmployeeCategory category, LocalDate joiningDate) {
+    @Transactional(propagation = Propagation.REQUIRED)
+    public String generateCode(
+            Integer branchId,
+            EmployeeCategory category,
+            LocalDate joiningDate
+    ) {
+        validateRequest(branchId, category, joiningDate);
 
-        // 1. Fetch School Code (e.g., U011, U021).
-        // IDE fix: No need for 'code != null' inside filter, Optional handles it.
-        String schoolCode = branchRepository.findById(branchId)
-                .map(Branch::getSchoolCode)
-                .filter(code -> !code.isEmpty())
-                .orElse("NA");
+        Branch branch = branchRepository.findById(branchId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Branch not found with ID: " + branchId
+                ));
 
-        // 2. Map the Category Enum to a strict short prefix
-        String categoryPrefix = getCategoryPrefix(category);
+        String schoolCode = normalizeSchoolCode(
+                branch.getSchoolCode()
+        );
 
-        // 3. Extract 2-digit joining year (e.g., 2026 -> "26")
-        String yearCode = joiningDate != null
-                ? joiningDate.format(DateTimeFormatter.ofPattern("yy"))
-                : LocalDate.now().format(DateTimeFormatter.ofPattern("yy"));
+        int sequenceYear = joiningDate.getYear();
 
-        // 4. Build exact Prefix: "U011-T-26-"
-        String prefix = String.format("%s-%s-%s-", schoolCode, categoryPrefix, yearCode);
+        employeeSequenceRepository.incrementSequence(
+                branchId,
+                category.name(),
+                sequenceYear
+        );
 
-        // 5. Fetch the highest existing sequence for this prefix
-        String maxCode = employeeRepository.findMaxEmployeeNoByPrefix(branchId, prefix);
+        Integer sequenceNumber =
+                employeeSequenceRepository.findCurrentNumber(
+                        branchId,
+                        category.name(),
+                        sequenceYear
+                );
 
-        int nextSequence = 1;
-
-        if (maxCode != null && !maxCode.isEmpty()) {
-            try {
-                // Extract the last part (e.g. from U011-T-26-001 -> "001")
-                String[] parts = maxCode.split("-");
-                String lastPart = parts[parts.length - 1];
-                nextSequence = Integer.parseInt(lastPart) + 1;
-            } catch (Exception ignored) {
-                // IDE fix: Removed redundant 'nextSequence = 1' since it's already 1
-            }
+        if (sequenceNumber == null || sequenceNumber <= 0) {
+            throw new IllegalStateException(
+                    "Employee sequence number could not be generated."
+            );
         }
 
-        // 6. Format sequence as 3 digits and append it (e.g., U011-T-26-001)
-        return prefix + String.format("%03d", nextSequence);
+        if (sequenceNumber > MAX_SEQUENCE_NUMBER) {
+            throw new IllegalStateException(
+                    "Employee sequence limit exceeded for branch "
+                            + schoolCode
+                            + ", category "
+                            + category.name()
+                            + " and year "
+                            + sequenceYear
+            );
+        }
+
+        String yearCode = joiningDate.format(YEAR_FORMAT);
+        String categoryCode = getCategoryCode(category);
+
+        return String.format(
+                Locale.ROOT,
+                "%s-%s-%s-%03d",
+                schoolCode,
+                categoryCode,
+                yearCode,
+                sequenceNumber
+        );
     }
 
-    /**
-     * Maps the strict EmployeeCategory enum to a short string prefix.
-     */
-    private String getCategoryPrefix(EmployeeCategory category) {
-        if (category == null) return "EMP";
-
-        // IDE fix: Removed 'default' branch because all Enum values are covered.
+    private String getCategoryCode(
+            EmployeeCategory category
+    ) {
         return switch (category) {
             case TEACHING -> "T";
             case NON_TEACHING -> "NT";
-            case MANAGEMENT_TEACHING, MANAGEMENT_NON_TEACHING -> "MGT";
+            case MANAGEMENT_TEACHING -> "MT";
+            case MANAGEMENT_NON_TEACHING -> "MNT";
             case SUPPORT_STAFF -> "SS";
         };
+    }
+
+    private String normalizeSchoolCode(
+            String schoolCode
+    ) {
+        if (schoolCode == null || schoolCode.isBlank()) {
+            throw new IllegalStateException(
+                    "The selected branch does not have a school code."
+            );
+        }
+
+        return schoolCode
+                .trim()
+                .toUpperCase(Locale.ROOT);
+    }
+
+    private void validateRequest(
+            Integer branchId,
+            EmployeeCategory category,
+            LocalDate joiningDate
+    ) {
+        if (branchId == null || branchId <= 0) {
+            throw new IllegalArgumentException(
+                    "A valid branch ID is required."
+            );
+        }
+
+        if (category == null) {
+            throw new IllegalArgumentException(
+                    "Employee category is required."
+            );
+        }
+
+        if (joiningDate == null) {
+            throw new IllegalArgumentException(
+                    "Joining date is required."
+            );
+        }
     }
 }

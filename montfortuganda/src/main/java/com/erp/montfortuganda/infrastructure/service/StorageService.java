@@ -267,6 +267,42 @@ public class StorageService {
             );
         }
     }
+    public void deleteStoredFile(
+            String relativePath,
+            boolean privateStorage
+    ) {
+        if (relativePath == null || relativePath.isBlank()) {
+            return;
+        }
+
+        try {
+            Path rootPath = Paths.get(
+                            privateStorage
+                                    ? privateErpStorageRoot
+                                    : publicUploadRoot
+                    )
+                    .normalize()
+                    .toAbsolutePath();
+
+            Path targetFile = rootPath
+                    .resolve(relativePath)
+                    .normalize();
+
+            if (!targetFile.startsWith(rootPath)) {
+                throw new SecurityException(
+                        "Path traversal attempt detected"
+                );
+            }
+
+            Files.deleteIfExists(targetFile);
+
+        } catch (IOException exception) {
+            throw new RuntimeException(
+                    "Could not delete stored file",
+                    exception
+            );
+        }
+    }
 
     private void validateFile(
             MultipartFile file

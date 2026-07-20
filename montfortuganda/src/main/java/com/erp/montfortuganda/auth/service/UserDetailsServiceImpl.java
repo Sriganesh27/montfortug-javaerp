@@ -29,25 +29,68 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String username)
             throws UsernameNotFoundException {
 
-        User user = userRepository.findByUsername(username)
+        if (username == null || username.isBlank()) {
+            throw new UsernameNotFoundException(
+                    "Username is required."
+            );
+        }
+
+        User user = userRepository.findByUsername(username.trim())
                 .orElseThrow(() ->
                         new UsernameNotFoundException(
                                 "User not found: " + username
                         )
                 );
 
-        List<GrantedAuthority> authorities = new ArrayList<>();
+        List<GrantedAuthority> authorities =
+                resolveAuthorities(user);
+
+        if (authorities.isEmpty()) {
+            throw new UsernameNotFoundException(
+                    "No active role assigned to user: "
+                            + user.getUsername()
+            );
+        }
+
+        boolean enabled =
+                Integer.valueOf(1).equals(user.getIsActive());
+
+        return new AuthenticatedUserPrincipal(
+                user.getId(),
+                user.getUsername(),
+                user.getPassword(),
+                enabled,
+                authorities
+        );
+    }
+
+    private List<GrantedAuthority> resolveAuthorities(User user) {
+
+        List<GrantedAuthority> authorities =
+                new ArrayList<>();
 
         /*
-         * New dynamic RBAC roles.
+         * Primary dynamic RBAC role mapping.
          */
         if (user.getUserRoles() != null) {
+
             for (ErpUserRole userRole : user.getUserRoles()) {
 
-                if (userRole == null
-                        || !Boolean.TRUE.equals(userRole.getActive())
-                        || userRole.getRole() == null
-                        || !Boolean.TRUE.equals(userRole.getRole().getActive())) {
+                if (userRole == null) {
+                    continue;
+                }
+
+                if (!Boolean.TRUE.equals(userRole.getActive())) {
+                    continue;
+                }
+
+                if (userRole.getRole() == null) {
+                    continue;
+                }
+
+                if (!Boolean.TRUE.equals(
+                        userRole.getRole().getActive()
+                )) {
                     continue;
                 }
 
@@ -55,9 +98,25 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                         userRole.getRole().getRoleCode()
                 );
 
-                if (roleCode != null) {
+                if (roleCode == null) {
+                    continue;
+                }
+
+                String authorityName =
+                        "ROLE_" + roleCode;
+
+                boolean alreadyAdded =
+                        authorities.stream()
+                                .anyMatch(authority ->
+                                        authority.getAuthority()
+                                                .equals(authorityName)
+                                );
+
+                if (!alreadyAdded) {
                     authorities.add(
-                            new SimpleGrantedAuthority("ROLE_" + roleCode)
+                            new SimpleGrantedAuthority(
+                                    authorityName
+                            )
                     );
                 }
             }
@@ -65,37 +124,29 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         /*
          * Legacy erp_users.role fallback.
+         *
+         * This remains for users that have not yet been migrated
+         * to erp_user_roles.
          */
         if (authorities.isEmpty()) {
-            String roleCode = normalizeRoleCode(user.getRole());
 
-            if (roleCode != null) {
+            String legacyRole =
+                    normalizeRoleCode(user.getRole());
+
+            if (legacyRole != null) {
                 authorities.add(
-                        new SimpleGrantedAuthority("ROLE_" + roleCode)
+                        new SimpleGrantedAuthority(
+                                "ROLE_" + legacyRole
+                        )
                 );
             }
         }
 
-        if (authorities.isEmpty()) {
-            throw new UsernameNotFoundException(
-                    "No active role assigned to user: " + username
-            );
-        }
-
-        boolean active = Integer.valueOf(1).equals(user.getIsActive());
-
-        return org.springframework.security.core.userdetails.User
-                .withUsername(user.getUsername())
-                .password(user.getPassword())
-                .authorities(authorities)
-                .disabled(!active)
-                .accountExpired(false)
-                .accountLocked(false)
-                .credentialsExpired(false)
-                .build();
+        return authorities;
     }
 
     private String normalizeRoleCode(String role) {
+
         if (role == null || role.isBlank()) {
             return null;
         }
