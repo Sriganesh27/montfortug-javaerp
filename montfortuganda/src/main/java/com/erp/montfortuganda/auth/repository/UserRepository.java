@@ -13,16 +13,33 @@ import java.util.Optional;
 public interface UserRepository
         extends JpaRepository<User, Integer> {
 
-    Optional<User> findByUsername(String username);
+    @Query("""
+            SELECT user
+            FROM User user
+            WHERE LOWER(user.username) = LOWER(:username)
+            """)
+    Optional<User> findByUsername(
+            @Param("username") String username
+    );
 
-    boolean existsByUsername(String username);
+    @Query("""
+            SELECT CASE
+                WHEN COUNT(user) > 0 THEN true
+                ELSE false
+            END
+            FROM User user
+            WHERE LOWER(user.username) = LOWER(:username)
+            """)
+    boolean existsByUsername(
+            @Param("username") String username
+    );
 
     @EntityGraph(attributePaths = "assignedBranch")
     @Query("""
-        SELECT user
-        FROM User user
-        WHERE user.username = :username
-    """)
+            SELECT user
+            FROM User user
+            WHERE LOWER(user.username) = LOWER(:username)
+            """)
     Optional<User> findByUsernameWithAssignedBranch(
             @Param("username") String username
     );

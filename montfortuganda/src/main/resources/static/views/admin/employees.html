@@ -1,174 +1,1716 @@
 <div id="ba-employees-view" class="fade-in">
-    <!-- Header -->
+
+    <!-- ===================================================== -->
+    <!-- HEADER                                                -->
+    <!-- ===================================================== -->
+
     <div class="view-header">
         <div>
             <h2>Manage Employees</h2>
-            <p class="text-muted">View and manage branch employees</p>
+            <p class="text-muted">
+                View and manage branch employees.
+            </p>
         </div>
-        <button id="btn-add-employee" class="btn-primary">
-            <i class="bi bi-person-plus-fill"></i> Add Employee
+
+        <button
+                type="button"
+                id="btn-add-employee"
+                class="btn-primary"
+        >
+            <i class="bi bi-person-plus-fill"></i>
+            Add Employee
         </button>
     </div>
 
-    <!-- MAIN TABLE VIEW -->
+    <!-- ===================================================== -->
+    <!-- EMPLOYEE TABLE VIEW                                   -->
+    <!-- ===================================================== -->
+
     <div id="emp-tableView">
-        <!-- Filter Card -->
+
+        <!-- Filters -->
         <div class="card mb-3 p-3">
             <div class="ba-flex-panel">
+
                 <div class="form-group ba-flex-1">
-                    <label>Search Employees</label>
-                    <input type="text" id="emp-searchInput" class="detail-input w-100" placeholder="Search by name, email, or code...">
+                    <label for="emp-searchInput">
+                        Search Employees
+                    </label>
+
+                    <input
+                            type="search"
+                            id="emp-searchInput"
+                            class="detail-input w-100"
+                            placeholder="Search by name, email, mobile or employee code"
+                    >
                 </div>
+
                 <div class="form-group ba-flex-1">
-                    <label>Category</label>
-                    <select id="emp-categoryFilter" class="detail-input w-100">
+                    <label for="emp-categoryFilter">
+                        Category
+                    </label>
+
+                    <select
+                            id="emp-categoryFilter"
+                            class="detail-input w-100"
+                    >
                         <option value="">All Categories</option>
                         <option value="TEACHING">Teaching</option>
-                        <option value="NON_TEACHING">Non-Teaching</option>
-                        <option value="MANAGEMENT">Management</option>
-                        <option value="SUPPORT_STAFF">Support Staff</option>
+                        <option value="NON_TEACHING">
+                            Non-Teaching
+                        </option>
+                        <option value="MANAGEMENT_TEACHING">
+                            Management (Teaching)
+                        </option>
+                        <option value="MANAGEMENT_NON_TEACHING">
+                            Management (Non-Teaching)
+                        </option>
+                        <option value="SUPPORT_STAFF">
+                            Support Staff
+                        </option>
                     </select>
                 </div>
+
                 <div class="form-group ba-flex-1">
-                    <label>Status</label>
-                    <select id="emp-statusFilter" class="detail-input w-100">
+                    <label for="emp-statusFilter">
+                        Employment Status
+                    </label>
+
+                    <select
+                            id="emp-statusFilter"
+                            class="detail-input w-100"
+                    >
                         <option value="">All Statuses</option>
                         <option value="ACTIVE">Active</option>
                         <option value="ON_LEAVE">On Leave</option>
+                        <option value="PROBATION">Probation</option>
                         <option value="SUSPENDED">Suspended</option>
+                        <option value="RESIGNED">Resigned</option>
+                        <option value="RETIRED">Retired</option>
                         <option value="TERMINATED">Terminated</option>
                     </select>
                 </div>
+
                 <div class="form-group ba-pagination-controls">
-                    <button id="emp-searchBtn" class="btn-primary"><i class="bi bi-search"></i> Search</button>
+                    <button
+                            type="button"
+                            id="emp-searchBtn"
+                            class="btn-primary"
+                    >
+                        <i class="bi bi-search"></i>
+                        Search
+                    </button>
+
+                    <button
+                            type="button"
+                            id="emp-resetBtn"
+                            class="btn-secondary"
+                    >
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        Reset
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Table Card -->
+        <!-- Employee Table -->
         <div class="card">
             <div class="table-responsive">
-                <table id="emp-tableComponent" class="data-table">
+                <table
+                        id="emp-tableComponent"
+                        class="data-table"
+                >
                     <thead>
                     <tr>
-                        <th data-sort="employeeNo">Code <i class="bi bi-arrow-down-up"></i></th>
-                        <th data-sort="fullName">Name <i class="bi bi-arrow-down-up"></i></th>
-                        <th data-sort="employeeCategory">Category <i class="bi bi-arrow-down-up"></i></th>
-                        <th>Email / Phone</th>
-                        <th data-sort="employmentStatus">Status <i class="bi bi-arrow-down-up"></i></th>
-                        <th class="col-action align-center">Actions</th>
+                        <th class="col-photo">
+                            Photo
+                        </th>
+
+                        <th data-sort="employeeNo">
+                            Code
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
+                        <th data-sort="fullName">
+                            Employee
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
+                        <th>
+                            Department / Designation
+                        </th>
+
+                        <th data-sort="employeeCategory">
+                            Category
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
+                        <th>
+                            Email / Mobile
+                        </th>
+
+                        <th data-sort="employmentStatus">
+                            Status
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
+                        <th class="col-action align-center">
+                            Actions
+                        </th>
                     </tr>
                     </thead>
+
                     <tbody id="emp-tableBody">
-                    <!-- Rows rendered via CrudTable -->
+                    <!-- Rows rendered through JavaScript -->
                     </tbody>
                 </table>
             </div>
 
-            <!-- CrudTable Pagination Footer -->
+            <!-- Pagination -->
             <div class="ba-pagination-footer">
                 <div class="ba-pagination-controls">
-                    <select id="emp-pageSize" class="detail-input w-auto">
+                    <label for="emp-pageSize">
+                        Rows
+                    </label>
+
+                    <select
+                            id="emp-pageSize"
+                            class="detail-input w-auto"
+                    >
                         <option value="5">5</option>
                         <option value="10" selected>10</option>
                         <option value="25">25</option>
                         <option value="50">50</option>
                     </select>
-                    <span id="emp-pageInfo" class="text-muted">Showing page 1 of 1</span>
+
+                    <span
+                            id="emp-pageInfo"
+                            class="text-muted"
+                    >
+                        Showing page 1 of 1
+                    </span>
                 </div>
+
                 <div class="ba-pagination-controls">
-                    <button id="btn-emp-prev" class="btn-secondary btn-sm" disabled>
-                        <i class="bi bi-chevron-left"></i> Prev
+                    <button
+                            type="button"
+                            id="btn-emp-prev"
+                            class="btn-secondary btn-sm"
+                            disabled
+                    >
+                        <i class="bi bi-chevron-left"></i>
+                        Previous
                     </button>
-                    <button id="btn-emp-next" class="btn-secondary btn-sm" disabled>
-                        Next <i class="bi bi-chevron-right"></i>
+
+                    <button
+                            type="button"
+                            id="btn-emp-next"
+                            class="btn-secondary btn-sm"
+                            disabled
+                    >
+                        Next
+                        <i class="bi bi-chevron-right"></i>
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- DETAIL VIEW -->
-    <div id="emp-detailView" class="hidden">
+    <!-- ===================================================== -->
+    <!-- EMPLOYEE DETAIL AND EDIT VIEW                         -->
+    <!-- ===================================================== -->
+
+    <div
+            id="emp-detailView"
+            class="hidden"
+    >
+
+        <!-- Detail Header -->
         <div class="view-header">
-            <h2>Employee: <span id="detail-empNameHeader"></span></h2>
+            <div>
+                <h2>
+                    Employee Profile
+                </h2>
+
+                <p class="text-muted">
+                    <span id="detail-empNameHeader"></span>
+                    <span id="detail-empCodeHeader"></span>
+                </p>
+            </div>
+
             <div class="action-btn-group">
-                <button id="emp-backToTableBtn" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back</button>
-                <button id="emp-editBtn" class="btn-primary"><i class="bi bi-pencil"></i> Edit Details</button>
-                <button id="emp-cancelEditBtn" class="btn-secondary hidden">Cancel</button>
-                <button id="emp-saveBtn" class="btn-success hidden"><i class="bi bi-save"></i> Save Changes</button>
+                <button
+                        type="button"
+                        id="emp-backToTableBtn"
+                        class="btn-secondary"
+                >
+                    <i class="bi bi-arrow-left"></i>
+                    Back
+                </button>
+
+                <button
+                        type="button"
+                        id="emp-editBtn"
+                        class="btn-primary"
+                >
+                    <i class="bi bi-pencil"></i>
+                    Edit Details
+                </button>
+
+                <button
+                        type="button"
+                        id="emp-cancelEditBtn"
+                        class="btn-secondary hidden"
+                >
+                    <i class="bi bi-x-lg"></i>
+                    Cancel
+                </button>
+
+                <button
+                        type="button"
+                        id="emp-saveBtn"
+                        class="btn-success hidden"
+                >
+                    <i class="bi bi-save"></i>
+                    Save Changes
+                </button>
             </div>
         </div>
-        <div class="card">
-            <div class="detail-grid p-4" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div class="form-group">
-                    <label>Employee Code</label>
-                    <span id="view-empCode" class="detail-text text-strong font-monospace text-muted"></span>
-                    <input type="text" id="edit-empCode" class="detail-input hidden w-100" disabled title="Code is auto-generated">
-                </div>
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <span id="view-empName" class="detail-text text-strong"></span>
-                    <div id="edit-empNameContainer" class="hidden" style="display:flex; gap:10px;">
-                        <input type="text" id="edit-empFirstName" class="detail-input w-100" placeholder="First Name">
-                        <input type="text" id="edit-empLastName" class="detail-input w-100" placeholder="Last Name">
+
+        <form
+                id="emp-edit-form"
+                novalidate
+        >
+
+            <!-- Validation Summary -->
+            <div
+                    id="edit-emp-validation-summary"
+                    class="emp-validation-summary hidden"
+                    role="alert"
+                    aria-live="assertive"
+            >
+                <strong>
+                    Please correct the highlighted fields.
+                </strong>
+
+                <p id="edit-emp-validation-summary-text"></p>
+            </div>
+
+            <!-- ================================================= -->
+            <!-- PROFILE SUMMARY                                   -->
+            <!-- ================================================= -->
+
+            <div class="card emp-profile-summary-card">
+                <div class="emp-profile-header">
+
+                    <!-- Profile Photo -->
+                    <div class="emp-profile-photo-panel">
+                        <div class="emp-profile-photo-box">
+                            <img
+                                    id="view-empProfilePhoto"
+                                    class="emp-profile-photo hidden"
+                                    alt="Employee profile photo"
+                            >
+
+                            <div
+                                    id="view-empProfilePhotoPlaceholder"
+                                    class="emp-profile-photo-placeholder"
+                            >
+                                <i class="bi bi-person-bounding-box"></i>
+                                <span>No photo available</span>
+                            </div>
+                        </div>
+
+                        <div
+                                id="edit-empProfilePhotoContainer"
+                                class="detail-input hidden"
+                        >
+                            <input
+                                    type="file"
+                                    id="edit-empProfilePhoto"
+                                    class="hidden"
+                                    accept="image/jpeg,image/png,image/webp"
+                            >
+
+                            <label
+                                    for="edit-empProfilePhoto"
+                                    class="btn-secondary btn-sm emp-photo-upload-btn"
+                            >
+                                <i class="bi bi-camera-fill"></i>
+                                Change Photo
+                            </label>
+
+                            <span
+                                    id="edit-empProfilePhotoName"
+                                    class="emp-photo-file-name"
+                            >
+                                No new photo selected
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Main Summary -->
+                    <div class="emp-profile-summary">
+                        <h3 id="view-empName"></h3>
+
+                        <div class="emp-profile-summary-grid">
+                            <div>
+                                <span class="text-muted">
+                                    Employee Code
+                                </span>
+
+                                <strong
+                                        id="view-empCode"
+                                        class="font-monospace"
+                                ></strong>
+
+                                <input
+                                        type="text"
+                                        id="edit-empCode"
+                                        class="detail-input hidden w-100"
+                                        disabled
+                                        title="Employee code is generated automatically"
+                                >
+                            </div>
+
+                            <div>
+                                <span class="text-muted">
+                                    Department
+                                </span>
+
+                                <strong id="summary-empDepartment"></strong>
+                            </div>
+
+                            <div>
+                                <span class="text-muted">
+                                    Designation
+                                </span>
+
+                                <strong id="summary-empDesignation"></strong>
+                            </div>
+
+                            <div>
+                                <span class="text-muted">
+                                    Employment Status
+                                </span>
+
+                                <span
+                                        id="summary-empStatus"
+                                        class="status-badge badge"
+                                ></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Official Email</label>
-                    <span id="view-empEmail" class="detail-text text-strong"></span>
-                    <input type="email" id="edit-empEmail" class="detail-input hidden w-100">
-                </div>
-                <div class="form-group">
-                    <label>Mobile Number</label>
-                    <span id="view-empPhone" class="detail-text text-strong"></span>
-                    <input type="text" id="edit-empPhone" class="detail-input hidden w-100">
-                </div>
-                <div class="form-group">
-                    <label>Category</label>
-                    <span id="view-empCategory" class="detail-text text-strong"></span>
-                    <select id="edit-empCategory" class="detail-input hidden w-100">
-                        <option value="TEACHING">Teaching</option>
-                        <option value="NON_TEACHING">Non-Teaching</option>
-                        <option value="MANAGEMENT">Management</option>
-                        <option value="SUPPORT_STAFF">Support Staff</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Date of Birth</label>
-                    <span id="view-empDob" class="detail-text text-strong"></span>
-                    <input type="date" id="edit-empDob" class="detail-input hidden w-100">
-                </div>
-                <div class="form-group">
-                    <label>Department</label>
-                    <span id="view-empDepartment" class="detail-text text-strong"></span>
-                    <select id="edit-empDepartment" class="detail-input hidden w-100">
-                        <option value="">-- None --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Designation</label>
-                    <span id="view-empDesignation" class="detail-text text-strong"></span>
-                    <select id="edit-empDesignation" class="detail-input hidden w-100">
-                        <option value="">-- None --</option>
-                    </select>
-                </div>
             </div>
-        </div>
+
+            <!-- ================================================= -->
+            <!-- PERSONAL DETAILS                                  -->
+            <!-- ================================================= -->
+
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Personal Details
+                </legend>
+
+                <div class="emp-detail-section-body">
+
+                    <!-- Separate Name Fields -->
+                    <div class="emp-detail-grid emp-detail-grid-4">
+
+                        <div class="form-group">
+                            <label for="edit-empTitle">
+                                Title
+                            </label>
+
+                            <span
+                                    id="view-empTitle"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empTitle"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">-- Select --</option>
+                                <option value="Mr.">Mr.</option>
+                                <option value="Ms.">Ms.</option>
+                                <option value="Mrs.">Mrs.</option>
+                                <option value="Dr.">Dr.</option>
+                                <option value="Rev.">Rev.</option>
+                                <option value="Br.">Br.</option>
+                                <option value="Sr.">Sr.</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group emp-required-field">
+                            <label for="edit-empFirstName">
+                                First Name
+                            </label>
+
+                            <span
+                                    id="view-empFirstName"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empFirstName"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                                    required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empMiddleName">
+                                Middle Name
+                            </label>
+
+                            <span
+                                    id="view-empMiddleName"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empMiddleName"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group emp-required-field">
+                            <label for="edit-empLastName">
+                                Last Name
+                            </label>
+
+                            <span
+                                    id="view-empLastName"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empLastName"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                                    required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-empGender">
+                                Gender
+                            </label>
+
+                            <span
+                                    id="view-empGender"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empGender"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">-- Select --</option>
+                                <option value="MALE">Male</option>
+                                <option value="FEMALE">Female</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empDob">
+                                Date of Birth
+                            </label>
+
+                            <span
+                                    id="view-empDob"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="date"
+                                    id="edit-empDob"
+                                    class="detail-input hidden w-100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empMaritalStatus">
+                                Marital Status
+                            </label>
+
+                            <span
+                                    id="view-empMaritalStatus"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empMaritalStatus"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">-- Select --</option>
+                                <option value="SINGLE">Single</option>
+                                <option value="MARRIED">Married</option>
+                                <option value="DIVORCED">Divorced</option>
+                                <option value="SEPARATED">Separated</option>
+                                <option value="WIDOWED">Widowed</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empBloodGroup">
+                                Blood Group
+                            </label>
+
+                            <span
+                                    id="view-empBloodGroup"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empBloodGroup"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">-- Select --</option>
+                                <option value="A_POSITIVE">A+</option>
+                                <option value="A_NEGATIVE">A-</option>
+                                <option value="B_POSITIVE">B+</option>
+                                <option value="B_NEGATIVE">B-</option>
+                                <option value="O_POSITIVE">O+</option>
+                                <option value="O_NEGATIVE">O-</option>
+                                <option value="AB_POSITIVE">AB+</option>
+                                <option value="AB_NEGATIVE">AB-</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label for="edit-empReligion">
+                                Religion
+                            </label>
+
+                            <span
+                                    id="view-empReligion"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empReligion"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">-- Select --</option>
+                                <option value="CHRISTIANITY">
+                                    Christianity
+                                </option>
+                                <option value="ISLAM">Islam</option>
+                                <option value="HINDUISM">Hinduism</option>
+                                <option value="TRADITIONAL">
+                                    Traditional Religion
+                                </option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empSubReligion">
+                                Denomination / Sub-Religion
+                            </label>
+
+                            <span
+                                    id="view-empSubReligion"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empSubReligion"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- EMPLOYMENT DETAILS                                -->
+            <!-- ================================================= -->
+
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Employment Details
+                </legend>
+
+                <div class="emp-detail-section-body">
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-empDepartment">
+                                Department
+                            </label>
+
+                            <span
+                                    id="view-empDepartment"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empDepartment"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">
+                                    -- Select Department --
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empDesignation">
+                                Designation
+                            </label>
+
+                            <span
+                                    id="view-empDesignation"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empDesignation"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">
+                                    -- Select Designation --
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Reporting Manager
+                            </label>
+
+                            <span
+                                    id="view-empReportingManager"
+                                    class="detail-text"
+                            ></span>
+
+                            <small class="text-muted">
+                                Assigned automatically according to department
+                                and designation.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-empCategory">
+                                Employee Category
+                            </label>
+
+                            <span
+                                    id="view-empCategory"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empCategory"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">
+                                    -- Select Category --
+                                </option>
+                                <option value="TEACHING">
+                                    Teaching
+                                </option>
+                                <option value="NON_TEACHING">
+                                    Non-Teaching
+                                </option>
+                                <option value="MANAGEMENT">
+                                    Management
+                                </option>
+                                <option value="SUPPORT_STAFF">
+                                    Support Staff
+                                </option>
+                            </select>
+                        </div>
+
+                        <div
+                                id="edit-empManagementTypeGroup"
+                                class="form-group emp-management-type-group hidden"
+                        >
+                            <label for="edit-empManagementType">
+                                Management Category
+                            </label>
+
+                            <select
+                                    id="edit-empManagementType"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">-- Select --</option>
+                                <option value="TEACHING">
+                                    Teaching Management
+                                </option>
+                                <option value="NON_TEACHING">
+                                    Non-Teaching Management
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empType">
+                                Employee Type
+                            </label>
+
+                            <span
+                                    id="view-empType"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empType"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">-- Select Type --</option>
+                                <option value="PERMANENT">Permanent</option>
+                                <option value="CONTRACT">Contract</option>
+                                <option value="TEMPORARY">Temporary</option>
+                                <option value="PART_TIME">Part Time</option>
+                                <option value="INTERN">Intern</option>
+                                <option value="VOLUNTEER">Volunteer</option>
+                                <option value="HONORY">Honorary</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empMode">
+                                Employment Mode
+                            </label>
+
+                            <span
+                                    id="view-empMode"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empMode"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">-- Select Mode --</option>
+                                <option value="FULL_TIME">Full Time</option>
+                                <option value="PART_TIME">Part Time</option>
+                                <option value="ON_CALL">On Call</option>
+                                <option value="REMOTE">Remote</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-empStatus">
+                                Employment Status
+                            </label>
+
+                            <span
+                                    id="view-empStatus"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empStatus"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="ACTIVE">Active</option>
+                                <option value="ON_LEAVE">On Leave</option>
+                                <option value="PROBATION">Probation</option>
+                                <option value="SUSPENDED">Suspended</option>
+                                <option value="RESIGNED">Resigned</option>
+                                <option value="RETIRED">Retired</option>
+                                <option value="TERMINATED">Terminated</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empJoiningDate">
+                                Joining Date
+                            </label>
+
+                            <span
+                                    id="view-empJoiningDate"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="date"
+                                    id="edit-empJoiningDate"
+                                    class="detail-input hidden w-100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empProbationEndDate">
+                                Probation End Date
+                            </label>
+
+                            <span
+                                    id="view-empProbationEndDate"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="date"
+                                    id="edit-empProbationEndDate"
+                                    class="detail-input hidden w-100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empConfirmationDate">
+                                Confirmation Date
+                            </label>
+
+                            <span
+                                    id="view-empConfirmationDate"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="date"
+                                    id="edit-empConfirmationDate"
+                                    class="detail-input hidden w-100"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-empRetirementDate">
+                                Retirement Date
+                            </label>
+
+                            <span
+                                    id="view-empRetirementDate"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="date"
+                                    id="edit-empRetirementDate"
+                                    class="detail-input hidden w-100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empResignationDate">
+                                Resignation Date
+                            </label>
+
+                            <span
+                                    id="view-empResignationDate"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="date"
+                                    id="edit-empResignationDate"
+                                    class="detail-input hidden w-100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empTerminationDate">
+                                Termination Date
+                            </label>
+
+                            <span
+                                    id="view-empTerminationDate"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="date"
+                                    id="edit-empTerminationDate"
+                                    class="detail-input hidden w-100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empEmploymentEndDate">
+                                Employment End Date
+                            </label>
+
+                            <span
+                                    id="view-empEmploymentEndDate"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="date"
+                                    id="edit-empEmploymentEndDate"
+                                    class="detail-input hidden w-100"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-empExitReason">
+                            Exit Reason
+                        </label>
+
+                        <span
+                                id="view-empExitReason"
+                                class="detail-text"
+                        ></span>
+
+                        <textarea
+                                id="edit-empExitReason"
+                                class="detail-input hidden w-100"
+                                rows="3"
+                        ></textarea>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- IDENTIFICATIONS AND PERMITS                       -->
+            <!-- ================================================= -->
+
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Identifications and Permits
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+
+                        <div class="form-group">
+                            <label for="edit-empNationality">
+                                Nationality
+                            </label>
+
+                            <span
+                                    id="view-empNationality"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empNationality"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empNationalId">
+                                National ID
+                            </label>
+
+                            <span
+                                    id="view-empNationalId"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empNationalId"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empTin">
+                                TIN Number
+                            </label>
+
+                            <span
+                                    id="view-empTin"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empTin"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empPassportNo">
+                                Passport Number
+                            </label>
+
+                            <span
+                                    id="view-empPassportNo"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empPassportNo"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empPassportExpiry">
+                                Passport Expiry Date
+                            </label>
+
+                            <span
+                                    id="view-empPassportExpiry"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="date"
+                                    id="edit-empPassportExpiry"
+                                    class="detail-input hidden w-100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empWorkPermit">
+                                Work Permit Number
+                            </label>
+
+                            <span
+                                    id="view-empWorkPermit"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empWorkPermit"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empWorkPermitExpiry">
+                                Work Permit Expiry Date
+                            </label>
+
+                            <span
+                                    id="view-empWorkPermitExpiry"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="date"
+                                    id="edit-empWorkPermitExpiry"
+                                    class="detail-input hidden w-100"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- CONTACT DETAILS                                   -->
+            <!-- ================================================= -->
+
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Contact Details
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+
+                        <div class="form-group">
+                            <label for="edit-empEmail">
+                                Official Email
+                            </label>
+
+                            <span
+                                    id="view-empEmail"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="email"
+                                    id="edit-empEmail"
+                                    class="detail-input hidden w-100"
+                                    maxlength="150"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empPersonalEmail">
+                                Personal Email
+                            </label>
+
+                            <span
+                                    id="view-empPersonalEmail"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="email"
+                                    id="edit-empPersonalEmail"
+                                    class="detail-input hidden w-100"
+                                    maxlength="150"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empPhone">
+                                Mobile Number
+                            </label>
+
+                            <span
+                                    id="view-empPhone"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="tel"
+                                    id="edit-empPhone"
+                                    class="detail-input hidden w-100"
+                                    maxlength="30"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empAlternatePhone">
+                                Alternate Mobile
+                            </label>
+
+                            <span
+                                    id="view-empAlternatePhone"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="tel"
+                                    id="edit-empAlternatePhone"
+                                    class="detail-input hidden w-100"
+                                    maxlength="30"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- RESIDENTIAL ADDRESS                               -->
+            <!-- ================================================= -->
+
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Residential Address
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+
+                        <div class="form-group">
+                            <label for="edit-empCountry">
+                                Country
+                            </label>
+
+                            <span
+                                    id="view-empCountry"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empCountry"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empState">
+                                State / Region
+                            </label>
+
+                            <span
+                                    id="view-empState"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empState"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empDistrict">
+                                District
+                            </label>
+
+                            <span
+                                    id="view-empDistrict"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empDistrict"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empCounty">
+                                County
+                            </label>
+
+                            <span
+                                    id="view-empCounty"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empCounty"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empSubCounty">
+                                Sub-County
+                            </label>
+
+                            <span
+                                    id="view-empSubCounty"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empSubCounty"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empParish">
+                                Parish
+                            </label>
+
+                            <span
+                                    id="view-empParish"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empParish"
+                                    class="detail-input hidden w-100"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empVillage">
+                                Village
+                            </label>
+
+                            <span
+                                    id="view-empVillage"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empVillage"
+                                    class="detail-input hidden w-100"
+                                    maxlength="150"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empPostalCode">
+                                Postal Code
+                            </label>
+
+                            <span
+                                    id="view-empPostalCode"
+                                    class="detail-text"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-empPostalCode"
+                                    class="detail-input hidden w-100"
+                                    maxlength="30"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-empStreet">
+                            Street / Address Line
+                        </label>
+
+                        <span
+                                id="view-empStreet"
+                                class="detail-text"
+                        ></span>
+
+                        <input
+                                type="text"
+                                id="edit-empStreet"
+                                class="detail-input hidden w-100"
+                                maxlength="255"
+                        >
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- PROFESSIONAL PROFILE                              -->
+            <!-- ================================================= -->
+
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Professional Profile
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-2">
+
+                        <div class="form-group">
+                            <label for="edit-empSkills">
+                                Skills
+                            </label>
+
+                            <span
+                                    id="view-empSkills"
+                                    class="detail-text"
+                            ></span>
+
+                            <textarea
+                                    id="edit-empSkills"
+                                    class="detail-input hidden w-100"
+                                    rows="3"
+                            ></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empLanguages">
+                                Languages Spoken
+                            </label>
+
+                            <span
+                                    id="view-empLanguages"
+                                    class="detail-text"
+                            ></span>
+
+                            <textarea
+                                    id="edit-empLanguages"
+                                    class="detail-input hidden w-100"
+                                    rows="3"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label>
+                                Signature
+                            </label>
+
+                            <span
+                                    id="view-empSignatureStatus"
+                                    class="detail-text"
+                            ></span>
+
+                            <button
+                                    type="button"
+                                    id="view-empSignatureBtn"
+                                    class="btn-secondary btn-sm hidden"
+                            >
+                                <i class="bi bi-box-arrow-up-right"></i>
+                                View Signature
+                            </button>
+
+                            <input
+                                    type="file"
+                                    id="edit-empSignature"
+                                    class="detail-input hidden w-100"
+                                    accept="image/jpeg,image/png,image/webp"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empRemarks">
+                                Employee Remarks
+                            </label>
+
+                            <span
+                                    id="view-empRemarks"
+                                    class="detail-text"
+                            ></span>
+
+                            <textarea
+                                    id="edit-empRemarks"
+                                    class="detail-input hidden w-100"
+                                    rows="3"
+                            ></textarea>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- LOGIN ACCOUNT                                     -->
+            <!-- ================================================= -->
+
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Login Account
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+
+                        <div class="form-group">
+                            <label>
+                                Login Enabled
+                            </label>
+
+                            <span
+                                    id="view-empLoginEnabled"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Login ID
+                            </label>
+
+                            <span
+                                    id="view-empLoginId"
+                                    class="detail-text font-monospace"
+                            ></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Login Role
+                            </label>
+
+                            <span
+                                    id="view-empLoginRole"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Account Status
+                            </label>
+
+                            <span
+                                    id="view-empLoginStatus"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- QUALIFICATIONS                                    -->
+            <!-- ================================================= -->
+
+            <fieldset
+                    id="qualifications-section"
+                    class="emp-detail-section"
+            >
+                <legend class="emp-detail-section-header">
+                    Qualifications
+                    <span id="emp-qualification-count"></span>
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div
+                            id="qualifications-view-container"
+                            class="emp-record-list"
+                    ></div>
+
+                    <div
+                            id="qualifications-container"
+                            class="hidden"
+                    ></div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- PREVIOUS EXPERIENCE                               -->
+            <!-- ================================================= -->
+
+            <fieldset
+                    id="experiences-section"
+                    class="emp-detail-section"
+            >
+                <legend class="emp-detail-section-header">
+                    Previous Experience
+                    <span id="emp-experience-count"></span>
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div
+                            id="experiences-view-container"
+                            class="emp-record-list"
+                    ></div>
+
+                    <div
+                            id="experiences-container"
+                            class="hidden"
+                    ></div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- EMERGENCY CONTACTS                                -->
+            <!-- ================================================= -->
+
+            <fieldset
+                    id="contacts-section"
+                    class="emp-detail-section"
+            >
+                <legend class="emp-detail-section-header">
+                    Emergency Contacts
+                    <span id="emp-contact-count"></span>
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div
+                            id="contacts-view-container"
+                            class="emp-record-list"
+                    ></div>
+
+                    <div
+                            id="contacts-container"
+                            class="hidden"
+                    ></div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- EMPLOYEE DOCUMENTS                                -->
+            <!-- ================================================= -->
+
+            <fieldset
+                    id="documents-section"
+                    class="emp-detail-section"
+            >
+                <legend class="emp-detail-section-header">
+                    Employee Documents
+                    <span id="emp-document-count"></span>
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <p class="text-muted">
+                        Select View Document to open a submitted document
+                        in a new browser window.
+                    </p>
+
+                    <div
+                            id="documents-view-container"
+                            class="emp-document-grid"
+                    ></div>
+
+                    <div
+                            id="documents-container"
+                            class="hidden"
+                    ></div>
+                </div>
+            </fieldset>
+        </form>
     </div>
 </div>
 
-<!-- TEMPLATES -->
+<!-- ========================================================= -->
+<!-- EMPLOYEE TABLE ROW TEMPLATE                               -->
+<!-- ========================================================= -->
+
 <template id="tpl-emp-row">
     <tr>
+        <td class="col-photo">
+            <div class="emp-table-photo-box">
+                <img
+                        class="emp-table-photo hidden"
+                        alt="Employee photo"
+                >
+
+                <span class="emp-table-photo-placeholder">
+                    <i class="bi bi-person"></i>
+                </span>
+            </div>
+        </td>
+
         <td class="col-code font-monospace text-muted"></td>
-        <td class="col-name text-primary cursor-pointer"><strong></strong></td>
+
+        <td class="col-name text-primary cursor-pointer">
+            <strong></strong>
+            <small class="employee-designation-label text-muted"></small>
+        </td>
+
+        <td class="col-work">
+            <span class="department-val"></span>
+            <small class="designation-val text-muted"></small>
+        </td>
+
         <td class="col-category"></td>
-        <td class="col-contact"><small class="d-block email-val"></small><small class="text-muted phone-val"></small></td>
-        <td><span class="status-badge badge"></span></td>
+
+        <td class="col-contact">
+            <small class="email-val"></small>
+            <small class="phone-val text-muted"></small>
+        </td>
+
+        <td>
+            <span class="status-badge badge"></span>
+        </td>
+
         <td class="col-action align-center">
-            <button class="btn-primary btn-sm view-more-btn me-1" title="View Details"><i class="bi bi-eye"></i></button>
-            <button class="btn-danger btn-sm delete-btn" title="Terminate"><i class="bi bi-trash"></i></button>
+            <button
+                    type="button"
+                    class="btn-primary btn-sm view-more-btn"
+                    title="View employee details"
+            >
+                <i class="bi bi-eye"></i>
+            </button>
+
+            <button
+                    type="button"
+                    class="btn-secondary btn-sm edit-row-btn"
+                    title="Edit employee"
+            >
+                <i class="bi bi-pencil"></i>
+            </button>
+
+            <button
+                    type="button"
+                    class="btn-danger btn-sm delete-btn"
+                    title="Terminate employee"
+            >
+                <i class="bi bi-person-x"></i>
+            </button>
         </td>
     </tr>
 </template>

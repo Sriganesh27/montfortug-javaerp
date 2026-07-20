@@ -46,6 +46,11 @@
     background: #fef3c7 !important;
     color: #b45309 !important;
 }
+.flatpickr-months{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 .flatpickr-calendar.erp-calendar-theme .flatpickr-months .flatpickr-month {
     height: 36px !important; /* REDUCED from 45px */
     color: #0f172a !important;
@@ -83,6 +88,7 @@
     position: relative;
     display: inline-block;
     margin-left: 4px;
+    margin-right: 20px;
 }
 .flatpickr-calendar.erp-calendar-theme .erp-year-dropdown-toggle {
     background: transparent !important;

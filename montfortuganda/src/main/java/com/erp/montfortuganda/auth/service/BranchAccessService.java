@@ -6,6 +6,8 @@ import com.erp.montfortuganda.school.repository.BranchRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
+
 @Service
 @RequiredArgsConstructor
 public class BranchAccessService {
@@ -13,47 +15,159 @@ public class BranchAccessService {
     private final BranchRepository branchRepository;
     private final CurrentUserService currentUserService;
 
-    public Integer getAccessibleBranchId(Integer requestedBranchId) {
-        CurrentUserContext ctx = currentUserService.getCurrentUserContext();
-        boolean isSuperAdmin = ctx.getRoles() != null &&
-                (ctx.getRoles().contains("SUPER_ADMIN") || ctx.getRoles().contains("ROLE_SUPER_ADMIN"));
+    public Integer getAccessibleBranchId(
+            Integer requestedBranchId
+    ) {
+        CurrentUserContext context =
+                currentUserService
+                        .getCurrentUserContext();
 
-        if (isSuperAdmin && requestedBranchId != null) {
+        return resolveAccessibleBranchId(
+                context,
+                requestedBranchId
+        );
+    }
+
+    public void validateBranchAccess(
+            Integer entityBranchId
+    ) {
+        if (entityBranchId == null) {
+            throw new BranchAccessDeniedException(
+                    "The record has no associated branch."
+            );
+        }
+
+        CurrentUserContext context =
+                currentUserService
+                        .getCurrentUserContext();
+
+        if (
+                !isSuperAdmin(context)
+                        && !entityBranchId.equals(
+                        context.getBranchId()
+                )
+        ) {
+            throw new BranchAccessDeniedException(
+                    "Unauthorized: Cannot modify a record "
+                            + "belonging to another branch."
+            );
+        }
+    }
+
+    public Branch getAccessibleBranch(
+            Integer requestedBranchId
+    ) {
+        Integer effectiveBranchId =
+                getAccessibleBranchId(
+                        requestedBranchId
+                );
+
+        return branchRepository
+                .findById(effectiveBranchId)
+                .orElseThrow(
+                        () -> new IllegalArgumentException(
+                                "Branch not found with ID: "
+                                        + effectiveBranchId
+                        )
+                );
+    }
+
+    /**
+     * Compatibility method used by existing services that already hold
+     * a CurrentUserContext.
+     */
+    public Integer getValidatedBranchId(
+            CurrentUserContext context
+    ) {
+        return resolveAccessibleBranchId(
+                context,
+                null
+        );
+    }
+
+    /**
+     * Compatibility overload used by existing services.
+     */
+    public Integer validateBranchAccess(
+            CurrentUserContext context
+    ) {
+        return resolveAccessibleBranchId(
+                context,
+                null
+        );
+    }
+
+    private Integer resolveAccessibleBranchId(
+            CurrentUserContext context,
+            Integer requestedBranchId
+    ) {
+        if (context == null) {
+            throw new BranchAccessDeniedException(
+                    "Current user context is unavailable."
+            );
+        }
+
+        if (
+                isSuperAdmin(context)
+                        && requestedBranchId != null
+        ) {
             return requestedBranchId;
         }
 
-        if (ctx.getBranchId() == null) {
-            throw new BranchAccessDeniedException("User has no associated branch context.");
+        Integer currentBranchId =
+                context.getBranchId();
+
+        if (currentBranchId == null) {
+            throw new BranchAccessDeniedException(
+                    "User has no associated branch context."
+            );
         }
 
-        if (requestedBranchId != null && !requestedBranchId.equals(ctx.getBranchId()) && !isSuperAdmin) {
-            throw new BranchAccessDeniedException("Unauthorized: Cannot access data for branch ID " + requestedBranchId);
+        if (
+                requestedBranchId != null
+                        && !requestedBranchId.equals(
+                        currentBranchId
+                )
+        ) {
+            throw new BranchAccessDeniedException(
+                    "Unauthorized: Cannot access data for branch ID "
+                            + requestedBranchId
+                            + "."
+            );
         }
 
-        return ctx.getBranchId();
+        return currentBranchId;
     }
 
-    public void validateBranchAccess(Integer entityBranchId) {
-        CurrentUserContext ctx = currentUserService.getCurrentUserContext();
-        boolean isSuperAdmin = ctx.getRoles() != null &&
-                (ctx.getRoles().contains("SUPER_ADMIN") || ctx.getRoles().contains("ROLE_SUPER_ADMIN"));
-
-        if (!isSuperAdmin && !entityBranchId.equals(ctx.getBranchId())) {
-            throw new BranchAccessDeniedException("Unauthorized: Cannot modify record belonging to another branch.");
+    private boolean isSuperAdmin(
+            CurrentUserContext context
+    ) {
+        if (
+                context == null
+                        || context.getRoles() == null
+        ) {
+            return false;
         }
-    }
 
-    public Branch getAccessibleBranch(Integer requestedBranchId) {
-        Integer effectiveBranchId = getAccessibleBranchId(requestedBranchId);
-        return branchRepository.findById(effectiveBranchId)
-                .orElseThrow(() -> new RuntimeException("Branch not found with ID: " + effectiveBranchId));
-    }
-    @Deprecated
-    public Integer getValidatedBranchId(CurrentUserContext ctx) {
-        return getAccessibleBranchId(null);
-    }
-    @Deprecated
-    public Integer validateBranchAccess(CurrentUserContext ctx) {
-        return getAccessibleBranchId(null);
+        for (String role : context.getRoles()) {
+            if (role == null) {
+                continue;
+            }
+
+            String normalizedRole =
+                    role.trim()
+                            .toUpperCase(Locale.ROOT);
+
+            if (
+                    normalizedRole.equals("SUPER_ADMIN")
+                            || normalizedRole.equals(
+                            "ROLE_SUPER_ADMIN"
+                    )
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

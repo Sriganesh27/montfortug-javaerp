@@ -2,7 +2,11 @@
 package com.erp.montfortuganda.employee.entity;
 
 import com.erp.montfortuganda.auth.entity.User;
-import com.erp.montfortuganda.employee.enums.*;
+import com.erp.montfortuganda.employee.enums.EmployeeCategory;
+import com.erp.montfortuganda.employee.enums.EmployeeType;
+import com.erp.montfortuganda.employee.enums.EmploymentMode;
+import com.erp.montfortuganda.employee.enums.EmploymentStatus;
+import com.erp.montfortuganda.employee.enums.Gender;
 import com.erp.montfortuganda.model.AuditableEntity;
 import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.entity.Department;
@@ -10,19 +14,33 @@ import com.erp.montfortuganda.school.entity.Designation;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.time.LocalDate;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = "erp_employees", indexes = {
-        @Index(name = "idx_emp_branch", columnList = "branch_id"),
-        @Index(name = "idx_emp_department", columnList = "department_id"),
-        @Index(name = "idx_emp_designation", columnList = "designation_id"),
-        @Index(name = "idx_emp_status", columnList = "employment_status"),
-        @Index(name = "idx_emp_category", columnList = "employee_category")
-})
+@Table(
+        name = "erp_employees",
+        indexes = {
+                @Index(name = "idx_emp_branch", columnList = "branch_id"),
+                @Index(name = "idx_emp_department", columnList = "department_id"),
+                @Index(name = "idx_emp_designation", columnList = "designation_id"),
+                @Index(name = "idx_emp_status", columnList = "employment_status"),
+                @Index(name = "idx_emp_category", columnList = "employee_category")
+        },
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_employee_no",
+                        columnNames = "employee_no"
+                ),
+                @UniqueConstraint(
+                        name = "uk_employee_user",
+                        columnNames = "user_id"
+                )
+        }
+)
 public class ErpEmployee extends AuditableEntity {
 
     @Id
@@ -30,30 +48,40 @@ public class ErpEmployee extends AuditableEntity {
     @Column(name = "employee_id")
     private Long employeeId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", unique = true)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "branch_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Branch branch;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Department department;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "designation_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Designation designation;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reporting_manager_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private ErpEmployee reportingManager;
 
     @Column(name = "employee_no", nullable = false, unique = true, length = 50)
     private String employeeNo;
 
-    @Column(length = 20)
+    @Column(name = "title", length = 20)
     private String title;
 
     @Column(name = "first_name", nullable = false, length = 100)
@@ -69,7 +97,7 @@ public class ErpEmployee extends AuditableEntity {
     private String fullName;
 
     @Enumerated(EnumType.STRING)
-    @Column(length = 20)
+    @Column(name = "gender", length = 20)
     private Gender gender;
 
     @Column(name = "date_of_birth")
@@ -81,7 +109,7 @@ public class ErpEmployee extends AuditableEntity {
     @Column(name = "signature_file", length = 500)
     private String signatureFile;
 
-    @Column(length = 100)
+    @Column(name = "nationality", length = 100)
     private String nationality;
 
     @Column(name = "national_id", length = 100)
@@ -99,8 +127,11 @@ public class ErpEmployee extends AuditableEntity {
     @Column(name = "blood_group", length = 20)
     private String bloodGroup;
 
-    @Column(length = 100)
+    @Column(name = "religion", length = 100)
     private String religion;
+
+    @Column(name = "sub_religion", length = 100)
+    private String subReligion;
 
     @Column(name = "official_email", length = 150)
     private String officialEmail;
@@ -122,6 +153,15 @@ public class ErpEmployee extends AuditableEntity {
 
     @Column(name = "address_district", length = 100)
     private String addressDistrict;
+
+    @Column(name = "address_county", length = 100)
+    private String addressCounty;
+
+    @Column(name = "address_sub_county", length = 100)
+    private String addressSubCounty;
+
+    @Column(name = "address_parish", length = 100)
+    private String addressParish;
 
     @Column(name = "address_village", length = 150)
     private String addressVillage;
@@ -181,43 +221,48 @@ public class ErpEmployee extends AuditableEntity {
     @Column(name = "exit_reason", columnDefinition = "TEXT")
     private String exitReason;
 
-    @Column(name = "employee_remarks", columnDefinition = "TEXT")
-    private String employeeRemarks;
-
-    @Column(name = "login_enabled", nullable = false)
-    private Boolean loginEnabled = false;
-
-    @Column(nullable = false)
-    private Boolean active = true;
-
-    @Column(name = "address_county", length = 100)
-    private String addressCounty;
-
-    @Column(name = "address_sub_county", length = 100)
-    private String addressSubCounty;
-
-    @Column(name = "address_parish", length = 100)
-    private String addressParish;
-
     @Column(name = "skills", columnDefinition = "TEXT")
     private String skills;
 
     @Column(name = "languages_spoken", columnDefinition = "TEXT")
     private String languagesSpoken;
 
-    @Column(name = "sub_religion", length = 100)
-    private String subReligion;
+    @Column(name = "employee_remarks", columnDefinition = "TEXT")
+    private String employeeRemarks;
+
+    @Column(name = "login_enabled", nullable = false)
+    private Boolean loginEnabled = false;
+
+    @Column(name = "active", nullable = false)
+    private Boolean active = true;
 
     @Version
-    @Column(nullable = false)
+    @Column(name = "version", nullable = false)
     private Long version = 0L;
 
     @PrePersist
     @PreUpdate
     private void generateFullName() {
-        this.fullName = (firstName != null ? firstName : "") +
-                (middleName != null && !middleName.isBlank() ? " " + middleName : "") +
-                (lastName != null && !lastName.isBlank() ? " " + lastName : "");
-        this.fullName = this.fullName.trim();
+        StringBuilder name = new StringBuilder();
+
+        if (firstName != null && !firstName.isBlank()) {
+            name.append(firstName.trim());
+        }
+
+        if (middleName != null && !middleName.isBlank()) {
+            if (!name.isEmpty()) {
+                name.append(" ");
+            }
+            name.append(middleName.trim());
+        }
+
+        if (lastName != null && !lastName.isBlank()) {
+            if (!name.isEmpty()) {
+                name.append(" ");
+            }
+            name.append(lastName.trim());
+        }
+
+        this.fullName = name.toString();
     }
 }

@@ -2,77 +2,255 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots"
+          content="noindex, nofollow, noarchive, nosnippet">
+    <meta name="theme-color"
+          content="#0f172a">
 
-    <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
+    <link rel="icon"
+          type="image/webp"
+          href="/assets/Images/logo_MBSG_UG_8.webp">
+
     <title>System Authentication | MBSG Uganda</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap">
 
-    <!-- Global layout which now includes the Eye Icon CSS! -->
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link rel="stylesheet"
+          href="/css/style.css">
+
 </head>
+
 <body>
 
-<div id="login-view" class="split-layout">
+<div id="login-view"
+     class="split-layout">
 
     <div class="login-left">
         <div class="bg-glow glow-1"></div>
         <div class="bg-glow glow-2"></div>
+
         <div class="branding-content">
-            <img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Logo" class="huge-logo">
+            <img src="/assets/Images/logo_MBSG_UG_8.webp"
+                 alt="Montfort Brothers of St. Gabriel Uganda Logo"
+                 class="huge-logo">
+
             <h1>Montfort Brothers of St. Gabriel</h1>
-            <h2>UGANDA </h2>
+            <h2>UGANDA</h2>
             <p>Admin Portal Login</p>
         </div>
     </div>
 
     <div class="login-right">
         <div class="form-container">
-            <div class="form-header">
-                <h2>Admin Portal</h2>
-            </div>
 
-            <div id="errorMessage" class="error-box hidden"></div>
-
-            <form id="secureAuthForm">
-                <div class="form-group">
-                    <!-- FIXED: Added for="username" -->
-                    <label for="username">Username</label>
-                    <div class="input-wrapper">
-                        <i class="bi bi-person"></i>
-                        <input type="text" id="username" placeholder="Admin Username" autocomplete="username" required>
-                    </div>
+            <div id="loginPanel">
+                <div class="form-header">
+                    <h2>Admin Portal</h2>
+                    <p>Enter your authorized ERP credentials.</p>
                 </div>
 
-                <div class="form-group">
-                    <!-- FIXED: Added for="password" -->
-                    <label for="password">Password</label>
-                    <div class="input-wrapper pwd-wrapper">
-                        <i class="bi bi-lock"></i>
-                        <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
-                        <span id="toggle-password" class="pwd-toggle-btn">
-                            <i class="bi bi-eye-slash" id="eye-icon"></i>
+                <div id="errorMessage"
+                     class="error-box hidden"
+                     role="alert"
+                     aria-live="polite"></div>
+
+                <form id="secureAuthForm">
+                    <div class="form-group">
+                        <label for="username">
+                            Username
+                        </label>
+
+                        <div class="input-wrapper">
+                            <i class="bi bi-person"
+                               aria-hidden="true"></i>
+
+                            <input type="text"
+                                   id="username"
+                                   name="username"
+                                   placeholder="Admin Username"
+                                   autocomplete="username"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">
+                            Password
+                        </label>
+
+                        <div class="input-wrapper pwd-wrapper">
+                            <i class="bi bi-lock"
+                               aria-hidden="true"></i>
+
+                            <input type="password"
+                                   id="password"
+                                   name="password"
+                                   placeholder="Password"
+                                   autocomplete="current-password"
+                                   required>
+
+                            <button type="button"
+                                    id="toggle-password"
+                                    class="pwd-toggle-btn"
+                                    data-password-toggle
+                                    data-target="password"
+                                    aria-label="Show password">
+                                <i class="bi bi-eye-slash"
+                                   aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            class="login-btn"
+                            id="loginBtn">
+                        <span class="btn-text">
+                            Login
+                        </span>
+                    </button>
+                </form>
+            </div>
+
+            <div id="temporaryPasswordPanel"
+                 class="hidden">
+
+                <div class="form-header password-change-header">
+                    <div class="security-icon"
+                         aria-hidden="true">
+                        <i class="bi bi-shield-lock"></i>
+                    </div>
+
+                    <h2>Change Temporary Password</h2>
+
+                    <p>
+                        Create a new password before entering the ERP dashboard.
+                    </p>
+                </div>
+
+                <div id="passwordChangeMessage"
+                     class="error-box hidden"
+                     role="alert"
+                     aria-live="polite"></div>
+
+                <div class="security-note">
+                    <i class="bi bi-clock-history"
+                       aria-hidden="true"></i>
+
+                    <div>
+                        <strong>Temporary access</strong>
+
+                        <span id="temporaryPasswordExpiry">
+                            These credentials are valid for 72 hours.
                         </span>
                     </div>
                 </div>
 
-                <button type="submit" class="login-btn" id="loginBtn">
-                    <span class="btn-text">Login</span>
-                </button>
-            </form>
+                <form id="temporaryPasswordChangeForm">
+                    <div class="form-group">
+                        <label for="newPassword">
+                            New Password
+                        </label>
+
+                        <div class="input-wrapper pwd-wrapper">
+                            <i class="bi bi-key"
+                               aria-hidden="true"></i>
+
+                            <input type="password"
+                                   id="newPassword"
+                                   name="newPassword"
+                                   placeholder="Enter a new password"
+                                   autocomplete="new-password"
+                                   minlength="8"
+                                   maxlength="100"
+                                   required>
+
+                            <button type="button"
+                                    class="pwd-toggle-btn"
+                                    data-password-toggle
+                                    data-target="newPassword"
+                                    aria-label="Show new password">
+                                <i class="bi bi-eye-slash"
+                                   aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="confirmPassword">
+                            Confirm New Password
+                        </label>
+
+                        <div class="input-wrapper pwd-wrapper">
+                            <i class="bi bi-check2-circle"
+                               aria-hidden="true"></i>
+
+                            <input type="password"
+                                   id="confirmPassword"
+                                   name="confirmPassword"
+                                   placeholder="Re-enter the new password"
+                                   autocomplete="new-password"
+                                   minlength="8"
+                                   maxlength="100"
+                                   required>
+
+                            <button type="button"
+                                    class="pwd-toggle-btn"
+                                    data-password-toggle
+                                    data-target="confirmPassword"
+                                    aria-label="Show confirmed password">
+                                <i class="bi bi-eye-slash"
+                                   aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="password-requirements">
+                        <p>Password must contain:</p>
+
+                        <ul>
+                            <li>8 to 100 characters</li>
+                            <li>One uppercase and one lowercase letter</li>
+                            <li>One number and one special character</li>
+                            <li>A value different from the temporary password</li>
+                        </ul>
+                    </div>
+
+                    <div class="password-action-stack">
+                        <button type="submit"
+                                class="login-btn"
+                                id="changePasswordBtn">
+                            <span class="btn-text">
+                                Change Password
+                            </span>
+                        </button>
+
+                        <button type="button"
+                                class="secondary-login-btn"
+                                id="backToLoginBtn">
+                            Back to Login
+                        </button>
+                    </div>
+                </form>
+            </div>
 
             <div class="footer-text mt-20">
-                &copy; <span id="currentYear">2026</span> Montfort Brothers of St. Gabriel:Uganda
+                &copy;
+                <span id="currentYear">2026</span>
+                Montfort Brothers of St. Gabriel, Uganda
             </div>
         </div>
     </div>
 
 </div>
+
 <script src="/js/api.js"></script>
 <script src="/js/auth.js"></script>
+
 </body>
 </html>

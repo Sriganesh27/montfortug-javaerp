@@ -1,4 +1,3 @@
-// File: src/main/java/com/erp/montfortuganda/employee/entity/ErpEmployeeExperience.java
 package com.erp.montfortuganda.employee.entity;
 
 import com.erp.montfortuganda.auth.entity.User;
@@ -7,6 +6,8 @@ import com.erp.montfortuganda.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,7 +25,14 @@ public class ErpEmployeeExperience extends AuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "employee_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private ErpEmployee employee;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "employee_experience_type", length = 30)
+    private ExperienceEmploymentType employeeExperienceType =
+            ExperienceEmploymentType.FULL_TIME;
 
     @Column(name = "employee_experience_company_name", nullable = false, length = 255)
     private String employeeExperienceCompanyName;
@@ -48,7 +56,11 @@ public class ErpEmployeeExperience extends AuditableEntity {
     private String employeeExperienceDepartment;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "employee_experience_employment_type", nullable = false, length = 30)
+    @Column(
+            name = "employee_experience_employment_type",
+            nullable = false,
+            length = 30
+    )
     private ExperienceEmploymentType employeeExperienceEmploymentType;
 
     @Column(name = "employee_experience_start_date", nullable = false)
@@ -84,7 +96,10 @@ public class ErpEmployeeExperience extends AuditableEntity {
     @Column(name = "employee_experience_achievements", columnDefinition = "TEXT")
     private String employeeExperienceAchievements;
 
-    @Column(name = "employee_experience_experience_certificate_file", length = 500)
+    @Column(
+            name = "employee_experience_experience_certificate_file",
+            length = 500
+    )
     private String employeeExperienceExperienceCertificateFile;
 
     @Column(name = "employee_experience_relieving_letter_file", length = 500)
@@ -95,6 +110,8 @@ public class ErpEmployeeExperience extends AuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_experience_verified_by")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private User employeeExperienceVerifiedBy;
 
     @Column(name = "employee_experience_verified_at")
@@ -107,6 +124,6 @@ public class ErpEmployeeExperience extends AuditableEntity {
     private String employeeExperienceRemarks;
 
     @Version
-    @Column(nullable = false)
+    @Column(name = "version", nullable = false)
     private Long version = 0L;
 }

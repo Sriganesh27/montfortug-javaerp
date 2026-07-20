@@ -60,6 +60,7 @@ body {
     0% {
         transform: translate(0, 0);
     }
+
     100% {
         transform: translate(30px, 40px);
     }
@@ -212,7 +213,6 @@ body {
     outline: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 
 #login-view .input-wrapper:focus-within i {
     color: #0f172a;
@@ -387,6 +387,142 @@ input::-ms-clear {
 }
 
 /* ========================================= */
+/* TEMPORARY PASSWORD CHANGE PANEL           */
+/* ========================================= */
+#temporaryPasswordPanel {
+    animation: authPanelFadeIn 0.25s ease-out;
+}
+
+@keyframes authPanelFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.password-change-header {
+    margin-bottom: 24px;
+}
+
+.security-icon {
+    width: 54px;
+    height: 54px;
+    margin-bottom: 18px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(212, 175, 55, 0.12);
+    color: #b78c17;
+    font-size: 1.45rem;
+}
+
+.security-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 14px 16px;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 10px;
+    background: rgba(212, 175, 55, 0.08);
+    color: #475569;
+    font-size: 0.85rem;
+    line-height: 1.5;
+}
+
+.security-note > i {
+    margin-top: 2px;
+    color: #b78c17;
+    font-size: 1.1rem;
+}
+
+.security-note strong,
+.security-note span {
+    display: block;
+}
+
+.security-note strong {
+    margin-bottom: 2px;
+    color: #0f172a;
+}
+
+.password-requirements {
+    margin: -4px 0 22px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.55;
+}
+
+.password-requirements p {
+    margin: 0 0 6px;
+    color: #334155;
+    font-weight: 600;
+}
+
+.password-requirements ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
+.password-action-stack {
+    display: grid;
+    gap: 12px;
+}
+
+.secondary-login-btn {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #334155;
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.secondary-login-btn:hover {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+.secondary-login-btn:disabled,
+#login-view .login-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+#login-view .pwd-toggle-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#login-view .pwd-wrapper input {
+    padding-right: 52px;
+}
+
+/* ========================================= */
 /* --- MOBILE RESPONSIVENESS ---             */
 /* ========================================= */
 @media (max-width: 900px) {
@@ -415,5 +551,13 @@ input::-ms-clear {
         width: 80px;
         height: 80px;
         margin-bottom: 15px;
+    }
+
+    .security-note {
+        font-size: 0.8rem;
+    }
+
+    .password-requirements {
+        font-size: 0.75rem;
     }
 }

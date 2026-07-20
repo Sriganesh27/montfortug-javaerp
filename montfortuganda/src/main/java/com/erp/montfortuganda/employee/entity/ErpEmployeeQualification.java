@@ -7,6 +7,8 @@ import com.erp.montfortuganda.model.AuditableEntity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -23,22 +25,48 @@ public class ErpEmployeeQualification extends AuditableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "employee_id", nullable = false)
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private ErpEmployee employee;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "employee_qualification_level", nullable = false, length = 30)
+    @Column(
+            name = "employee_qualification_level",
+            nullable = false,
+            length = 30
+    )
     private QualificationLevel employeeQualificationLevel;
 
-    @Column(name = "employee_qualification_name", nullable = false, length = 255)
+    @Column(name = "custom_level", length = 255)
+    private String customLevel;
+
+    @Column(
+            name = "employee_qualification_name",
+            nullable = false,
+            length = 255
+    )
     private String employeeQualificationName;
 
-    @Column(name = "employee_qualification_specialization", length = 255)
+    @Column(
+            name = "employee_qualification_specialization",
+            length = 255
+    )
     private String employeeQualificationSpecialization;
 
-    @Column(name = "employee_qualification_institution_name", nullable = false, length = 255)
+    @Column(
+            name = "employee_qualification_institution_name",
+            nullable = false,
+            length = 255
+    )
     private String employeeQualificationInstitutionName;
 
-    @Column(name = "employee_qualification_board_university", length = 255)
+    @Column(name = "qualification_grade", length = 100)
+    private String qualificationGrade;
+
+    @Column(
+            name = "employee_qualification_board_university",
+            length = 255
+    )
     private String employeeQualificationBoardUniversity;
 
     @Column(name = "employee_qualification_country", length = 100)
@@ -56,44 +84,66 @@ public class ErpEmployeeQualification extends AuditableEntity {
     @Column(name = "employee_qualification_grade", length = 50)
     private String employeeQualificationGrade;
 
-    @Column(name = "employee_qualification_percentage", precision = 5, scale = 2)
+    @Column(
+            name = "employee_qualification_percentage",
+            precision = 5,
+            scale = 2
+    )
     private BigDecimal employeeQualificationPercentage;
 
-    @Column(name = "employee_qualification_cgpa", precision = 4, scale = 2)
+    @Column(
+            name = "employee_qualification_cgpa",
+            precision = 4,
+            scale = 2
+    )
     private BigDecimal employeeQualificationCgpa;
 
-    @Column(name = "employee_qualification_certificate_number", length = 100)
+    @Column(
+            name = "employee_qualification_certificate_number",
+            length = 100
+    )
     private String employeeQualificationCertificateNumber;
 
-    @Column(name = "employee_qualification_registration_number", length = 100)
+    @Column(
+            name = "employee_qualification_registration_number",
+            length = 100
+    )
     private String employeeQualificationRegistrationNumber;
 
-    @Column(name = "employee_qualification_document_file", length = 500)
+    @Column(
+            name = "employee_qualification_document_file",
+            length = 500
+    )
     private String employeeQualificationDocumentFile;
 
-    @Column(name = "employee_qualification_verified", nullable = false)
+    @Column(
+            name = "employee_qualification_verified",
+            nullable = false
+    )
     private Boolean employeeQualificationVerified = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_qualification_verified_by")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private User employeeQualificationVerifiedBy;
 
     @Column(name = "employee_qualification_verified_at")
     private LocalDateTime employeeQualificationVerifiedAt;
 
-    @Column(name = "employee_qualification_remarks", columnDefinition = "TEXT")
+    @Column(
+            name = "employee_qualification_remarks",
+            columnDefinition = "TEXT"
+    )
     private String employeeQualificationRemarks;
 
-    @Column(name = "employee_qualification_active", nullable = false)
+    @Column(
+            name = "employee_qualification_active",
+            nullable = false
+    )
     private Boolean employeeQualificationActive = true;
 
-    @Column(name = "qualification_grade", length = 100)
-    private String qualificationGrade;
-
-    @Column(name = "custom_level", length = 255)
-    private String customLevel;
-
     @Version
-    @Column(nullable = false)
+    @Column(name = "version", nullable = false)
     private Long version = 0L;
 }

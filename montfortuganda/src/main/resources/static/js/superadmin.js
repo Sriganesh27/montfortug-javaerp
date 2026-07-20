@@ -1,4 +1,4 @@
-/* global Swal, initErpCalendar */
+/* global Swal, initErpCalendar, apiGet, apiPost, apiPut, apiMultipart, showPremiumModal, showSuccessMessage, showErrorMessage, showLoader, hideLoader, loadView, renderFetchingMessage, renderEmptyTableMessage, GlobalPagination */
 // ==========================================
 // SUPER ADMIN MODULE
 // ==========================================
@@ -94,7 +94,11 @@ async function populateDynamicLevels(containerId) {
         });
     } catch (e) {
         console.error("Failed to load dynamic levels", e);
-        container.innerHTML = '<span style="color:red">Failed to load database levels.</span>';
+        container.textContent = '';
+        const errorText = document.createElement('span');
+        errorText.className = 'loading-text level-load-error';
+        errorText.textContent = 'Failed to load database levels.';
+        container.appendChild(errorText);
     }
 }
 
@@ -223,13 +227,11 @@ async function initHomeView() {
 // 2. BRANCHES LOGIC (SPA)
 // ---------------------------------------------------------
 function initBranchesView() {
-
-    void populateDynamicLevels('edit-branchLevels');
-
     const viewContainer = document.querySelector('#superadmin-branches-view');
     if (!viewContainer) return;
 
-    // --- SPA FIX: Clone tableBody to prevent duplicate event listeners on row click ---
+    void populateDynamicLevels('edit-branchLevels');
+
     let tableBody = viewContainer.querySelector('#sa-branchesTableBody');
     if (tableBody) {
         const newTableBody = tableBody.cloneNode(true);
@@ -239,114 +241,338 @@ function initBranchesView() {
 
     const tableView = viewContainer.querySelector('#sa-branchTableView');
     const detailView = viewContainer.querySelector('#sa-branchDetailView');
+    const validationSummary = viewContainer.querySelector('#edit-branch-validation-summary');
+    const validationList = viewContainer.querySelector('#edit-branch-validation-list');
 
-    let currentDetailBranchId = '';
+    let currentDetailBranchId = null;
+    let currentBranch = null;
+
+    const whatsappLabels = {
+        NONE: 'No WhatsApp number',
+        PRIMARY: 'Phone Number 1',
+        SECONDARY: 'Phone Number 2',
+        BOTH: 'Both phone numbers'
+    };
+
+    const normalizeText = value => {
+        if (value === undefined || value === null) return '';
+        return String(value).trim();
+    };
+
+    const displayValue = value => {
+        const normalized = normalizeText(value);
+        return normalized || '-';
+    };
+
+    const setText = (selector, value) => {
+        const element = viewContainer.querySelector(selector);
+        if (element) element.textContent = displayValue(value);
+    };
+
+    const setInput = (selector, value) => {
+        const element = viewContainer.querySelector(selector);
+        if (!element) return;
+
+        if (element.type === 'checkbox') {
+            element.checked = value === true || value === 1 || value === '1' || value === 'true';
+            return;
+        }
+
+        element.value = value ?? '';
+    };
+
+    const getInputValue = selector =>
+        viewContainer.querySelector(selector)?.value?.trim() || '';
+
+    const getEmailEnabled = () =>
+        Boolean(viewContainer.querySelector('#edit-emailEnabled')?.checked);
+
+    const buildFullAddress = branch => {
+        const parts = [
+            branch?.addressLine1,
+            branch?.addressLine2,
+            branch?.poBox,
+            branch?.locality,
+            branch?.city,
+            branch?.district,
+            branch?.region,
+            branch?.country,
+            branch?.postalCode
+        ]
+            .map(normalizeText)
+            .filter(Boolean);
+
+        if (parts.length > 0) return parts.join(', ');
+        return normalizeText(branch?.branchLocation) || '-';
+    };
+
+    const clearEditValidation = () => {
+        validationSummary?.classList.add('hidden');
+        if (validationList) validationList.textContent = '';
+
+        viewContainer
+            .querySelectorAll('.branch-field-invalid')
+            .forEach(element => element.classList.remove('branch-field-invalid'));
+    };
+
+    const showEditValidation = errors => {
+        clearEditValidation();
+
+        if (!Array.isArray(errors) || errors.length === 0) return;
+
+        errors.forEach(error => {
+            const element = viewContainer.querySelector(error.selector);
+            element?.classList.add('branch-field-invalid');
+
+            if (validationList) {
+                const item = document.createElement('li');
+                item.textContent = error.message;
+                validationList.appendChild(item);
+            }
+        });
+
+        validationSummary?.classList.remove('hidden');
+        validationSummary?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        const firstField = viewContainer.querySelector(errors[0].selector);
+        if (firstField && typeof firstField.focus === 'function') {
+            firstField.focus({ preventScroll: true });
+        }
+    };
+
+    const validateEditForm = () => {
+        const errors = [];
+
+        const requiredFields = [
+            ['#edit-branchName', 'School name is required.'],
+            ['#edit-schoolCode', 'School code is required.'],
+            ['#edit-foundationDate', 'Foundation date is required.'],
+            ['#edit-branchLocation', 'Short location is required.'],
+            ['#edit-addressLine1', 'Campus or Address Line 1 is required.'],
+            ['#edit-country', 'Country is required.'],
+            ['#edit-primaryPhone', 'Phone Number 1 is required.'],
+            ['#edit-branchEmail', 'Branch email is required.']
+        ];
+
+        requiredFields.forEach(([selector, message]) => {
+            if (!getInputValue(selector)) errors.push({ selector, message });
+        });
+
+        const branchEmail = getInputValue('#edit-branchEmail');
+        const replyTo = getInputValue('#edit-emailReplyTo');
+        const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        if (branchEmail && !emailPattern.test(branchEmail)) {
+            errors.push({ selector: '#edit-branchEmail', message: 'Enter a valid branch email address.' });
+        }
+
+        if (replyTo && !emailPattern.test(replyTo)) {
+            errors.push({ selector: '#edit-emailReplyTo', message: 'Enter a valid Reply-To email address.' });
+        }
+
+        const primaryPhone = getInputValue('#edit-primaryPhone');
+        const secondaryPhone = getInputValue('#edit-secondaryPhone');
+        const whatsappPhone = getInputValue('#edit-whatsappPhone') || 'NONE';
+
+        if (primaryPhone && secondaryPhone && primaryPhone === secondaryPhone) {
+            errors.push({ selector: '#edit-secondaryPhone', message: 'Phone Number 2 must be different from Phone Number 1.' });
+        }
+
+        if (whatsappPhone === 'SECONDARY' && !secondaryPhone) {
+            errors.push({ selector: '#edit-secondaryPhone', message: 'Enter Phone Number 2 because it is selected for WhatsApp.' });
+        }
+
+        if (whatsappPhone === 'BOTH' && !secondaryPhone) {
+            errors.push({ selector: '#edit-secondaryPhone', message: 'Enter both phone numbers when both are selected for WhatsApp.' });
+        }
+
+        const selectedLevels = viewContainer.querySelectorAll('#edit-branchLevels .level-cb:checked');
+        if (selectedLevels.length === 0) {
+            errors.push({ selector: '#edit-branchLevels', message: 'Select at least one education level.' });
+        }
+
+        const inchargeRows = Array.from(viewContainer.querySelectorAll('#edit-incharge-tbody tr'));
+        inchargeRows.forEach((row, index) => {
+            const name = row.querySelector('.inc-name')?.value?.trim() || '';
+            const role = row.querySelector('.inc-role')?.value?.trim() || '';
+            const phone = row.querySelector('.inc-phone')?.value?.trim() || '';
+            const hasAnyValue = Boolean(name || role || phone);
+
+            if (hasAnyValue && (!name || !role || !phone)) {
+                errors.push({
+                    selector: '#edit-inchargeDetails-container',
+                    message: `Incharge row ${index + 1} requires name, role and phone number.`
+                });
+            }
+        });
+
+        const logoFile = viewContainer.querySelector('#edit-branchLogo')?.files?.[0] || null;
+        if (logoFile) {
+            const allowedLogoTypes = ['image/jpeg', 'image/png'];
+            const maxLogoSize = 500 * 1024;
+
+            if (!allowedLogoTypes.includes(logoFile.type)) {
+                errors.push({ selector: '#edit-branchLogo', message: 'Branch logo must be JPG or PNG.' });
+            } else if (logoFile.size > maxLogoSize) {
+                errors.push({ selector: '#edit-branchLogo', message: 'Branch logo must not exceed 500 KB.' });
+            }
+        }
+
+        const photoFile = viewContainer.querySelector('#edit-schoolPhoto')?.files?.[0] || null;
+        if (photoFile) {
+            const allowedPhotoTypes = ['image/jpeg', 'image/png'];
+            const maxPhotoSize = 100 * 1024;
+
+            if (!allowedPhotoTypes.includes(photoFile.type)) {
+                errors.push({ selector: '#edit-schoolPhoto', message: 'School photo must be JPG or PNG.' });
+            } else if (photoFile.size > maxPhotoSize) {
+                errors.push({ selector: '#edit-schoolPhoto', message: 'School photo must not exceed 100 KB.' });
+            }
+        }
+
+        const documentFile = viewContainer.querySelector('#edit-govDocument')?.files?.[0] || null;
+        if (documentFile) {
+            const allowedDocumentTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+            const maxDocumentSize = documentFile.type === 'application/pdf'
+                ? 2 * 1024 * 1024
+                : 100 * 1024;
+
+            if (!allowedDocumentTypes.includes(documentFile.type)) {
+                errors.push({ selector: '#edit-govDocument', message: 'Government document must be PDF, JPG or PNG.' });
+            } else if (documentFile.size > maxDocumentSize) {
+                errors.push({
+                    selector: '#edit-govDocument',
+                    message: documentFile.type === 'application/pdf'
+                        ? 'Government PDF must not exceed 2 MB.'
+                        : 'Government image must not exceed 100 KB.'
+                });
+            }
+        }
+
+        return errors;
+    };
 
     function addEditInchargeRow(name = '', role = '', phone = '') {
         const template = viewContainer.querySelector('#incharge-edit-row-template');
-        if(!template) return;
+        const tbody = viewContainer.querySelector('#edit-incharge-tbody');
+        if (!template || !tbody) return;
 
         const clone = template.content.cloneNode(true);
-        clone.querySelector('.inc-name').value = name;
-        clone.querySelector('.inc-role').value = role;
-        clone.querySelector('.inc-phone').value = phone;
+        const nameInput = clone.querySelector('.inc-name');
+        const roleInput = clone.querySelector('.inc-role');
+        const phoneInput = clone.querySelector('.inc-phone');
+        const removeButton = clone.querySelector('.remove-inc-btn');
 
-        clone.querySelector('.remove-inc-btn').addEventListener('click', function() {
-            this.closest('tr').remove();
+        if (nameInput) nameInput.value = name;
+        if (roleInput) roleInput.value = role;
+        if (phoneInput) phoneInput.value = phone;
+
+        removeButton?.addEventListener('click', event => {
+            event.currentTarget.closest('tr')?.remove();
         });
 
-        viewContainer.querySelector('#edit-incharge-tbody').appendChild(clone);
+        tbody.appendChild(clone);
     }
 
-    // SPA FIX: Clone Add Person button to clear old event listeners
     const addPersonBtn = viewContainer.querySelector('#edit-addInchargeRowBtn');
     if (addPersonBtn) {
-        const newBtn = addPersonBtn.cloneNode(true);
-        addPersonBtn.parentNode.replaceChild(newBtn, addPersonBtn);
-        newBtn.addEventListener('click', () => addEditInchargeRow());
+        const newButton = addPersonBtn.cloneNode(true);
+        addPersonBtn.parentNode.replaceChild(newButton, addPersonBtn);
+        newButton.addEventListener('click', () => addEditInchargeRow());
     }
 
     async function loadBranches() {
-        if (tableBody) renderFetchingMessage(tableBody, 10, 'Fetching branches...');
+        if (tableBody) renderFetchingMessage(tableBody, 6, 'Fetching branches...');
+
         try {
-            const json = await apiGet('/superadmin/branches');
-            const branches = json.data;
-
+            const response = await apiGet('/superadmin/branches');
+            const branches = Array.isArray(response?.data) ? response.data : [];
             const template = viewContainer.querySelector('#branch-row-template');
-            if (!tableBody || !template) return;
 
+            if (!tableBody || !template) return;
             tableBody.textContent = '';
 
             branches.forEach(branch => {
                 const clone = template.content.cloneNode(true);
+                const branchId = Number(branch.branchId);
 
-                clone.querySelector('.col-id').textContent = branch.branchId.toString();
-                clone.querySelector('.col-name strong').textContent = branch.branchName;
-                clone.querySelector('.col-code').textContent = branch.schoolCode;
-                clone.querySelector('.col-type').textContent = (branch.levels && branch.levels.length > 0) ? branch.levels.map(l => l.levelName).join(', ') : 'N/A';
+                clone.querySelector('.col-id').textContent = String(branchId);
+                clone.querySelector('.col-name strong').textContent = displayValue(branch.branchName);
+                clone.querySelector('.col-code').textContent = displayValue(branch.schoolCode);
+                clone.querySelector('.col-type').textContent =
+                    Array.isArray(branch.levels) && branch.levels.length > 0
+                        ? branch.levels.map(level => level.levelName).filter(Boolean).join(', ')
+                        : 'N/A';
 
                 const toggle = clone.querySelector('.status-toggle');
-                toggle.checked = branch.isActive === 1;
-                toggle.setAttribute('data-id', branch.branchId);
+                if (toggle) {
+                    toggle.checked = branch.isActive === true || branch.isActive === 1;
+                    toggle.dataset.id = String(branchId);
+                }
 
-                clone.querySelector('.view-more-btn').setAttribute('data-id', branch.branchId);
+                const viewButton = clone.querySelector('.view-more-btn');
+                if (viewButton) viewButton.dataset.id = String(branchId);
 
                 tableBody.appendChild(clone);
             });
         } catch (error) {
             console.error(error);
-            tableBody.textContent = 'Failed to load branches.';
+            if (tableBody) renderEmptyTableMessage(tableBody, 6, 'Failed to load branches.');
         } finally {
             hideLoader();
         }
     }
 
-    if (tableBody) {
-        tableBody.addEventListener('click', async function(e) {
-            const viewBtn = e.target.closest('.view-more-btn');
-            const toggleBtn = e.target.closest('.status-toggle');
+    tableBody?.addEventListener('click', event => {
+        const viewButton = event.target.closest('.view-more-btn');
+        const toggleButton = event.target.closest('.status-toggle');
 
-            if (viewBtn) {
-                const id = parseInt(viewBtn.getAttribute('data-id'));
-                void openViewMore(id);
-            } else if (toggleBtn) {
-                e.preventDefault(); // Stop instant toggle
-                const id = parseInt(toggleBtn.getAttribute('data-id'));
+        if (viewButton) {
+            const id = Number.parseInt(viewButton.dataset.id, 10);
+            if (Number.isInteger(id) && id > 0) void openViewMore(id);
+            return;
+        }
 
-                showPremiumModal({
-                    title: 'Confirm Action',
-                    type: 'warning',
-                    contentText: 'Are you sure you want to change the active status of this branch?',
-                    confirmText: 'Yes, Change Status',
-                    cancelText: 'Cancel',
-                    onConfirm: async (modal) => {
-                        modal.close();
-                        showLoader();
-                        try {
-                            await apiPut(`/superadmin/branches/${id}/toggle`, {});
-                            toggleBtn.checked = !toggleBtn.checked; // Change UI visually securely
-                            showPremiumModal({ title: 'Success', type: 'success', contentText: 'Branch status successfully updated.', confirmText: 'OK' });
-                        } catch (err) {
-                            showErrorMessage("Failed to update status");
-                        } finally {
-                            hideLoader();
-                        }
-                    }
-                });
+        if (!toggleButton) return;
+
+        event.preventDefault();
+        const id = Number.parseInt(toggleButton.dataset.id, 10);
+        if (!Number.isInteger(id) || id <= 0) return;
+
+        showPremiumModal({
+            title: 'Confirm Action',
+            type: 'warning',
+            contentText: 'Are you sure you want to change the active status of this branch?',
+            confirmText: 'Yes, Change Status',
+            cancelText: 'Cancel',
+            onConfirm: async modal => {
+                modal.close();
+                showLoader();
+
+                try {
+                    await apiPut(`/superadmin/branches/${id}/toggle`, {});
+                    toggleButton.checked = !toggleButton.checked;
+                    showSuccessMessage('Branch status updated successfully.');
+                } catch (error) {
+                    console.error(error);
+                    showErrorMessage('Failed to update branch status.');
+                } finally {
+                    hideLoader();
+                }
             }
         });
-    }
+    });
 
-    // --- SPA FIX: Clone Back Button ---
-    let backBtn = viewContainer.querySelector('#sa-backToTableBtn');
-    if (backBtn) {
-        const newBackBtn = backBtn.cloneNode(true);
-        backBtn.parentNode.replaceChild(newBackBtn, backBtn);
-        backBtn = newBackBtn;
+    let backButton = viewContainer.querySelector('#sa-backToTableBtn');
+    if (backButton) {
+        const newButton = backButton.cloneNode(true);
+        backButton.parentNode.replaceChild(newButton, backButton);
+        backButton = newButton;
 
-        backBtn.addEventListener('click', () => {
-            detailView.classList.add('hidden');
-            tableView.classList.remove('hidden');
+        backButton.addEventListener('click', () => {
+            clearEditValidation();
+            detailView?.classList.add('hidden');
+            tableView?.classList.remove('hidden');
             void loadBranches();
         });
     }
@@ -354,224 +580,301 @@ function initBranchesView() {
     async function openViewMore(id) {
         currentDetailBranchId = id;
         showLoader();
+
         try {
-            const json = await apiGet('/superadmin/branches');
-            const branch = json.data.find(b => b.branchId === id);
+            const response = await apiGet('/superadmin/branches');
+            const branches = Array.isArray(response?.data) ? response.data : [];
+            const branch = branches.find(item => Number(item.branchId) === Number(id));
 
-            if (branch) {
-                viewContainer.querySelector('#detail-schoolNameHeader').textContent = branch.branchName;
-                viewContainer.querySelector('#view-branchName').textContent = branch.branchName;
-                viewContainer.querySelector('#view-schoolCode').textContent = branch.schoolCode;
-                viewContainer.querySelector('#view-adminUsername').textContent = branch.schoolCode.toLowerCase() + "@montfort.ug";
-                viewContainer.querySelector('#view-branchType').textContent = (branch.levels && branch.levels.length > 0) ? branch.levels.map(l => l.levelName).join(', ') : 'N/A';
-                viewContainer.querySelector('#view-foundationDate').textContent = branch.foundationDate || '';
-                viewContainer.querySelector('#view-branchLocation').textContent = branch.branchLocation;
-                viewContainer.querySelector('#view-contactDetails').textContent = branch.contactDetails;
+            if (!branch) {
+                showErrorMessage('Branch not found.');
+                return;
+            }
 
-                const inchargeView = viewContainer.querySelector('#view-inchargeDetails');
-                const inchargeEditTbody = viewContainer.querySelector('#edit-incharge-tbody');
+            currentBranch = branch;
 
-                if (inchargeView) inchargeView.textContent = '';
-                if (inchargeEditTbody) inchargeEditTbody.textContent = '';
+            setText('#detail-schoolNameHeader', branch.branchName);
+            setText('#view-branchName', branch.branchName);
+            setText('#view-schoolCode', branch.schoolCode);
+            setText('#view-adminUsername', `${normalizeText(branch.schoolCode).toLowerCase()}@montfort.ug`);
+            setText(
+                '#view-branchType',
+                Array.isArray(branch.levels) && branch.levels.length > 0
+                    ? branch.levels.map(level => level.levelName).filter(Boolean).join(', ')
+                    : 'N/A'
+            );
+            setText('#view-foundationDate', branch.foundationDate);
 
+            setText('#view-branchLocation', branch.branchLocation);
+            setText('#view-addressLine1', branch.addressLine1);
+            setText('#view-addressLine2', branch.addressLine2);
+            setText('#view-poBox', branch.poBox);
+            setText('#view-locality', branch.locality);
+            setText('#view-city', branch.city);
+            setText('#view-district', branch.district);
+            setText('#view-region', branch.region);
+            setText('#view-country', branch.country || 'Uganda');
+            setText('#view-postalCode', branch.postalCode);
+            setText('#view-fullAddress', buildFullAddress(branch));
+
+            setText('#view-primaryPhone', branch.primaryPhone || branch.contactDetails);
+            setText('#view-secondaryPhone', branch.secondaryPhone);
+            setText('#view-whatsappPhone', whatsappLabels[branch.whatsappPhone || 'NONE']);
+            setText('#view-branchEmail', branch.branchEmail);
+            setText('#view-emailFromName', branch.emailFromName || branch.branchName);
+            setText('#view-emailReplyTo', branch.emailReplyTo || branch.branchEmail);
+            setText(
+                '#view-emailEnabled',
+                branch.emailEnabled === false || branch.emailEnabled === 0 ? 'Disabled' : 'Enabled'
+            );
+            setText('#view-contactDetails', branch.contactDetails);
+
+            const emailStatus = viewContainer.querySelector('#view-emailEnabled');
+            if (emailStatus) {
+                const enabled = !(branch.emailEnabled === false || branch.emailEnabled === 0);
+                emailStatus.classList.toggle('branch-status-enabled', enabled);
+                emailStatus.classList.toggle('branch-status-disabled', !enabled);
+            }
+
+            const inchargeView = viewContainer.querySelector('#view-inchargeDetails');
+            const inchargeEditTbody = viewContainer.querySelector('#edit-incharge-tbody');
+            if (inchargeView) inchargeView.textContent = '';
+            if (inchargeEditTbody) inchargeEditTbody.textContent = '';
+
+            let incharges = [];
+            const rawIncharges = branch.inchargeDetails;
+
+            if (Array.isArray(rawIncharges)) {
+                incharges = rawIncharges;
+            } else if (rawIncharges && rawIncharges !== 'null' && rawIncharges !== '[object Object]') {
                 try {
-                    let incharges = [];
-                    let rawData = branch.inchargeDetails;
-
-                    if (rawData && rawData !== 'null' && rawData !== '[object Object]') {
-                        try {
-                            incharges = JSON.parse(rawData);
-                        } catch (parseError) {
-                            console.warn("Corrupted legacy incharge data ignored:", rawData);
-                        }
-                    }
-
-                    if (!Array.isArray(incharges)) {
-                        incharges = [];
-                    }
-
-                    if (incharges.length === 0) {
-                        const emptyDiv = document.createElement('div');
-                        emptyDiv.className = 'view-incharge-empty';
-                        emptyDiv.textContent = 'No incharge details provided.';
-                        inchargeView.appendChild(emptyDiv);
-                    } else {
-                        const viewTableTemplate = viewContainer.querySelector('#incharge-view-table-template');
-                        if (viewTableTemplate) {
-                            const viewTableClone = viewTableTemplate.content.cloneNode(true);
-                            const viewTbody = viewTableClone.querySelector('.incharge-view-tbody');
-
-                            incharges.forEach(inc => {
-                                const trView = document.createElement('tr');
-                                const tdName = document.createElement('td'); tdName.textContent = inc.name;
-                                const tdRole = document.createElement('td'); tdRole.textContent = inc.role;
-                                const tdPhone = document.createElement('td'); tdPhone.textContent = inc.phone;
-                                trView.appendChild(tdName); trView.appendChild(tdRole); trView.appendChild(tdPhone);
-                                viewTbody.appendChild(trView);
-
-                                addEditInchargeRow(inc.name, inc.role, inc.phone);
-                            });
-                            inchargeView.appendChild(viewTableClone);
-                        }
-                    }
-                } catch(e) {
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'view-incharge-error';
-                    errorDiv.textContent = 'Failed to load details.';
-                    inchargeView.appendChild(errorDiv);
+                    const parsed = JSON.parse(rawIncharges);
+                    incharges = Array.isArray(parsed) ? parsed : [];
+                } catch (error) {
+                    console.warn('Corrupted legacy incharge data ignored:', rawIncharges, error);
                 }
+            }
 
-                const photoImg = viewContainer.querySelector('#view-schoolPhoto');
-                if(branch.schoolPhotoUrl) {
-                    photoImg.src = branch.schoolPhotoUrl;
-                    photoImg.classList.remove('hidden');
-                } else {
-                    photoImg.classList.add('hidden');
+            if (incharges.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'view-incharge-empty';
+                emptyMessage.textContent = 'No incharge details provided.';
+                inchargeView?.appendChild(emptyMessage);
+            } else {
+                const viewTemplate = viewContainer.querySelector('#incharge-view-table-template');
+                if (viewTemplate && inchargeView) {
+                    const tableClone = viewTemplate.content.cloneNode(true);
+                    const tbody = tableClone.querySelector('.incharge-view-tbody');
+
+                    incharges.forEach(incharge => {
+                        const row = document.createElement('tr');
+                        [incharge.name, incharge.role, incharge.phone].forEach(value => {
+                            const cell = document.createElement('td');
+                            cell.textContent = displayValue(value);
+                            row.appendChild(cell);
+                        });
+                        tbody.appendChild(row);
+                        addEditInchargeRow(incharge.name || '', incharge.role || '', incharge.phone || '');
+                    });
+
+                    inchargeView.appendChild(tableClone);
                 }
+            }
 
-                const docDiv = viewContainer.querySelector('#view-govDocument');
-                docDiv.textContent = '';
-                if(branch.govDocumentUrl) {
+            const logoImage = viewContainer.querySelector('#view-branchLogo');
+            const logoEmpty = viewContainer.querySelector('#view-branchLogoEmpty');
+            const branchLogoUrl = branch.branchLogoUrl || branch.logoUrl || null;
+
+            if (logoImage && branchLogoUrl) {
+                logoImage.src = branchLogoUrl;
+                logoImage.classList.remove('hidden');
+                logoEmpty?.classList.add('hidden');
+            } else if (logoImage) {
+                logoImage.removeAttribute('src');
+                logoImage.classList.add('hidden');
+                logoEmpty?.classList.remove('hidden');
+            }
+
+            const photoImage = viewContainer.querySelector('#view-schoolPhoto');
+            if (photoImage && branch.schoolPhotoUrl) {
+                photoImage.src = branch.schoolPhotoUrl;
+                photoImage.classList.remove('hidden');
+            } else if (photoImage) {
+                photoImage.removeAttribute('src');
+                photoImage.classList.add('hidden');
+            }
+
+            const documentContainer = viewContainer.querySelector('#view-govDocument');
+            if (documentContainer) {
+                documentContainer.textContent = '';
+
+                if (branch.govDocumentUrl) {
                     const link = document.createElement('a');
                     link.href = branch.govDocumentUrl;
                     link.target = '_blank';
+                    link.rel = 'noopener noreferrer';
                     link.className = 'btn-secondary';
                     link.textContent = 'View Document';
-                    docDiv.appendChild(link);
+                    documentContainer.appendChild(link);
                 } else {
-                    docDiv.textContent = "No document uploaded.";
+                    documentContainer.textContent = 'No document uploaded.';
                 }
-
-                // --- Load Stats & Audit Logs ---
-                try {
-                    const statsRes = await apiGet(`/superadmin/branches/${id}/stats`).catch(() => null);
-                    if(statsRes && statsRes.data) {
-                        viewContainer.querySelector('#view-statStudents').textContent = (statsRes.data['students'] || 0).toString();
-                        viewContainer.querySelector('#view-statStaff').textContent = (statsRes.data['staff'] || 0).toString();
-                        viewContainer.querySelector('#view-statAttendance').textContent = (statsRes.data['attendance'] || 0) + '%';
-                    } else {
-                        viewContainer.querySelector('#view-statStudents').textContent = 'N/A';
-                        viewContainer.querySelector('#view-statStaff').textContent = 'N/A';
-                        viewContainer.querySelector('#view-statAttendance').textContent = 'N/A';
-                    }
-
-                    const logTbody = viewContainer.querySelector('#view-auditLogTbody');
-                    const logTemplate = viewContainer.querySelector('#audit-log-row-template');
-                    if (logTbody && logTemplate) {
-                        logTbody.textContent = ''; // Clear old logs
-                        const logsRes = await apiGet(`/superadmin/branches/${id}/logs`).catch(() => null);
-                        const logs = (logsRes && logsRes.data) ? logsRes.data : [
-                            { date: 'Today, 10:30 AM', user: 'School Admin', action: 'Logged into portal' },
-                            { date: 'Yesterday, 4:15 PM', user: 'System', action: 'Automated weekly backup completed' }
-                        ];
-
-                        if (logs.length === 0) {
-                            const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 3; td.style.textAlign = 'center'; td.style.color = '#94a3b8'; td.style.padding = '20px'; td.textContent = 'No recent activity found.'; tr.appendChild(td); logTbody.appendChild(tr);
-                        } else {
-                            logs.forEach(log => {
-                                const clone = logTemplate.content.cloneNode(true);
-                                clone.querySelector('.log-date').textContent = log.date;
-                                clone.querySelector('.log-user').textContent = log.user;
-                                clone.querySelector('.log-action').textContent = log.action;
-                                logTbody.appendChild(clone);
-                            });
-                        }
-                    }
-                } catch(e) { console.error("Stats Error:", e); }
-
-                tableView.classList.add('hidden');
-                detailView.classList.remove('hidden');
-                resetEditMode();
             }
-        } catch(error) {
+
+            try {
+                const statsResponse = await apiGet(`/superadmin/branches/${id}/stats`).catch(() => null);
+                const stats = statsResponse?.data || null;
+
+                setText('#view-statStudents', stats ? stats.students || 0 : 'N/A');
+                setText('#view-statStaff', stats ? stats.staff || 0 : 'N/A');
+                setText('#view-statAttendance', stats ? `${stats.attendance || 0}%` : 'N/A');
+
+                const logBody = viewContainer.querySelector('#view-auditLogTbody');
+                const logTemplate = viewContainer.querySelector('#audit-log-row-template');
+
+                if (logBody && logTemplate) {
+                    logBody.textContent = '';
+                    const logResponse = await apiGet(`/superadmin/branches/${id}/logs`).catch(() => null);
+                    const logs = Array.isArray(logResponse?.data) ? logResponse.data : [];
+
+                    if (logs.length === 0) {
+                        const row = document.createElement('tr');
+                        const cell = document.createElement('td');
+                        cell.colSpan = 3;
+                        cell.className = 'branch-audit-empty';
+                        cell.textContent = 'No recent activity found.';
+                        row.appendChild(cell);
+                        logBody.appendChild(row);
+                    } else {
+                        logs.forEach(log => {
+                            const clone = logTemplate.content.cloneNode(true);
+                            clone.querySelector('.log-date').textContent = displayValue(log.date);
+                            clone.querySelector('.log-user').textContent = displayValue(log.user);
+                            clone.querySelector('.log-action').textContent = displayValue(log.action);
+                            logBody.appendChild(clone);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Branch stats or logs failed:', error);
+            }
+
+            tableView?.classList.add('hidden');
+            detailView?.classList.remove('hidden');
+            resetEditMode();
+        } catch (error) {
             console.error(error);
-            showErrorMessage("Failed to fetch branch details");
+            showErrorMessage(error.message || 'Failed to fetch branch details.');
         } finally {
             hideLoader();
         }
     }
 
-    // --- SPA FIX: Clone Edit, Save, and Cancel Buttons ---
-    let editBtn = viewContainer.querySelector('#sa-editBranchBtn');
-    if (editBtn) {
-        const newBtn = editBtn.cloneNode(true);
-        editBtn.parentNode.replaceChild(newBtn, editBtn);
-        editBtn = newBtn;
+    let editButton = viewContainer.querySelector('#sa-editBranchBtn');
+    if (editButton) {
+        const newButton = editButton.cloneNode(true);
+        editButton.parentNode.replaceChild(newButton, editButton);
+        editButton = newButton;
     }
 
-    let saveBtn = viewContainer.querySelector('#sa-saveBranchBtn');
-    if (saveBtn) {
-        const newBtn = saveBtn.cloneNode(true);
-        saveBtn.parentNode.replaceChild(newBtn, saveBtn);
-        saveBtn = newBtn;
+    let saveButton = viewContainer.querySelector('#sa-saveBranchBtn');
+    if (saveButton) {
+        const newButton = saveButton.cloneNode(true);
+        saveButton.parentNode.replaceChild(newButton, saveButton);
+        saveButton = newButton;
     }
 
-    let cancelEditBtn = viewContainer.querySelector('#sa-cancelEditBtn');
-    if (cancelEditBtn) {
-        const newBtn = cancelEditBtn.cloneNode(true);
-        cancelEditBtn.parentNode.replaceChild(newBtn, cancelEditBtn);
-        cancelEditBtn = newBtn;
+    let cancelEditButton = viewContainer.querySelector('#sa-cancelEditBtn');
+    if (cancelEditButton) {
+        const newButton = cancelEditButton.cloneNode(true);
+        cancelEditButton.parentNode.replaceChild(newButton, cancelEditButton);
+        cancelEditButton = newButton;
     }
 
-    if (editBtn) {
-        editBtn.addEventListener('click', async () => {
-            viewContainer.querySelectorAll('.detail-text:not(.readonly-always)').forEach(el => el.classList.add('hidden'));
-            viewContainer.querySelectorAll('.detail-input').forEach(el => el.classList.remove('hidden'));
+    editButton?.addEventListener('click', async () => {
+        if (!currentBranch) return;
 
-            viewContainer.querySelector('#edit-branchName').value = viewContainer.querySelector('#view-branchName').textContent;
-            viewContainer.querySelector('#edit-schoolCode').value = viewContainer.querySelector('#view-schoolCode').textContent;
-            viewContainer.querySelector('#edit-foundationDate').value = viewContainer.querySelector('#view-foundationDate').textContent;
-            viewContainer.querySelector('#edit-branchLocation').value = viewContainer.querySelector('#view-branchLocation').textContent;
-            viewContainer.querySelector('#edit-contactDetails').value = viewContainer.querySelector('#view-contactDetails').textContent;
+        clearEditValidation();
 
-            // Fetch full branch details from API to get the mapped levels
-            try {
-                const json = await apiGet('/superadmin/branches');
-                const branch = json.data.find(b => b.branchId === currentDetailBranchId);
-                const branchLevelIds = branch.levelIds || [];
+        viewContainer
+            .querySelectorAll('.detail-text:not(.readonly-always)')
+            .forEach(element => element.classList.add('hidden'));
 
-                viewContainer.querySelectorAll('.level-cb').forEach(cb => {
-                    cb.checked = branchLevelIds.includes(parseInt(cb.value));
-                });
-            } catch (e) {
-                console.error("Failed to load branch levels for editing", e);
-            }
+        viewContainer
+            .querySelectorAll('.detail-input')
+            .forEach(element => element.classList.remove('hidden'));
 
-            editBtn.classList.add('hidden');
-            saveBtn.classList.remove('hidden');
-            if (cancelEditBtn) cancelEditBtn.classList.remove('hidden');
+        setInput('#edit-branchName', currentBranch.branchName);
+        setInput('#edit-schoolCode', currentBranch.schoolCode);
+        setInput('#edit-foundationDate', currentBranch.foundationDate);
+        setInput('#edit-branchLocation', currentBranch.branchLocation);
+        setInput('#edit-addressLine1', currentBranch.addressLine1);
+        setInput('#edit-addressLine2', currentBranch.addressLine2);
+        setInput('#edit-poBox', currentBranch.poBox);
+        setInput('#edit-locality', currentBranch.locality);
+        setInput('#edit-city', currentBranch.city);
+        setInput('#edit-district', currentBranch.district);
+        setInput('#edit-region', currentBranch.region);
+        setInput('#edit-country', currentBranch.country || 'Uganda');
+        setInput('#edit-postalCode', currentBranch.postalCode);
+        setInput('#edit-primaryPhone', currentBranch.primaryPhone || currentBranch.contactDetails);
+        setInput('#edit-secondaryPhone', currentBranch.secondaryPhone);
+        setInput('#edit-whatsappPhone', currentBranch.whatsappPhone || 'NONE');
+        setInput('#edit-branchEmail', currentBranch.branchEmail);
+        setInput('#edit-emailFromName', currentBranch.emailFromName || currentBranch.branchName);
+        setInput('#edit-emailReplyTo', currentBranch.emailReplyTo || currentBranch.branchEmail);
+        setInput(
+            '#edit-emailEnabled',
+            !(currentBranch.emailEnabled === false || currentBranch.emailEnabled === 0)
+        );
+
+        if (!viewContainer.querySelector('#edit-branchLevels .level-cb')) {
+            await populateDynamicLevels('edit-branchLevels');
+        }
+
+        const levelIds = Array.isArray(currentBranch.levelIds)
+            ? currentBranch.levelIds.map(Number)
+            : Array.isArray(currentBranch.levels)
+                ? currentBranch.levels.map(level => Number(level.levelId))
+                : [];
+
+        viewContainer.querySelectorAll('#edit-branchLevels .level-cb').forEach(checkbox => {
+            checkbox.checked = levelIds.includes(Number(checkbox.value));
         });
-    }
 
-    if (cancelEditBtn) {
-        cancelEditBtn.addEventListener('click', () => {
-            void openViewMore(currentDetailBranchId);
-        });
-    }
+        editButton.classList.add('hidden');
+        saveButton?.classList.remove('hidden');
+        cancelEditButton?.classList.remove('hidden');
+    });
 
-    // --- SPA FIX: Clone Branch Admin Password Reset Button ---
-    let resetPwdBtn = viewContainer.querySelector('#sa-resetBranchAdminPwdBtn');
-    if (resetPwdBtn) {
-        const newBtn = resetPwdBtn.cloneNode(true);
-        resetPwdBtn.parentNode.replaceChild(newBtn, resetPwdBtn);
-        resetPwdBtn = newBtn;
+    cancelEditButton?.addEventListener('click', () => {
+        clearEditValidation();
+        if (currentDetailBranchId) void openViewMore(currentDetailBranchId);
+    });
 
-        resetPwdBtn.addEventListener('click', () => {
+    let resetPasswordButton = viewContainer.querySelector('#sa-resetBranchAdminPwdBtn');
+    if (resetPasswordButton) {
+        const newButton = resetPasswordButton.cloneNode(true);
+        resetPasswordButton.parentNode.replaceChild(newButton, resetPasswordButton);
+        resetPasswordButton = newButton;
+
+        resetPasswordButton.addEventListener('click', () => {
             showPremiumModal({
                 title: 'Reset Admin Password',
                 type: 'warning',
-                contentText: 'Are you sure you want to reset the School Admin password for this branch? It will revert to the default format.',
+                contentText: 'Are you sure you want to reset the School Admin password for this branch?',
                 confirmText: 'Yes, Reset',
                 cancelText: 'Cancel',
-                onConfirm: async (modal) => {
+                onConfirm: async modal => {
                     modal.close();
                     showLoader();
+
                     try {
                         await apiPut(`/superadmin/branches/${currentDetailBranchId}/reset-admin-password`, {});
-                        showSuccessMessage('The administrator password has been reset successfully.');
-                    } catch (e) {
-                        console.error(e);
-                        showErrorMessage('Failed to reset the password. Ensure backend is configured.');
+                        showSuccessMessage('The administrator password was reset successfully.');
+                    } catch (error) {
+                        console.error(error);
+                        showErrorMessage('Failed to reset the branch administrator password.');
                     } finally {
                         hideLoader();
                     }
@@ -580,14 +883,13 @@ function initBranchesView() {
         });
     }
 
-    // --- SPA FIX: Clone Data Backup Button ---
-    let backupBtn = viewContainer.querySelector('#sa-backupBranchBtn');
-    if (backupBtn) {
-        const newBtn = backupBtn.cloneNode(true);
-        backupBtn.parentNode.replaceChild(newBtn, backupBtn);
-        backupBtn = newBtn;
+    let backupButton = viewContainer.querySelector('#sa-backupBranchBtn');
+    if (backupButton) {
+        const newButton = backupButton.cloneNode(true);
+        backupButton.parentNode.replaceChild(newButton, backupButton);
+        backupButton = newButton;
 
-        backupBtn.addEventListener('click', () => {
+        backupButton.addEventListener('click', () => {
             confirmAction(
                 'Export Branch Data',
                 'info',
@@ -596,94 +898,131 @@ function initBranchesView() {
                 `/superadmin/branches/${currentDetailBranchId}/export`,
                 false,
                 'Export initiated.',
-                'Failed to trigger backup. Ensure backend endpoint is ready.',
+                'Failed to trigger the branch export.',
                 null
             );
         });
     }
 
-    if (saveBtn) {
-        saveBtn.addEventListener('click', async () => {
-            showPremiumModal({
-                title: 'Save Changes',
-                type: 'info',
-                contentText: 'Are you sure you want to apply these updates to the branch?',
-                confirmText: 'Save Changes',
-                cancelText: 'Cancel',
-                onConfirm: async (modal) => {
-                    modal.close();
+    saveButton?.addEventListener('click', () => {
+        const errors = validateEditForm();
+        if (errors.length > 0) {
+            showEditValidation(errors);
+            return;
+        }
 
-                    const formData = new FormData();
-                    formData.append("branchName", viewContainer.querySelector('#edit-branchName').value);
-                    formData.append("schoolCode", viewContainer.querySelector('#edit-schoolCode').value);
-                    formData.append("foundationDate", viewContainer.querySelector('#edit-foundationDate').value);
-                    formData.append("branchLocation", viewContainer.querySelector('#edit-branchLocation').value);
-                    formData.append("contactDetails", viewContainer.querySelector('#edit-contactDetails').value);
+        showPremiumModal({
+            title: 'Save Changes',
+            type: 'info',
+            contentText: 'Apply the updated branch address, communication and email settings?',
+            confirmText: 'Save Changes',
+            cancelText: 'Cancel',
+            onConfirm: async modal => {
+                modal.close();
 
-                    const selectedLevels = Array.from(viewContainer.querySelectorAll('.level-cb:checked')).map(cb => cb.value);
-                    if (selectedLevels.length === 0) {
-                        if (typeof Swal !== 'undefined') Swal.fire('Validation Error', 'Please select at least one education level.', 'warning');
-                        return;
-                    }
+                const branchName = getInputValue('#edit-branchName');
+                const branchEmail = getInputValue('#edit-branchEmail');
+                const primaryPhone = getInputValue('#edit-primaryPhone');
+                const secondaryPhone = getInputValue('#edit-secondaryPhone');
 
-                    selectedLevels.forEach(levelId => {
-                        formData.append("levelIds", levelId);
-                    });
+                const formData = new FormData();
+                formData.append('branchName', branchName);
+                formData.append('schoolCode', getInputValue('#edit-schoolCode'));
+                formData.append('foundationDate', getInputValue('#edit-foundationDate'));
+                formData.append('branchLocation', getInputValue('#edit-branchLocation'));
+                formData.append('addressLine1', getInputValue('#edit-addressLine1'));
+                formData.append('addressLine2', getInputValue('#edit-addressLine2'));
+                formData.append('poBox', getInputValue('#edit-poBox'));
+                formData.append('locality', getInputValue('#edit-locality'));
+                formData.append('city', getInputValue('#edit-city'));
+                formData.append('district', getInputValue('#edit-district'));
+                formData.append('region', getInputValue('#edit-region'));
+                formData.append('country', getInputValue('#edit-country'));
+                formData.append('postalCode', getInputValue('#edit-postalCode'));
+                formData.append('primaryPhone', primaryPhone);
+                formData.append('secondaryPhone', secondaryPhone);
+                formData.append('whatsappPhone', getInputValue('#edit-whatsappPhone') || 'NONE');
+                formData.append('branchEmail', branchEmail);
+                formData.append('emailFromName', getInputValue('#edit-emailFromName') || branchName);
+                formData.append('emailReplyTo', getInputValue('#edit-emailReplyTo') || branchEmail);
+                formData.append('emailEnabled', String(getEmailEnabled()));
 
-                    const updatedIncharges = extractInchargeDetails(viewContainer, 'edit-incharge-tbody', 'inc-name', 'inc-role', 'inc-phone');
-                    formData.append("inchargeDetails", JSON.stringify(updatedIncharges));
+                const legacyContactDetails = [primaryPhone, secondaryPhone, branchEmail]
+                    .filter(Boolean)
+                    .join(' | ');
+                formData.append('contactDetails', legacyContactDetails);
 
-                    const photoFile = viewContainer.querySelector('#edit-schoolPhoto').files[0];
-                    const docFile = viewContainer.querySelector('#edit-govDocument').files[0];
-                    if(photoFile) formData.append("photo", photoFile);
-                    if(docFile) formData.append("documents", docFile);
+                viewContainer
+                    .querySelectorAll('#edit-branchLevels .level-cb:checked')
+                    .forEach(checkbox =>
+                        formData.append('levelIds', String(checkbox.value))
+                    );
 
-                    showLoader();
-                    try {
-                        await apiMultipart(`/superadmin/branches/${currentDetailBranchId}`, 'PUT', formData);
-                        showPremiumModal({ title: 'Saved!', type: 'success', contentText: 'Changes applied successfully.', confirmText: 'Done' });
-                        void openViewMore(currentDetailBranchId);
-                    } catch(e) {
-                        console.error(e);
-                        showErrorMessage("Failed to save changes.");
-                    } finally {
-                        hideLoader();
-                    }
+                const updatedIncharges = extractInchargeDetails(
+                    viewContainer,
+                    'edit-incharge-tbody',
+                    'inc-name',
+                    'inc-role',
+                    'inc-phone'
+                );
+                formData.append('inchargeDetails', JSON.stringify(updatedIncharges));
+
+                const logoFile = viewContainer.querySelector('#edit-branchLogo')?.files?.[0] || null;
+                const photoFile = viewContainer.querySelector('#edit-schoolPhoto')?.files?.[0] || null;
+                const documentFile = viewContainer.querySelector('#edit-govDocument')?.files?.[0] || null;
+                if (logoFile) formData.append('logo', logoFile);
+                if (photoFile) formData.append('photo', photoFile);
+                if (documentFile) formData.append('documents', documentFile);
+
+                showLoader();
+                saveButton.disabled = true;
+
+                try {
+                    await apiMultipart(`/superadmin/branches/${currentDetailBranchId}`, 'PUT', formData);
+                    clearEditValidation();
+                    showSuccessMessage('Branch details updated successfully.');
+                    await openViewMore(currentDetailBranchId);
+                } catch (error) {
+                    console.error(error);
+                    showErrorMessage(error.message || 'Failed to save branch changes.');
+                } finally {
+                    saveButton.disabled = false;
+                    hideLoader();
                 }
-            });
+            }
         });
-    }
+    });
 
     function resetEditMode() {
-        viewContainer.querySelectorAll('.detail-text').forEach(el => el.classList.remove('hidden'));
-        viewContainer.querySelectorAll('.detail-input').forEach(el => el.classList.add('hidden'));
-        if (editBtn) editBtn.classList.remove('hidden');
-        if (saveBtn) saveBtn.classList.add('hidden');
-        if (cancelEditBtn) cancelEditBtn.classList.add('hidden');
+        clearEditValidation();
+
+        viewContainer
+            .querySelectorAll('.detail-text')
+            .forEach(element => element.classList.remove('hidden'));
+
+        viewContainer
+            .querySelectorAll('.detail-input')
+            .forEach(element => element.classList.add('hidden'));
+
+        editButton?.classList.remove('hidden');
+        saveButton?.classList.add('hidden');
+        cancelEditButton?.classList.add('hidden');
+
+        const logoInput = viewContainer.querySelector('#edit-branchLogo');
+        const photoInput = viewContainer.querySelector('#edit-schoolPhoto');
+        const documentInput = viewContainer.querySelector('#edit-govDocument');
+        if (logoInput) logoInput.value = '';
+        if (photoInput) photoInput.value = '';
+        if (documentInput) documentInput.value = '';
     }
 
-    // --- SPA FIX: Clone Print Button ---
-    let printBtn = viewContainer.querySelector('#sa-printBranchBtn');
-    if (printBtn) {
-        const newBtn = printBtn.cloneNode(true);
-        printBtn.parentNode.replaceChild(newBtn, printBtn);
-        printBtn = newBtn;
+    let printButton = viewContainer.querySelector('#sa-printBranchBtn');
+    if (printButton) {
+        const newButton = printButton.cloneNode(true);
+        printButton.parentNode.replaceChild(newButton, printButton);
+        printButton = newButton;
 
-        printBtn.addEventListener('click', () => {
-            const printContent = viewContainer.querySelector('#printable-area').cloneNode(true);
-            const originalChildren = Array.from(document.body.childNodes);
-
-            document.body.textContent = '';
-            const header = document.createElement('h2');
-            header.textContent = 'Montfort School Branch Report';
-            document.body.appendChild(header);
-            document.body.appendChild(printContent);
-
-            window.print();
-
-            document.body.textContent = '';
-            originalChildren.forEach(child => document.body.appendChild(child));
-        });
+        printButton.addEventListener('click', () => window.print());
     }
 
     void loadBranches();
@@ -696,184 +1035,636 @@ function initBranchesView() {
 // 3. ADD BRANCH PAGE LOGIC (DYNAMIC TABLE & JSON)
 // ---------------------------------------------------------
 function initAddBranchView() {
-
     const viewContainer = document.querySelector('#superadmin-add-branch-view');
     if (!viewContainer) return;
 
-    // --- SPA FIX 1: CLONE & RESET THE FORM ---
-    // Clones the form to destroy all old hidden 'submit' listeners from previous branches!
     const oldForm = viewContainer.querySelector('#add-branch-full-form');
-    let form = oldForm;
-    if (oldForm) {
-        form = oldForm.cloneNode(true);
-        oldForm.parentNode.replaceChild(form, oldForm);
-        form.reset(); // Safely clears out all text fields
-    }
+    if (!oldForm) return;
 
-    // --- FETCH LEVELS *AFTER* THE FORM IS CLONED! ---
+    const form = oldForm.cloneNode(true);
+    oldForm.parentNode.replaceChild(form, oldForm);
+    form.reset();
+
+    const getElement = selector => form.querySelector(selector);
+    const getValue = selector => getElement(selector)?.value?.trim() || '';
+
+    const validationSummary = getElement('#add-branch-validation-summary');
+    const validationList = getElement('#add-branch-validation-list');
+
+    const setClass = (element, className, enabled) => {
+        if (!element) return;
+        if (enabled) {
+            element.classList.add(className);
+        } else {
+            element.classList.remove(className);
+        }
+    };
+
+    const clearValidation = () => {
+        form.querySelectorAll('.branch-field-invalid').forEach(element => {
+            element.classList.remove('branch-field-invalid');
+            element.removeAttribute('aria-invalid');
+        });
+
+        setClass(validationSummary, 'hidden', true);
+        if (validationList) validationList.textContent = '';
+    };
+
+    const clearElementValidation = element => {
+        if (!element) return;
+        element.classList.remove('branch-field-invalid');
+        element.removeAttribute('aria-invalid');
+
+        const field = element.closest('.branch-form-field');
+        field?.classList.remove('branch-field-invalid');
+    };
+
+    const markInvalid = element => {
+        if (!element) return;
+        element.classList.add('branch-field-invalid');
+        element.setAttribute('aria-invalid', 'true');
+
+        const field = element.closest('.branch-form-field');
+        field?.classList.add('branch-field-invalid');
+    };
+
+    const addError = (errors, message, element = null) => {
+        errors.push({ message, element });
+        markInvalid(element);
+    };
+
+    const displayValidationErrors = errors => {
+        if (!errors.length) {
+            setClass(validationSummary, 'hidden', true);
+            return;
+        }
+
+        if (validationList) {
+            validationList.textContent = '';
+
+            errors.forEach(error => {
+                const item = document.createElement('li');
+                item.textContent = error.message;
+                validationList.appendChild(item);
+            });
+        }
+
+        setClass(validationSummary, 'hidden', false);
+
+        const firstElement = errors.find(error => error.element)?.element;
+        const scrollTarget = firstElement || validationSummary;
+
+        scrollTarget?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+        });
+
+        window.setTimeout(() => {
+            if (
+                firstElement &&
+                typeof firstElement.focus === 'function'
+            ) {
+                firstElement.focus({ preventScroll: true });
+            }
+        }, 350);
+    };
+
+    const isValidPhone = value =>
+        !value || /^[0-9+()\-\s]{7,30}$/.test(value);
+
+    const validateForm = () => {
+        clearValidation();
+
+        const errors = [];
+        const schoolName = getValue('#add-schoolName');
+        const schoolCode = getValue('#add-schoolCode');
+        const foundationDate = getValue('#add-foundationDate');
+        const shortLocation = getValue('#add-shortLocation');
+        const addressLine1 = getValue('#add-addressLine1');
+        const country = getValue('#add-country');
+        const primaryPhone = getValue('#add-primaryPhone');
+        const secondaryPhone = getValue('#add-secondaryPhone');
+        const whatsappPhone = getValue('#add-whatsappPhone') || 'NONE';
+        const branchEmail = getValue('#add-branchEmail');
+
+        if (!schoolName) {
+            addError(errors, 'School Name is required.', getElement('#add-schoolName'));
+        }
+
+        if (!schoolCode) {
+            addError(errors, 'School Code is required.', getElement('#add-schoolCode'));
+        } else if (!/^[A-Za-z0-9_-]{2,20}$/.test(schoolCode)) {
+            addError(
+                errors,
+                'School Code may contain only letters, numbers, hyphens and underscores.',
+                getElement('#add-schoolCode')
+            );
+        }
+
+        if (!foundationDate) {
+            addError(errors, 'Foundation Date is required.', getElement('#add-foundationDate'));
+        } else {
+            const selectedDate = new Date(`${foundationDate}T00:00:00`);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (selectedDate > today) {
+                addError(
+                    errors,
+                    'Foundation Date cannot be in the future.',
+                    getElement('#add-foundationDate')
+                );
+            }
+        }
+
+        if (!shortLocation) {
+            addError(errors, 'Short Location is required.', getElement('#add-shortLocation'));
+        }
+
+        if (!addressLine1) {
+            addError(
+                errors,
+                'Campus / Address Line 1 is required.',
+                getElement('#add-addressLine1')
+            );
+        }
+
+        if (!country) {
+            addError(errors, 'Country is required.', getElement('#add-country'));
+        }
+
+        if (!primaryPhone) {
+            addError(errors, 'Phone Number 1 is required.', getElement('#add-primaryPhone'));
+        } else if (!isValidPhone(primaryPhone)) {
+            addError(
+                errors,
+                'Phone Number 1 contains unsupported characters.',
+                getElement('#add-primaryPhone')
+            );
+        }
+
+        if (secondaryPhone && !isValidPhone(secondaryPhone)) {
+            addError(
+                errors,
+                'Phone Number 2 contains unsupported characters.',
+                getElement('#add-secondaryPhone')
+            );
+        }
+
+        if (
+            primaryPhone &&
+            secondaryPhone &&
+            primaryPhone.replace(/\D/g, '') === secondaryPhone.replace(/\D/g, '')
+        ) {
+            addError(
+                errors,
+                'Phone Number 2 must be different from Phone Number 1.',
+                getElement('#add-secondaryPhone')
+            );
+        }
+
+        if (whatsappPhone === 'PRIMARY' && !primaryPhone) {
+            addError(
+                errors,
+                'Enter Phone Number 1 because it is selected for WhatsApp.',
+                getElement('#add-primaryPhone')
+            );
+        }
+
+        if (whatsappPhone === 'SECONDARY' && !secondaryPhone) {
+            addError(
+                errors,
+                'Enter Phone Number 2 because it is selected for WhatsApp.',
+                getElement('#add-secondaryPhone')
+            );
+        }
+
+        if (
+            whatsappPhone === 'BOTH' &&
+            (!primaryPhone || !secondaryPhone)
+        ) {
+            addError(
+                errors,
+                'Enter both phone numbers when both are selected for WhatsApp.',
+                !primaryPhone
+                    ? getElement('#add-primaryPhone')
+                    : getElement('#add-secondaryPhone')
+            );
+        }
+
+        const emailInput = getElement('#add-branchEmail');
+        if (!branchEmail) {
+            addError(errors, 'Official Branch Email is required.', emailInput);
+        } else if (emailInput?.validity?.typeMismatch) {
+            addError(errors, 'Enter a valid official branch email address.', emailInput);
+        }
+
+        const selectedLevels = Array.from(
+            form.querySelectorAll('.level-cb:checked')
+        );
+
+        if (selectedLevels.length === 0) {
+            const levelContainer = getElement('#add-branchLevels');
+            addError(
+                errors,
+                'Select at least one education level.',
+                levelContainer
+            );
+        }
+
+        form.querySelectorAll('#incharge-tbody tr').forEach((row, index) => {
+            const nameInput = row.querySelector('.incharge-name');
+            const roleInput = row.querySelector('.incharge-role');
+            const phoneInput = row.querySelector('.incharge-phone');
+
+            const name = nameInput?.value?.trim() || '';
+            const role = roleInput?.value?.trim() || '';
+            const phone = phoneInput?.value?.trim() || '';
+            const hasAnyValue = Boolean(name || role || phone);
+
+            if (!hasAnyValue) return;
+
+            if (!name) {
+                addError(
+                    errors,
+                    `Incharge row ${index + 1}: Full Name is required.`,
+                    nameInput
+                );
+            }
+
+            if (!role) {
+                addError(
+                    errors,
+                    `Incharge row ${index + 1}: Role / Position is required.`,
+                    roleInput
+                );
+            }
+
+            if (!phone) {
+                addError(
+                    errors,
+                    `Incharge row ${index + 1}: Phone Number is required.`,
+                    phoneInput
+                );
+            } else if (!isValidPhone(phone)) {
+                addError(
+                    errors,
+                    `Incharge row ${index + 1}: Enter a valid phone number.`,
+                    phoneInput
+                );
+            }
+        });
+
+        const logoFile = getElement('#add-logo')?.files?.[0] || null;
+        const allowedImageTypes = ['image/jpeg', 'image/png'];
+        const maxLogoSize = 500 * 1024;
+        const maxImageSize = 100 * 1024;
+
+        if (logoFile) {
+            if (!allowedImageTypes.includes(logoFile.type)) {
+                addError(
+                    errors,
+                    'Branch Logo must be a JPG or PNG image.',
+                    getElement('#add-logo')
+                );
+            } else if (logoFile.size > maxLogoSize) {
+                addError(
+                    errors,
+                    'Branch Logo exceeds the 500 KB limit.',
+                    getElement('#add-logo')
+                );
+            }
+        }
+
+        const photoFile = getElement('#add-photo')?.files?.[0] || null;
+
+        if (photoFile) {
+            if (!allowedImageTypes.includes(photoFile.type)) {
+                addError(
+                    errors,
+                    'School Photo must be a JPG or PNG image.',
+                    getElement('#add-photo')
+                );
+            } else if (photoFile.size > maxImageSize) {
+                addError(
+                    errors,
+                    'School Photo exceeds the 100 KB limit.',
+                    getElement('#add-photo')
+                );
+            }
+        }
+
+        const documentFiles = Array.from(
+            getElement('#add-doc')?.files || []
+        );
+        const allowedDocumentTypes = [
+            'image/jpeg',
+            'image/png',
+            'application/pdf'
+        ];
+        const maxPdfSize = 2 * 1024 * 1024;
+
+        documentFiles.forEach(file => {
+            if (!allowedDocumentTypes.includes(file.type)) {
+                addError(
+                    errors,
+                    `Government document "${file.name}" must be JPG, PNG or PDF.`,
+                    getElement('#add-doc')
+                );
+                return;
+            }
+
+            if (file.type === 'application/pdf' && file.size > maxPdfSize) {
+                addError(
+                    errors,
+                    `PDF "${file.name}" exceeds the 2 MB limit.`,
+                    getElement('#add-doc')
+                );
+            }
+
+            if (
+                (file.type === 'image/jpeg' || file.type === 'image/png') &&
+                file.size > maxImageSize
+            ) {
+                addError(
+                    errors,
+                    `Image "${file.name}" exceeds the 100 KB limit.`,
+                    getElement('#add-doc')
+                );
+            }
+        });
+
+        displayValidationErrors(errors);
+
+        return {
+            valid: errors.length === 0,
+            selectedLevelIds: selectedLevels.map(checkbox => checkbox.value)
+        };
+    };
+
+    const createInchargeRow = () => {
+        const template = viewContainer.querySelector('#incharge-row-template');
+        const tbody = getElement('#incharge-tbody');
+        if (!template || !tbody) return;
+
+        const clone = template.content.cloneNode(true);
+        const row = clone.querySelector('tr');
+
+        clone.querySelector('.remove-incharge-btn')?.addEventListener('click', () => {
+            row?.remove();
+        });
+
+        tbody.appendChild(clone);
+    };
+
     void populateDynamicLevels('add-branchLevels');
 
-    // --- SPA FIX 2: CLEAR INCHARGE TABLE & FIX ADD BUTTON ---
-    const tbody = viewContainer.querySelector('#incharge-tbody');
-    if (tbody) tbody.innerHTML = ''; // Wipes out old rows from previous branches!
-
-    const addRowBtn = viewContainer.querySelector('#addInchargeRowBtn');
-    const template = viewContainer.querySelector('#incharge-row-template');
-
-    if (addRowBtn && template && tbody) {
-        // Clone button to prevent multiple 'click' listeners from stacking up!
-        const newAddRowBtn = addRowBtn.cloneNode(true);
-        addRowBtn.parentNode.replaceChild(newAddRowBtn, addRowBtn);
-
-        newAddRowBtn.addEventListener('click', () => {
-            const clone = template.content.cloneNode(true);
-            clone.querySelector('.remove-incharge-btn').addEventListener('click', function() {
-                this.closest('tr').remove();
-            });
-            tbody.appendChild(clone);
-        });
+    const tbody = getElement('#incharge-tbody');
+    if (tbody) {
+        tbody.textContent = '';
+        createInchargeRow();
     }
 
-    // --- SPA FIX 3: FIX FILE UPLOAD UI ---
-    viewContainer.querySelectorAll('.upload-title').forEach(span => {
-        span.textContent = "Click or drag file here"; // Reset text
+    const oldAddRowButton = getElement('#addInchargeRowBtn');
+    if (oldAddRowButton) {
+        const addRowButton = oldAddRowButton.cloneNode(true);
+        oldAddRowButton.parentNode.replaceChild(addRowButton, oldAddRowButton);
+        addRowButton.addEventListener('click', createInchargeRow);
+    }
+
+    form.querySelectorAll('.upload-title').forEach(title => {
+        title.textContent = 'Click or drag file here';
     });
 
-    viewContainer.querySelectorAll('.file-hidden-input').forEach(input => {
-        // Because the form was cloned above, old listeners are gone. We re-attach them cleanly!
-        input.addEventListener('change', function(e) {
-            let fileName = "Click or drag file here";
-            if (e.target.files && e.target.files.length > 1) {
-                fileName = `${e.target.files.length} files selected`;
-            } else if (e.target.files && e.target.files.length === 1) {
-                fileName = e.target.files[0].name;
+    form.querySelectorAll('.file-hidden-input').forEach(input => {
+        input.addEventListener('change', event => {
+            const files = Array.from(event.target.files || []);
+            let fileName = 'Click or drag file here';
+
+            if (files.length > 1) {
+                fileName = `${files.length} files selected`;
+            } else if (files.length === 1) {
+                fileName = files[0].name;
             }
-            const titleSpan = this.parentElement.querySelector('.upload-title');
-            if (titleSpan) titleSpan.textContent = fileName;
+
+            const title = input.parentElement?.querySelector('.upload-title');
+            if (title) title.textContent = fileName;
+
+            clearElementValidation(input);
         });
     });
 
-    // --- SPA FIX 4: BACK BUTTON FIX ---
-    const backBtn = viewContainer.querySelector('#backToBranchesBtn');
-    if (backBtn) {
-        const newBackBtn = backBtn.cloneNode(true);
-        backBtn.parentNode.replaceChild(newBackBtn, backBtn);
+    form.addEventListener('input', event => {
+        clearElementValidation(event.target);
+    });
 
-        newBackBtn.addEventListener('click', () => {
-            const mainContent = document.getElementById('main-content-area');
-            window.history.pushState({ view: 'branches', title: 'Manage Branches' }, "", "/superadmin/branches");
-            const pageTitleElement = document.getElementById('pageTitle');
-            if (pageTitleElement) pageTitleElement.textContent = "Manage Branches";
-            void loadView('superadmin', 'branches', mainContent);
-        });
+    form.addEventListener('change', event => {
+        clearElementValidation(event.target);
+
+        if (event.target.matches('.level-cb')) {
+            clearElementValidation(getElement('#add-branchLevels'));
+        }
+    });
+
+    const navigateToBranches = () => {
+        const mainContent = document.getElementById('main-content-area');
+
+        window.history.pushState(
+            {
+                view: 'branches',
+                title: 'Manage Branches'
+            },
+            '',
+            '/superadmin/branches'
+        );
+
+        const pageTitleElement = document.getElementById('pageTitle');
+        if (pageTitleElement) {
+            pageTitleElement.textContent = 'Manage Branches';
+        }
+
+        void loadView('superadmin', 'branches', mainContent);
+    };
+
+    const oldBackButton = viewContainer.querySelector('#backToBranchesBtn');
+    if (oldBackButton) {
+        const backButton = oldBackButton.cloneNode(true);
+        oldBackButton.parentNode.replaceChild(backButton, oldBackButton);
+        backButton.addEventListener('click', navigateToBranches);
     }
 
-    // --- FINALLY: BIND THE CLEAN SUBMIT LISTENER ---
-    if (form) {
-        form.addEventListener('submit', async function(e) {
-            e.preventDefault();
+    const cancelButton = getElement('#cancelAddBranchBtn');
+    cancelButton?.addEventListener('click', navigateToBranches);
 
-            // Grab the submit button and instantly disable it to prevent double clicks
-            const submitBtn = form.querySelector('button[type="submit"]');
-            let originalBtnText = "";
-            if (submitBtn) {
-                originalBtnText = submitBtn.innerHTML;
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+    form.addEventListener('submit', async event => {
+        event.preventDefault();
+
+        const validation = validateForm();
+        if (!validation.valid) return;
+
+        const submitButton = form.querySelector('button[type="submit"]');
+        const originalButtonHtml = submitButton?.innerHTML || '';
+
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML =
+                '<i class="bi bi-hourglass-split" aria-hidden="true"></i> Saving...';
+        }
+
+        const branchName = getValue('#add-schoolName');
+        const schoolCode = getValue('#add-schoolCode').toUpperCase();
+        const foundationDate = getValue('#add-foundationDate');
+        const primaryPhone = getValue('#add-primaryPhone');
+        const secondaryPhone = getValue('#add-secondaryPhone');
+        const whatsappPhone = getValue('#add-whatsappPhone') || 'NONE';
+        const branchEmail = getValue('#add-branchEmail').toLowerCase();
+
+        const whatsappLabels = {
+            NONE: 'None',
+            PRIMARY: 'Phone Number 1',
+            SECONDARY: 'Phone Number 2',
+            BOTH: 'Both phone numbers'
+        };
+
+        const contactDetails = [
+            primaryPhone ? `Primary: ${primaryPhone}` : null,
+            secondaryPhone ? `Secondary: ${secondaryPhone}` : null,
+            `WhatsApp: ${whatsappLabels[whatsappPhone] || 'None'}`,
+            branchEmail ? `Email: ${branchEmail}` : null
+        ].filter(Boolean).join(' | ');
+
+        const incharges = extractInchargeDetails(
+            form,
+            'incharge-tbody',
+            'incharge-name',
+            'incharge-role',
+            'incharge-phone'
+        );
+
+        const formData = new FormData();
+        formData.append('branchName', branchName);
+        formData.append('schoolCode', schoolCode);
+        formData.append('foundationDate', foundationDate);
+        formData.append('branchLocation', getValue('#add-shortLocation'));
+
+        formData.append('addressLine1', getValue('#add-addressLine1'));
+        formData.append('addressLine2', getValue('#add-addressLine2'));
+        formData.append('poBox', getValue('#add-poBox'));
+        formData.append('locality', getValue('#add-locality'));
+        formData.append('city', getValue('#add-city'));
+        formData.append('district', getValue('#add-district'));
+        formData.append('region', getValue('#add-region'));
+        formData.append('country', getValue('#add-country'));
+        formData.append('postalCode', getValue('#add-postalCode'));
+
+        formData.append('primaryPhone', primaryPhone);
+        formData.append('secondaryPhone', secondaryPhone);
+        formData.append('whatsappPhone', whatsappPhone);
+        formData.append('branchEmail', branchEmail);
+
+        formData.append('emailFromName', branchName);
+        formData.append('emailReplyTo', branchEmail);
+        formData.append('emailEnabled', 'true');
+
+        formData.append('contactDetails', contactDetails);
+        formData.append('inchargeDetails', JSON.stringify(incharges));
+
+        validation.selectedLevelIds.forEach(levelId => {
+            formData.append('levelIds', String(levelId));
+        });
+
+        const logoFile = getElement('#add-logo')?.files?.[0] || null;
+        if (logoFile) {
+            formData.append('logo', logoFile);
+        }
+
+        const photoFile = getElement('#add-photo')?.files?.[0] || null;
+        if (photoFile) {
+            formData.append('photo', photoFile);
+        }
+
+        Array.from(getElement('#add-doc')?.files || []).forEach(file => {
+            if (file instanceof File) {
+                formData.append('documents', file);
             }
+        });
 
-            const incharges = extractInchargeDetails(viewContainer, 'incharge-tbody', 'incharge-name', 'incharge-role', 'incharge-phone');
-            const inchargeJson = JSON.stringify(incharges);
+        showLoader();
 
-            const formData = new FormData();
-            formData.append("branchName", viewContainer.querySelector('#add-schoolName').value);
-            formData.append("schoolCode", viewContainer.querySelector('#add-schoolCode').value);
-            formData.append("foundationDate", viewContainer.querySelector('#add-foundationDate').value);
-            formData.append("branchLocation", viewContainer.querySelector('#add-location').value);
-            formData.append("contactDetails", viewContainer.querySelector('#add-contact').value);
+        try {
+            await apiMultipart(
+                '/superadmin/branches',
+                'POST',
+                formData
+            );
 
-            // Fetch checked levels
-            const selectedLevels = Array.from(viewContainer.querySelectorAll('.level-cb:checked')).map(cb => cb.value);
-            selectedLevels.forEach(levelId => {
-                formData.append("levelIds", levelId);
-            });
+            const successTemplate =
+                document.getElementById(
+                    'branch-success-content-template'
+                );
 
-            formData.append("inchargeDetails", inchargeJson);
+            if (successTemplate) {
+                const successClone =
+                    successTemplate.content.cloneNode(true);
 
-            const photoFile = viewContainer.querySelector('#add-photo').files[0];
-            if (photoFile) formData.append("photo", photoFile);
+                const branchNameElement =
+                    successClone.querySelector(
+                        '.success-branch-name'
+                    );
 
-            const docFiles = viewContainer.querySelector('#add-doc').files;
-            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-            const MAX_PDF_SIZE = 2 * 1024 * 1024;
-            const MAX_IMG_SIZE = 100 * 1024;
+                const credentialsBox =
+                    successClone.querySelector(
+                        '.credentials-box'
+                    );
 
-            for (let i = 0; i < docFiles.length; i++) {
-                const file = docFiles[i];
-                if (!allowedTypes.includes(file.type)) {
-                    showErrorMessage(`Upload blocked: "${file.name}" is not a JPG, PNG, or PDF.`);
-                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; }
-                    return;
+                if (branchNameElement) {
+                    branchNameElement.textContent =
+                        branchName;
                 }
-                if (file.type === 'application/pdf' && file.size > MAX_PDF_SIZE) {
-                    showErrorMessage(`Upload blocked: PDF "${file.name}" exceeds the 2MB limit.`);
-                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; }
-                    return;
+
+                if (credentialsBox) {
+                    credentialsBox.innerHTML = `
+            <p>
+                A secure Branch Administrator account
+                will be created and the temporary
+                credentials will be sent to the
+                registered branch email.
+            </p>
+        `;
                 }
-                if ((file.type === 'image/jpeg' || file.type === 'image/png') && file.size > MAX_IMG_SIZE) {
-                    showErrorMessage(`Upload blocked: Image "${file.name}" exceeds the 100KB limit.`);
-                    if (submitBtn) { submitBtn.disabled = false; submitBtn.innerHTML = originalBtnText; }
-                    return;
-                }
-                formData.append("documents", file);
-            }
-
-            showLoader();
-            try {
-                await apiMultipart('/superadmin/branches', 'POST', formData);
-
-                const branchName = viewContainer.querySelector('#add-schoolName').value;
-                const schoolCode = viewContainer.querySelector('#add-schoolCode').value;
-                const foundationDate = viewContainer.querySelector('#add-foundationDate').value;
-
-                const cleanName = branchName.replace(/\s+/g, '');
-                const namePrefix = cleanName.length >= 6 ? cleanName.substring(0, 6) : cleanName;
-                const year = foundationDate && foundationDate.length >= 4 ? foundationDate.substring(0, 4) : "";
-
-                const generatedUsername = schoolCode.toLowerCase() + "@montfort.ug";
-                const generatedPassword = namePrefix.toUpperCase() + "@" + schoolCode + year;
-
-                const successTemplate = document.getElementById('branch-success-content-template');
-                const successClone = successTemplate.content.cloneNode(true);
-
-                successClone.querySelector('.success-branch-name').textContent = branchName;
-                successClone.querySelector('.cred-username').textContent = generatedUsername;
-                successClone.querySelector('.cred-password').textContent = generatedPassword;
 
                 showPremiumModal({
                     title: 'Branch Created!',
                     type: 'success',
                     contentNode: successClone,
                     confirmText: 'Go to Manage Branches',
-                    onConfirm: (modal) => {
+                    onConfirm: modal => {
                         modal.close();
-                        const finalBackBtn = viewContainer.querySelector('#backToBranchesBtn');
-                        if (finalBackBtn) finalBackBtn.click();
+                        navigateToBranches();
                     }
                 });
+            } else {
+                showSuccessMessage(
+                    'Branch created successfully.'
+                );
 
-            } catch (error) {
-                console.error("Save error:", error);
-                showErrorMessage("Upload failed. Ensure files are within limits and valid types.");
-            } finally {
-                hideLoader();
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalBtnText;
-                }
+                navigateToBranches();
             }
-        });
-    }
+        } catch (error) {
+            console.error('Branch save error:', error);
+            showErrorMessage(
+                error?.message ||
+                'Failed to create the branch. Confirm that the backend supports the new address and communication fields.'
+            );
+        } finally {
+            hideLoader();
+
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalButtonHtml;
+            }
+        }
+    });
 }
 // ---------------------------------------------------------
 // 4. GLOBAL SYSTEM STATS LOGIC (UPGRADED)

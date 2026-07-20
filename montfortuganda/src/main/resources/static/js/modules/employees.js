@@ -1,5 +1,280 @@
 /* global apiGet, apiPost, apiPut, apiDelete, showLoader, hideLoader, showPremiumModal, showSuccessMessage, showErrorMessage, CrudTable, loadView, createErpCalendar */
 
+/**
+ * @typedef {Object} EmployeeDepartmentData
+ * @property {(number|string|null)} [departmentId]
+ * @property {(number|string|null)} [id]
+ * @property {(string|null)} [departmentName]
+ * @property {(string|null)} [name]
+ */
+
+/**
+ * @typedef {Object} EmployeeDesignationData
+ * @property {(number|string|null)} [designationId]
+ * @property {(number|string|null)} [id]
+ * @property {(string|null)} [designationName]
+ * @property {(string|null)} [name]
+ */
+
+/**
+ * @typedef {Object} EmployeeUserData
+ * @property {(string|null)} [username]
+ * @property {(string|null)} [status]
+ */
+
+/**
+ * @typedef {Object} EmployeeData
+ * @property {(number|string|null)} [employeeId]
+ * @property {(number|string|null)} [id]
+ * @property {(string|null)} [employeeNo]
+ * @property {(string|null)} [code]
+ * @property {(string|null)} [title]
+ * @property {(string|null)} [firstName]
+ * @property {(string|null)} [middleName]
+ * @property {(string|null)} [lastName]
+ * @property {(string|null)} [fullName]
+ * @property {(string|null)} [employeeName]
+ * @property {(string|null)} [gender]
+ * @property {(string|null)} [dateOfBirth]
+ * @property {(string|null)} [maritalStatus]
+ * @property {(string|null)} [bloodGroup]
+ * @property {(string|null)} [religion]
+ * @property {(string|null)} [subReligion]
+ * @property {(number|string|null)} [departmentId]
+ * @property {(number|string|null)} [designationId]
+ * @property {(string|null)} [departmentName]
+ * @property {(string|null)} [designationName]
+ * @property {(EmployeeDepartmentData|null)} [department]
+ * @property {(EmployeeDesignationData|null)} [designation]
+ * @property {(string|null)} [employeeCategory]
+ * @property {(string|null)} [category]
+ * @property {(string|null)} [employeeType]
+ * @property {(string|null)} [employmentMode]
+ * @property {(string|null)} [employmentStatus]
+ * @property {(string|null)} [status]
+ * @property {(string|null)} [joiningDate]
+ * @property {(string|null)} [probationEndDate]
+ * @property {(string|null)} [confirmationDate]
+ * @property {(string|null)} [retirementDate]
+ * @property {(string|null)} [resignationDate]
+ * @property {(string|null)} [terminationDate]
+ * @property {(string|null)} [employmentEndDate]
+ * @property {(string|null)} [exitReason]
+ * @property {(string|null)} [reportingManagerName]
+ * @property {(EmployeeData|null)} [reportingManager]
+ * @property {(string|null)} [nationality]
+ * @property {(string|null)} [nationalId]
+ * @property {(string|null)} [tinNumber]
+ * @property {(string|null)} [passportNo]
+ * @property {(string|null)} [passportExpiryDate]
+ * @property {(string|null)} [workPermitNumber]
+ * @property {(string|null)} [workPermitExpiryDate]
+ * @property {(string|null)} [officialEmail]
+ * @property {(string|null)} [email]
+ * @property {(string|null)} [personalEmail]
+ * @property {(string|null)} [mobileNo]
+ * @property {(string|null)} [phone]
+ * @property {(string|null)} [alternateMobile]
+ * @property {(string|null)} [addressCountry]
+ * @property {(string|null)} [addressState]
+ * @property {(string|null)} [addressDistrict]
+ * @property {(string|null)} [addressCounty]
+ * @property {(string|null)} [addressSubCounty]
+ * @property {(string|null)} [addressParish]
+ * @property {(string|null)} [addressVillage]
+ * @property {(string|null)} [addressStreet]
+ * @property {(string|null)} [postalCode]
+ * @property {(string|null)} [skills]
+ * @property {(string|null)} [languagesSpoken]
+ * @property {(string|null)} [employeeRemarks]
+ * @property {(boolean|null)} [loginEnabled]
+ * @property {(string|null)} [loginId]
+ * @property {(string|null)} [username]
+ * @property {(string|null)} [loginRole]
+ * @property {(string|null)} [roleName]
+ * @property {(string|null)} [loginStatus]
+ * @property {(EmployeeUserData|null)} [user]
+ * @property {(string|null)} [profilePhotoUrl]
+ * @property {(string|null)} [profilePhoto]
+ * @property {(string|null)} [signatureFileUrl]
+ * @property {(string|null)} [signatureFile]
+ * @property {Array<Object>} [contacts]
+ * @property {Array<Object>} [qualifications]
+ * @property {Array<Object>} [experiences]
+ * @property {Array<Object>} [documents]
+ */
+
+/**
+ * @typedef {Object} EmployeeRegistrationResult
+ * @property {(string|null)} [operationId]
+ * @property {(string|null)} [status]
+ * @property {(string|null)} [stage]
+ * @property {(string|null)} [stageTitle]
+ * @property {(number|string|null)} [percentage]
+ * @property {(string|null)} [message]
+ * @property {(number|string|null)} [employeeId]
+ * @property {(string|null)} [employeeNo]
+ * @property {(string|null)} [fullName]
+ * @property {(string|null)} [departmentName]
+ * @property {(string|null)} [designationName]
+ * @property {(string|null)} [reportingManagerName]
+ * @property {(string|null)} [loginAccountStatus]
+ * @property {(boolean|null)} [loginCreated]
+ * @property {(number|string|null)} [completedItems]
+ * @property {(number|string|null)} [totalItems]
+ * @property {(string|null)} [itemMessage]
+ * @property {Array<*>} [errors]
+ * @property {*} [error]
+ */
+
+/**
+ * @typedef {Object} FlatpickrAdapter
+ * @property {function((string|Date|null), boolean=): void} setDate
+ */
+
+/**
+ * @typedef {HTMLInputElement & {_flatpickr?: FlatpickrAdapter}} CalendarInput
+ */
+
+/**
+ * @param {Element|null|undefined} element
+ * @returns {(FlatpickrAdapter|null)}
+ */
+function getCalendarAdapter(element) {
+    const input = /** @type {(CalendarInput|null)} */ (element);
+    return input?._flatpickr || null;
+}
+
+
+/**
+ * Adds one or more CSS classes without relying on DOMTokenList.
+ * This keeps JetBrains inspections from incorrectly flagging
+ * classList.add(), classList.remove() and classList.toggle().
+ *
+ * @param {Element|null|undefined} element
+ * @param {...string} classNames
+ */
+function addCssClasses(element, ...classNames) {
+    if (!element) return;
+
+    const currentClasses = String(
+        element.getAttribute('class') || ''
+    )
+        .split(/\s+/)
+        .filter(Boolean);
+
+    classNames
+        .flatMap(name => String(name || '').split(/\s+/))
+        .filter(Boolean)
+        .forEach(name => {
+            if (currentClasses.indexOf(name) === -1) {
+                currentClasses.push(name);
+            }
+        });
+
+    element.setAttribute(
+        'class',
+        currentClasses.join(' ')
+    );
+}
+
+/**
+ * Removes one or more CSS classes without relying on DOMTokenList.
+ *
+ * @param {Element|null|undefined} element
+ * @param {...string} classNames
+ */
+function removeCssClasses(element, ...classNames) {
+    if (!element) return;
+
+    const namesToRemove = classNames
+        .flatMap(name => String(name || '').split(/\s+/))
+        .filter(Boolean);
+
+    const remainingClasses = String(
+        element.getAttribute('class') || ''
+    )
+        .split(/\s+/)
+        .filter(Boolean)
+        .filter(
+            name =>
+                namesToRemove.indexOf(name) === -1
+        );
+
+    element.setAttribute(
+        'class',
+        remainingClasses.join(' ')
+    );
+}
+
+/**
+ * Adds or removes one CSS class based on the requested state.
+ *
+ * @param {Element|null|undefined} element
+ * @param {string} className
+ * @param {boolean=} force
+ * @returns {boolean}
+ */
+function toggleCssClass(
+    element,
+    className,
+    force
+) {
+    if (!element) return false;
+
+    const normalizedClassName =
+        String(className || '').trim();
+
+    if (!normalizedClassName) {
+        return false;
+    }
+
+    const currentClasses = String(
+        element.getAttribute('class') || ''
+    )
+        .split(/\s+/)
+        .filter(Boolean);
+
+    const currentlyPresent =
+        currentClasses.indexOf(
+            normalizedClassName
+        ) !== -1;
+
+    const shouldBePresent =
+        typeof force === 'boolean'
+            ? force
+            : !currentlyPresent;
+
+    if (shouldBePresent) {
+        addCssClasses(
+            element,
+            normalizedClassName
+        );
+    } else {
+        removeCssClasses(
+            element,
+            normalizedClassName
+        );
+    }
+
+    return shouldBePresent;
+}
+
+/**
+ * Safely removes an element without using Element.remove().
+ *
+ * @param {Node|null|undefined} element
+ */
+function removeDomElement(element) {
+    if (
+        element &&
+        element.parentNode
+    ) {
+        element.parentNode.removeChild(element);
+    }
+}
+
+
 document.addEventListener('viewLoaded', function(e) {
     if (e.detail.role === 'admin') {
         if (e.detail.view === 'employees') {
@@ -23,7 +298,38 @@ function getRequiredBranchId() {
 
     return branchId;
 }
+function resolveEmployeeCategory(
+    viewContainer,
+    prefix = 'add'
+) {
+    const category =
+        viewContainer.querySelector(
+            `#${prefix}-empCategory`
+        )?.value?.trim() || null;
 
+    if (!category) {
+        return null;
+    }
+
+    if (category !== 'MANAGEMENT') {
+        return category;
+    }
+
+    const managementType =
+        viewContainer.querySelector(
+            `#${prefix}-empManagementType`
+        )?.value?.trim() || null;
+
+    if (managementType === 'TEACHING') {
+        return 'MANAGEMENT_TEACHING';
+    }
+
+    if (managementType === 'NON_TEACHING') {
+        return 'MANAGEMENT_NON_TEACHING';
+    }
+
+    return null;
+}
 let currentDetailEmpId = null;
 
 function getRowId(row) {
@@ -97,8 +403,8 @@ function collectContacts(viewContainer) {
         ...contact,
         employeeContactType: 'EMERGENCY',
         employeeContactIsPrimary: index === 0,
-        employeeContactIsEmergency: index === 0,
-        active: true
+        employeeContactIsEmergency: true,
+        employeeContactActive: true
     }));
 }
 
@@ -165,14 +471,7 @@ async function collectQualifications(viewContainer) {
             continue;
         }
 
-        const qualificationNameRequired =
-            [
-                'CERTIFICATE',
-                'DIPLOMA',
-                'GRADUATION',
-                'POST_GRADUATION',
-                'DR_PHD'
-            ].includes(employeeQualificationLevel);
+        const qualificationNameRequired = true;
 
         const specializationRequired =
             employeeQualificationLevel ===
@@ -227,11 +526,15 @@ async function collectQualifications(viewContainer) {
             employeeQualificationSpecialization,
             employeeQualificationGrade,
             employeeQualificationCompletionYear,
-            active: true,
+            employeeQualificationActive: true,
             fileData:
                 await EmpCollections.fileToBase64(file),
             fileName:
-                file?.name || null
+                file?.name || null,
+            contentType:
+                file?.type || null,
+            fileSize:
+                file?.size || null
         });
     }
 
@@ -307,13 +610,33 @@ async function collectExperiences(viewContainer) {
 
         experiences.push({
             employeeExperienceId,
-            companyName,
+
+            employeeExperienceType:
             employeeExperienceEmploymentType,
+
+            employeeExperienceCompanyName:
+            companyName,
+
+            employeeExperienceEmploymentType,
+
+            employeeExperienceDesignation:
             jobRole,
+
+            employeeExperienceStartDate:
             startDate,
+
+            employeeExperienceEndDate:
             endDate,
+
+            employeeExperienceCurrentJob:
+                !endDate,
+
+            employeeExperienceActive:
+                true,
+
             fileData:
                 await EmpCollections.fileToBase64(file),
+
             fileName:
                 file?.name || null
         });
@@ -332,33 +655,33 @@ async function collectDocuments(viewContainer) {
     const documents = [];
 
     for (const row of rows) {
-        const employeeDocumentId = getRowId(row);
-        const documentType =
+        const employeeDocumentId =
+            getRowId(row);
+
+        const employeeDocumentType =
             row.querySelector('.d-type')
                 ?.value
                 ?.trim() || null;
-        const documentName =
+
+        const employeeDocumentName =
             row.querySelector('.d-name')
                 ?.value
                 ?.trim() || null;
-        const documentNumber =
-            row.querySelector('.d-num')
-                ?.value
-                ?.trim() || null;
-        const remarks =
+
+        const employeeDocumentRemarks =
             row.querySelector('.d-remarks')
                 ?.value
                 ?.trim() || null;
+
         const file =
             row.querySelector('.d-file')
                 ?.files?.[0] || null;
 
         const hasAnyValue = Boolean(
             employeeDocumentId ||
-            documentType ||
-            documentName ||
-            documentNumber ||
-            remarks ||
+            employeeDocumentType ||
+            employeeDocumentName ||
+            employeeDocumentRemarks ||
             file
         );
 
@@ -366,7 +689,10 @@ async function collectDocuments(viewContainer) {
             continue;
         }
 
-        if (!documentType || !documentName) {
+        if (
+            !employeeDocumentType ||
+            !employeeDocumentName
+        ) {
             throw new Error(
                 'Each document requires document type and document name.'
             );
@@ -380,14 +706,24 @@ async function collectDocuments(viewContainer) {
 
         documents.push({
             employeeDocumentId,
-            documentType,
-            documentName,
-            documentNumber,
-            remarks,
+            employeeDocumentType,
+            employeeDocumentName,
+            employeeDocumentRemarks,
+            employeeDocumentActive: true,
+
             fileData:
-                await EmpCollections.fileToBase64(file),
+                await EmpCollections.fileToBase64(
+                    file
+                ),
+
             fileName:
-                file?.name || null
+                file?.name || null,
+
+            contentType:
+                file?.type || null,
+
+            fileSize:
+                file?.size || null
         });
     }
 
@@ -554,7 +890,7 @@ const EmpCollections = {
         {
             placeholder: 'Document Type',
             className: 'd-type',
-            dataKey: 'documentType',
+            dataKey: 'employeeDocumentType',
             type: 'select',
             options: [
                 { value: '', text: '-- Select Document Type --' },
@@ -581,28 +917,29 @@ const EmpCollections = {
                 { value: 'RESUME', text: 'Resume' },
                 { value: 'PASSPORT_PHOTO', text: 'Passport Photo' },
                 { value: 'SIGNATURE', text: 'Signature' },
-                { value: 'CODE_OF_CONDUCT_AGREEMENT', text: 'Code of Conduct Agreement' },
-                { value: 'CONFIDENTIALITY_AGREEMENT', text: 'Confidentiality Agreement' },
+                {
+                    value: 'CODE_OF_CONDUCT_AGREEMENT',
+                    text: 'Code of Conduct Agreement'
+                },
+                {
+                    value: 'CONFIDENTIALITY_AGREEMENT',
+                    text: 'Confidentiality Agreement'
+                },
                 { value: 'OTHER', text: 'Other' }
             ]
         },
         {
             placeholder: 'Document Name',
             className: 'd-name',
-            dataKey: 'documentName'
-        },
-        {
-            placeholder: 'Number',
-            className: 'd-num',
-            dataKey: 'documentNumber'
+            dataKey: 'employeeDocumentName'
         },
         {
             placeholder: 'Remarks',
             className: 'd-remarks',
-            dataKey: 'remarks'
+            dataKey: 'employeeDocumentRemarks'
         },
         {
-            placeholder: 'Upload Doc',
+            placeholder: 'Upload Document',
             className: 'd-file',
             type: 'file',
             dataKey: 'fileData'
@@ -725,8 +1062,8 @@ const EmpCollections = {
                     span.textContent =
                         String(value).split('T')[0];
                 } else {
-                    input.value = value;
-                    span.textContent = value;
+                    input.value = String(value);
+                    span.textContent = String(value);
                 }
             } else {
                 span.textContent = '-';
@@ -758,7 +1095,7 @@ const EmpCollections = {
                 conditionalFields['other-level'];
 
             const specializationWrapper =
-                conditionalFields.specialization;
+                conditionalFields['specialization'];
 
             const showOther =
                 selectedLevel === 'OTHER';
@@ -769,7 +1106,7 @@ const EmpCollections = {
                 selectedLevel !== 'SECONDARY';
 
             if (otherWrapper) {
-                otherWrapper.classList.toggle(
+                toggleCssClass(otherWrapper,
                     'hidden',
                     !showOther
                 );
@@ -785,7 +1122,7 @@ const EmpCollections = {
             }
 
             if (specializationWrapper) {
-                specializationWrapper.classList.toggle(
+                toggleCssClass(specializationWrapper,
                     'hidden',
                     !showSpecialization
                 );
@@ -825,7 +1162,7 @@ const EmpCollections = {
 
         removeButton.addEventListener(
             'click',
-            () => row.remove()
+            () => removeDomElement(row)
         );
 
         row.appendChild(removeButton);
@@ -858,12 +1195,237 @@ const EmpCollections = {
 };
 
 function initEmployeesView() {
-    const viewContainer = document.querySelector('#ba-employees-view');
+    const viewContainer =
+        /** @type {(HTMLElement|null)} */ (
+        document.querySelector('#ba-employees-view')
+    );
+
     if (!viewContainer) return;
+
+    const tableView =
+        viewContainer.querySelector('#emp-tableView');
+
+    const detailView =
+        viewContainer.querySelector('#emp-detailView');
+
+    const addEmpBtn =
+        viewContainer.querySelector('#btn-add-employee');
+
+    const editBtn =
+        viewContainer.querySelector('#emp-editBtn');
+
+    const saveBtn =
+        viewContainer.querySelector('#emp-saveBtn');
+
+    const cancelEditBtn =
+        viewContainer.querySelector('#emp-cancelEditBtn');
+
+    const backBtn =
+        viewContainer.querySelector('#emp-backToTableBtn');
+
+    const editCategory =
+        viewContainer.querySelector('#edit-empCategory');
+
+    const editManagementType =
+        viewContainer.querySelector('#edit-empManagementType');
+
+    const editManagementTypeGroup =
+        viewContainer.querySelector(
+            '#edit-empManagementTypeGroup'
+        );
+
+    const state = {
+        page: 0,
+        size: 10,
+        sort: 'employeeId,desc'
+    };
+
+    let table = null;
+    /** @type {(EmployeeData|null)} */
+    let currentEmployee = null;
+
+    /**
+     * @param {Object<string, *>} object
+     * @param {...string} keys
+     * @returns {*}
+     */
+    const valueOf = (object, ...keys) => {
+        for (const key of keys) {
+            const value = object?.[key];
+
+            if (value !== undefined && value !== null) {
+                return value;
+            }
+        }
+
+        return null;
+    };
+
+    const formatEnum = value => {
+        if (!value) return '-';
+
+        return String(value)
+            .replace(/_/g, ' ')
+            .toLowerCase()
+            .replace(/\b\w/g, letter => letter.toUpperCase());
+    };
+
+    const formatBoolean = value =>
+        value === true ? 'Yes' : value === false ? 'No' : '-';
+
+    const formatDate = value => {
+        if (!value) return '-';
+        return String(value).split('T')[0];
+    };
+
+    const normalizeImageSource = value => {
+        if (!value) return null;
+
+        const source = String(value).trim();
+
+        if (!source) return null;
+
+        if (
+            source.startsWith('data:') ||
+            source.startsWith('blob:') ||
+            source.startsWith('https://') ||
+            source.startsWith('/')
+        ) {
+            return source;
+        }
+
+        return `/${source.replace(/^\/+/, '')}`;
+    };
+
+    const getPageData = response => {
+        const data = response?.data ?? response ?? {};
+
+        if (Array.isArray(data)) {
+            return {
+                content: data,
+                pageNumber: 0,
+                totalPages: data.length > 0 ? 1 : 0,
+                totalElements: data.length
+            };
+        }
+
+        return {
+            content: Array.isArray(data.content)
+                ? data.content
+                : [],
+            pageNumber:
+                data.pageNumber ?? data.number ?? 0,
+            totalPages:
+                data.totalPages ?? 0,
+            totalElements:
+                data.totalElements ?? 0
+        };
+    };
+
+    const getCollection = (employee, key) => {
+        const value = employee?.[key];
+        return Array.isArray(value) ? value : [];
+    };
+
+    const setText = (selector, value, formatter = null) => {
+        const element =
+            viewContainer.querySelector(selector);
+
+        if (!element) return;
+
+        const formatted = formatter
+            ? formatter(value)
+            : value;
+
+        element.textContent =
+            formatted !== undefined &&
+            formatted !== null &&
+            String(formatted).trim() !== ''
+                ? String(formatted)
+                : '-';
+    };
+
+    const setInput = (selector, value) => {
+        const element =
+            viewContainer.querySelector(selector);
+
+        if (!element) return;
+
+        const normalized =
+            element.type === 'date' && value
+                ? String(value).split('T')[0]
+                : value ?? '';
+
+        const calendar =
+            getCalendarAdapter(element);
+
+        if (calendar) {
+            calendar.setDate(
+                normalized === ''
+                    ? null
+                    : String(normalized),
+                false
+            );
+        } else if (
+            element instanceof HTMLInputElement ||
+            element instanceof HTMLSelectElement ||
+            element instanceof HTMLTextAreaElement
+        ) {
+            element.value = String(normalized);
+        }
+    };
+
+    const bindField = (
+        suffix,
+        value,
+        formatter = null
+    ) => {
+        setText(
+            `#view-${suffix}`,
+            value,
+            formatter
+        );
+
+        setInput(
+            `#edit-${suffix}`,
+            value
+        );
+    };
+
+    const synchronizeEditManagementCategory = () => {
+        const isManagement =
+            editCategory?.value === 'MANAGEMENT';
+
+        toggleCssClass(editManagementTypeGroup,
+            'hidden',
+            !isManagement
+        );
+
+        if (editManagementType) {
+            editManagementType.required = isManagement;
+            editManagementType.setAttribute(
+                'aria-required',
+                String(isManagement)
+            );
+
+            if (!isManagement) {
+                editManagementType.value = '';
+            }
+        }
+    };
+
+    editCategory?.addEventListener(
+        'change',
+        synchronizeEditManagementCategory
+    );
 
     if (typeof createErpCalendar === 'function') {
         const today = new Date();
-        const maxDobDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+        const maxDobDate = new Date(
+            today.getFullYear() - 18,
+            today.getMonth(),
+            today.getDate()
+        );
 
         createErpCalendar('#edit-empDob', {
             maxDate: maxDobDate
@@ -871,245 +1433,1155 @@ function initEmployeesView() {
         createErpCalendar('#edit-empJoiningDate');
         createErpCalendar('#edit-empProbationEndDate');
         createErpCalendar('#edit-empConfirmationDate');
+        createErpCalendar('#edit-empRetirementDate');
+        createErpCalendar('#edit-empResignationDate');
+        createErpCalendar('#edit-empTerminationDate');
+        createErpCalendar('#edit-empEmploymentEndDate');
         createErpCalendar('#edit-empPassportExpiry');
         createErpCalendar('#edit-empWorkPermitExpiry');
     }
 
-    const addEmpBtn = viewContainer.querySelector('#btn-add-employee');
-    if (addEmpBtn) {
-        addEmpBtn.addEventListener('click', () => {
-            const mainContent = document.getElementById('main-content-area');
-            window.history.pushState({ view: 'add-employee', title: 'Add Employee' }, "", "/admin/add-employee");
-            const pageTitleElement = document.getElementById('pageTitle');
-            if (pageTitleElement) pageTitleElement.textContent = "Add Employee";
-            void loadView('admin', 'add-employee', mainContent);
-        });
-    }
+    addEmpBtn?.addEventListener('click', () => {
+        const mainContent =
+            document.getElementById('main-content-area');
 
-    const tableView = viewContainer.querySelector('#emp-tableView');
-    const detailView = viewContainer.querySelector('#emp-detailView');
+        window.history.pushState(
+            {
+                view: 'add-employee',
+                title: 'Add Employee'
+            },
+            '',
+            '/admin/add-employee'
+        );
 
-    EmpCollections.initSection(viewContainer, '#contacts-section', '#contacts-container', '+ Add Contact', EmpCollections.contactFields, 'contact-row');
-    EmpCollections.initSection(viewContainer, '#qualifications-section', '#qualifications-container', '+ Add Qualification', EmpCollections.qualFields, 'qual-row');
-    EmpCollections.initSection(viewContainer, '#experiences-section', '#experiences-container', '+ Add Experience', EmpCollections.expFields, 'exp-row');
-    EmpCollections.initSection(viewContainer, '#documents-section', '#documents-container', '+ Add Document', EmpCollections.docFields, 'doc-row');
+        const pageTitleElement =
+            document.getElementById('pageTitle');
 
-    const state = { page: 0, size: 10, sort: 'employeeId,desc' };
-    let table;
+        if (pageTitleElement) {
+            pageTitleElement.textContent =
+                'Add Employee';
+        }
+
+        void loadView(
+            'admin',
+            'add-employee',
+            mainContent
+        );
+    });
+
+    EmpCollections.initSection(
+        viewContainer,
+        '#contacts-section',
+        '#contacts-container',
+        '+ Add Contact',
+        EmpCollections.contactFields,
+        'contact-row'
+    );
+
+    EmpCollections.initSection(
+        viewContainer,
+        '#qualifications-section',
+        '#qualifications-container',
+        '+ Add Qualification',
+        EmpCollections.qualFields,
+        'qual-row'
+    );
+
+    EmpCollections.initSection(
+        viewContainer,
+        '#experiences-section',
+        '#experiences-container',
+        '+ Add Experience',
+        EmpCollections.expFields,
+        'exp-row'
+    );
+
+    EmpCollections.initSection(
+        viewContainer,
+        '#documents-section',
+        '#documents-container',
+        '+ Add Document',
+        EmpCollections.docFields,
+        'doc-row'
+    );
 
     async function loadEmployees() {
-        if (table) table.showLoading();
+        table?.showLoading();
+
         try {
-            const searchVal = viewContainer.querySelector('#emp-searchInput').value.trim();
-            const categoryVal = viewContainer.querySelector('#emp-categoryFilter').value;
-            const statusVal = viewContainer.querySelector('#emp-statusFilter').value;
+            const keyword =
+                viewContainer.querySelector(
+                    '#emp-searchInput'
+                )?.value?.trim() || null;
+
+            const employeeCategory =
+                viewContainer.querySelector(
+                    '#emp-categoryFilter'
+                )?.value || null;
+
+            const employmentStatus =
+                viewContainer.querySelector(
+                    '#emp-statusFilter'
+                )?.value || null;
 
             const payload = {
-                keyword: searchVal || null,
-                category: categoryVal || null,
-                status: statusVal || null
+                keyword,
+                employeeCategory,
+                employmentStatus
             };
 
-            const url = `/branchadmin/employees/search?page=${state.page}&size=${state.size}&sort=${state.sort}`;
-            const res = await apiPost(url, payload);
-            const pageData = res.data;
+            const response = await apiPost(
+                `/branchadmin/employees/search?page=${state.page}&size=${state.size}&sort=${encodeURIComponent(state.sort)}`,
+                payload
+            );
 
-            table.render(pageData.content, (emp, rowNode) => {
-                rowNode.querySelector('.col-code').textContent = emp.employeeNo;
+            const pageData =
+                getPageData(response);
 
-                const nameNode = rowNode.querySelector('.col-name strong');
-                nameNode.textContent = emp.fullName;
-                rowNode.querySelector('.col-name').addEventListener('click', async () => await openEmpDetail(emp.employeeId));
+            table.render(
+                pageData.content,
+                (employee, rowNode) => {
+                    const employeeId =
+                        valueOf(
+                            employee,
+                            'employeeId',
+                            'id'
+                        );
 
-                rowNode.querySelector('.col-category').textContent = formatEnum(emp.category);
+                    const employeeNo =
+                        valueOf(
+                            employee,
+                            'employeeNo',
+                            'code'
+                        ) || '-';
 
-                rowNode.querySelector('.email-val').textContent = emp.email || 'No email';
-                rowNode.querySelector('.phone-val').textContent = emp.phone || 'No phone';
+                    const fullName =
+                        valueOf(
+                            employee,
+                            'fullName',
+                            'employeeName'
+                        ) || [
+                            employee.title,
+                            employee.firstName,
+                            employee.middleName,
+                            employee.lastName
+                        ].filter(Boolean).join(' ');
 
-                const statusBadge = rowNode.querySelector('.status-badge');
-                statusBadge.textContent = emp.status || 'ACTIVE';
-                statusBadge.className = `status-badge badge-${(emp.status || 'ACTIVE').toLowerCase()}`;
+                    const employeeCategoryValue =
+                        valueOf(
+                            employee,
+                            'employeeCategory',
+                            'category'
+                        );
 
-                rowNode.querySelector('.view-more-btn').addEventListener('click', async () => await openEmpDetail(emp.employeeId));
-                rowNode.querySelector('.delete-btn').addEventListener('click', async () => await deleteEmp(emp.employeeId));
+                    const officialEmail =
+                        valueOf(
+                            employee,
+                            'officialEmail',
+                            'email'
+                        );
 
-                return rowNode;
-            });
+                    const mobileNo =
+                        valueOf(
+                            employee,
+                            'mobileNo',
+                            'phone'
+                        );
 
-            table.renderPagination(pageData.pageNumber, pageData.totalPages, pageData.totalElements);
-        } catch (e) {
-            console.error(e);
-            showErrorMessage("Failed to load employees.");
-            table.render([]);
+                    const employmentStatusValue =
+                        valueOf(
+                            employee,
+                            'employmentStatus',
+                            'status'
+                        ) || 'ACTIVE';
+
+                    const departmentName =
+                        valueOf(
+                            employee,
+                            'departmentName'
+                        ) || employee.department?.departmentName || '-';
+
+                    const designationName =
+                        valueOf(
+                            employee,
+                            'designationName'
+                        ) || employee.designation?.designationName || '-';
+
+                    const profilePhoto =
+                        normalizeImageSource(
+                            valueOf(
+                                employee,
+                                'profilePhotoUrl',
+                                'profilePhoto'
+                            )
+                        );
+
+                    const codeCell =
+                        rowNode.querySelector('.col-code');
+                    if (codeCell) {
+                        codeCell.textContent = employeeNo;
+                    }
+
+                    const nameCell =
+                        rowNode.querySelector('.col-name');
+                    const nameStrong =
+                        nameCell?.querySelector('strong');
+                    const nameDesignation =
+                        nameCell?.querySelector(
+                            '.employee-designation-label'
+                        );
+
+                    if (nameStrong) {
+                        nameStrong.textContent =
+                            fullName || '-';
+                    }
+
+                    if (nameDesignation) {
+                        nameDesignation.textContent =
+                            designationName;
+                    }
+
+                    nameCell?.addEventListener(
+                        'click',
+                        () => openEmpDetail(employeeId)
+                    );
+
+                    const workCell =
+                        rowNode.querySelector('.col-work');
+                    if (workCell) {
+                        const departmentElement =
+                            workCell.querySelector(
+                                '.department-val'
+                            );
+                        const designationElement =
+                            workCell.querySelector(
+                                '.designation-val'
+                            );
+
+                        if (departmentElement) {
+                            departmentElement.textContent =
+                                departmentName;
+                        }
+                        if (designationElement) {
+                            designationElement.textContent =
+                                designationName;
+                        }
+                    }
+
+                    const categoryCell =
+                        rowNode.querySelector('.col-category');
+                    if (categoryCell) {
+                        categoryCell.textContent =
+                            formatEnum(employeeCategoryValue);
+                    }
+
+                    const emailElement =
+                        rowNode.querySelector('.email-val');
+                    const phoneElement =
+                        rowNode.querySelector('.phone-val');
+
+                    if (emailElement) {
+                        emailElement.textContent =
+                            officialEmail || 'No email';
+                    }
+                    if (phoneElement) {
+                        phoneElement.textContent =
+                            mobileNo || 'No mobile';
+                    }
+
+                    const statusBadge =
+                        rowNode.querySelector(
+                            '.status-badge'
+                        );
+
+                    if (statusBadge) {
+                        statusBadge.textContent =
+                            formatEnum(
+                                employmentStatusValue
+                            );
+                        statusBadge.className =
+                            `status-badge badge badge-${String(employmentStatusValue).toLowerCase()}`;
+                    }
+
+                    const photoImage =
+                        rowNode.querySelector(
+                            '.emp-table-photo'
+                        );
+                    const photoPlaceholder =
+                        rowNode.querySelector(
+                            '.emp-table-photo-placeholder'
+                        );
+
+                    if (photoImage && profilePhoto) {
+                        photoImage.src = profilePhoto;
+                        removeCssClasses(photoImage, 'hidden');
+                        addCssClasses(photoPlaceholder,
+                            'hidden'
+                        );
+                    } else {
+                        photoImage?.removeAttribute('src');
+                        addCssClasses(photoImage, 'hidden');
+                        removeCssClasses(photoPlaceholder,
+                            'hidden'
+                        );
+                    }
+
+                    rowNode
+                        .querySelector('.view-more-btn')
+                        ?.addEventListener(
+                            'click',
+                            () => openEmpDetail(employeeId)
+                        );
+
+                    rowNode
+                        .querySelector('.edit-row-btn')
+                        ?.addEventListener(
+                            'click',
+                            async () => {
+                                await openEmpDetail(employeeId);
+                                enterEmpEditMode();
+                            }
+                        );
+
+                    rowNode
+                        .querySelector('.delete-btn')
+                        ?.addEventListener(
+                            'click',
+                            () => deleteEmp(employeeId)
+                        );
+
+                    return rowNode;
+                }
+            );
+
+            table.renderPagination(
+                pageData.pageNumber,
+                pageData.totalPages,
+                pageData.totalElements
+            );
+        } catch (error) {
+            console.error(error);
+            showErrorMessage(
+                error.message ||
+                'Failed to load employees.'
+            );
+            table?.render([]);
         }
     }
 
     table = new CrudTable(
         {
-            tbody: document.getElementById('emp-tableBody'),
-            pageSize: document.getElementById('emp-pageSize'),
-            pageInfo: document.getElementById('emp-pageInfo'),
-            btnPrev: document.getElementById('btn-emp-prev'),
-            btnNext: document.getElementById('btn-emp-next'),
-            tplLoading: document.getElementById('global-table-fetching-template'),
-            tplEmpty: document.getElementById('global-table-empty-template'),
-            tplRow: document.getElementById('tpl-emp-row'),
-            table: document.getElementById('emp-tableComponent')
+            tbody:
+                viewContainer.querySelector(
+                    '#emp-tableBody'
+                ),
+            pageSize:
+                viewContainer.querySelector(
+                    '#emp-pageSize'
+                ),
+            pageInfo:
+                viewContainer.querySelector(
+                    '#emp-pageInfo'
+                ),
+            btnPrev:
+                viewContainer.querySelector(
+                    '#btn-emp-prev'
+                ),
+            btnNext:
+                viewContainer.querySelector(
+                    '#btn-emp-next'
+                ),
+            tplLoading:
+                document.getElementById(
+                    'global-table-fetching-template'
+                ),
+            tplEmpty:
+                document.getElementById(
+                    'global-table-empty-template'
+                ),
+            tplRow:
+                document.getElementById(
+                    'tpl-emp-row'
+                ),
+            table:
+                viewContainer.querySelector(
+                    '#emp-tableComponent'
+                )
         },
         {
-            onPageChange: async (dir) => { state.page += dir; await loadEmployees(); },
-            onSizeChange: async (size) => { state.size = size; state.page = 0; await loadEmployees(); },
-            onSort: async (field) => { state.sort = field; await loadEmployees(); }
+            onPageChange: async direction => {
+                state.page += direction;
+                await loadEmployees();
+            },
+            onSizeChange: async size => {
+                state.size = size;
+                state.page = 0;
+                await loadEmployees();
+            },
+            onSort: async field => {
+                state.sort = field;
+                await loadEmployees();
+            }
         }
     );
 
-    const searchBtn = viewContainer.querySelector('#emp-searchBtn');
-    if (searchBtn) searchBtn.addEventListener('click', async () => { state.page = 0; await loadEmployees(); });
+    viewContainer
+        .querySelector('#emp-searchBtn')
+        ?.addEventListener('click', async () => {
+            state.page = 0;
+            await loadEmployees();
+        });
+
+    viewContainer
+        .querySelector('#emp-searchInput')
+        ?.addEventListener('keydown', async event => {
+            if (event.key !== 'Enter') return;
+            event.preventDefault();
+            state.page = 0;
+            await loadEmployees();
+        });
+
+    viewContainer
+        .querySelector('#emp-resetBtn')
+        ?.addEventListener('click', async () => {
+            const searchInput =
+                viewContainer.querySelector(
+                    '#emp-searchInput'
+                );
+            const categoryFilter =
+                viewContainer.querySelector(
+                    '#emp-categoryFilter'
+                );
+            const statusFilter =
+                viewContainer.querySelector(
+                    '#emp-statusFilter'
+                );
+
+            if (searchInput) searchInput.value = '';
+            if (categoryFilter) categoryFilter.value = '';
+            if (statusFilter) statusFilter.value = '';
+
+            state.page = 0;
+            await loadEmployees();
+        });
 
     async function loadSelectOptions() {
-        try {
-            const branchId = getRequiredBranchId();
-            const [deptRes, designationRes] = await Promise.all([
-                apiGet(`/departments?branchId=${branchId}&size=100`),
-                apiGet(`/designations?branchId=${branchId}&size=100`)
+        const branchId = getRequiredBranchId();
+
+        const [departmentResponse, designationResponse] =
+            await Promise.all([
+                apiGet(
+                    `/departments?branchId=${branchId}&size=100`
+                ),
+                apiGet(
+                    `/designations?branchId=${branchId}&size=100`
+                )
             ]);
 
-            const deptSelect = viewContainer.querySelector('#edit-empDepartment');
-            const designationSelect = viewContainer.querySelector('#edit-empDesignation');
+        const departments =
+            departmentResponse?.data?.content ??
+            departmentResponse?.data ??
+            [];
 
-            deptSelect.innerHTML = '<option value="">-- None --</option>';
-            designationSelect.innerHTML = '<option value="">-- None --</option>';
+        const designations =
+            designationResponse?.data?.content ??
+            designationResponse?.data ??
+            [];
 
-            deptRes.data.content.forEach(d => {
-                deptSelect.innerHTML += `<option value="${d.departmentId}">${d.departmentName}</option>`;
+        const departmentSelect =
+            viewContainer.querySelector(
+                '#edit-empDepartment'
+            );
+
+        const designationSelect =
+            viewContainer.querySelector(
+                '#edit-empDesignation'
+            );
+
+        if (departmentSelect) {
+            departmentSelect.innerHTML =
+                '<option value="">-- Select Department --</option>';
+
+            departments.forEach(department => {
+                const option =
+                    document.createElement('option');
+
+                option.value =
+                    department.departmentId ??
+                    department.id ??
+                    '';
+                option.textContent =
+                    department.departmentName ??
+                    department.name ??
+                    'Unnamed Department';
+
+                departmentSelect.appendChild(option);
             });
-            designationRes.data.content.forEach(d => {
-                designationSelect.innerHTML += `<option value="${d.id}">${d.designationName}</option>`;
+        }
+
+        if (designationSelect) {
+            designationSelect.innerHTML =
+                '<option value="">-- Select Designation --</option>';
+
+            designations.forEach(designation => {
+                const option =
+                    document.createElement('option');
+
+                option.value =
+                    designation.designationId ??
+                    designation.id ??
+                    '';
+                option.textContent =
+                    designation.designationName ??
+                    designation.name ??
+                    'Unnamed Designation';
+
+                designationSelect.appendChild(option);
             });
-        } catch (e) {
-            console.warn("Could not load departments/designations for dropdowns", e);
         }
     }
 
+    const createDetailItem = (label, value) => {
+        const item = document.createElement('div');
+        item.className = 'emp-record-item';
+
+        const labelElement = document.createElement('span');
+        labelElement.className = 'emp-record-label';
+        labelElement.textContent = label;
+
+        const valueElement = document.createElement('strong');
+        valueElement.className = 'emp-record-value';
+        valueElement.textContent =
+            value !== undefined &&
+            value !== null &&
+            String(value).trim() !== ''
+                ? String(value)
+                : '-';
+
+        item.appendChild(labelElement);
+        item.appendChild(valueElement);
+        return item;
+    };
+
+    const renderSimpleRecords = (
+        containerSelector,
+        records,
+        mapper
+    ) => {
+        const container =
+            viewContainer.querySelector(
+                containerSelector
+            );
+
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (!records.length) {
+            const empty = document.createElement('p');
+            empty.className = 'text-muted';
+            empty.textContent = 'No records available.';
+            container.appendChild(empty);
+            return;
+        }
+
+        records.forEach((record, index) => {
+            const card = document.createElement('div');
+            card.className = 'emp-record-card';
+
+            const heading = document.createElement('h4');
+            heading.textContent = `Record ${index + 1}`;
+            card.appendChild(heading);
+
+            mapper(record).forEach(item => {
+                card.appendChild(
+                    createDetailItem(
+                        item.label,
+                        item.value
+                    )
+                );
+            });
+
+            container.appendChild(card);
+        });
+    };
+
+    const renderDocuments = documents => {
+        const container =
+            viewContainer.querySelector(
+                '#documents-view-container'
+            );
+
+        if (!container) return;
+        container.innerHTML = '';
+
+        if (!documents.length) {
+            const empty = document.createElement('p');
+            empty.className = 'text-muted';
+            empty.textContent = 'No documents submitted.';
+            container.appendChild(empty);
+            return;
+        }
+
+        documents.forEach(documentRecord => {
+            const card = document.createElement('article');
+            card.className = 'emp-document-card';
+
+            const header = document.createElement('div');
+            header.className = 'emp-document-card-header';
+
+            const headingGroup = document.createElement('div');
+
+            const name = document.createElement('div');
+            name.className = 'emp-document-name';
+            name.textContent =
+                documentRecord.employeeDocumentName ||
+                'Employee Document';
+
+            const type = document.createElement('div');
+            type.className = 'emp-document-type';
+            type.textContent = formatEnum(
+                documentRecord.employeeDocumentType
+            );
+
+            headingGroup.appendChild(name);
+            headingGroup.appendChild(type);
+            header.appendChild(headingGroup);
+            card.appendChild(header);
+
+            const meta = document.createElement('div');
+            meta.className = 'emp-document-meta';
+            meta.textContent = [
+                documentRecord.employeeDocumentOriginalFileName ||
+                documentRecord.employeeDocumentFileName,
+                documentRecord.employeeDocumentMimeType,
+                documentRecord.employeeDocumentFileSize
+                    ? `${documentRecord.employeeDocumentFileSize} bytes`
+                    : null
+            ].filter(Boolean).join(' • ') || 'File information unavailable';
+            card.appendChild(meta);
+
+            if (documentRecord.employeeDocumentRemarks) {
+                const remarks = document.createElement('p');
+                remarks.className = 'emp-document-meta';
+                remarks.textContent =
+                    documentRecord.employeeDocumentRemarks;
+                card.appendChild(remarks);
+            }
+
+            const actions = document.createElement('div');
+            actions.className = 'emp-document-actions';
+
+            const viewButton = document.createElement('button');
+            viewButton.type = 'button';
+            viewButton.className =
+                'btn-primary btn-sm emp-document-view-btn';
+            viewButton.innerHTML =
+                '<i class="bi bi-box-arrow-up-right"></i> View Document';
+
+            viewButton.addEventListener('click', () => {
+                const employeeId = currentDetailEmpId;
+                const documentId =
+                    documentRecord.employeeDocumentId;
+
+                const suppliedUrl =
+                    documentRecord.employeeDocumentViewUrl ||
+                    documentRecord.viewUrl ||
+                    null;
+
+                const url = suppliedUrl ||
+                    `/api/branchadmin/employees/${employeeId}/documents/${documentId}/view`;
+
+                window.open(
+                    url,
+                    '_blank',
+                    'noopener,noreferrer'
+                );
+            });
+
+            actions.appendChild(viewButton);
+            card.appendChild(actions);
+            container.appendChild(card);
+        });
+    };
+
+    const populateEditCollections = employee => {
+        const contactsContainer =
+            viewContainer.querySelector(
+                '#contacts-container'
+            );
+        const qualificationsContainer =
+            viewContainer.querySelector(
+                '#qualifications-container'
+            );
+        const experiencesContainer =
+            viewContainer.querySelector(
+                '#experiences-container'
+            );
+        const documentsContainer =
+            viewContainer.querySelector(
+                '#documents-container'
+            );
+
+        if (contactsContainer) {
+            contactsContainer.innerHTML = '';
+            getCollection(employee, 'contacts')
+                .forEach(contact => {
+                    EmpCollections.createRow(
+                        contactsContainer,
+                        EmpCollections.contactFields,
+                        'contact-row',
+                        contact,
+                        false
+                    );
+                });
+        }
+
+        if (qualificationsContainer) {
+            qualificationsContainer.innerHTML = '';
+            getCollection(employee, 'qualifications')
+                .forEach(qualification => {
+                    EmpCollections.createRow(
+                        qualificationsContainer,
+                        EmpCollections.qualFields,
+                        'qual-row',
+                        qualification,
+                        false
+                    );
+                });
+        }
+
+        if (experiencesContainer) {
+            experiencesContainer.innerHTML = '';
+            getCollection(employee, 'experiences')
+                .forEach(experience => {
+                    EmpCollections.createRow(
+                        experiencesContainer,
+                        EmpCollections.expFields,
+                        'exp-row',
+                        experience,
+                        false
+                    );
+                });
+        }
+
+        if (documentsContainer) {
+            documentsContainer.innerHTML = '';
+            getCollection(employee, 'documents')
+                .forEach(documentRecord => {
+                    EmpCollections.createRow(
+                        documentsContainer,
+                        EmpCollections.docFields,
+                        'doc-row',
+                        documentRecord,
+                        false
+                    );
+                });
+        }
+    };
+
     async function openEmpDetail(id) {
+        if (!id) return;
+
         currentDetailEmpId = id;
         showLoader();
+
         try {
             await loadSelectOptions();
-            const res = await apiGet(`/branchadmin/employees/${id}`);
-            const emp = res.data;
 
-            viewContainer.querySelector('#detail-empNameHeader').textContent = emp.fullName || `${emp.firstName} ${emp.lastName}`;
+            const response = await apiGet(
+                `/branchadmin/employees/${id}`
+            );
 
-            const bindField = (fieldKey, value) => {
-                const viewEl = document.getElementById(`view-${fieldKey}`);
-                const editEl = document.getElementById(`edit-${fieldKey}`);
-                if (viewEl) viewEl.textContent = value || '-';
-                if (editEl) {
-                    if (editEl['_flatpickr'] && value) {
-                        editEl['_flatpickr'].setDate(value);
-                    } else {
-                        editEl.value = value || '';
+            const employee =
+                /** @type {EmployeeData} */ (
+                response?.data ?? response
+            );
+
+            currentEmployee = employee;
+
+            const fullName =
+                employee.fullName ||
+                [
+                    employee.title,
+                    employee.firstName,
+                    employee.middleName,
+                    employee.lastName
+                ].filter(Boolean).join(' ');
+
+            setText(
+                '#detail-empNameHeader',
+                fullName
+            );
+            setText(
+                '#detail-empCodeHeader',
+                employee.employeeNo
+                    ? `(${employee.employeeNo})`
+                    : ''
+            );
+
+            bindField('empCode', employee.employeeNo);
+            bindField('empTitle', employee.title);
+            bindField('empFirstName', employee.firstName);
+            bindField('empMiddleName', employee.middleName);
+            bindField('empLastName', employee.lastName);
+            bindField('empGender', employee.gender, formatEnum);
+            bindField('empDob', employee.dateOfBirth, formatDate);
+            bindField('empMaritalStatus', employee.maritalStatus, formatEnum);
+            bindField('empBloodGroup', employee.bloodGroup, formatEnum);
+            bindField('empReligion', employee.religion, formatEnum);
+            bindField('empSubReligion', employee.subReligion);
+
+            setText('#view-empName', fullName);
+
+            const departmentId =
+                employee.departmentId ??
+                employee.department?.departmentId ??
+                employee.department?.id ??
+                null;
+
+            const designationId =
+                employee.designationId ??
+                employee.designation?.designationId ??
+                employee.designation?.id ??
+                null;
+
+            const departmentName =
+                employee.departmentName ??
+                employee.department?.departmentName ??
+                '-';
+
+            const designationName =
+                employee.designationName ??
+                employee.designation?.designationName ??
+                '-';
+
+            setInput('#edit-empDepartment', departmentId);
+            setInput('#edit-empDesignation', designationId);
+            setText('#view-empDepartment', departmentName);
+            setText('#view-empDesignation', designationName);
+            setText('#summary-empDepartment', departmentName);
+            setText('#summary-empDesignation', designationName);
+
+            const category =
+                employee.employeeCategory ??
+                employee.category ??
+                null;
+
+            setText(
+                '#view-empCategory',
+                category,
+                formatEnum
+            );
+
+            if (category === 'MANAGEMENT_TEACHING') {
+                setInput('#edit-empCategory', 'MANAGEMENT');
+                setInput('#edit-empManagementType', 'TEACHING');
+            } else if (
+                category === 'MANAGEMENT_NON_TEACHING'
+            ) {
+                setInput('#edit-empCategory', 'MANAGEMENT');
+                setInput('#edit-empManagementType', 'NON_TEACHING');
+            } else {
+                setInput('#edit-empCategory', category);
+                setInput('#edit-empManagementType', '');
+            }
+
+            synchronizeEditManagementCategory();
+
+            bindField('empType', employee.employeeType, formatEnum);
+            bindField('empMode', employee.employmentMode, formatEnum);
+            bindField('empStatus', employee.employmentStatus, formatEnum);
+            bindField('empJoiningDate', employee.joiningDate, formatDate);
+            bindField('empProbationEndDate', employee.probationEndDate, formatDate);
+            bindField('empConfirmationDate', employee.confirmationDate, formatDate);
+            bindField('empRetirementDate', employee.retirementDate, formatDate);
+            bindField('empResignationDate', employee.resignationDate, formatDate);
+            bindField('empTerminationDate', employee.terminationDate, formatDate);
+            bindField('empEmploymentEndDate', employee.employmentEndDate, formatDate);
+            bindField('empExitReason', employee.exitReason);
+
+            const reportingManagerName =
+                employee.reportingManagerName ??
+                employee.reportingManager?.fullName ??
+                null;
+
+            setText(
+                '#view-empReportingManager',
+                reportingManagerName ||
+                'Not assigned automatically yet'
+            );
+
+            bindField('empNationality', employee.nationality);
+            bindField('empNationalId', employee.nationalId);
+            bindField('empTin', employee.tinNumber);
+            bindField('empPassportNo', employee.passportNo);
+            bindField('empPassportExpiry', employee.passportExpiryDate, formatDate);
+            bindField('empWorkPermit', employee.workPermitNumber);
+            bindField('empWorkPermitExpiry', employee.workPermitExpiryDate, formatDate);
+
+            bindField('empEmail', employee.officialEmail);
+            bindField('empPersonalEmail', employee.personalEmail);
+            bindField('empPhone', employee.mobileNo);
+            bindField('empAlternatePhone', employee.alternateMobile);
+
+            bindField('empCountry', employee.addressCountry);
+            bindField('empState', employee.addressState);
+            bindField('empDistrict', employee.addressDistrict);
+            bindField('empCounty', employee.addressCounty);
+            bindField('empSubCounty', employee.addressSubCounty);
+            bindField('empParish', employee.addressParish);
+            bindField('empVillage', employee.addressVillage);
+            bindField('empStreet', employee.addressStreet);
+            bindField('empPostalCode', employee.postalCode);
+
+            bindField('empSkills', employee.skills);
+            bindField('empLanguages', employee.languagesSpoken);
+            bindField('empRemarks', employee.employeeRemarks);
+
+            setText(
+                '#summary-empStatus',
+                employee.employmentStatus,
+                formatEnum
+            );
+
+            const summaryStatus =
+                viewContainer.querySelector(
+                    '#summary-empStatus'
+                );
+            if (summaryStatus) {
+                summaryStatus.className =
+                    `status-badge badge badge-${String(employee.employmentStatus || 'ACTIVE').toLowerCase()}`;
+            }
+
+            setText(
+                '#view-empLoginEnabled',
+                employee.loginEnabled,
+                formatBoolean
+            );
+            setText(
+                '#view-empLoginId',
+                employee.loginId ??
+                employee.username ??
+                employee.user?.username
+            );
+            setText(
+                '#view-empLoginRole',
+                employee.loginRole ??
+                employee.roleName
+            );
+            setText(
+                '#view-empLoginStatus',
+                employee.loginStatus ??
+                employee.user?.status,
+                formatEnum
+            );
+
+            const profilePhoto = normalizeImageSource(
+                employee.profilePhotoUrl ??
+                employee.profilePhoto
+            );
+
+            const profileImage =
+                viewContainer.querySelector(
+                    '#view-empProfilePhoto'
+                );
+            const profilePlaceholder =
+                viewContainer.querySelector(
+                    '#view-empProfilePhotoPlaceholder'
+                );
+
+            if (profileImage && profilePhoto) {
+                profileImage.src = profilePhoto;
+                removeCssClasses(profileImage, 'hidden');
+                addCssClasses(profilePlaceholder, 'hidden');
+            } else {
+                profileImage?.removeAttribute('src');
+                addCssClasses(profileImage, 'hidden');
+                removeCssClasses(profilePlaceholder, 'hidden');
+            }
+
+            const signatureButton =
+                viewContainer.querySelector(
+                    '#view-empSignatureBtn'
+                );
+
+            const signaturePath =
+                employee.signatureFileUrl ??
+                employee.signatureFile ??
+                null;
+
+            setText(
+                '#view-empSignatureStatus',
+                signaturePath
+                    ? 'Signature available'
+                    : 'No signature uploaded'
+            );
+
+            if (signatureButton) {
+                toggleCssClass(signatureButton,
+                    'hidden',
+                    !signaturePath
+                );
+
+                signatureButton.onclick = signaturePath
+                    ? () => {
+                        window.open(
+                            normalizeImageSource(signaturePath),
+                            '_blank',
+                            'noopener,noreferrer'
+                        );
                     }
-                }
-            };
-
-            bindField('empCode', emp.employeeNo);
-            bindField('empTitle', emp.title);
-
-            document.getElementById('view-empName').textContent = emp.fullName || `${emp.firstName} ${emp.lastName}`;
-            const setEditVal = (id, val) => {
-                const el = document.getElementById(id);
-                if (el) el.value = val || '';
-            };
-            setEditVal('edit-empFirstName', emp.firstName);
-            setEditVal('edit-empMiddleName', emp.middleName);
-            setEditVal('edit-empLastName', emp.lastName);
-
-            bindField('empGender', emp.gender);
-            bindField('empDob', emp.dateOfBirth);
-            bindField('empMaritalStatus', emp.maritalStatus);
-            bindField('empBloodGroup', emp.bloodGroup);
-
-            bindField('empCategory', emp.category);
-            bindField('empType', emp.employeeType);
-            bindField('empMode', emp.employmentMode);
-            bindField('empDepartment', emp.departmentId);
-            bindField('empDesignation', emp.designationId);
-            bindField('empJoiningDate', emp.joiningDate);
-            bindField('empProbationEndDate', emp.probationEndDate);
-            bindField('empConfirmationDate', emp.confirmationDate);
-
-            bindField('empNationality', emp.nationality);
-            bindField('empNationalId', emp.nationalId);
-            bindField('empTin', emp.tinNumber);
-            bindField('empPassportNo', emp.passportNo);
-            bindField('empWorkPermit', emp.workPermitNumber);
-
-            bindField('empEmail', emp.email);
-            bindField('empPersonalEmail', emp.personalEmail);
-            bindField('empPhone', emp.phone);
-            bindField('empAlternatePhone', emp.alternatePhone);
-            bindField('empCountry', emp.addressCountry);
-            bindField('empState', emp.addressState);
-            bindField('empDistrict', emp.addressDistrict);
-            bindField('empVillage', emp.addressVillage);
-            bindField('empStreet', emp.addressStreet);
-
-            const deptSelect = document.getElementById('edit-empDepartment');
-            if (deptSelect && deptSelect.options[deptSelect.selectedIndex]) {
-                document.getElementById('view-empDepartment').textContent = deptSelect.options[deptSelect.selectedIndex].text;
-            }
-            const desigSelect = document.getElementById('edit-empDesignation');
-            if (desigSelect && desigSelect.options[desigSelect.selectedIndex]) {
-                document.getElementById('view-empDesignation').textContent = desigSelect.options[desigSelect.selectedIndex].text;
+                    : null;
             }
 
-            viewContainer.querySelector('#contacts-container').innerHTML = '';
-            viewContainer.querySelector('#qualifications-container').innerHTML = '';
-            viewContainer.querySelector('#experiences-container').innerHTML = '';
-            viewContainer.querySelector('#documents-container').innerHTML = '';
+            const contacts = getCollection(employee, 'contacts');
+            const qualifications = getCollection(employee, 'qualifications');
+            const experiences = getCollection(employee, 'experiences');
+            const documents = getCollection(employee, 'documents');
 
-            if (emp.contacts) {
-                emp.contacts.forEach(c => EmpCollections.createRow(viewContainer.querySelector('#contacts-container'), EmpCollections.contactFields, 'contact-row', c));
-            }
-            if (emp.qualifications) {
-                emp.qualifications.forEach(q => EmpCollections.createRow(viewContainer.querySelector('#qualifications-container'), EmpCollections.qualFields, 'qual-row', q));
-            }
-            if (emp.experiences) {
-                emp.experiences.forEach(e => EmpCollections.createRow(viewContainer.querySelector('#experiences-container'), EmpCollections.expFields, 'exp-row', e));
-            }
-            if (emp.documents) {
-                emp.documents.forEach(d => EmpCollections.createRow(viewContainer.querySelector('#documents-container'), EmpCollections.docFields, 'doc-row', d));
-            }
+            setText('#emp-contact-count', `(${contacts.length})`);
+            setText('#emp-qualification-count', `(${qualifications.length})`);
+            setText('#emp-experience-count', `(${experiences.length})`);
+            setText('#emp-document-count', `(${documents.length})`);
 
-            tableView.classList.add('hidden');
-            detailView.classList.remove('hidden');
+            renderSimpleRecords(
+                '#contacts-view-container',
+                contacts,
+                contact => [
+                    {
+                        label: 'Name',
+                        value: contact.employeeContactName
+                    },
+                    {
+                        label: 'Relationship',
+                        value: formatEnum(
+                            contact.employeeContactRelationship
+                        )
+                    },
+                    {
+                        label: 'Mobile',
+                        value: contact.employeeContactMobile
+                    },
+                    {
+                        label: 'Email',
+                        value: contact.employeeContactEmail
+                    }
+                ]
+            );
+
+            renderSimpleRecords(
+                '#qualifications-view-container',
+                qualifications,
+                qualification => [
+                    {
+                        label: 'Level',
+                        value: formatEnum(
+                            qualification.employeeQualificationLevel
+                        )
+                    },
+                    {
+                        label: 'Qualification',
+                        value: qualification.employeeQualificationName
+                    },
+                    {
+                        label: 'Institution',
+                        value: qualification.employeeQualificationInstitutionName
+                    },
+                    {
+                        label: 'Specialization',
+                        value: qualification.employeeQualificationSpecialization
+                    },
+                    {
+                        label: 'Grade',
+                        value: qualification.employeeQualificationGrade
+                    },
+                    {
+                        label: 'Completion Year',
+                        value: qualification.employeeQualificationCompletionYear
+                    }
+                ]
+            );
+
+            renderSimpleRecords(
+                '#experiences-view-container',
+                experiences,
+                experience => [
+                    {
+                        label: 'Organisation',
+                        value: experience.employeeExperienceCompanyName
+                    },
+                    {
+                        label: 'Employment Type',
+                        value: formatEnum(
+                            experience.employeeExperienceEmploymentType
+                        )
+                    },
+                    {
+                        label: 'Post Held',
+                        value: experience.employeeExperienceDesignation
+                    },
+                    {
+                        label: 'Start Date',
+                        value: formatDate(
+                            experience.employeeExperienceStartDate
+                        )
+                    },
+                    {
+                        label: 'End Date',
+                        value: experience.employeeExperienceCurrentJob
+                            ? 'Current Job'
+                            : formatDate(
+                                experience.employeeExperienceEndDate
+                            )
+                    }
+                ]
+            );
+
+            renderDocuments(documents);
+            populateEditCollections(employee);
+
+            addCssClasses(tableView, 'hidden');
+            removeCssClasses(detailView, 'hidden');
             resetEmpEditMode();
-        } catch (e) {
-            console.error(e);
-            showErrorMessage("Failed to load employee details.");
+        } catch (error) {
+            console.error(error);
+            showErrorMessage(
+                error.message ||
+                'Failed to load employee details.'
+            );
         } finally {
             hideLoader();
         }
     }
 
     async function deleteEmp(id) {
+        if (!id) return;
+
         showPremiumModal({
             title: 'Terminate Employee',
             type: 'warning',
-            contentText: 'Are you sure you want to terminate this employee? They will lose access to the system.',
+            contentText:
+                'Are you sure you want to terminate this employee? The employee login will be disabled.',
             confirmText: 'Yes, Terminate',
             cancelText: 'Cancel',
-            onConfirm: async (modal) => {
+            onConfirm: async modal => {
                 modal.close();
                 showLoader();
+
                 try {
-                    await apiDelete(`/branchadmin/employees/${id}`);
-                    showSuccessMessage('Employee terminated successfully.');
+                    await apiDelete(
+                        `/branchadmin/employees/${id}`
+                    );
+                    showSuccessMessage(
+                        'Employee terminated successfully.'
+                    );
                     await loadEmployees();
-                } catch (e) {
-                    showErrorMessage('Failed to terminate employee.');
+                } catch (error) {
+                    console.error(error);
+                    showErrorMessage(
+                        error.message ||
+                        'Failed to terminate employee.'
+                    );
                 } finally {
                     hideLoader();
                 }
@@ -1117,148 +2589,349 @@ function initEmployeesView() {
         });
     }
 
-    const editBtn = viewContainer.querySelector('#emp-editBtn');
-    const saveBtn = viewContainer.querySelector('#emp-saveBtn');
-    const cancelEditBtn = viewContainer.querySelector('#emp-cancelEditBtn');
-    const backBtn = viewContainer.querySelector('#emp-backToTableBtn');
+    function enterEmpEditMode() {
+        viewContainer
+            .querySelectorAll('.detail-text')
+            .forEach(element => {
+                addCssClasses(element, 'hidden');
+            });
 
-    if (backBtn) {
-        backBtn.addEventListener('click', async () => {
-            detailView.classList.add('hidden');
-            tableView.classList.remove('hidden');
-            await loadEmployees();
+        viewContainer
+            .querySelectorAll(
+                '.detail-input:not([disabled])'
+            )
+            .forEach(element => {
+                removeCssClasses(element, 'hidden');
+            });
+
+        [
+            '#contacts-view-container',
+            '#qualifications-view-container',
+            '#experiences-view-container',
+            '#documents-view-container'
+        ].forEach(selector => {
+            addCssClasses(
+                viewContainer.querySelector(selector),
+                'hidden'
+            );
         });
-    }
 
-    if (editBtn) {
-        editBtn.addEventListener('click', () => {
-            viewContainer.querySelectorAll('.detail-text').forEach(el => el.classList.add('hidden'));
-            viewContainer.querySelectorAll('.detail-input:not([disabled])').forEach(el => el.classList.remove('hidden'));
-            viewContainer.querySelector('#edit-empNameContainer').classList.remove('hidden');
-            const codeEl = viewContainer.querySelector('#edit-empCode');
-            if(codeEl) codeEl.classList.remove('hidden');
-
-            editBtn.classList.add('hidden');
-            saveBtn.classList.remove('hidden');
-            cancelEditBtn.classList.remove('hidden');
+        [
+            '#contacts-container',
+            '#qualifications-container',
+            '#experiences-container',
+            '#documents-container'
+        ].forEach(selector => {
+            removeCssClasses(
+                viewContainer.querySelector(selector),
+                'hidden'
+            );
         });
-    }
 
-    if (cancelEditBtn) {
-        cancelEditBtn.addEventListener('click', () => resetEmpEditMode());
-    }
+        viewContainer
+            .querySelectorAll('.add-row-btn')
+            .forEach(button => {
+                removeCssClasses(button, 'hidden');
+            });
 
-    if (saveBtn) {
-        saveBtn.addEventListener('click', async () => {
-            if (!currentDetailEmpId) return;
+        viewContainer
+            .querySelectorAll(
+                '.emp-child-row .detail-text'
+            )
+            .forEach(element => {
+                addCssClasses(element, 'hidden');
+            });
 
-            const valOrNull = (id) => {
-                const el = viewContainer.querySelector(id);
-                if (!el) return null;
-                const v = el.value.trim();
-                return v === "" ? null : v;
-            };
+        viewContainer
+            .querySelectorAll(
+                '.emp-child-row .detail-input'
+            )
+            .forEach(element => {
+                removeCssClasses(element, 'hidden');
+            });
 
-            showLoader();
-            try {
-                // FIXED EDIT PAYLOAD
-                const payload = {
-                    title: valOrNull('#edit-empTitle'),
-                    firstName: valOrNull('#edit-empFirstName'),
-                    middleName: valOrNull('#edit-empMiddleName'),
-                    lastName: valOrNull('#edit-empLastName'),
-                    gender: valOrNull('#edit-empGender'),
-                    dateOfBirth: valOrNull('#edit-empDob'),
-                    maritalStatus: valOrNull('#edit-empMaritalStatus'),
-                    bloodGroup: valOrNull('#edit-empBloodGroup'),
-                    religion: valOrNull('#edit-empReligion'),
-                    subReligion: valOrNull('#edit-empSubReligion'),
+        synchronizeEditManagementCategory();
 
-                    officialEmail: valOrNull('#edit-empEmail'),
-                    personalEmail: valOrNull('#edit-empPersonalEmail'),
-                    mobileNo: valOrNull('#edit-empPhone'),
-                    alternateMobile: valOrNull('#edit-empAlternatePhone'),
-
-                    departmentId: valOrNull('#edit-empDepartment'),
-                    designationId: valOrNull('#edit-empDesignation'),
-                    employeeCategory: valOrNull('#edit-empCategory'),
-                    employeeType: valOrNull('#edit-empType'),
-                    employmentMode: valOrNull('#edit-empMode'),
-                    employmentStatus: 'ACTIVE',
-
-                    joiningDate: valOrNull('#edit-empJoiningDate'),
-                    probationEndDate: valOrNull('#edit-empProbationEndDate'),
-                    confirmationDate: valOrNull('#edit-empConfirmationDate'),
-
-                    nationality: valOrNull('#edit-empNationality'),
-                    nationalId: valOrNull('#edit-empNationalId'),
-                    tinNumber: valOrNull('#edit-empTin'),
-                    passportNo: valOrNull('#edit-empPassportNo'),
-                    passportExpiryDate: valOrNull('#edit-empPassportExpiry'),
-                    workPermitNumber: valOrNull('#edit-empWorkPermit'),
-                    workPermitExpiryDate: valOrNull('#edit-empWorkPermitExpiry'),
-
-                    addressCountry: valOrNull('#edit-empCountry'),
-                    addressState: valOrNull('#edit-empState'),
-                    addressDistrict: valOrNull('#edit-empDistrict'),
-                    addressCounty: valOrNull('#edit-empCounty'),
-                    addressSubCounty: valOrNull('#edit-empSubCounty'),
-                    addressParish: valOrNull('#edit-empParish'),
-                    addressVillage: valOrNull('#edit-empVillage'),
-                    addressStreet: valOrNull('#edit-empStreet'),
-                    skills: valOrNull('#edit-empSkills'),
-                    languagesSpoken: valOrNull('#edit-empLanguages'),
-
-                    contacts:
-                        collectContacts(viewContainer),
-
-                    qualifications:
-                        await collectQualifications(
-                            viewContainer
-                        ),
-
-                    experiences:
-                        await collectExperiences(
-                            viewContainer
-                        ),
-
-                    documents:
-                        await collectDocuments(
-                            viewContainer
-                        )
-                };
-
-                await apiPut(`/branchadmin/employees/${currentDetailEmpId}`, payload);
-                showSuccessMessage('Employee updated successfully.');
-                resetEmpEditMode();
-                await openEmpDetail(currentDetailEmpId);
-                await loadEmployees();
-            } catch (e) {
-                console.error(e);
-                showErrorMessage(e.message || 'Failed to update employee.');
-            } finally {
-                hideLoader();
-            }
-        });
+        addCssClasses(editBtn, 'hidden');
+        removeCssClasses(saveBtn, 'hidden');
+        removeCssClasses(cancelEditBtn, 'hidden');
     }
 
     function resetEmpEditMode() {
-        viewContainer.querySelectorAll('.detail-text').forEach(el => el.classList.remove('hidden'));
-        viewContainer.querySelectorAll('.detail-input').forEach(el => el.classList.add('hidden'));
-        const nameContainer = viewContainer.querySelector('#edit-empNameContainer');
-        if(nameContainer) nameContainer.classList.add('hidden');
-        if (editBtn) editBtn.classList.remove('hidden');
-        if (saveBtn) saveBtn.classList.add('hidden');
-        if (cancelEditBtn) cancelEditBtn.classList.add('hidden');
+        viewContainer
+            .querySelectorAll('.detail-text')
+            .forEach(element => {
+                removeCssClasses(element, 'hidden');
+            });
+
+        viewContainer
+            .querySelectorAll('.detail-input')
+            .forEach(element => {
+                addCssClasses(element, 'hidden');
+            });
+
+        [
+            '#contacts-view-container',
+            '#qualifications-view-container',
+            '#experiences-view-container',
+            '#documents-view-container'
+        ].forEach(selector => {
+            removeCssClasses(
+                viewContainer.querySelector(selector),
+                'hidden'
+            );
+        });
+
+        [
+            '#contacts-container',
+            '#qualifications-container',
+            '#experiences-container',
+            '#documents-container'
+        ].forEach(selector => {
+            addCssClasses(
+                viewContainer.querySelector(selector),
+                'hidden'
+            );
+        });
+
+        viewContainer
+            .querySelectorAll('.add-row-btn')
+            .forEach(button => {
+                addCssClasses(button, 'hidden');
+            });
+
+        addCssClasses(editManagementTypeGroup, 'hidden');
+
+        removeCssClasses(editBtn, 'hidden');
+        addCssClasses(saveBtn, 'hidden');
+        addCssClasses(cancelEditBtn, 'hidden');
     }
 
-    function formatEnum(val) {
-        if(!val) return '';
-        return val.replace(/_/g, ' ').replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase());
-    }
+    editBtn?.addEventListener(
+        'click',
+        enterEmpEditMode
+    );
 
-    // Initial Load
-    void loadEmployees();
+    cancelEditBtn?.addEventListener('click', async () => {
+        if (currentDetailEmpId) {
+            await openEmpDetail(currentDetailEmpId);
+        } else {
+            resetEmpEditMode();
+        }
+    });
+
+    backBtn?.addEventListener('click', async () => {
+        currentDetailEmpId = null;
+        currentEmployee = null;
+        addCssClasses(detailView, 'hidden');
+        removeCssClasses(tableView, 'hidden');
+        await loadEmployees();
+    });
+
+    saveBtn?.addEventListener('click', async () => {
+        if (!currentDetailEmpId) return;
+
+        const valueOrNull = selector => {
+            const element =
+                viewContainer.querySelector(selector);
+
+            if (!element) return null;
+
+            const value =
+                String(element.value ?? '').trim();
+
+            return value === '' ? null : value;
+        };
+
+        const firstName =
+            valueOrNull('#edit-empFirstName');
+        const lastName =
+            valueOrNull('#edit-empLastName');
+
+        if (!firstName || !lastName) {
+            showErrorMessage(
+                'First Name and Last Name are required.'
+            );
+            return;
+        }
+
+        const employeeCategory =
+            resolveEmployeeCategory(
+                viewContainer,
+                'edit'
+            );
+
+        if (!employeeCategory) {
+            showErrorMessage(
+                'Select a valid Employee Category.'
+            );
+            return;
+        }
+
+        const profilePhoto =
+            viewContainer.querySelector(
+                '#edit-empProfilePhoto'
+            )?.files?.[0] || null;
+
+        const signatureFile =
+            viewContainer.querySelector(
+                '#edit-empSignature'
+            )?.files?.[0] || null;
+
+        showLoader();
+
+        try {
+            const payload = {
+                title: valueOrNull('#edit-empTitle'),
+                firstName,
+                middleName: valueOrNull('#edit-empMiddleName'),
+                lastName,
+                gender: valueOrNull('#edit-empGender'),
+                dateOfBirth: valueOrNull('#edit-empDob'),
+                maritalStatus: valueOrNull('#edit-empMaritalStatus'),
+                bloodGroup: valueOrNull('#edit-empBloodGroup'),
+                religion: valueOrNull('#edit-empReligion'),
+                subReligion: valueOrNull('#edit-empSubReligion'),
+
+                officialEmail: valueOrNull('#edit-empEmail'),
+                personalEmail: valueOrNull('#edit-empPersonalEmail'),
+                mobileNo: valueOrNull('#edit-empPhone'),
+                alternateMobile: valueOrNull('#edit-empAlternatePhone'),
+
+                departmentId: valueOrNull('#edit-empDepartment'),
+                designationId: valueOrNull('#edit-empDesignation'),
+                employeeCategory,
+                employeeType: valueOrNull('#edit-empType'),
+                employmentMode: valueOrNull('#edit-empMode'),
+                employmentStatus:
+                    valueOrNull('#edit-empStatus') || 'ACTIVE',
+
+                joiningDate: valueOrNull('#edit-empJoiningDate'),
+                probationEndDate: valueOrNull('#edit-empProbationEndDate'),
+                confirmationDate: valueOrNull('#edit-empConfirmationDate'),
+                retirementDate: valueOrNull('#edit-empRetirementDate'),
+                resignationDate: valueOrNull('#edit-empResignationDate'),
+                terminationDate: valueOrNull('#edit-empTerminationDate'),
+                employmentEndDate: valueOrNull('#edit-empEmploymentEndDate'),
+                exitReason: valueOrNull('#edit-empExitReason'),
+
+                nationality: valueOrNull('#edit-empNationality'),
+                nationalId: valueOrNull('#edit-empNationalId'),
+                tinNumber: valueOrNull('#edit-empTin'),
+                passportNo: valueOrNull('#edit-empPassportNo'),
+                passportExpiryDate: valueOrNull('#edit-empPassportExpiry'),
+                workPermitNumber: valueOrNull('#edit-empWorkPermit'),
+                workPermitExpiryDate: valueOrNull('#edit-empWorkPermitExpiry'),
+
+                addressCountry: valueOrNull('#edit-empCountry'),
+                addressState: valueOrNull('#edit-empState'),
+                addressDistrict: valueOrNull('#edit-empDistrict'),
+                addressCounty: valueOrNull('#edit-empCounty'),
+                addressSubCounty: valueOrNull('#edit-empSubCounty'),
+                addressParish: valueOrNull('#edit-empParish'),
+                addressVillage: valueOrNull('#edit-empVillage'),
+                addressStreet: valueOrNull('#edit-empStreet'),
+                postalCode: valueOrNull('#edit-empPostalCode'),
+
+                skills: valueOrNull('#edit-empSkills'),
+                languagesSpoken: valueOrNull('#edit-empLanguages'),
+                employeeRemarks: valueOrNull('#edit-empRemarks'),
+
+                profilePhotoData:
+                    await EmpCollections.fileToBase64(
+                        profilePhoto
+                    ),
+                profilePhotoFileName:
+                    profilePhoto?.name || null,
+                profilePhotoContentType:
+                    profilePhoto?.type || null,
+                profilePhotoFileSize:
+                    profilePhoto?.size || null,
+
+                signatureFileData:
+                    await EmpCollections.fileToBase64(
+                        signatureFile
+                    ),
+                signatureFileName:
+                    signatureFile?.name || null,
+                signatureContentType:
+                    signatureFile?.type || null,
+                signatureFileSize:
+                    signatureFile?.size || null,
+
+                contacts:
+                    collectContacts(viewContainer),
+                qualifications:
+                    await collectQualifications(
+                        viewContainer
+                    ),
+                experiences:
+                    await collectExperiences(
+                        viewContainer
+                    ),
+                documents:
+                    await collectDocuments(
+                        viewContainer
+                    )
+            };
+
+            await apiPut(
+                `/branchadmin/employees/${currentDetailEmpId}`,
+                payload
+            );
+
+            showSuccessMessage(
+                'Employee updated successfully.'
+            );
+
+            await openEmpDetail(currentDetailEmpId);
+            await loadEmployees();
+        } catch (error) {
+            console.error(error);
+            showErrorMessage(
+                error.message ||
+                'Failed to update employee.'
+            );
+        } finally {
+            hideLoader();
+        }
+    });
+
+    void (async () => {
+        await loadEmployees();
+
+        let employeeIdToOpen = null;
+
+        try {
+            employeeIdToOpen =
+                Number.parseInt(
+                    sessionStorage.getItem(
+                        'employeeDetailToOpen'
+                    ),
+                    10
+                );
+
+            sessionStorage.removeItem(
+                'employeeDetailToOpen'
+            );
+        } catch (error) {
+            console.warn(
+                'Could not read pending employee detail.',
+                error
+            );
+        }
+
+        if (
+            Number.isInteger(
+                employeeIdToOpen
+            ) &&
+            employeeIdToOpen > 0
+        ) {
+            await openEmpDetail(
+                employeeIdToOpen
+            );
+        }
+    })();
 }
 
 
@@ -1309,9 +2982,14 @@ const AddEmployeeValidation = {
             message: 'Nationality is required.'
         },
         {
+            selector: '#add-empProfilePhoto',
+            message: 'Passport-size photo is required.'
+        },
+        {
             selector: '#add-empPhone',
             message: 'Mobile Number is required.'
         }
+
     ],
 
     getValue: function(field) {
@@ -1342,7 +3020,7 @@ const AddEmployeeValidation = {
         const container =
             this.getErrorContainer(field);
 
-        field.classList.add(
+        addCssClasses(field,
             'emp-input-invalid'
         );
 
@@ -1352,7 +3030,7 @@ const AddEmployeeValidation = {
         );
 
         if (container) {
-            container.classList.add(
+            addCssClasses(container,
                 'emp-field-invalid'
             );
 
@@ -1367,7 +3045,7 @@ const AddEmployeeValidation = {
         const container =
             this.getErrorContainer(field);
 
-        field.classList.remove(
+        removeCssClasses(field,
             'emp-input-invalid'
         );
 
@@ -1376,7 +3054,7 @@ const AddEmployeeValidation = {
         );
 
         if (container) {
-            container.classList.remove(
+            removeCssClasses(container,
                 'emp-field-invalid'
             );
 
@@ -1390,7 +3068,7 @@ const AddEmployeeValidation = {
                 '.emp-input-invalid'
             )
             .forEach(field => {
-                field.classList.remove(
+                removeCssClasses(field,
                     'emp-input-invalid'
                 );
 
@@ -1404,7 +3082,7 @@ const AddEmployeeValidation = {
                 '.emp-field-invalid'
             )
             .forEach(container => {
-                container.classList.remove(
+                removeCssClasses(container,
                     'emp-field-invalid'
                 );
 
@@ -1422,7 +3100,7 @@ const AddEmployeeValidation = {
             );
 
         if (summary) {
-            summary.classList.add('hidden');
+            addCssClasses(summary, 'hidden');
         }
 
         if (summaryText) {
@@ -1501,7 +3179,76 @@ const AddEmployeeValidation = {
             }
         );
     },
+    validateManagementCategory: function(
+        viewContainer,
+        errors
+    ) {
+        const categoryField =
+            viewContainer.querySelector(
+                '#add-empCategory'
+            );
 
+        const managementTypeField =
+            viewContainer.querySelector(
+                '#add-empManagementType'
+            );
+
+        if (
+            this.getValue(categoryField) ===
+            'MANAGEMENT' &&
+            !this.getValue(managementTypeField)
+        ) {
+            this.addError(
+                errors,
+                managementTypeField,
+                'Select Teaching or Non-Teaching Management.'
+            );
+        }
+    },
+    validateProfilePhoto: function(
+        viewContainer,
+        errors
+    ) {
+        const photoInput =
+            viewContainer.querySelector(
+                '#add-empProfilePhoto'
+            );
+
+        const photo =
+            photoInput?.files?.[0];
+
+        if (!photo) {
+            return;
+        }
+
+        const allowedTypes =
+            new Set([
+                'image/jpeg',
+                'image/png',
+                'image/webp'
+            ]);
+
+        if (!allowedTypes.has(photo.type)) {
+            this.addError(
+                errors,
+                photoInput,
+                'Passport photo must be JPG, PNG or WEBP.'
+            );
+
+            return;
+        }
+
+        const maximumSize =
+            5 * 1024 * 1024;
+
+        if (photo.size > maximumSize) {
+            this.addError(
+                errors,
+                photoInput,
+                'Passport photo must not exceed 5 MB.'
+            );
+        }
+    },
     validateDateOfBirth: function(
         viewContainer,
         errors
@@ -1661,15 +3408,6 @@ const AddEmployeeValidation = {
                 '#qualifications-container .qual-row'
             );
 
-        const qualificationNameLevels =
-            new Set([
-                'CERTIFICATE',
-                'DIPLOMA',
-                'GRADUATION',
-                'POST_GRADUATION',
-                'DR_PHD'
-            ]);
-
         rows.forEach((row, index) => {
             if (!this.hasAnyRowValue(row)) {
                 return;
@@ -1710,16 +3448,11 @@ const AddEmployeeValidation = {
                 );
             }
 
-            if (
-                qualificationNameLevels.has(
-                    selectedLevel
-                ) &&
-                !this.getValue(name)
-            ) {
+            if (!this.getValue(name)) {
                 this.addError(
                     errors,
                     name,
-                    `Qualification ${index + 1}: Qualification Name is required for this level.`
+                    `Qualification ${index + 1}: Qualification Name is required.`
                 );
             }
 
@@ -1916,7 +3649,7 @@ const AddEmployeeValidation = {
         summaryText.textContent =
             uniqueMessages.join(' • ');
 
-        summary.classList.remove(
+        removeCssClasses(summary,
             'hidden'
         );
     },
@@ -1930,7 +3663,15 @@ const AddEmployeeValidation = {
             viewContainer,
             errors
         );
+        this.validateManagementCategory(
+            viewContainer,
+            errors
+        );
 
+        this.validateProfilePhoto(
+            viewContainer,
+            errors
+        );
         this.validateDateOfBirth(
             viewContainer,
             errors
@@ -2008,7 +3749,7 @@ const AddEmployeeValidation = {
                 );
 
             if (summary) {
-                summary.classList.add(
+                addCssClasses(summary,
                     'hidden'
                 );
             }
@@ -2026,21 +3767,911 @@ const AddEmployeeValidation = {
     }
 };
 
+
+/**
+ * @param {HTMLElement} viewContainer
+ * @returns {*}
+ */
+function createEmployeeRegistrationProgressController(
+    viewContainer
+) {
+    const modal =
+        /** @type {(HTMLElement|null)} */ (
+        viewContainer.querySelector(
+            '#employee-registration-modal'
+        )
+    );
+
+    if (!modal) {
+        return null;
+    }
+
+    /*
+     * Render the registration dialog directly under <body>.
+     * The Add Employee view uses animated/transformed containers,
+     * which can make a fixed modal centre against the full form
+     * instead of the visible browser viewport.
+     */
+    document
+        .querySelectorAll(
+            '#employee-registration-modal'
+        )
+        .forEach(existingModal => {
+            if (existingModal !== modal) {
+                removeDomElement(existingModal);
+            }
+        });
+
+    if (modal.parentElement !== document.body) {
+        document.body.appendChild(modal);
+    }
+
+    const processingView =
+        modal.querySelector(
+            '#employee-registration-processing-view'
+        );
+
+    const successView =
+        modal.querySelector(
+            '#employee-registration-success-view'
+        );
+
+    const failureView =
+        modal.querySelector(
+            '#employee-registration-failure-view'
+        );
+
+    const title =
+        modal.querySelector(
+            '#employee-registration-title'
+        );
+
+    const employeeName =
+        modal.querySelector(
+            '#employee-registration-employee-name'
+        );
+
+    const statusIcon =
+        modal.querySelector(
+            '#employee-registration-status-icon'
+        );
+
+    const closeButton =
+        modal.querySelector(
+            '#employee-registration-close-btn'
+        );
+
+    const percentageText =
+        modal.querySelector(
+            '#employee-registration-percentage'
+        );
+
+    const progressBar =
+        modal.querySelector(
+            '#employee-registration-progress'
+        );
+
+    const progressFill =
+        modal.querySelector(
+            '#employee-registration-progress-fill'
+        );
+
+    const stageTitle =
+        modal.querySelector(
+            '#employee-registration-stage-title'
+        );
+
+    const message =
+        modal.querySelector(
+            '#employee-registration-message'
+        );
+
+    const itemProgress =
+        modal.querySelector(
+            '#employee-registration-item-progress'
+        );
+
+    const itemMessage =
+        modal.querySelector(
+            '#employee-registration-item-message'
+        );
+
+    const completedItems =
+        modal.querySelector(
+            '#employee-registration-completed-items'
+        );
+
+    const totalItems =
+        modal.querySelector(
+            '#employee-registration-total-items'
+        );
+
+    const operationWrapper =
+        modal.querySelector(
+            '#employee-registration-operation-wrapper'
+        );
+
+    const operationIdElement =
+        modal.querySelector(
+            '#employee-registration-operation-id'
+        );
+
+    const steps = Array.from(
+        modal.querySelectorAll(
+            '.emp-registration-step'
+        )
+    );
+
+    const stageOrder = [
+        'REQUEST_ACCEPTED',
+        'SERVER_VALIDATION',
+        'EMPLOYEE_CREATION',
+        'RELATED_RECORDS',
+        'REPORTING_MANAGER',
+        'LOGIN_ACCOUNT',
+        'FINALIZATION'
+    ];
+
+    const state = {
+        processing: false,
+        operationId: null,
+        employeeId: null,
+        previousBodyOverflow: ''
+    };
+
+    const clampPercentage = value => {
+        const parsed =
+            Number.parseInt(value, 10);
+
+        if (!Number.isFinite(parsed)) {
+            return 0;
+        }
+
+        return Math.min(
+            100,
+            Math.max(0, parsed)
+        );
+    };
+
+    const formatStage = value => {
+        if (!value) {
+            return 'Processing registration';
+        }
+
+        return String(value)
+            .replace(/_/g, ' ')
+            .toLowerCase()
+            .replace(
+                /\b\w/g,
+                character =>
+                    character.toUpperCase()
+            );
+    };
+
+    const setStepState = (
+        step,
+        stepState
+    ) => {
+        if (!step) return;
+
+        removeCssClasses(step,
+            'is-waiting',
+            'is-processing',
+            'is-completed',
+            'is-failed'
+        );
+
+        addCssClasses(step,
+            `is-${stepState}`
+        );
+
+        const icon =
+            step.querySelector('i');
+
+        if (!icon) return;
+
+        icon.className =
+            stepState === 'completed'
+                ? 'bi bi-check-lg'
+                : stepState === 'processing'
+                    ? 'bi bi-arrow-repeat'
+                    : stepState === 'failed'
+                        ? 'bi bi-x-lg'
+                        : 'bi bi-circle';
+    };
+
+    const setMainIcon = iconState => {
+        if (!statusIcon) return;
+
+        removeCssClasses(statusIcon,
+            'is-processing',
+            'is-success',
+            'is-failed'
+        );
+
+        addCssClasses(statusIcon,
+            `is-${iconState}`
+        );
+
+        const icon =
+            statusIcon.querySelector('i');
+
+        if (!icon) return;
+
+        icon.className =
+            iconState === 'success'
+                ? 'bi bi-check-circle-fill'
+                : iconState === 'failed'
+                    ? 'bi bi-x-circle-fill'
+                    : 'bi bi-person-plus-fill';
+    };
+
+    const setPercentage = value => {
+        const percentage =
+            clampPercentage(value);
+
+        if (percentageText) {
+            percentageText.textContent =
+                `${percentage}%`;
+        }
+
+        if (progressBar) {
+            progressBar.setAttribute(
+                'aria-valuenow',
+                String(percentage)
+            );
+        }
+
+        if (progressFill) {
+            progressFill.style.width =
+                `${percentage}%`;
+        }
+
+        return percentage;
+    };
+
+    const updateSteps = (
+        currentStage,
+        registrationStatus
+    ) => {
+        const normalizedStage =
+            String(
+                currentStage ||
+                'REQUEST_ACCEPTED'
+            ).toUpperCase();
+
+        const currentIndex =
+            stageOrder.indexOf(
+                normalizedStage
+            );
+
+        steps.forEach(step => {
+            const stepStage =
+                step.dataset.stage;
+
+            const stepIndex =
+                stageOrder.indexOf(
+                    stepStage
+                );
+
+            if (
+                registrationStatus ===
+                'COMPLETED'
+            ) {
+                setStepState(
+                    step,
+                    'completed'
+                );
+                return;
+            }
+
+            if (
+                registrationStatus ===
+                'FAILED'
+            ) {
+                if (
+                    stepStage ===
+                    normalizedStage
+                ) {
+                    setStepState(
+                        step,
+                        'failed'
+                    );
+                } else if (
+                    currentIndex >= 0 &&
+                    stepIndex < currentIndex
+                ) {
+                    setStepState(
+                        step,
+                        'completed'
+                    );
+                } else {
+                    setStepState(
+                        step,
+                        'waiting'
+                    );
+                }
+
+                return;
+            }
+
+            if (
+                currentIndex < 0
+            ) {
+                setStepState(
+                    step,
+                    'waiting'
+                );
+            } else if (
+                stepIndex < currentIndex
+            ) {
+                setStepState(
+                    step,
+                    'completed'
+                );
+            } else if (
+                stepIndex === currentIndex
+            ) {
+                setStepState(
+                    step,
+                    'processing'
+                );
+            } else {
+                setStepState(
+                    step,
+                    'waiting'
+                );
+            }
+        });
+    };
+
+    const showOnlyView = view => {
+        [
+            processingView,
+            successView,
+            failureView
+        ].forEach(element => {
+            addCssClasses(element,
+                'hidden'
+            );
+        });
+
+        removeCssClasses(view,
+            'hidden'
+        );
+    };
+
+    const setOperationId = value => {
+        state.operationId =
+            value || null;
+
+        if (
+            operationIdElement &&
+            state.operationId
+        ) {
+            operationIdElement.textContent =
+                state.operationId;
+
+            removeCssClasses(operationWrapper,
+                'hidden'
+            );
+        } else {
+            operationIdElement &&
+            (
+                operationIdElement.textContent =
+                    ''
+            );
+
+            addCssClasses(operationWrapper,
+                'hidden'
+            );
+        }
+    };
+
+    const reset = displayName => {
+        state.processing = false;
+        state.operationId = null;
+        state.employeeId = null;
+
+        showOnlyView(
+            processingView
+        );
+
+        if (title) {
+            title.textContent =
+                'Registering Employee';
+        }
+
+        if (employeeName) {
+            employeeName.textContent =
+                displayName ||
+                'Preparing employee information';
+        }
+
+        setMainIcon('processing');
+        setPercentage(0);
+
+        removeCssClasses(progressFill,
+            'is-success'
+        );
+        removeCssClasses(progressFill,
+            'is-failed'
+        );
+
+        updateSteps(
+            'REQUEST_ACCEPTED',
+            'PROCESSING'
+        );
+
+        if (stageTitle) {
+            stageTitle.textContent =
+                'Preparing registration';
+        }
+
+        if (message) {
+            message.textContent =
+                'Preparing employee information for registration.';
+        }
+
+        addCssClasses(itemProgress,
+            'hidden'
+        );
+
+        if (itemMessage) {
+            itemMessage.textContent =
+                'Processing records';
+        }
+
+        if (completedItems) {
+            completedItems.textContent =
+                '0';
+        }
+
+        if (totalItems) {
+            totalItems.textContent =
+                '0';
+        }
+
+        setOperationId(null);
+
+        addCssClasses(closeButton,
+            'hidden'
+        );
+
+        const errorList =
+            modal.querySelector(
+                '#employee-registration-error-list'
+            );
+
+        if (errorList) {
+            errorList.innerHTML = '';
+        }
+    };
+
+    const open = displayName => {
+        reset(displayName);
+
+        state.processing = true;
+
+        state.previousBodyOverflow =
+            document.body.style.overflow;
+
+        document.body.style.overflow =
+            'hidden';
+
+        removeCssClasses(modal,
+            'hidden'
+        );
+    };
+
+    const close = () => {
+        if (state.processing) {
+            return false;
+        }
+
+        addCssClasses(modal,
+            'hidden'
+        );
+
+        document.body.style.overflow =
+            state.previousBodyOverflow;
+
+        return true;
+    };
+
+    /** @param {EmployeeRegistrationResult} progress */
+    const update = progress => {
+        const registrationStatus =
+            String(
+                progress?.status ||
+                'PROCESSING'
+            ).toUpperCase();
+
+        const currentStage =
+            String(
+                progress?.stage ||
+                'REQUEST_ACCEPTED'
+            ).toUpperCase();
+
+        const percentage =
+            setPercentage(
+                progress?.percentage ?? 0
+            );
+
+        updateSteps(
+            currentStage,
+            registrationStatus
+        );
+
+        setOperationId(
+            progress?.operationId ||
+            state.operationId
+        );
+
+        if (stageTitle) {
+            stageTitle.textContent =
+                progress?.stageTitle ||
+                formatStage(
+                    currentStage
+                );
+        }
+
+        if (message) {
+            message.textContent =
+                progress?.message ||
+                'Employee registration is in progress.';
+        }
+
+        const total =
+            Number.parseInt(
+                String(
+                    progress?.totalItems ?? ''
+                ),
+                10
+            );
+
+        const completed =
+            Number.parseInt(
+                String(
+                    progress?.completedItems ?? ''
+                ),
+                10
+            );
+
+        if (
+            Number.isInteger(total) &&
+            total > 0
+        ) {
+            removeCssClasses(itemProgress,
+                'hidden'
+            );
+
+            if (itemMessage) {
+                itemMessage.textContent =
+                    progress?.itemMessage ||
+                    progress?.message ||
+                    'Processing employee records';
+            }
+
+            if (completedItems) {
+                completedItems.textContent =
+                    String(
+                        Number.isInteger(completed)
+                            ? completed
+                            : 0
+                    );
+            }
+
+            if (totalItems) {
+                totalItems.textContent =
+                    String(total);
+            }
+        } else {
+            addCssClasses(itemProgress,
+                'hidden'
+            );
+        }
+
+        return percentage;
+    };
+
+    const setResultValue = (
+        selector,
+        value,
+        fallback = '-'
+    ) => {
+        const element =
+            modal.querySelector(selector);
+
+        if (element) {
+            element.textContent =
+                value || fallback;
+        }
+    };
+
+    /** @param {EmployeeRegistrationResult} result */
+    const showSuccess = result => {
+        state.processing = false;
+        state.employeeId =
+            result?.employeeId || null;
+
+        update({
+            ...result,
+            status: 'COMPLETED',
+            stage: 'FINALIZATION',
+            percentage: 100
+        });
+
+        showOnlyView(
+            successView
+        );
+
+        setMainIcon('success');
+
+        removeCssClasses(progressFill,
+            'is-failed'
+        );
+
+        addCssClasses(progressFill,
+            'is-success'
+        );
+
+        if (title) {
+            title.textContent =
+                'Employee Registered';
+        }
+
+        if (employeeName) {
+            employeeName.textContent =
+                result?.fullName ||
+                'Registration completed successfully';
+        }
+
+        setResultValue(
+            '#employee-registration-result-name',
+            result?.fullName
+        );
+
+        setResultValue(
+            '#employee-registration-result-number',
+            result?.employeeNo
+        );
+
+        setResultValue(
+            '#employee-registration-result-department',
+            result?.departmentName
+        );
+
+        setResultValue(
+            '#employee-registration-result-designation',
+            result?.designationName
+        );
+
+        setResultValue(
+            '#employee-registration-result-manager',
+            result?.reportingManagerName,
+            'Not assigned'
+        );
+
+        const loginStatus =
+            result?.loginAccountStatus ||
+            (
+                result?.loginCreated === true
+                    ? 'Created'
+                    : result?.loginCreated === false
+                        ? 'Not requested'
+                        : null
+            );
+
+        setResultValue(
+            '#employee-registration-result-login',
+            loginStatus,
+            'Not requested'
+        );
+
+        const successMessage =
+            modal.querySelector(
+                '#employee-registration-success-message'
+            );
+
+        if (successMessage) {
+            successMessage.textContent =
+                result?.message ||
+                'Employee registration has been completed.';
+        }
+
+        removeCssClasses(closeButton,
+            'hidden'
+        );
+    };
+
+    const normalizeErrors = progress => {
+        if (
+            Array.isArray(progress?.errors) &&
+            progress.errors.length > 0
+        ) {
+            return progress.errors.map(
+                error =>
+                    typeof error === 'string'
+                        ? error
+                        : (
+                            error?.message ||
+                            JSON.stringify(error)
+                        )
+            );
+        }
+
+        if (
+            progress?.error &&
+            typeof progress.error === 'string'
+        ) {
+            return [
+                progress.error
+            ];
+        }
+
+        return [
+            progress?.message ||
+            'An unexpected registration error occurred.'
+        ];
+    };
+
+    /** @param {EmployeeRegistrationResult} progress */
+    const showFailure = progress => {
+        state.processing = false;
+
+        const currentStage =
+            progress?.stage ||
+            'REQUEST_ACCEPTED';
+
+        const percentage =
+            clampPercentage(
+                progress?.percentage ?? 0
+            );
+
+        update({
+            ...progress,
+            status: 'FAILED',
+            stage: currentStage,
+            percentage
+        });
+
+        showOnlyView(
+            failureView
+        );
+
+        setMainIcon('failed');
+
+        removeCssClasses(progressFill,
+            'is-success'
+        );
+
+        addCssClasses(progressFill,
+            'is-failed'
+        );
+
+        if (title) {
+            title.textContent =
+                'Registration Failed';
+        }
+
+        if (employeeName) {
+            employeeName.textContent =
+                'The employee form has been preserved';
+        }
+
+        setResultValue(
+            '#employee-registration-failed-stage',
+            progress?.stageTitle ||
+            formatStage(currentStage)
+        );
+
+        setResultValue(
+            '#employee-registration-failed-percentage',
+            `${percentage}%`
+        );
+
+        const failureMessage =
+            modal.querySelector(
+                '#employee-registration-failure-message'
+            );
+
+        if (failureMessage) {
+            failureMessage.textContent =
+                progress?.message ||
+                'Employee registration could not be completed.';
+        }
+
+        const errorList =
+            modal.querySelector(
+                '#employee-registration-error-list'
+            );
+
+        if (errorList) {
+            errorList.innerHTML = '';
+
+            normalizeErrors(
+                progress
+            ).forEach(errorMessage => {
+                const item =
+                    document.createElement('li');
+
+                item.textContent =
+                    errorMessage;
+
+                errorList.appendChild(
+                    item
+                );
+            });
+        }
+
+        removeCssClasses(closeButton,
+            'hidden'
+        );
+    };
+
+    closeButton?.addEventListener(
+        'click',
+        close
+    );
+
+    return {
+        modal,
+        open,
+        close,
+        reset,
+        update,
+        showSuccess,
+        showFailure,
+        setOperationId,
+        getEmployeeId: () =>
+            state.employeeId
+    };
+}
+
 function initAddEmployeeView() {
     const viewContainer =
-        document.querySelector('#ba-add-employee-view');
+        /** @type {(HTMLElement|null)} */ (
+        document.querySelector('#ba-add-employee-view')
+    );
 
     if (!viewContainer) return;
+
+    const oldForm =
+        viewContainer.querySelector('#add-emp-form');
+
+    if (!oldForm) return;
+
+    const form = oldForm.cloneNode(true);
+    oldForm.parentNode.replaceChild(form, oldForm);
+    form.reset();
 
     AddEmployeeValidation.bindLiveClearing(
         viewContainer
     );
 
+    const valueOrNull = selector => {
+        const element =
+            viewContainer.querySelector(selector);
+
+        if (!element) return null;
+
+        const value =
+            String(element.value ?? '').trim();
+
+        return value === '' ? null : value;
+    };
+
+    const getResponseContent = response =>
+        response?.data?.content ??
+        response?.data ??
+        [];
+
     async function loadAddSelectOptions() {
         try {
             const branchId = getRequiredBranchId();
 
-            const [deptRes, designationRes] =
+            const [departmentResponse, designationResponse] =
                 await Promise.all([
                     apiGet(
                         `/departments?branchId=${branchId}&size=100`
@@ -2050,7 +4681,7 @@ function initAddEmployeeView() {
                     )
                 ]);
 
-            const deptSelect =
+            const departmentSelect =
                 viewContainer.querySelector(
                     '#add-empDepartment'
                 );
@@ -2060,16 +4691,26 @@ function initAddEmployeeView() {
                     '#add-empDesignation'
                 );
 
-            if (deptSelect) {
-                deptSelect.innerHTML =
+            if (departmentSelect) {
+                departmentSelect.innerHTML =
                     '<option value="">-- Select Department --</option>';
 
-                deptRes.data.content.forEach(department => {
-                    deptSelect.innerHTML += `
-                        <option value="${department.departmentId}">
-                            ${department.departmentName}
-                        </option>
-                    `;
+                getResponseContent(
+                    departmentResponse
+                ).forEach(department => {
+                    const option =
+                        document.createElement('option');
+
+                    option.value =
+                        department.departmentId ??
+                        department.id ??
+                        '';
+                    option.textContent =
+                        department.departmentName ??
+                        department.name ??
+                        'Unnamed Department';
+
+                    departmentSelect.appendChild(option);
                 });
             }
 
@@ -2077,384 +4718,1145 @@ function initAddEmployeeView() {
                 designationSelect.innerHTML =
                     '<option value="">-- Select Designation --</option>';
 
-                designationRes.data.content.forEach(designation => {
-                    designationSelect.innerHTML += `
-                        <option value="${designation.id}">
-                            ${designation.designationName}
-                        </option>
-                    `;
+                getResponseContent(
+                    designationResponse
+                ).forEach(designation => {
+                    const option =
+                        document.createElement('option');
+
+                    option.value =
+                        designation.designationId ??
+                        designation.id ??
+                        '';
+                    option.textContent =
+                        designation.designationName ??
+                        designation.name ??
+                        'Unnamed Designation';
+
+                    designationSelect.appendChild(option);
                 });
             }
         } catch (error) {
             console.warn(
-                'Could not load departments/designations',
+                'Could not load departments/designations.',
                 error
+            );
+            showErrorMessage(
+                'Could not load Department and Designation options.'
             );
         }
     }
 
-    const oldForm =
-        viewContainer.querySelector('#add-emp-form');
-
-    let form = oldForm;
-
-    if (oldForm) {
-        form = oldForm.cloneNode(true);
-
-        oldForm.parentNode.replaceChild(
-            form,
-            oldForm
+    const categorySelect =
+        viewContainer.querySelector(
+            '#add-empCategory'
         );
 
-        form.reset();
+    const managementTypeGroup =
+        viewContainer.querySelector(
+            '#add-empManagementTypeGroup'
+        );
 
-        const generateLoginCheckbox =
-            viewContainer.querySelector(
-                '#add-generateLogin'
+    const managementTypeSelect =
+        viewContainer.querySelector(
+            '#add-empManagementType'
+        );
+
+    const synchronizeManagementCategory = () => {
+        const isManagement =
+            categorySelect?.value === 'MANAGEMENT';
+
+        toggleCssClass(managementTypeGroup,
+            'hidden',
+            !isManagement
+        );
+
+        if (managementTypeSelect) {
+            managementTypeSelect.required = isManagement;
+            managementTypeSelect.setAttribute(
+                'aria-required',
+                String(isManagement)
             );
 
-        const loginOptions =
-            viewContainer.querySelector(
-                '#add-loginOptions'
-            );
+            if (!isManagement) {
+                managementTypeSelect.value = '';
+            }
+        }
+    };
 
-        const sendLoginEmailCheckbox =
-            viewContainer.querySelector(
-                '#add-sendLoginEmail'
-            );
+    categorySelect?.addEventListener(
+        'change',
+        synchronizeManagementCategory
+    );
+    synchronizeManagementCategory();
 
-        const officialEmailInput =
-            viewContainer.querySelector(
-                '#add-empEmail'
-            );
+    const profilePhotoInput =
+        /** @type {(HTMLInputElement|null)} */ (
+        viewContainer.querySelector(
+            '#add-empProfilePhoto'
+        )
+    );
 
-        if (generateLoginCheckbox && loginOptions) {
-            generateLoginCheckbox.addEventListener(
-                'change',
+    const profilePhotoPreview =
+        /** @type {(HTMLImageElement|null)} */ (
+        viewContainer.querySelector(
+            '#add-empProfilePhotoPreview'
+        )
+    );
+
+    const profilePhotoPlaceholder =
+        viewContainer.querySelector(
+            '#add-empProfilePhotoPlaceholder'
+        );
+
+    const profilePhotoName =
+        viewContainer.querySelector(
+            '#add-empProfilePhotoName'
+        );
+
+    const resetProfilePhotoPreview = () => {
+        profilePhotoPreview?.removeAttribute('src');
+        addCssClasses(profilePhotoPreview, 'hidden');
+
+        removeCssClasses(profilePhotoPlaceholder,
+            'hidden'
+        );
+
+        if (profilePhotoName) {
+            profilePhotoName.textContent =
+                'No file chosen';
+        }
+    };
+
+    profilePhotoInput?.addEventListener(
+        'change',
+        () => {
+            const photo =
+                profilePhotoInput.files?.[0];
+
+            if (!photo) {
+                resetProfilePhotoPreview();
+                return;
+            }
+
+            const allowedTypes = new Set([
+                'image/jpeg',
+                'image/png',
+                'image/webp'
+            ]);
+
+            if (!allowedTypes.has(photo.type)) {
+                profilePhotoInput.value = '';
+                resetProfilePhotoPreview();
+
+                showErrorMessage(
+                    'Select a JPG, PNG or WEBP photo.'
+                );
+                return;
+            }
+
+            if (photo.size > 5 * 1024 * 1024) {
+                profilePhotoInput.value = '';
+                resetProfilePhotoPreview();
+
+                showErrorMessage(
+                    'Passport photo must not exceed 5 MB.'
+                );
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.addEventListener(
+                'load',
                 () => {
-                    const enabled =
-                        generateLoginCheckbox.checked;
+                    if (profilePhotoPreview) {
+                        profilePhotoPreview.src =
+                            String(reader.result);
 
-                    loginOptions.classList.toggle(
-                        'hidden',
-                        !enabled
+                        removeCssClasses(profilePhotoPreview,
+                            'hidden'
+                        );
+                    }
+
+                    addCssClasses(profilePhotoPlaceholder,
+                        'hidden'
                     );
 
-                    if (
-                        !enabled &&
-                        sendLoginEmailCheckbox
-                    ) {
-                        sendLoginEmailCheckbox.checked =
-                            false;
+                    if (profilePhotoName) {
+                        profilePhotoName.textContent =
+                            photo.name;
                     }
+
+                    AddEmployeeValidation.clearFieldError(
+                        profilePhotoInput
+                    );
                 }
             );
-        }
 
-        if (
-            sendLoginEmailCheckbox &&
-            officialEmailInput
-        ) {
-            sendLoginEmailCheckbox.addEventListener(
-                'change',
+            reader.addEventListener(
+                'error',
                 () => {
-                    if (
-                        sendLoginEmailCheckbox.checked &&
-                        !officialEmailInput.value.trim()
-                    ) {
-                        sendLoginEmailCheckbox.checked =
-                            false;
+                    profilePhotoInput.value = '';
+                    resetProfilePhotoPreview();
 
-                        showErrorMessage(
-                            'Enter the official email before enabling credential email.'
-                        );
-
-                        officialEmailInput.focus();
-                    }
+                    showErrorMessage(
+                        'The selected photo could not be previewed.'
+                    );
                 }
             );
+
+            reader.readAsDataURL(photo);
         }
+    );
 
-        viewContainer
-            .querySelectorAll('.detail-text')
-            .forEach(element => {
-                element.classList.add('hidden');
-            });
+    const generateLoginCheckbox =
+        viewContainer.querySelector(
+            '#add-generateLogin'
+        );
 
-        viewContainer
-            .querySelectorAll('.detail-input')
-            .forEach(element => {
-                element.classList.remove('hidden');
-            });
+    const loginOptions =
+        viewContainer.querySelector(
+            '#add-loginOptions'
+        );
 
-        const contactsContainer =
-            viewContainer.querySelector(
-                '#contacts-container'
+    const sendLoginEmailCheckbox =
+        viewContainer.querySelector(
+            '#add-sendLoginEmail'
+        );
+
+    const officialEmailInput =
+        viewContainer.querySelector(
+            '#add-empEmail'
+        );
+
+    generateLoginCheckbox?.addEventListener(
+        'change',
+        () => {
+            const enabled =
+                generateLoginCheckbox.checked;
+
+            toggleCssClass(loginOptions,
+                'hidden',
+                !enabled
             );
 
-        const qualificationsContainer =
+            if (!enabled && sendLoginEmailCheckbox) {
+                sendLoginEmailCheckbox.checked = false;
+            }
+        }
+    );
+
+    sendLoginEmailCheckbox?.addEventListener(
+        'change',
+        () => {
+            if (
+                sendLoginEmailCheckbox.checked &&
+                !officialEmailInput?.value.trim()
+            ) {
+                sendLoginEmailCheckbox.checked = false;
+                showErrorMessage(
+                    'Enter the official email before enabling credential email.'
+                );
+                officialEmailInput?.focus();
+            }
+        }
+    );
+
+    viewContainer
+        .querySelectorAll('.detail-text')
+        .forEach(element => {
+            addCssClasses(element, 'hidden');
+        });
+
+    viewContainer
+        .querySelectorAll('.detail-input')
+        .forEach(element => {
+            removeCssClasses(element, 'hidden');
+        });
+
+    const dynamicSections = [
+        {
+            section: '#contacts-section',
+            container: '#contacts-container',
+            button: '+ Add Contact',
+            fields: EmpCollections.contactFields,
+            rowClass: 'contact-row'
+        },
+        {
+            section: '#qualifications-section',
+            container: '#qualifications-container',
+            button: '+ Add Qualification',
+            fields: EmpCollections.qualFields,
+            rowClass: 'qual-row'
+        },
+        {
+            section: '#experiences-section',
+            container: '#experiences-container',
+            button: '+ Add Experience',
+            fields: EmpCollections.expFields,
+            rowClass: 'exp-row'
+        },
+        {
+            section: '#documents-section',
+            container: '#documents-container',
+            button: '+ Add Document',
+            fields: EmpCollections.docFields,
+            rowClass: 'doc-row'
+        }
+    ];
+
+    dynamicSections.forEach(definition => {
+        const container =
             viewContainer.querySelector(
-                '#qualifications-container'
+                definition.container
             );
 
-        const experiencesContainer =
-            viewContainer.querySelector(
-                '#experiences-container'
-            );
-
-        const documentsContainer =
-            viewContainer.querySelector(
-                '#documents-container'
-            );
-
-        if (contactsContainer) {
-            contactsContainer.innerHTML = '';
-        }
-
-        if (qualificationsContainer) {
-            qualificationsContainer.innerHTML = '';
-        }
-
-        if (experiencesContainer) {
-            experiencesContainer.innerHTML = '';
-        }
-
-        if (documentsContainer) {
-            documentsContainer.innerHTML = '';
+        if (container) {
+            container.innerHTML = '';
         }
 
         EmpCollections.initSection(
             viewContainer,
-            '#contacts-section',
-            '#contacts-container',
-            '+ Add Contact',
-            EmpCollections.contactFields,
-            'contact-row',
+            definition.section,
+            definition.container,
+            definition.button,
+            definition.fields,
+            definition.rowClass,
             true
         );
+    });
 
-        EmpCollections.initSection(
-            viewContainer,
-            '#qualifications-section',
-            '#qualifications-container',
-            '+ Add Qualification',
-            EmpCollections.qualFields,
-            'qual-row',
-            true
+    if (typeof createErpCalendar === 'function') {
+        const today = new Date();
+        const maxDobDate = new Date(
+            today.getFullYear() - 18,
+            today.getMonth(),
+            today.getDate()
         );
 
-        EmpCollections.initSection(
-            viewContainer,
-            '#experiences-section',
-            '#experiences-container',
-            '+ Add Experience',
-            EmpCollections.expFields,
-            'exp-row',
-            true
-        );
+        const maxDobDateString =
+            maxDobDate.toISOString().split('T')[0];
 
-        EmpCollections.initSection(
-            viewContainer,
-            '#documents-section',
-            '#documents-container',
-            '+ Add Document',
-            EmpCollections.docFields,
-            'doc-row',
-            true
-        );
+        createErpCalendar('#add-empDob', {
+            maxDate: maxDobDateString
+        });
+        createErpCalendar('#add-empJoiningDate');
+        createErpCalendar('#add-empProbationEndDate');
+        createErpCalendar('#add-empConfirmationDate');
+        createErpCalendar('#add-empPassportExpiry');
+        createErpCalendar('#add-empWorkPermitExpiry');
+    }
 
-        if (
-            typeof createErpCalendar === 'function'
-        ) {
-            const today = new Date();
-
-            const maxDobDate = new Date(
-                today.getFullYear() - 18,
-                today.getMonth(),
-                today.getDate()
-            );
-
-            const maxDobDateString =
-                maxDobDate
-                    .toISOString()
-                    .split('T')[0];
-
-            createErpCalendar('#add-empDob', {
-                maxDate: maxDobDateString,
-                defaultDate: maxDobDateString
-            });
-
-            createErpCalendar(
-                '#add-empJoiningDate'
-            );
-
-            createErpCalendar(
-                '#add-empProbationEndDate'
-            );
-
-            createErpCalendar(
-                '#add-empConfirmationDate'
-            );
-
-            createErpCalendar(
-                '#add-empPassportExpiry'
-            );
-
-            createErpCalendar(
-                '#add-empWorkPermitExpiry'
-            );
-        }
-
+    const setTodayAsJoiningDate = () => {
         const todayString =
-            new Date()
-                .toISOString()
-                .split('T')[0];
+            new Date().toISOString().split('T')[0];
 
         const joiningDateInput =
             viewContainer.querySelector(
                 '#add-empJoiningDate'
             );
 
-        if (
-            joiningDateInput &&
-            joiningDateInput['_flatpickr']
+        const calendar =
+            getCalendarAdapter(
+                joiningDateInput
+            );
+
+        if (calendar) {
+            calendar.setDate(todayString);
+        } else if (
+            joiningDateInput instanceof HTMLInputElement
         ) {
-            joiningDateInput['_flatpickr']
-                .setDate(todayString);
-        } else if (joiningDateInput) {
-            joiningDateInput.value =
-                todayString;
+            joiningDateInput.value = todayString;
+        }
+    };
+
+    setTodayAsJoiningDate();
+    void loadAddSelectOptions();
+
+    const resetAddEmployeeForm = () => {
+        form.reset();
+        AddEmployeeValidation.clearAll(viewContainer);
+        resetProfilePhotoPreview();
+        synchronizeManagementCategory();
+        addCssClasses(loginOptions, 'hidden');
+
+        dynamicSections.forEach(definition => {
+            const container =
+                viewContainer.querySelector(
+                    definition.container
+                );
+            if (container) {
+                container.innerHTML = '';
+            }
+        });
+
+        setTodayAsJoiningDate();
+    };
+
+    viewContainer
+        .querySelector('#backToEmployeesBtn')
+        ?.addEventListener('click', () => {
+            const mainContent =
+                document.getElementById(
+                    'main-content-area'
+                );
+
+            window.history.pushState(
+                {
+                    view: 'employees',
+                    title: 'Manage Employees'
+                },
+                '',
+                '/admin/employees'
+            );
+
+            const pageTitleElement =
+                document.getElementById('pageTitle');
+
+            if (pageTitleElement) {
+                pageTitleElement.textContent =
+                    'Manage Employees';
+            }
+
+            void loadView(
+                'admin',
+                'employees',
+                mainContent
+            );
+        });
+
+    viewContainer
+        .querySelector('#btn-import-employee')
+        ?.addEventListener('click', () => {
+            if (typeof AppImporter === 'undefined') {
+                showErrorMessage(
+                    'Importer module not found.'
+                );
+                return;
+            }
+
+            AppImporter.open(
+                'employee',
+                'Import Employees',
+                'Upload the Excel file containing Employee records.',
+                () => {
+                    const mainContent =
+                        document.getElementById(
+                            'main-content-area'
+                        );
+
+                    window.history.pushState(
+                        {
+                            view: 'employees',
+                            title: 'Manage Employees'
+                        },
+                        '',
+                        '/admin/employees'
+                    );
+
+                    void loadView(
+                        'admin',
+                        'employees',
+                        mainContent
+                    );
+                }
+            );
+        });
+
+    const registrationProgress =
+        createEmployeeRegistrationProgressController(
+            viewContainer
+        );
+
+    let latestRegistrationPayload = null;
+    let latestRegistrationName = null;
+    let registrationRunning = false;
+
+    const getEmployeeFormName = () => {
+        return [
+            valueOrNull('#add-empTitle'),
+            valueOrNull('#add-empFirstName'),
+            valueOrNull('#add-empMiddleName'),
+            valueOrNull('#add-empLastName')
+        ]
+            .filter(Boolean)
+            .join(' ');
+    };
+
+    const extractApiFailure = (
+        error,
+        fallbackStage = 'REQUEST_ACCEPTED',
+        fallbackPercentage = 0
+    ) => {
+        const responseData =
+            error?.response?.data ||
+            error?.data ||
+            null;
+
+        const statusCode =
+            error?.response?.status ??
+            error?.status ??
+            responseData?.status ??
+            null;
+
+        const isMissingRegistrationEndpoint =
+            Number(statusCode) === 404 ||
+            /HTTP\s+Error:\s*404/i.test(
+                String(error?.message || '')
+            );
+
+        if (isMissingRegistrationEndpoint) {
+            return {
+                status: 'FAILED',
+                stage: fallbackStage,
+                stageTitle: 'Backend Endpoint',
+                percentage: fallbackPercentage,
+                message:
+                    'Employee registration backend is not available yet.',
+                errors: [
+                    'Create POST /api/branchadmin/employees/registrations before testing employee registration.'
+                ]
+            };
         }
 
-        void loadAddSelectOptions();
-    }
+        const errors =
+            responseData?.errors ||
+            responseData?.fieldErrors ||
+            (
+                responseData?.message
+                    ? [responseData.message]
+                    : (
+                        error?.message
+                            ? [error.message]
+                            : [
+                                'Employee registration failed.'
+                            ]
+                    )
+            );
 
-    const backButton =
-        viewContainer.querySelector(
-            '#backToEmployeesBtn'
-        );
+        return {
+            status: 'FAILED',
+            stage:
+                responseData?.stage ||
+                fallbackStage,
+            stageTitle:
+                responseData?.stageTitle ||
+                null,
+            percentage:
+                responseData?.percentage ??
+                fallbackPercentage,
+            message:
+                responseData?.message ||
+                error?.message ||
+                'Employee registration failed.',
+            errors:
+                Array.isArray(errors)
+                    ? errors
+                    : [String(errors)]
+        };
+    };
 
-    if (backButton) {
-        const newBackButton =
-            backButton.cloneNode(true);
-
-        backButton.parentNode.replaceChild(
-            newBackButton,
-            backButton
-        );
-
-        newBackButton.addEventListener(
-            'click',
-            () => {
-                const mainContent =
-                    document.getElementById(
-                        'main-content-area'
-                    );
-
-                window.history.pushState(
-                    {
-                        view: 'employees',
-                        title: 'Manage Employees'
-                    },
-                    '',
-                    '/admin/employees'
+    const buildEmployeePayload =
+        async () => {
+            const employeeCategory =
+                resolveEmployeeCategory(
+                    viewContainer,
+                    'add'
                 );
 
-                const pageTitleElement =
-                    document.getElementById(
-                        'pageTitle'
-                    );
-
-                if (pageTitleElement) {
-                    pageTitleElement.textContent =
-                        'Manage Employees';
-                }
-
-                void loadView(
-                    'admin',
-                    'employees',
-                    mainContent
+            if (!employeeCategory) {
+                throw new Error(
+                    'Select a valid Employee Category.'
                 );
             }
+
+            const profilePhoto =
+                profilePhotoInput
+                    ?.files?.[0] || null;
+
+            const generateLogin =
+                generateLoginCheckbox
+                    ?.checked ?? false;
+
+            const sendLoginEmail =
+                sendLoginEmailCheckbox
+                    ?.checked ?? false;
+
+            return {
+                title:
+                    valueOrNull('#add-empTitle'),
+
+                firstName:
+                    valueOrNull(
+                        '#add-empFirstName'
+                    ),
+
+                middleName:
+                    valueOrNull(
+                        '#add-empMiddleName'
+                    ),
+
+                lastName:
+                    valueOrNull(
+                        '#add-empLastName'
+                    ),
+
+                gender:
+                    valueOrNull('#add-empGender'),
+
+                dateOfBirth:
+                    valueOrNull('#add-empDob'),
+
+                maritalStatus:
+                    valueOrNull(
+                        '#add-empMaritalStatus'
+                    ),
+
+                bloodGroup:
+                    valueOrNull(
+                        '#add-empBloodGroup'
+                    ),
+
+                religion:
+                    valueOrNull('#add-empReligion'),
+
+                subReligion:
+                    valueOrNull(
+                        '#add-empSubReligion'
+                    ),
+
+                profilePhotoData:
+                    await EmpCollections.fileToBase64(
+                        profilePhoto
+                    ),
+
+                profilePhotoFileName:
+                    profilePhoto?.name || null,
+
+                profilePhotoContentType:
+                    profilePhoto?.type || null,
+
+                profilePhotoFileSize:
+                    profilePhoto?.size || null,
+
+                officialEmail:
+                    valueOrNull('#add-empEmail'),
+
+                personalEmail:
+                    valueOrNull(
+                        '#add-empPersonalEmail'
+                    ),
+
+                mobileNo:
+                    valueOrNull('#add-empPhone'),
+
+                alternateMobile:
+                    valueOrNull(
+                        '#add-empAlternatePhone'
+                    ),
+
+                departmentId:
+                    valueOrNull(
+                        '#add-empDepartment'
+                    ),
+
+                designationId:
+                    valueOrNull(
+                        '#add-empDesignation'
+                    ),
+
+                employeeCategory,
+
+                employeeType:
+                    valueOrNull('#add-empType'),
+
+                employmentMode:
+                    valueOrNull('#add-empMode'),
+
+                employmentStatus:
+                    'ACTIVE',
+
+                joiningDate:
+                    valueOrNull(
+                        '#add-empJoiningDate'
+                    ),
+
+                probationEndDate:
+                    valueOrNull(
+                        '#add-empProbationEndDate'
+                    ),
+
+                confirmationDate:
+                    valueOrNull(
+                        '#add-empConfirmationDate'
+                    ),
+
+                nationality:
+                    valueOrNull(
+                        '#add-empNationality'
+                    ),
+
+                nationalId:
+                    valueOrNull(
+                        '#add-empNationalId'
+                    ),
+
+                tinNumber:
+                    valueOrNull('#add-empTin'),
+
+                passportNo:
+                    valueOrNull(
+                        '#add-empPassportNo'
+                    ),
+
+                passportExpiryDate:
+                    valueOrNull(
+                        '#add-empPassportExpiry'
+                    ),
+
+                workPermitNumber:
+                    valueOrNull(
+                        '#add-empWorkPermit'
+                    ),
+
+                workPermitExpiryDate:
+                    valueOrNull(
+                        '#add-empWorkPermitExpiry'
+                    ),
+
+                addressCountry:
+                    valueOrNull(
+                        '#add-empCountry'
+                    ),
+
+                addressState:
+                    valueOrNull(
+                        '#add-empState'
+                    ),
+
+                addressDistrict:
+                    valueOrNull(
+                        '#add-empDistrict'
+                    ),
+
+                addressCounty:
+                    valueOrNull(
+                        '#add-empCounty'
+                    ),
+
+                addressSubCounty:
+                    valueOrNull(
+                        '#add-empSubCounty'
+                    ),
+
+                addressParish:
+                    valueOrNull(
+                        '#add-empParish'
+                    ),
+
+                addressVillage:
+                    valueOrNull(
+                        '#add-empVillage'
+                    ),
+
+                addressStreet:
+                    valueOrNull(
+                        '#add-empStreet'
+                    ),
+
+                postalCode:
+                    valueOrNull(
+                        '#add-empPostalCode'
+                    ),
+
+                skills:
+                    valueOrNull('#add-empSkills'),
+
+                languagesSpoken:
+                    valueOrNull(
+                        '#add-empLanguages'
+                    ),
+
+                contacts:
+                    collectContacts(
+                        viewContainer
+                    ),
+
+                qualifications:
+                    await collectQualifications(
+                        viewContainer
+                    ),
+
+                experiences:
+                    await collectExperiences(
+                        viewContainer
+                    ),
+
+                documents:
+                    await collectDocuments(
+                        viewContainer
+                    ),
+
+                accountRequest: {
+                    generateLogin,
+
+                    roleId:
+                        valueOrNull(
+                            '#add-employeeRoleId'
+                        )
+                            ? Number(
+                                valueOrNull(
+                                    '#add-employeeRoleId'
+                                )
+                            )
+                            : null,
+
+                    sendEmail:
+                    sendLoginEmail
+                }
+            };
+        };
+
+    const wait = milliseconds =>
+        new Promise(resolve => {
+            window.setTimeout(
+                resolve,
+                milliseconds
+            );
+        });
+
+    const pollEmployeeRegistration =
+        async operationId => {
+            const maximumPolls =
+                15 * 60;
+
+            for (
+                let pollNumber = 0;
+                pollNumber < maximumPolls;
+                pollNumber++
+            ) {
+                await wait(1000);
+
+                const statusResponse =
+                    await apiGet(
+                        `/branchadmin/employees/registrations/${encodeURIComponent(operationId)}/status`
+                    );
+
+                const progress =
+                    statusResponse?.data ??
+                    statusResponse;
+
+                registrationProgress?.update(
+                    progress
+                );
+
+                const status =
+                    String(
+                        progress?.status ||
+                        'PROCESSING'
+                    ).toUpperCase();
+
+                if (status === 'COMPLETED') {
+                    registrationProgress
+                        ?.showSuccess(
+                            progress
+                        );
+
+                    return progress;
+                }
+
+                if (status === 'FAILED') {
+                    registrationProgress
+                        ?.showFailure(
+                            progress
+                        );
+
+                    return progress;
+                }
+            }
+
+            const timeoutFailure = {
+                status: 'FAILED',
+                stage: 'FINALIZATION',
+                percentage: 99,
+                message:
+                    'Registration status timed out.',
+                errors: [
+                    'The server did not return a final registration status within 15 minutes.'
+                ]
+            };
+
+            registrationProgress
+                ?.showFailure(
+                    timeoutFailure
+                );
+
+            return timeoutFailure;
+        };
+
+    const startEmployeeRegistration =
+        async payload => {
+            if (registrationRunning) {
+                return null;
+            }
+
+            registrationRunning = true;
+
+            registrationProgress?.open(
+                latestRegistrationName
+            );
+
+            registrationProgress?.update({
+                status: 'PROCESSING',
+                stage: 'REQUEST_ACCEPTED',
+                percentage: 2,
+                message:
+                    'Sending employee registration request...'
+            });
+
+            try {
+                const startResponse =
+                    await apiPost(
+                        '/branchadmin/employees/registrations',
+                        payload
+                    );
+
+                const startResult =
+                    startResponse?.data ??
+                    startResponse;
+
+                const startStatus =
+                    String(
+                        startResult?.status ||
+                        'PROCESSING'
+                    ).toUpperCase();
+
+                registrationProgress?.update({
+                    ...startResult,
+                    stage:
+                        startResult?.stage ||
+                        'REQUEST_ACCEPTED',
+                    percentage:
+                        startResult?.percentage ??
+                        5,
+                    message:
+                        startResult?.message ||
+                        'Employee registration request accepted.'
+                });
+
+                if (
+                    startStatus ===
+                    'COMPLETED'
+                ) {
+                    registrationProgress
+                        ?.showSuccess(
+                            startResult
+                        );
+
+                    return startResult;
+                }
+
+                if (
+                    startStatus ===
+                    'FAILED'
+                ) {
+                    registrationProgress
+                        ?.showFailure(
+                            startResult
+                        );
+
+                    return startResult;
+                }
+
+                const operationId =
+                    startResult?.operationId;
+
+                if (!operationId) {
+                    const missingOperationFailure = {
+                        status: 'FAILED',
+                        stage: 'REQUEST_ACCEPTED',
+                        stageTitle: 'Registration Reference',
+                        percentage: 5,
+                        message:
+                            'The server did not return a registration operation ID.',
+                        errors: [
+                            'The backend must return operationId after accepting the employee registration request.'
+                        ]
+                    };
+
+                    registrationProgress
+                        ?.showFailure(
+                            missingOperationFailure
+                        );
+
+                    return missingOperationFailure;
+                }
+
+                registrationProgress
+                    ?.setOperationId(
+                        String(operationId)
+                    );
+
+                return await pollEmployeeRegistration(
+                    String(operationId)
+                );
+            } catch (error) {
+                console.error(error);
+
+                const failure =
+                    extractApiFailure(
+                        error,
+                        'REQUEST_ACCEPTED',
+                        2
+                    );
+
+                registrationProgress
+                    ?.showFailure(
+                        failure
+                    );
+
+                return failure;
+            } finally {
+                registrationRunning = false;
+            }
+        };
+
+    const navigateToEmployeeList =
+        employeeId => {
+            if (
+                Number.isInteger(
+                    Number(employeeId)
+                ) &&
+                Number(employeeId) > 0
+            ) {
+                try {
+                    sessionStorage.setItem(
+                        'employeeDetailToOpen',
+                        String(employeeId)
+                    );
+                } catch (error) {
+                    console.warn(
+                        'Could not save employee detail navigation state.',
+                        error
+                    );
+                }
+            }
+
+            const mainContent =
+                document.getElementById(
+                    'main-content-area'
+                );
+
+            window.history.pushState(
+                {
+                    view: 'employees',
+                    title: 'Manage Employees'
+                },
+                '',
+                '/admin/employees'
+            );
+
+            const pageTitleElement =
+                document.getElementById(
+                    'pageTitle'
+                );
+
+            if (pageTitleElement) {
+                pageTitleElement.textContent =
+                    'Manage Employees';
+            }
+
+            void loadView(
+                'admin',
+                'employees',
+                mainContent
+            );
+        };
+
+    registrationProgress?.modal
+        .querySelector(
+            '#employee-registration-return-btn'
+        )
+        ?.addEventListener(
+            'click',
+            () => {
+                registrationProgress.close();
+            }
         );
-    }
 
-    const importButton =
-        viewContainer.querySelector(
-            '#btn-import-employee'
-        );
-
-    if (importButton) {
-        const newImportButton =
-            importButton.cloneNode(true);
-
-        importButton.parentNode.replaceChild(
-            newImportButton,
-            importButton
-        );
-
-        newImportButton.addEventListener(
+    registrationProgress?.modal
+        .querySelector(
+            '#employee-registration-retry-btn'
+        )
+        ?.addEventListener(
             'click',
             () => {
                 if (
-                    typeof AppImporter !==
-                    'undefined'
+                    latestRegistrationPayload
                 ) {
-                    AppImporter.open(
-                        'employee',
-                        'Import Employees',
-                        'Upload the Excel file containing Employee records.',
-                        () => {
-                            const mainContent =
-                                document.getElementById(
-                                    'main-content-area'
-                                );
-
-                            window.history.pushState(
-                                {
-                                    view: 'employees',
-                                    title: 'Manage Employees'
-                                },
-                                '',
-                                '/admin/employees'
-                            );
-
-                            const pageTitleElement =
-                                document.getElementById(
-                                    'pageTitle'
-                                );
-
-                            if (pageTitleElement) {
-                                pageTitleElement.textContent =
-                                    'Manage Employees';
-                            }
-
-                            void loadView(
-                                'admin',
-                                'employees',
-                                mainContent
-                            );
-                        }
-                    );
-                } else {
-                    showErrorMessage(
-                        'Importer module not found.'
-                    );
-
-                    console.warn(
-                        'AppImporter is not defined.'
+                    void startEmployeeRegistration(
+                        latestRegistrationPayload
                     );
                 }
             }
         );
-    }
 
-    if (!form) return;
+    registrationProgress?.modal
+        .querySelector(
+            '#employee-registration-add-another-btn'
+        )
+        ?.addEventListener(
+            'click',
+            () => {
+                registrationProgress.close();
+                resetAddEmployeeForm();
+                viewContainer.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        );
+
+    registrationProgress?.modal
+        .querySelector(
+            '#employee-registration-list-btn'
+        )
+        ?.addEventListener(
+            'click',
+            () => {
+                registrationProgress.close();
+                navigateToEmployeeList(null);
+            }
+        );
+
+    registrationProgress?.modal
+        .querySelector(
+            '#employee-registration-view-btn'
+        )
+        ?.addEventListener(
+            'click',
+            () => {
+                const employeeId =
+                    registrationProgress
+                        .getEmployeeId();
+
+                registrationProgress.close();
+
+                navigateToEmployeeList(
+                    employeeId
+                );
+            }
+        );
 
     form.addEventListener(
         'submit',
-        async function(event) {
+        async event => {
             event.preventDefault();
+
+            if (registrationRunning) {
+                return;
+            }
 
             if (
                 !AddEmployeeValidation.validate(
@@ -2464,405 +5866,47 @@ function initAddEmployeeView() {
                 showErrorMessage(
                     'Please correct the highlighted fields.'
                 );
-
                 return;
             }
-
-            const dobValue =
-                viewContainer.querySelector(
-                    '#add-empDob'
-                )?.value || null;
-
-            const valOrNull = selector => {
-                const element =
-                    viewContainer.querySelector(
-                        selector
-                    );
-
-                if (!element) return null;
-
-                const value =
-                    element.value.trim();
-
-                return value === ''
-                    ? null
-                    : value;
-            };
-
-            const generateLogin =
-                viewContainer.querySelector(
-                    '#add-generateLogin'
-                )?.checked ?? false;
-
-            const sendLoginEmail =
-                viewContainer.querySelector(
-                    '#add-sendLoginEmail'
-                )?.checked ?? false;
-
-            const officialEmail =
-                valOrNull('#add-empEmail');
 
             const submitButton =
                 form.querySelector(
                     'button[type="submit"]'
                 );
 
-            if (!submitButton) return;
+            if (!submitButton) {
+                return;
+            }
 
             const originalButtonText =
                 submitButton.innerHTML;
 
             submitButton.disabled = true;
-
             submitButton.innerHTML =
-                '<i class="bi bi-hourglass-split"></i> Saving...';
-
-            showLoader();
+                '<i class="bi bi-hourglass-split"></i> Preparing...';
 
             try {
-                const payload = {
-                    title:
-                        valOrNull(
-                            '#add-empTitle'
-                        ),
+                latestRegistrationName =
+                    getEmployeeFormName();
 
-                    firstName:
-                        valOrNull(
-                            '#add-empFirstName'
-                        ),
+                latestRegistrationPayload =
+                    await buildEmployeePayload();
 
-                    middleName:
-                        valOrNull(
-                            '#add-empMiddleName'
-                        ),
+                submitButton.innerHTML =
+                    '<i class="bi bi-arrow-repeat"></i> Registering...';
 
-                    lastName:
-                        valOrNull(
-                            '#add-empLastName'
-                        ),
-
-                    gender:
-                        valOrNull(
-                            '#add-empGender'
-                        ),
-
-                    dateOfBirth:
-                    dobValue,
-
-                    maritalStatus:
-                        valOrNull(
-                            '#add-empMaritalStatus'
-                        ),
-
-                    bloodGroup:
-                        valOrNull(
-                            '#add-empBloodGroup'
-                        ),
-
-                    religion:
-                        valOrNull(
-                            '#add-empReligion'
-                        ),
-
-                    subReligion:
-                        valOrNull(
-                            '#add-empSubReligion'
-                        ),
-
-                    officialEmail:
-                    officialEmail,
-
-                    personalEmail:
-                        valOrNull(
-                            '#add-empPersonalEmail'
-                        ),
-
-                    mobileNo:
-                        valOrNull(
-                            '#add-empPhone'
-                        ),
-
-                    alternateMobile:
-                        valOrNull(
-                            '#add-empAlternatePhone'
-                        ),
-
-                    departmentId:
-                        valOrNull(
-                            '#add-empDepartment'
-                        ),
-
-                    designationId:
-                        valOrNull(
-                            '#add-empDesignation'
-                        ),
-
-                    employeeCategory:
-                        valOrNull(
-                            '#add-empCategory'
-                        ),
-
-                    employeeType:
-                        valOrNull(
-                            '#add-empType'
-                        ),
-
-                    employmentMode:
-                        valOrNull(
-                            '#add-empMode'
-                        ),
-
-                    employmentStatus:
-                        'ACTIVE',
-
-                    joiningDate:
-                        valOrNull(
-                            '#add-empJoiningDate'
-                        ),
-
-                    probationEndDate:
-                        valOrNull(
-                            '#add-empProbationEndDate'
-                        ),
-
-                    confirmationDate:
-                        valOrNull(
-                            '#add-empConfirmationDate'
-                        ),
-
-                    nationality:
-                        valOrNull(
-                            '#add-empNationality'
-                        ),
-
-                    nationalId:
-                        valOrNull(
-                            '#add-empNationalId'
-                        ),
-
-                    tinNumber:
-                        valOrNull(
-                            '#add-empTin'
-                        ),
-
-                    passportNo:
-                        valOrNull(
-                            '#add-empPassportNo'
-                        ),
-
-                    passportExpiryDate:
-                        valOrNull(
-                            '#add-empPassportExpiry'
-                        ),
-
-                    workPermitNumber:
-                        valOrNull(
-                            '#add-empWorkPermit'
-                        ),
-
-                    workPermitExpiryDate:
-                        valOrNull(
-                            '#add-empWorkPermitExpiry'
-                        ),
-
-                    addressCountry:
-                        valOrNull(
-                            '#add-empCountry'
-                        ),
-
-                    addressState:
-                        valOrNull(
-                            '#add-empState'
-                        ),
-
-                    addressDistrict:
-                        valOrNull(
-                            '#add-empDistrict'
-                        ),
-
-                    addressCounty:
-                        valOrNull(
-                            '#add-empCounty'
-                        ),
-
-                    addressSubCounty:
-                        valOrNull(
-                            '#add-empSubCounty'
-                        ),
-
-                    addressParish:
-                        valOrNull(
-                            '#add-empParish'
-                        ),
-
-                    addressVillage:
-                        valOrNull(
-                            '#add-empVillage'
-                        ),
-
-                    addressStreet:
-                        valOrNull(
-                            '#add-empStreet'
-                        ),
-
-                    skills:
-                        valOrNull(
-                            '#add-empSkills'
-                        ),
-
-                    languagesSpoken:
-                        valOrNull(
-                            '#add-empLanguages'
-                        ),
-
-                    contacts:
-                        collectContacts(viewContainer),
-
-                    qualifications:
-                        await collectQualifications(
-                            viewContainer
-                        ),
-
-                    experiences:
-                        await collectExperiences(
-                            viewContainer
-                        ),
-
-                    documents:
-                        await collectDocuments(
-                            viewContainer
-                        ),
-
-                    accountRequest: {
-                        generateLogin:
-                        generateLogin,
-
-                        roleId:
-                            viewContainer.querySelector(
-                                '#add-employeeRoleId'
-                            )?.value
-                                ? Number(
-                                    viewContainer.querySelector(
-                                        '#add-employeeRoleId'
-                                    ).value
-                                )
-                                : null,
-
-                        sendEmail:
-                        sendLoginEmail
-                    }
-                };
-
-                const response =
-                    await apiPost(
-                        '/branchadmin/employees',
-                        payload
-                    );
-
-                showPremiumModal({
-                    title:
-                        'Employee Registered',
-
-                    type:
-                        'success',
-
-                    contentText:
-                        `Employee ${response.data.firstName} ${response.data.lastName} registered successfully. Generated Code: ${response.data.employeeNo}`,
-
-                    confirmText:
-                        'Done'
-                });
-
-                form.reset();
-
-                AddEmployeeValidation.clearAll(
-                    viewContainer
+                await startEmployeeRegistration(
+                    latestRegistrationPayload
                 );
-
-                const loginOptionsReset =
-                    viewContainer.querySelector(
-                        '#add-loginOptions'
-                    );
-
-                if (loginOptionsReset) {
-                    loginOptionsReset.classList.add(
-                        'hidden'
-                    );
-                }
-
-                const contactsContainerReset =
-                    viewContainer.querySelector(
-                        '#contacts-container'
-                    );
-
-                const qualificationsContainerReset =
-                    viewContainer.querySelector(
-                        '#qualifications-container'
-                    );
-
-                const experiencesContainerReset =
-                    viewContainer.querySelector(
-                        '#experiences-container'
-                    );
-
-                const documentsContainerReset =
-                    viewContainer.querySelector(
-                        '#documents-container'
-                    );
-
-                if (contactsContainerReset) {
-                    contactsContainerReset.innerHTML =
-                        '';
-                }
-
-                if (qualificationsContainerReset) {
-                    qualificationsContainerReset.innerHTML =
-                        '';
-                }
-
-                if (experiencesContainerReset) {
-                    experiencesContainerReset.innerHTML =
-                        '';
-                }
-
-                if (documentsContainerReset) {
-                    documentsContainerReset.innerHTML =
-                        '';
-                }
-
-                const joiningDateReset =
-                    viewContainer.querySelector(
-                        '#add-empJoiningDate'
-                    );
-
-                const resetTodayString =
-                    new Date()
-                        .toISOString()
-                        .split('T')[0];
-
-                if (
-                    joiningDateReset &&
-                    joiningDateReset['_flatpickr']
-                ) {
-                    joiningDateReset['_flatpickr']
-                        .setDate(resetTodayString);
-                } else if (joiningDateReset) {
-                    joiningDateReset.value =
-                        resetTodayString;
-                }
             } catch (error) {
                 console.error(error);
 
                 showErrorMessage(
-                    error.message ||
-                    'Failed to register employee.'
+                    error?.message ||
+                    'Could not prepare employee registration.'
                 );
             } finally {
-                hideLoader();
-
-                submitButton.disabled =
-                    false;
-
+                submitButton.disabled = false;
                 submitButton.innerHTML =
                     originalButtonText;
             }

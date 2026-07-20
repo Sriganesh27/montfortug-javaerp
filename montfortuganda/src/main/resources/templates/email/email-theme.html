@@ -1,19 +1,19 @@
 <th:block th:fragment="styles">
     <style>
-        /* ===================================================
-           MONTFORT ERP - GLOBAL EMAIL DESIGN SYSTEM
-        =================================================== */
         body {
-            margin: 0; padding: 0;
+            margin: 0;
+            padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: #f1f5f9;
             -webkit-font-smoothing: antialiased;
         }
+
         .email-wrapper {
             width: 100%;
             background-color: #f1f5f9;
             padding: 40px 20px;
         }
+
         .email-container {
             max-width: 600px;
             width: 100%;
@@ -24,52 +24,74 @@
             border-collapse: separate;
             overflow: hidden;
         }
-        /* Header */
+
         .email-header {
-            background-color: #000000; /* Pure Black to hide logo background */
+            background-color: #000000;
             padding: 40px 20px;
             border-bottom: 4px solid #d4af37;
         }
+
         .email-header-logo {
-            width: 80px; height: 80px;
-            display: block; border: 0;
+            width: 80px;
+            height: 80px;
+            display: block;
+            border: 0;
             object-fit: contain;
-            margin: 0; /* Removed auto margins for side-by-side layout */
+            margin: 0;
         }
+
         .email-header-text-container {
-            padding-left: 20px; /* Replaces inline CSS padding */
+            padding-left: 20px;
         }
+
         .email-header-supertitle {
-            margin: 0 0 6px 0; color: #d4af37; /* Gold */
-            font-size: 11px; text-transform: uppercase;
-            letter-spacing: 2px; font-weight: 700;
+            margin: 0 0 6px 0;
+            color: #d4af37;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
         }
+
         .email-header-title {
-            margin: 0; color: #ffffff;
-            font-size: 24px; font-weight: 700;
+            margin: 0;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 700;
             letter-spacing: 0.5px;
         }
+
         .email-header-subtitle {
-            margin: 8px 0 0 0; color: #94a3b8;
-            font-size: 14px; text-transform: uppercase;
+            margin: 8px 0 0 0;
+            color: #94a3b8;
+            font-size: 14px;
+            text-transform: uppercase;
             letter-spacing: 1.5px;
         }
-        /* Body */
+
         .email-body {
             padding: 40px 35px;
         }
+
         .email-greeting {
-            margin: 0 0 20px 0; color: #334155;
-            font-size: 16px; font-weight: 600;
+            margin: 0 0 20px 0;
+            color: #334155;
+            font-size: 16px;
+            font-weight: 600;
         }
+
         .email-text {
-            margin: 0 0 25px 0; color: #475569;
-            font-size: 15px; line-height: 1.6;
+            margin: 0 0 25px 0;
+            color: #475569;
+            font-size: 15px;
+            line-height: 1.6;
         }
+
         .email-text-strong {
-            color: #0f172a; font-weight: 700;
+            color: #0f172a;
+            font-weight: 700;
         }
-        /* Ref Box */
+
         .email-ref-box {
             margin: 30px 0;
             background-color: #f8fafc;
@@ -77,46 +99,115 @@
             border-radius: 8px;
             border-collapse: separate;
         }
+
         .email-ref-box td {
             padding: 25px;
         }
+
         .email-ref-label {
-            margin: 0 0 8px 0; color: #64748b;
-            font-size: 12px; text-transform: uppercase;
-            letter-spacing: 1px; font-weight: 600;
+            margin: 0 0 8px 0;
+            color: #64748b;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
         }
+
         .email-ref-value {
-            margin: 0; color: #0f172a;
-            font-size: 24px; font-weight: 800;
+            margin: 0;
+            color: #0f172a;
+            font-size: 24px;
+            font-weight: 800;
             letter-spacing: 2px;
         }
-        /* Buttons */
+
+        .email-password-value {
+            margin: 5px 0 0 0;
+            color: #1f2937;
+            font-family: monospace;
+            font-size: 18px;
+            letter-spacing: 1px;
+            overflow-wrap: anywhere;
+        }
+
+        .email-expiry-value {
+            margin: 5px 0 0 0;
+            color: #b45309;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
         .email-button-container {
             margin-top: 20px;
         }
+
         .email-button {
             display: inline-block;
             padding: 14px 32px;
             background-color: #d4af37;
             color: #0f172a !important;
             text-decoration: none;
-            font-size: 16px; font-weight: 700;
+            font-size: 16px;
+            font-weight: 700;
             border-radius: 30px;
             border: 1px solid #d4af37;
         }
-        /* Footer */
+
         .email-footer {
             background-color: #f8fafc;
             padding: 25px 35px;
             border-top: 1px solid #e2e8f0;
         }
+
         .email-footer-text {
-            margin: 0 0 8px 0; color: #94a3b8;
-            font-size: 13px; line-height: 1.5;
+            margin: 0 0 8px 0;
+            color: #94a3b8;
+            font-size: 13px;
+            line-height: 1.5;
         }
+
         .email-footer-copyright {
-            margin: 0; color: #64748b;
-            font-size: 13px; font-weight: 600;
+            margin: 0;
+            color: #64748b;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        @media only screen and (max-width: 620px) {
+            .email-wrapper {
+                padding: 15px 5px !important;
+            }
+
+            .email-body {
+                padding: 30px 20px !important;
+            }
+
+            .email-header {
+                padding: 30px 15px !important;
+            }
+
+            .email-header-title {
+                font-size: 20px !important;
+            }
+
+            .email-header-logo {
+                width: 64px !important;
+                height: 64px !important;
+            }
+
+            .email-header-text-container {
+                padding-left: 12px !important;
+            }
+
+            .email-ref-value {
+                font-size: 18px !important;
+                overflow-wrap: anywhere;
+            }
+
+            .email-button {
+                padding: 13px 22px !important;
+                font-size: 14px !important;
+            }
         }
     </style>
 </th:block>

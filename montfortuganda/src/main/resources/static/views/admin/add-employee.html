@@ -1,5 +1,7 @@
 <div id="ba-add-employee-view">
     <form id="add-emp-form" novalidate>
+
+        <!-- Validation Summary -->
         <div
                 id="add-emp-validation-summary"
                 class="emp-validation-summary hidden"
@@ -9,316 +11,1314 @@
             <strong>Please correct the highlighted fields.</strong>
             <p id="add-emp-validation-summary-text"></p>
         </div>
-        <div id="emp-detailView">
-            <div class="view-header mb-4 d-flex justify-content-between align-items-center">
+
+        <!-- Header -->
+        <div class="view-header mb-4 d-flex justify-content-between align-items-center">
+            <div>
                 <h2>Add New Employee</h2>
-                <div class="action-btn-group">
-                    <button type="button" id="btn-import-employee" class="btn btn-secondary"><i class="bi bi-upload"></i> Import Employees</button>
-                    <button type="button" id="backToEmployeesBtn" class="btn btn-secondary me-2"><i class="bi bi-arrow-left"></i> Back</button>
-                </div>
+                <p class="text-muted">
+                    Register employee personal, employment and supporting details.
+                </p>
             </div>
 
-            <div class="form-container p-4 bg-white shadow-sm rounded">
-                <!-- SECTION 1: Personal Details -->
-                <fieldset class="emp-fieldset">
-                    <legend class="emp-legend">Personal Details</legend>
-                    <div class="emp-grid emp-grid-4 mb-3">
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empTitle">Title</label>
-                            <select id="add-empTitle" class="detail-input w-100">
-                                <option value="">--</option>
-                                <option value="Mr.">Mr.</option>
-                                <option value="Ms.">Ms.</option>
-                                <option value="Mrs.">Mrs.</option>
-                                <option value="Dr.">Dr.</option>
-                            </select>
-                        </div>
-                        <div class="form-group emp-required-field span-2-cols">
-                            <label class="text-muted small" for="add-empFirstName">Full Name</label>
-                            <div id="add-empNameContainer" class="emp-name-container d-flex gap-2">
-                                <input type="text" id="add-empFirstName" class="detail-input flex-fill" placeholder="First" required aria-required="true" data-validation-label="First Name">
-                                <input type="text" id="add-empMiddleName" class="detail-input flex-fill" placeholder="Middle">
-                                <input type="text" id="add-empLastName" class="detail-input flex-fill" placeholder="Last" required aria-required="true" data-validation-label="Last Name">
-                            </div>
-                        </div>
-                    </div>
+            <div class="action-btn-group">
+                <button
+                        type="button"
+                        id="btn-import-employee"
+                        class="btn btn-secondary"
+                >
+                    <i class="bi bi-upload"></i>
+                    Import Employees
+                </button>
 
-                    <div class="emp-grid emp-grid-4 mb-2">
-                        <div class="form-group emp-required-field">
-                            <label class="text-muted small" for="add-empGender">Gender</label>
-                            <select id="add-empGender" class="detail-input w-100" required aria-required="true" data-validation-label="Gender">
-                                <option value="">-- Select --</option>
-                                <option value="MALE">Male</option>
-                                <option value="FEMALE">Female</option>
-                                <option value="OTHER">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group emp-required-field">
-                            <label class="text-muted small" for="add-empDob">Date of Birth</label>
-                            <input type="date" id="add-empDob" class="detail-input w-100" required aria-required="true" data-validation-label="Date of Birth">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empMaritalStatus">Marital Status</label>
-                            <select id="add-empMaritalStatus" class="detail-input w-100">
-                                <option value="">-- Select --</option>
-                                <option value="SINGLE">Single</option>
-                                <option value="MARRIED">Married</option>
-                                <option value="DIVORCED">Divorced</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empBloodGroup">Blood Group</label>
-                            <select id="add-empBloodGroup" class="detail-input w-100">
-                                <option value="">-- Select --</option>
-                                <option value="A_POSITIVE">A+</option>
-                                <option value="A_NEGATIVE">A-</option>
-                                <option value="B_POSITIVE">B+</option>
-                                <option value="B_NEGATIVE">B-</option>
-                                <option value="O_POSITIVE">O+</option>
-                                <option value="O_NEGATIVE">O-</option>
-                                <option value="AB_POSITIVE">AB+</option>
-                                <option value="AB_NEGATIVE">AB-</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="emp-grid emp-grid-2 mb-2">
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empReligion">Religion</label>
-                            <select id="add-empReligion" class="detail-input w-100">
-                                <option value="">Select</option>
-                                <option value="CHRISTIANITY">Christianity</option>
-                                <option value="ISLAM">Islam</option>
-                                <option value="HINDUISM">Hinduism</option>
-                                <option value="OTHER">Other</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empSubReligion">Sub-Religion (Denomination)</label>
-                            <input type="text" id="add-empSubReligion" class="detail-input w-100" placeholder="e.g. Catholic, Sunni">
-                        </div>
-                    </div>
-                </fieldset>
+                <button
+                        type="button"
+                        id="backToEmployeesBtn"
+                        class="btn btn-secondary"
+                >
+                    <i class="bi bi-arrow-left"></i>
+                    Back
+                </button>
+            </div>
+        </div>
 
-                <!-- SECTION 2: Employment Details -->
-                <fieldset class="emp-fieldset">
-                    <legend class="emp-legend">Employment Details</legend>
-                    <div class="emp-grid emp-grid-2 mb-3 ">
-                        <div class="form-group emp-required-field">
-                            <label class="text-muted small" for="add-empDepartment">Department</label>
-                            <select id="add-empDepartment" class="detail-input w-100" required aria-required="true" data-validation-label="Department">
-                                <option value="">-- None --</option>
-                            </select>
-                        </div>
-                        <div class="form-group emp-required-field">
-                            <label class="text-muted small" for="add-empDesignation">Designation</label>
-                            <select id="add-empDesignation" class="detail-input w-100" required aria-required="true" data-validation-label="Designation">
-                                <option value="">-- None --</option>
-                            </select>
-                        </div>
-                    </div>
+        <div class="form-container p-4 bg-white shadow-sm rounded">
+            <!-- ===================================================== -->
+            <!-- SECTION 1: PERSONAL DETAILS WITH PHOTO                -->
+            <!-- ===================================================== -->
 
-                    <div class="emp-grid emp-grid-3 mb-2">
-                        <div class="form-group emp-required-field">
-                            <label class="text-muted small" for="add-empCategory">Category</label>
-                            <select id="add-empCategory" class="detail-input w-100" required aria-required="true" data-validation-label="Employee Category">
-                                <option value="TEACHING">Teaching</option>
-                                <option value="NON_TEACHING">Non-Teaching</option>
-                                <option value="MANAGEMENT_TEACHING">Management (Teaching)</option>
-                                <option value="MANAGEMENT_NON_TEACHING">Management (Non-Teaching)</option>
-                                <option value="SUPPORT_STAFF">Support Staff</option>
-                            </select>
-                        </div>
-                        <div class="form-group emp-required-field">
-                            <label class="text-muted small" for="add-empType">Type</label>
-                            <select id="add-empType" class="detail-input w-100" required aria-required="true" data-validation-label="Employee Type">
-                                <option value="TEMPORARY">Temporary</option>
-                                <option value="CONTRACT">Contract</option>
-                                <option value="PERMANENT">Permanent</option>
-                                <option value="HONORY">HONORY</option>
-                                <option value="PART_TIME">Part Time</option>
-                            </select>
-                        </div>
-                        <div class="form-group emp-required-field">
-                            <label class="text-muted small" for="add-empMode">Mode</label>
-                            <select id="add-empMode" class="detail-input w-100" required aria-required="true" data-validation-label="Employment Mode">
-                                <option value="FULL_TIME">Full Time</option>
-                                <option value="PART_TIME">Part Time</option>
-                                <option value="REMOTE">Remote</option>
-                            </select>
-                        </div>
-                    </div>
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Personal Details</legend>
 
-                    <div class="emp-grid emp-grid-3 mb-2">
-                        <div class="form-group emp-required-field">
-                            <label class="text-muted small" for="add-empJoiningDate">Joining Date</label>
-                            <input type="date" id="add-empJoiningDate" class="detail-input w-100" required aria-required="true" data-validation-label="Joining Date">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empProbationEndDate">Probation End Date</label>
-                            <input type="date" id="add-empProbationEndDate" class="detail-input w-100">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empConfirmationDate">Confirmation Date</label>
-                            <input type="date" id="add-empConfirmationDate" class="detail-input w-100">
-                        </div>
-                    </div>
-                </fieldset>
-                <fieldset class="emp-fieldset">
-                    <legend class="emp-legend">Login Account</legend>
+                <div class="emp-personal-photo-layout">
 
-                    <div class="form-group mb-3">
-                        <div class="d-flex align-items-center gap-2">
-                            <input type="checkbox" id="add-generateLogin">
-                            <label for="add-generateLogin">Generate login account</label>
-                        </div>
-
-                        <small class="text-muted">
-                            The generated employee code will be used as the login ID.
-                        </small>
-                    </div>
-
-                    <div id="add-loginOptions" class="hidden">
-                        <div class="emp-grid emp-grid-2 mb-3">
+                    <div class="emp-personal-fields">
+                        <div class="emp-grid emp-grid-4 mb-3">
                             <div class="form-group">
-                                <label class="text-muted small" for="add-employeeRoleId">Login Role</label>
+                                <label for="add-empTitle">Title</label>
 
                                 <select
-                                        id="add-employeeRoleId"
+                                        id="add-empTitle"
                                         class="detail-input w-100"
                                 >
-                                    <option value="">Default Employee Role</option>
+                                    <option value="">-- Select --</option>
+                                    <option value="Mr.">Mr.</option>
+                                    <option value="Ms.">Ms.</option>
+                                    <option value="Mrs.">Mrs.</option>
+                                    <option value="Dr.">Dr.</option>
+                                    <option value="Rev.">Rev.</option>
+                                    <option value="Br.">Br.</option>
+                                    <option value="Sr.">Sr.</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group emp-required-field">
+                                <label for="add-empFirstName">First Name</label>
+
+                                <input
+                                        type="text"
+                                        id="add-empFirstName"
+                                        class="detail-input w-100"
+                                        placeholder="Enter first name"
+                                        required
+                                        aria-required="true"
+                                        data-validation-label="First Name"
+                                        maxlength="100"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="add-empMiddleName">Middle Name</label>
+
+                                <input
+                                        type="text"
+                                        id="add-empMiddleName"
+                                        class="detail-input w-100"
+                                        placeholder="Enter middle name"
+                                        maxlength="100"
+                                >
+                            </div>
+
+                            <div class="form-group emp-required-field">
+                                <label for="add-empLastName">Last Name</label>
+
+                                <input
+                                        type="text"
+                                        id="add-empLastName"
+                                        class="detail-input w-100"
+                                        placeholder="Enter last name"
+                                        required
+                                        aria-required="true"
+                                        data-validation-label="Last Name"
+                                        maxlength="100"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="emp-grid emp-grid-4 mb-3">
+                            <div class="form-group emp-required-field">
+                                <label for="add-empGender">Gender</label>
+
+                                <select
+                                        id="add-empGender"
+                                        class="detail-input w-100"
+                                        required
+                                        aria-required="true"
+                                        data-validation-label="Gender"
+                                >
+                                    <option value="">-- Select --</option>
+                                    <option value="MALE">Male</option>
+                                    <option value="FEMALE">Female</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group emp-required-field">
+                                <label for="add-empDob">Date of Birth</label>
+
+                                <input
+                                        type="date"
+                                        id="add-empDob"
+                                        class="detail-input w-100"
+                                        required
+                                        aria-required="true"
+                                        data-validation-label="Date of Birth"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="add-empMaritalStatus">Marital Status</label>
+
+                                <select
+                                        id="add-empMaritalStatus"
+                                        class="detail-input w-100"
+                                >
+                                    <option value="">-- Select --</option>
+                                    <option value="SINGLE">Single</option>
+                                    <option value="MARRIED">Married</option>
+                                    <option value="DIVORCED">Divorced</option>
+                                    <option value="SEPARATED">Separated</option>
+                                    <option value="WIDOWED">Widowed</option>
                                 </select>
                             </div>
 
                             <div class="form-group">
-                                <div class="d-flex align-items-center gap-2 mt-4">
-                                    <input type="checkbox" id="add-sendLoginEmail">
-                                    <label for="add-sendLoginEmail">Send credentials by email</label>
-                                </div>
+                                <label for="add-empBloodGroup">Blood Group</label>
+
+                                <select
+                                        id="add-empBloodGroup"
+                                        class="detail-input w-100"
+                                >
+                                    <option value="">-- Select --</option>
+                                    <option value="A_POSITIVE">A+</option>
+                                    <option value="A_NEGATIVE">A-</option>
+                                    <option value="B_POSITIVE">B+</option>
+                                    <option value="B_NEGATIVE">B-</option>
+                                    <option value="O_POSITIVE">O+</option>
+                                    <option value="O_NEGATIVE">O-</option>
+                                    <option value="AB_POSITIVE">AB+</option>
+                                    <option value="AB_NEGATIVE">AB-</option>
+                                </select>
                             </div>
                         </div>
 
-                        <small class="text-muted">
-                            Official email is required when credentials are sent.
-                        </small>
-                    </div>
-                </fieldset>
-                <!-- SECTION 3: Identifications & Permits -->
-                <fieldset class="emp-fieldset">
-                    <legend class="emp-legend">Identifications</legend>
-                    <div class="emp-grid emp-grid-3 mb-3">
-                        <div class="form-group emp-required-field">
-                            <label class="text-muted small" for="add-empNationality">Nationality</label>
-                            <input type="text" id="add-empNationality" class="detail-input w-100" required aria-required="true" data-validation-label="Nationality">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empNationalId">National ID</label>
-                            <input type="text" id="add-empNationalId" class="detail-input w-100">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empTin">TIN Number</label>
-                            <input type="text" id="add-empTin" class="detail-input w-100">
-                        </div>
-                    </div>
-                    <div class="emp-grid emp-grid-2 mb-2">
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empPassportNo">Passport No.</label>
-                            <input type="text" id="add-empPassportNo" class="detail-input w-100">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empWorkPermit">Work Permit No.</label>
-                            <input type="text" id="add-empWorkPermit" class="detail-input w-100">
-                        </div>
-                    </div>
-                </fieldset>
+                        <div class="emp-grid emp-grid-2 mb-2">
+                            <div class="form-group">
+                                <label for="add-empReligion">Religion</label>
 
-                <!-- SECTION 4: Contact & Address -->
-                <fieldset class="emp-fieldset">
-                    <legend class="emp-legend">Contact & Address</legend>
+                                <select
+                                        id="add-empReligion"
+                                        class="detail-input w-100"
+                                >
+                                    <option value="">-- Select --</option>
+                                    <option value="CHRISTIANITY">Christianity</option>
+                                    <option value="ISLAM">Islam</option>
+                                    <option value="HINDUISM">Hinduism</option>
+                                    <option value="TRADITIONAL">Traditional Religion</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="add-empSubReligion">
+                                    Denomination / Sub-Religion
+                                </label>
+
+                                <input
+                                        type="text"
+                                        id="add-empSubReligion"
+                                        class="detail-input w-100"
+                                        placeholder="Example: Catholic, Anglican, Sunni"
+                                        maxlength="100"
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="emp-photo-panel" aria-label="Employee photo">
+                        <div class="form-group emp-required-field">
+                            <label for="add-empProfilePhoto">
+                                Passport-Size Photo
+                            </label>
+
+                            <div class="emp-photo-preview-box">
+                                <img
+                                        id="add-empProfilePhotoPreview"
+                                        class="emp-photo-preview hidden"
+                                        alt="Employee passport-size photo preview"
+                                >
+
+                                <div
+                                        id="add-empProfilePhotoPlaceholder"
+                                        class="emp-photo-placeholder"
+                                >
+                                    <i class="bi bi-person-bounding-box" aria-hidden="true"></i>
+                                    <span>No photo selected</span>
+                                </div>
+                            </div>
+
+                            <input
+                                    type="file"
+                                    id="add-empProfilePhoto"
+                                    class="emp-photo-file-input"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    required
+                                    aria-required="true"
+                                    data-validation-label="Passport-Size Photo"
+                            >
+
+                            <label
+                                    for="add-empProfilePhoto"
+                                    class="btn btn-secondary emp-photo-upload-btn"
+                            >
+                                <i class="bi bi-camera-fill" aria-hidden="true"></i>
+                                Choose Photo
+                            </label>
+
+                            <span
+                                    id="add-empProfilePhotoName"
+                                    class="emp-photo-file-name"
+                            >
+                                No file chosen
+                            </span>
+
+                            <small class="emp-photo-help">
+                                JPG, PNG or WEBP. Maximum size: 5 MB.
+                            </small>
+                        </div>
+                    </aside>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 3: EMPLOYMENT DETAILS                         -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Employment Details</legend>
+
+                <div class="emp-grid emp-grid-2 mb-3">
+                    <div class="form-group emp-required-field">
+                        <label for="add-empDepartment">
+                            Department
+                        </label>
+
+                        <select
+                                id="add-empDepartment"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Department"
+                        >
+                            <option value="">-- Select Department --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group emp-required-field">
+                        <label for="add-empDesignation">
+                            Designation
+                        </label>
+
+                        <select
+                                id="add-empDesignation"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Designation"
+                        >
+                            <option value="">-- Select Designation --</option>
+                        </select>
+                    </div>
+
+
+                </div>
+
+                <!-- Category Chain Selection -->
+                <div class="emp-grid emp-grid-4 mb-3">
+                    <div class="form-group emp-required-field">
+                        <label for="add-empCategory">
+                            Employee Category
+                        </label>
+
+                        <select
+                                id="add-empCategory"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Employee Category"
+                        >
+                            <option value="">-- Select Category --</option>
+                            <option value="TEACHING">Teaching</option>
+                            <option value="NON_TEACHING">Non-Teaching</option>
+                            <option value="MANAGEMENT">Management</option>
+                            <option value="SUPPORT_STAFF">Support Staff</option>
+                        </select>
+                    </div>
+
+                    <div
+                            id="add-empManagementTypeGroup"
+                            class="form-group emp-required-field emp-management-type-group hidden"
+                    >
+                        <label for="add-empManagementType">
+                            Management Category
+                        </label>
+
+                        <select
+                                id="add-empManagementType"
+                                class="detail-input w-100"
+                                data-validation-label="Management Category"
+                        >
+                            <option value="">-- Select --</option>
+                            <option value="TEACHING">
+                                Teaching Management
+                            </option>
+                            <option value="NON_TEACHING">
+                                Non-Teaching Management
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group emp-required-field">
+                        <label for="add-empType">
+                            Employee Type
+                        </label>
+
+                        <select
+                                id="add-empType"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Employee Type"
+                        >
+                            <option value="">-- Select Type --</option>
+                            <option value="CONTRACT">Contract</option>
+                            <option value="TEMPORARY">Temporary</option>
+                            <option value="PART_TIME">Part Time</option>
+                            <option value="PERMANENT">Permanent</option>
+                            <option value="INTERN">Intern</option>
+                            <option value="VOLUNTEER">Volunteer</option>
+                            <option value="HONORY">Honory</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group emp-required-field">
+                        <label for="add-empMode">
+                            Employment Mode
+                        </label>
+
+                        <select
+                                id="add-empMode"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Employment Mode"
+                        >
+                            <option value="">-- Select Mode --</option>
+                            <option value="FULL_TIME">Full Time</option>
+                            <option value="PART_TIME">Part Time</option>
+                            <option value="ON_CALL">On Call</option>
+                            <option value="REMOTE">Remote</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-3 mb-2">
+                    <div class="form-group emp-required-field">
+                        <label for="add-empJoiningDate">
+                            Joining Date
+                        </label>
+
+                        <input
+                                type="date"
+                                id="add-empJoiningDate"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Joining Date"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empProbationEndDate">
+                            Probation End Date
+                        </label>
+
+                        <input
+                                type="date"
+                                id="add-empProbationEndDate"
+                                class="detail-input w-100"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empConfirmationDate">
+                            Confirmation Date
+                        </label>
+
+                        <input
+                                type="date"
+                                id="add-empConfirmationDate"
+                                class="detail-input w-100"
+                        >
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 4: LOGIN ACCOUNT                              -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Login Account</legend>
+
+                <div class="form-group mb-3">
+                    <div class="emp-checkbox-row">
+                        <input
+                                type="checkbox"
+                                id="add-generateLogin"
+                        >
+
+                        <label for="add-generateLogin">
+                            Generate login account
+                        </label>
+                    </div>
+
+                    <small class="text-muted">
+                        The generated employee code will be used as the login ID.
+                    </small>
+                </div>
+
+                <div id="add-loginOptions" class="hidden">
                     <div class="emp-grid emp-grid-2 mb-3">
                         <div class="form-group">
-                            <label class="text-muted small" for="add-empEmail">Official Email</label>
-                            <input type="email" id="add-empEmail" class="detail-input w-100" data-validation-label="Official Email">
+                            <label for="add-employeeRoleId">
+                                Login Role
+                            </label>
+
+                            <select
+                                    id="add-employeeRoleId"
+                                    class="detail-input w-100"
+                            >
+                                <option value="">
+                                    Default Employee Role
+                                </option>
+                            </select>
                         </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empPersonalEmail">Personal Email</label>
-                            <input type="email" id="add-empPersonalEmail" class="detail-input w-100">
-                        </div>
-                        <div class="form-group emp-required-field">
-                            <label class="text-muted small" for="add-empPhone">Mobile No</label>
-                            <input type="text" id="add-empPhone" class="detail-input w-100" required aria-required="true" data-validation-label="Mobile Number">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empAlternatePhone">Alternate Phone</label>
-                            <input type="text" id="add-empAlternatePhone" class="detail-input w-100">
+
+                        <div class="form-group emp-login-email-option">
+                            <div class="emp-checkbox-row">
+                                <input
+                                        type="checkbox"
+                                        id="add-sendLoginEmail"
+                                >
+
+                                <label for="add-sendLoginEmail">
+                                    Send credentials by email
+                                </label>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="emp-grid emp-grid-5 mb-3">
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empDistrict">District</label>
-                            <input type="text" id="add-empDistrict" class="detail-input w-100">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empCounty">County</label>
-                            <input type="text" id="add-empCounty" class="detail-input w-100">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empSubCounty">Sub-County (LC-III)</label>
-                            <input type="text" id="add-empSubCounty" class="detail-input w-100">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empParish">Parish (LC-II)</label>
-                            <input type="text" id="add-empParish" class="detail-input w-100">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empVillage">Village (LC-I)</label>
-                            <input type="text" id="add-empVillage" class="detail-input w-100">
-                        </div>
+                    <small class="text-muted">
+                        Official email is required when credentials are sent.
+                    </small>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 5: IDENTIFICATIONS AND PERMITS                -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Identifications and Permits</legend>
+
+                <div class="emp-grid emp-grid-3 mb-3">
+                    <div class="form-group emp-required-field">
+                        <label for="add-empNationality">
+                            Nationality
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empNationality"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Nationality"
+                                maxlength="100"
+                        >
                     </div>
-                </fieldset>
 
-                <!-- Professional Profile -->
-                <fieldset class="emp-fieldset">
-                    <legend class="emp-legend">Professional Profile</legend>
-                    <div class="emp-grid emp-grid-2 mb-3">
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empSkills">Skills</label>
-                            <input type="text" id="add-empSkills" class="detail-input w-100" placeholder="e.g. Project Management, Accounting">
-                        </div>
-                        <div class="form-group">
-                            <label class="text-muted small" for="add-empLanguages">Languages Spoken</label>
-                            <input type="text" id="add-empLanguages" class="detail-input w-100" placeholder="e.g. English, Luganda, Swahili">
-                        </div>
+                    <div class="form-group">
+                        <label for="add-empNationalId">
+                            National ID
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empNationalId"
+                                class="detail-input w-100"
+                                maxlength="100"
+                        >
                     </div>
-                </fieldset>
 
-                <!-- DYNAMIC SECTIONS (Now also fieldsets!) -->
+                    <div class="form-group">
+                        <label for="add-empTin">
+                            TIN Number
+                        </label>
 
+                        <input
+                                type="text"
+                                id="add-empTin"
+                                class="detail-input w-100"
+                                maxlength="100"
+                        >
+                    </div>
+                </div>
 
-                <fieldset class="emp-fieldset" id="qualifications-section">
-                    <legend class="emp-legend">Qualifications</legend>
-                    <div id="qualifications-container"></div>
-                </fieldset>
+                <div class="emp-grid emp-grid-4 mb-2">
+                    <div class="form-group">
+                        <label for="add-empPassportNo">
+                            Passport Number
+                        </label>
 
-                <fieldset class="emp-fieldset" id="experiences-section">
-                    <legend class="emp-legend">Experiences</legend>
-                    <div id="experiences-container"></div>
-                </fieldset>
+                        <input
+                                type="text"
+                                id="add-empPassportNo"
+                                class="detail-input w-100"
+                                maxlength="100"
+                        >
+                    </div>
 
-                <fieldset class="emp-fieldset" id="contacts-section">
-                    <legend class="emp-legend">Emergency Contacts</legend>
-                    <div id="contacts-container"></div>
-                </fieldset>
+                    <div class="form-group">
+                        <label for="add-empPassportExpiry">
+                            Passport Expiry Date
+                        </label>
 
-                <fieldset class="emp-fieldset" id="documents-section">
-                    <legend class="emp-legend">Other Documents</legend>
-                    <div id="documents-container"></div>
-                </fieldset>
+                        <input
+                                type="date"
+                                id="add-empPassportExpiry"
+                                class="detail-input w-100"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empWorkPermit">
+                            Work Permit Number
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empWorkPermit"
+                                class="detail-input w-100"
+                                maxlength="100"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empWorkPermitExpiry">
+                            Work Permit Expiry Date
+                        </label>
+
+                        <input
+                                type="date"
+                                id="add-empWorkPermitExpiry"
+                                class="detail-input w-100"
+                        >
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 6: CONTACT DETAILS                            -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Contact Details</legend>
+
+                <div class="emp-grid emp-grid-4 mb-2">
+                    <div class="form-group">
+                        <label for="add-empEmail">
+                            Official Email
+                        </label>
+
+                        <input
+                                type="email"
+                                id="add-empEmail"
+                                class="detail-input w-100"
+                                data-validation-label="Official Email"
+                                maxlength="150"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empPersonalEmail">
+                            Personal Email
+                        </label>
+
+                        <input
+                                type="email"
+                                id="add-empPersonalEmail"
+                                class="detail-input w-100"
+                                maxlength="150"
+                        >
+                    </div>
+
+                    <div class="form-group emp-required-field">
+                        <label for="add-empPhone">
+                            Mobile Number
+                        </label>
+
+                        <input
+                                type="tel"
+                                id="add-empPhone"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Mobile Number"
+                                maxlength="30"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empAlternatePhone">
+                            Alternate Mobile
+                        </label>
+
+                        <input
+                                type="tel"
+                                id="add-empAlternatePhone"
+                                class="detail-input w-100"
+                                maxlength="30"
+                        >
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 7: ADDRESS                                    -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Residential Address</legend>
+
+                <div class="emp-grid emp-grid-3 mb-3">
+                    <div class="form-group">
+                        <label for="add-empCountry">
+                            Country
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empCountry"
+                                class="detail-input w-100"
+                                maxlength="100"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empState">
+                            State / Region
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empState"
+                                class="detail-input w-100"
+                                maxlength="100"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empDistrict">
+                            District
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empDistrict"
+                                class="detail-input w-100"
+                                maxlength="100"
+                        >
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-4 mb-3">
+                    <div class="form-group">
+                        <label for="add-empCounty">
+                            County
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empCounty"
+                                class="detail-input w-100"
+                                maxlength="100"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empSubCounty">
+                            Sub-County (LC-III)
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empSubCounty"
+                                class="detail-input w-100"
+                                maxlength="100"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empParish">
+                            Parish (LC-II)
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empParish"
+                                class="detail-input w-100"
+                                maxlength="100"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empVillage">
+                            Village (LC-I)
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empVillage"
+                                class="detail-input w-100"
+                                maxlength="150"
+                        >
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-2 mb-2">
+                    <div class="form-group">
+                        <label for="add-empStreet">
+                            Street / Address Line
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empStreet"
+                                class="detail-input w-100"
+                                maxlength="255"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empPostalCode">
+                            Postal Code
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-empPostalCode"
+                                class="detail-input w-100"
+                                maxlength="30"
+                        >
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 8: PROFESSIONAL PROFILE                       -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Professional Profile</legend>
+
+                <div class="emp-grid emp-grid-2 mb-3">
+                    <div class="form-group">
+                        <label for="add-empSkills">
+                            Skills
+                        </label>
+
+                        <textarea
+                                id="add-empSkills"
+                                class="detail-input w-100"
+                                rows="3"
+                                placeholder="Example: Project Management, Accounting, Teaching"
+                        ></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empLanguages">
+                            Languages Spoken
+                        </label>
+
+                        <textarea
+                                id="add-empLanguages"
+                                class="detail-input w-100"
+                                rows="3"
+                                placeholder="Example: English, Luganda, Swahili"
+                        ></textarea>
+                    </div>
+                </div>
+
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 9: QUALIFICATIONS                             -->
+            <!-- ===================================================== -->
+
+            <fieldset
+                    class="emp-fieldset"
+                    id="qualifications-section"
+            >
+                <legend class="emp-legend">
+                    Qualifications
+                </legend>
+
+                <div id="qualifications-container"></div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 10: PREVIOUS EXPERIENCE                       -->
+            <!-- ===================================================== -->
+
+            <fieldset
+                    class="emp-fieldset"
+                    id="experiences-section"
+            >
+                <legend class="emp-legend">
+                    Previous Experience
+                </legend>
+
+                <div id="experiences-container"></div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 11: EMERGENCY CONTACTS                        -->
+            <!-- ===================================================== -->
+
+            <fieldset
+                    class="emp-fieldset"
+                    id="contacts-section"
+            >
+                <legend class="emp-legend">
+                    Emergency Contacts
+                </legend>
+
+                <div id="contacts-container"></div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 12: SUPPORTING DOCUMENTS                      -->
+            <!-- ===================================================== -->
+
+            <fieldset
+                    class="emp-fieldset"
+                    id="documents-section"
+            >
+                <legend class="emp-legend">
+                    Supporting Documents
+                </legend>
+
+                <div id="documents-container"></div>
+            </fieldset>
+
+            <!-- Submit Actions -->
+            <div class="action-btn-group emp-form-actions">
+                <button
+                        type="submit"
+                        class="btn btn-primary"
+                >
+                    <i class="bi bi-check-lg"></i>
+                    Register Employee
+                </button>
             </div>
         </div>
-        <div class="action-btn-group">
-            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg"></i> Register Employee</button>
-        </div>
     </form>
+    <!-- ===================================================== -->
+    <!-- EMPLOYEE BACKEND REGISTRATION PROGRESS DIALOG          -->
+    <!-- Opens only after frontend validation is successful     -->
+    <!-- ===================================================== -->
+
+    <div
+            id="employee-registration-modal"
+            class="emp-registration-modal hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="employee-registration-title"
+            aria-describedby="employee-registration-message"
+    >
+        <div class="emp-registration-backdrop"></div>
+
+        <div class="emp-registration-dialog">
+
+            <!-- Dialog Header -->
+            <div class="emp-registration-header">
+                <div class="emp-registration-header-content">
+                    <div
+                            id="employee-registration-status-icon"
+                            class="emp-registration-main-icon is-processing"
+                            aria-hidden="true"
+                    >
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+
+                    <div>
+                        <h3 id="employee-registration-title">
+                            Registering Employee
+                        </h3>
+
+                        <p
+                                id="employee-registration-employee-name"
+                                class="emp-registration-employee-name"
+                        >
+                            Preparing employee information
+                        </p>
+                    </div>
+                </div>
+
+                <button
+                        type="button"
+                        id="employee-registration-close-btn"
+                        class="emp-registration-close-btn hidden"
+                        aria-label="Close registration dialog"
+                >
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <!-- Processing View -->
+            <div
+                    id="employee-registration-processing-view"
+                    class="emp-registration-view"
+            >
+                <!-- Percentage -->
+                <div class="emp-registration-progress-heading">
+                    <span>Registration Progress</span>
+
+                    <strong id="employee-registration-percentage">
+                        0%
+                    </strong>
+                </div>
+
+                <!-- Progress Bar -->
+                <div
+                        id="employee-registration-progress"
+                        class="emp-registration-progress"
+                        role="progressbar"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        aria-valuenow="0"
+                        aria-label="Employee registration progress"
+                >
+                    <div
+                            id="employee-registration-progress-fill"
+                            class="emp-registration-progress-fill"
+                    ></div>
+                </div>
+
+                <!-- Tab / Stage Bar -->
+                <ol
+                        id="employee-registration-steps"
+                        class="emp-registration-steps"
+                        aria-label="Employee registration stages"
+                >
+                    <!-- Step 1 -->
+                    <li
+                            class="emp-registration-step is-waiting"
+                            data-stage="REQUEST_ACCEPTED"
+                    >
+                    <span class="emp-registration-step-icon">
+                        <i class="bi bi-circle"></i>
+                    </span>
+
+                        <span class="emp-registration-step-label">
+                        Request
+                    </span>
+                    </li>
+
+                    <!-- Step 2 -->
+                    <li
+                            class="emp-registration-step is-waiting"
+                            data-stage="SERVER_VALIDATION"
+                    >
+                    <span class="emp-registration-step-icon">
+                        <i class="bi bi-circle"></i>
+                    </span>
+
+                        <span class="emp-registration-step-label">
+                        Validation
+                    </span>
+                    </li>
+
+                    <!-- Step 3 -->
+                    <li
+                            class="emp-registration-step is-waiting"
+                            data-stage="EMPLOYEE_CREATION"
+                    >
+                    <span class="emp-registration-step-icon">
+                        <i class="bi bi-circle"></i>
+                    </span>
+
+                        <span class="emp-registration-step-label">
+                        Employee
+                    </span>
+                    </li>
+
+                    <!-- Step 4 -->
+                    <li
+                            class="emp-registration-step is-waiting"
+                            data-stage="RELATED_RECORDS"
+                    >
+                    <span class="emp-registration-step-icon">
+                        <i class="bi bi-circle"></i>
+                    </span>
+
+                        <span class="emp-registration-step-label">
+                        Records
+                    </span>
+                    </li>
+
+                    <!-- Step 5 -->
+                    <li
+                            class="emp-registration-step is-waiting"
+                            data-stage="REPORTING_MANAGER"
+                    >
+                    <span class="emp-registration-step-icon">
+                        <i class="bi bi-circle"></i>
+                    </span>
+
+                        <span class="emp-registration-step-label">
+                        Manager
+                    </span>
+                    </li>
+
+                    <!-- Step 6 -->
+                    <li
+                            class="emp-registration-step is-waiting"
+                            data-stage="LOGIN_ACCOUNT"
+                    >
+                    <span class="emp-registration-step-icon">
+                        <i class="bi bi-circle"></i>
+                    </span>
+
+                        <span class="emp-registration-step-label">
+                        Account
+                    </span>
+                    </li>
+
+                    <!-- Step 7 -->
+                    <li
+                            class="emp-registration-step is-waiting"
+                            data-stage="FINALIZATION"
+                    >
+                    <span class="emp-registration-step-icon">
+                        <i class="bi bi-circle"></i>
+                    </span>
+
+                        <span class="emp-registration-step-label">
+                        Complete
+                    </span>
+                    </li>
+                </ol>
+
+                <!-- Current Backend Process -->
+                <div class="emp-registration-current-process">
+                    <div class="emp-registration-spinner" aria-hidden="true">
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+
+                    <div>
+                        <strong id="employee-registration-stage-title">
+                            Preparing registration
+                        </strong>
+
+                        <p
+                                id="employee-registration-message"
+                                aria-live="polite"
+                        >
+                            Preparing employee information for registration.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Optional Child Record Progress -->
+                <div
+                        id="employee-registration-item-progress"
+                        class="emp-registration-item-progress hidden"
+                >
+                <span id="employee-registration-item-message">
+                    Processing records
+                </span>
+
+                    <strong>
+                        <span id="employee-registration-completed-items">0</span>
+                        /
+                        <span id="employee-registration-total-items">0</span>
+                    </strong>
+                </div>
+
+                <!-- Operation Reference -->
+                <div
+                        id="employee-registration-operation-wrapper"
+                        class="emp-registration-operation hidden"
+                >
+                    <span>Operation Reference</span>
+
+                    <code id="employee-registration-operation-id"></code>
+                </div>
+
+                <p class="emp-registration-lock-message">
+                    Do not refresh or close this page while registration is in progress.
+                </p>
+            </div>
+
+            <!-- Success View -->
+            <div
+                    id="employee-registration-success-view"
+                    class="emp-registration-view hidden"
+                    aria-live="polite"
+            >
+                <div class="emp-registration-result-icon is-success">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+
+                <h3>Employee Registered Successfully</h3>
+
+                <p id="employee-registration-success-message">
+                    Employee registration has been completed.
+                </p>
+
+                <div class="emp-registration-result-details">
+                    <div>
+                        <span>Employee</span>
+
+                        <strong id="employee-registration-result-name">
+                            -
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Employee Number</span>
+
+                        <strong id="employee-registration-result-number">
+                            -
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Department</span>
+
+                        <strong id="employee-registration-result-department">
+                            -
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Designation</span>
+
+                        <strong id="employee-registration-result-designation">
+                            -
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Reporting Manager</span>
+
+                        <strong id="employee-registration-result-manager">
+                            Not assigned
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Login Account</span>
+
+                        <strong id="employee-registration-result-login">
+                            Not requested
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="emp-registration-actions">
+                    <button
+                            type="button"
+                            id="employee-registration-view-btn"
+                            class="btn btn-primary"
+                    >
+                        <i class="bi bi-person-vcard"></i>
+                        View Employee
+                    </button>
+
+                    <button
+                            type="button"
+                            id="employee-registration-add-another-btn"
+                            class="btn btn-secondary"
+                    >
+                        <i class="bi bi-person-plus"></i>
+                        Add Another
+                    </button>
+
+                    <button
+                            type="button"
+                            id="employee-registration-list-btn"
+                            class="btn btn-secondary"
+                    >
+                        <i class="bi bi-people"></i>
+                        Employee List
+                    </button>
+                </div>
+            </div>
+
+            <!-- Failure View -->
+            <div
+                    id="employee-registration-failure-view"
+                    class="emp-registration-view hidden"
+                    aria-live="assertive"
+            >
+                <div class="emp-registration-result-icon is-failed">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+
+                <h3>Employee Registration Failed</h3>
+
+                <p id="employee-registration-failure-message">
+                    Employee registration could not be completed.
+                </p>
+
+                <div class="emp-registration-failure-details">
+                    <div>
+                        <span>Failed Stage</span>
+
+                        <strong id="employee-registration-failed-stage">
+                            -
+                        </strong>
+                    </div>
+
+                    <div>
+                        <span>Progress Reached</span>
+
+                        <strong id="employee-registration-failed-percentage">
+                            0%
+                        </strong>
+                    </div>
+                </div>
+
+                <div
+                        id="employee-registration-error-container"
+                        class="emp-registration-error-container"
+                >
+                    <strong>Reason</strong>
+
+                    <ul id="employee-registration-error-list">
+                        <li>An unexpected registration error occurred.</li>
+                    </ul>
+                </div>
+
+                <p class="emp-registration-rollback-message">
+                    Incomplete database records and temporary files will be rolled back.
+                </p>
+
+                <div class="emp-registration-actions">
+                    <button
+                            type="button"
+                            id="employee-registration-return-btn"
+                            class="btn btn-secondary"
+                    >
+                        <i class="bi bi-arrow-left"></i>
+                        Return to Form
+                    </button>
+
+                    <button
+                            type="button"
+                            id="employee-registration-retry-btn"
+                            class="btn btn-primary"
+                    >
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Try Again
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
 </div>

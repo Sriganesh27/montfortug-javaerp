@@ -1,35 +1,314 @@
 <div id="superadmin-add-branch-view">
     <div class="view-header">
-        <h2>Add New Branch</h2>
-        <button id="backToBranchesBtn" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Branches</button>
+        <div>
+            <h2>Add New Branch</h2>
+            <p class="text-muted branch-page-subtitle">
+                Create the branch profile, official address, communication details and assigned education levels.
+            </p>
+        </div>
+
+        <button id="backToBranchesBtn" type="button" class="btn-secondary">
+            <i class="bi bi-arrow-left" aria-hidden="true"></i>
+            Back to Branches
+        </button>
     </div>
 
-    <!-- Restored the original form exactly as you had it -->
-    <form id="add-branch-full-form" enctype="multipart/form-data">
+    <form id="add-branch-full-form" enctype="multipart/form-data" novalidate>
+        <div
+                id="add-branch-validation-summary"
+                class="branch-form-validation-summary hidden"
+                role="alert"
+                aria-live="assertive"
+        >
+            <div class="branch-form-validation-heading">
+                <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+                <strong>Please correct the highlighted information.</strong>
+            </div>
+            <ul id="add-branch-validation-list"></ul>
+        </div>
 
-        <div class="card add-branch-card">
-            <h3 class="card-header">General Information</h3>
-            <div class="detail-grid">
-                <!-- Added "for" attributes to link labels to inputs -->
-                <div class="form-group"><label for="add-schoolName">School Name</label><input type="text" id="add-schoolName" required /></div>
-                <div class="form-group"><label for="add-schoolCode">School Code</label><input type="text" id="add-schoolCode" placeholder="e.g. U011" required /></div>
-                <div class="form-group"><label for="add-foundationDate">Foundation Date</label><input type="date" id="add-foundationDate" required /></div>
-                <div class="form-group"><label for="add-location">Location</label><input type="text" id="add-location" required /></div>
-                <div class="form-group"><label for="add-contact">Contact Details</label><input type="text" id="add-contact" required /></div>
+        <section class="card add-branch-card" aria-labelledby="branch-general-heading">
+            <div class="branch-card-heading-row">
+                <div>
+                    <h3 id="branch-general-heading" class="card-header">General Information</h3>
+                    <p class="branch-card-description">
+                        Enter the official school identity and assign the education levels offered by this branch.
+                    </p>
+                </div>
+                <span class="branch-required-note">Fields marked * are required</span>
+            </div>
 
-                <!-- PURE DYNAMIC LEVELS INJECTED HERE -->
-                <div class="form-group">
-                    <label>Assigned Levels</label>
-                    <div class="checkbox-group level-checkbox-group" id="add-branchLevels">
+            <div class="branch-form-grid branch-form-grid--2">
+                <div class="form-group branch-form-field branch-span-2">
+                    <label for="add-schoolName" class="branch-required-label">School Name</label>
+                    <input
+                            type="text"
+                            id="add-schoolName"
+                            autocomplete="organization"
+                            placeholder="Example: St. Montfort Nursery and Primary School"
+                            maxlength="200"
+                            required
+                    >
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-schoolCode" class="branch-required-label">School Code</label>
+                    <input
+                            type="text"
+                            id="add-schoolCode"
+                            placeholder="Example: U011"
+                            maxlength="20"
+                            autocomplete="off"
+                            required
+                    >
+                    <small class="branch-field-hint">Use a unique short code without spaces.</small>
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-foundationDate" class="branch-required-label">Foundation Date</label>
+                    <input type="date" id="add-foundationDate" required>
+                </div>
+
+                <div class="form-group branch-form-field branch-span-2">
+                    <label class="branch-required-label">Assigned Levels</label>
+                    <div
+                            class="checkbox-group level-checkbox-group branch-level-options"
+                            id="add-branchLevels"
+                            role="group"
+                            aria-label="Assigned education levels"
+                    >
                         <span class="loading-text">Loading database levels...</span>
+                    </div>
+                    <small class="branch-field-hint">Select at least one education level.</small>
+                </div>
+            </div>
+        </section>
+
+        <section class="card add-branch-card" aria-labelledby="branch-address-heading">
+            <div class="branch-card-heading-row">
+                <div>
+                    <h3 id="branch-address-heading" class="card-header">Official Address</h3>
+                    <p class="branch-card-description">
+                        These structured details will appear on emails, receipts, reports and official letters.
+                    </p>
+                </div>
+                <i class="bi bi-geo-alt-fill branch-card-heading-icon" aria-hidden="true"></i>
+            </div>
+
+            <div class="branch-address-example" aria-label="Address example">
+                <i class="bi bi-info-circle" aria-hidden="true"></i>
+                <span>
+                    Example: Mpala Catholic Church Campus, P.O. Box 51, Mpala, Entebbe, Uganda
+                </span>
+            </div>
+
+            <div class="branch-form-grid branch-form-grid--2">
+                <div class="form-group branch-form-field">
+                    <label for="add-shortLocation" class="branch-required-label">Short Location</label>
+                    <input
+                            type="text"
+                            id="add-shortLocation"
+                            placeholder="Example: Mpala, Entebbe"
+                            maxlength="255"
+                            required
+                    >
+                    <small class="branch-field-hint">Used in tables and branch dropdowns.</small>
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-addressLine1" class="branch-required-label">Campus / Address Line 1</label>
+                    <input
+                            type="text"
+                            id="add-addressLine1"
+                            placeholder="Example: Mpala Catholic Church Campus"
+                            maxlength="255"
+                            autocomplete="address-line1"
+                            required
+                    >
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-addressLine2">Address Line 2</label>
+                    <input
+                            type="text"
+                            id="add-addressLine2"
+                            placeholder="Building, road or nearby landmark"
+                            maxlength="255"
+                            autocomplete="address-line2"
+                    >
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-poBox">P.O. Box</label>
+                    <input
+                            type="text"
+                            id="add-poBox"
+                            placeholder="Example: P.O. Box 51"
+                            maxlength="100"
+                    >
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-locality">Locality / Town</label>
+                    <input
+                            type="text"
+                            id="add-locality"
+                            placeholder="Example: Mpala"
+                            maxlength="150"
+                            autocomplete="address-level3"
+                    >
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-city">City / Municipality</label>
+                    <input
+                            type="text"
+                            id="add-city"
+                            placeholder="Example: Entebbe"
+                            maxlength="150"
+                            autocomplete="address-level2"
+                    >
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-district">District</label>
+                    <input
+                            type="text"
+                            id="add-district"
+                            placeholder="Enter district"
+                            maxlength="150"
+                            autocomplete="address-level1"
+                    >
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-region">Region</label>
+                    <select id="add-region">
+                        <option value="">-- Select Region --</option>
+                        <option value="CENTRAL">Central</option>
+                        <option value="EASTERN">Eastern</option>
+                        <option value="NORTHERN">Northern</option>
+                        <option value="WESTERN">Western</option>
+                    </select>
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-country" class="branch-required-label">Country</label>
+                    <input
+                            type="text"
+                            id="add-country"
+                            value="Uganda"
+                            maxlength="100"
+                            autocomplete="country-name"
+                            required
+                    >
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-postalCode">Postal Code</label>
+                    <input
+                            type="text"
+                            id="add-postalCode"
+                            placeholder="Enter postal code when available"
+                            maxlength="30"
+                            autocomplete="postal-code"
+                    >
+                </div>
+            </div>
+        </section>
+
+        <section class="card add-branch-card branch-communication-card" aria-labelledby="branch-communication-heading">
+            <div class="branch-card-heading-row">
+                <div>
+                    <h3 id="branch-communication-heading" class="card-header">Communication and Email Identity</h3>
+                    <p class="branch-card-description">
+                        These details will be used for employee credentials, admission notices, receipts and branch communication.
+                    </p>
+                </div>
+                <i class="bi bi-envelope-at-fill branch-card-heading-icon" aria-hidden="true"></i>
+            </div>
+
+            <div class="branch-form-grid branch-form-grid--2">
+                <div class="form-group branch-form-field">
+                    <label for="add-primaryPhone" class="branch-required-label">Phone Number 1</label>
+                    <div class="branch-input-with-icon">
+                        <i class="bi bi-telephone-fill" aria-hidden="true"></i>
+                        <input
+                                type="tel"
+                                id="add-primaryPhone"
+                                placeholder="Example: +256 700 000 001"
+                                maxlength="30"
+                                autocomplete="tel"
+                                required
+                        >
+                    </div>
+                    <small class="branch-field-hint">This is the primary public contact number.</small>
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-secondaryPhone">Phone Number 2</label>
+                    <div class="branch-input-with-icon">
+                        <i class="bi bi-telephone" aria-hidden="true"></i>
+                        <input
+                                type="tel"
+                                id="add-secondaryPhone"
+                                placeholder="Example: +256 750 000 002"
+                                maxlength="30"
+                                autocomplete="tel"
+                        >
                     </div>
                 </div>
 
-            </div>
-        </div>
+                <div class="form-group branch-form-field">
+                    <label for="add-whatsappPhone">Which Number Has WhatsApp?</label>
+                    <div class="branch-input-with-icon branch-whatsapp-select">
+                        <i class="bi bi-whatsapp" aria-hidden="true"></i>
+                        <select id="add-whatsappPhone">
+                            <option value="NONE">No WhatsApp number</option>
+                            <option value="PRIMARY">Phone Number 1</option>
+                            <option value="SECONDARY">Phone Number 2</option>
+                            <option value="BOTH">Both phone numbers</option>
+                        </select>
+                    </div>
+                    <small class="branch-field-hint">The selected number can be displayed as the branch WhatsApp contact.</small>
+                </div>
 
-        <div class="card add-branch-card">
-            <h3 class="card-header">Incharge Details</h3>
+                <div class="form-group branch-form-field">
+                    <label for="add-branchEmail" class="branch-required-label">Official Branch Email</label>
+                    <div class="branch-input-with-icon">
+                        <i class="bi bi-envelope-fill" aria-hidden="true"></i>
+                        <input
+                                type="email"
+                                id="add-branchEmail"
+                                placeholder="Example: mpala@montfortbrothersuganda.com"
+                                maxlength="150"
+                                autocomplete="email"
+                                required
+                        >
+                    </div>
+                    <small class="branch-field-hint">Used as the Reply-To address for branch emails.</small>
+                </div>
+            </div>
+
+            <div class="branch-email-identity-note">
+                <i class="bi bi-shield-check" aria-hidden="true"></i>
+                <div>
+                    <strong>Email sending identity</strong>
+                    <p>
+                        The system will use the school name as the sender display name and this branch email as the Reply-To address. SMTP passwords will not be stored in the branch table.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section class="card add-branch-card" aria-labelledby="branch-incharge-heading">
+            <div class="branch-card-heading-row">
+                <div>
+                    <h3 id="branch-incharge-heading" class="card-header">Incharge Details</h3>
+                    <p class="branch-card-description">Add the principal, head teacher, administrator or other responsible persons.</p>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="data-table" id="incharge-table">
                     <thead>
@@ -40,59 +319,131 @@
                         <th class="col-action">Remove</th>
                     </tr>
                     </thead>
-                    <tbody id="incharge-tbody">
-                    </tbody>
+                    <tbody id="incharge-tbody"></tbody>
                 </table>
             </div>
-            <button type="button" id="addInchargeRowBtn" class="btn-outline-primary"><i class="bi bi-plus-circle"></i> Add Another Person</button>
-        </div>
 
-        <div class="card add-branch-card">
-            <h3 class="card-header">Documents & Media</h3>
-            <div class="detail-grid">
+            <button type="button" id="addInchargeRowBtn" class="btn-outline-primary branch-add-person-btn">
+                <i class="bi bi-plus-circle" aria-hidden="true"></i>
+                Add Another Person
+            </button>
+        </section>
 
-                <!-- 1. School Photo -->
-                <div class="form-group">
-                    <label for="add-photo">School Photo</label>
-                    <div class="upload-zone">
-                        <input type="file" id="add-photo" class="file-hidden-input" accept="image/png, image/jpeg" />
-                        <div class="upload-content">
-                            <i class="bi bi-image text-blue"></i>
-                            <span class="upload-title">Click or drag photo here</span>
-                            <span class="upload-subtitle">JPG/PNG up to 100KB</span>
-                        </div>
-                    </div>
+        <section class="card add-branch-card" aria-labelledby="branch-documents-heading">
+            <div class="branch-card-heading-row">
+                <div>
+                    <h3 id="branch-documents-heading" class="card-header">Documents and Media</h3>
+                    <p class="branch-card-description">Upload the school photograph and available government or registration documents.</p>
                 </div>
-
-                <!-- 2. Government Document -->
-                <div class="form-group">
-                    <label for="add-doc">Government Document</label>
-                    <div class="upload-zone">
-                        <input type="file" id="add-doc" class="file-hidden-input" accept="image/png, image/jpeg, application/pdf" multiple />
-                        <div class="upload-content">
-                            <i class="bi bi-file-earmark-pdf text-orange"></i>
-                            <span class="upload-title">Click or drag document here</span>
-                            <span class="upload-subtitle">PDF, JPG/PNG up to 2MB</span>
-                        </div>
-                    </div>
-                </div>
-
             </div>
-        </div>
 
-        <div class="form-actions add-branch-actions">
-            <button type="submit" class="btn-primary btn-large"><i class="bi bi-save"></i> Save New Branch</button>
+            <div class="branch-form-grid branch-form-grid--3">
+                <div class="form-group branch-form-field">
+                    <label for="add-logo">Branch Logo</label>
+                    <div class="upload-zone branch-upload-zone branch-logo-upload-zone">
+                        <input
+                                type="file"
+                                id="add-logo"
+                                class="file-hidden-input"
+                                accept="image/png,image/jpeg"
+                        >
+                        <div class="upload-content">
+                            <i class="bi bi-building text-blue" aria-hidden="true"></i>
+                            <span class="upload-title">Click or drag logo here</span>
+                            <span class="upload-subtitle">Transparent PNG preferred; JPG or PNG, maximum 500 KB</span>
+                        </div>
+                    </div>
+                    <small class="branch-field-note">Used in emails, receipts, reports, letters and branch documents.</small>
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-photo">School Photo</label>
+                    <div class="upload-zone branch-upload-zone">
+                        <input
+                                type="file"
+                                id="add-photo"
+                                class="file-hidden-input"
+                                accept="image/png,image/jpeg"
+                        >
+                        <div class="upload-content">
+                            <i class="bi bi-image text-blue" aria-hidden="true"></i>
+                            <span class="upload-title">Click or drag photo here</span>
+                            <span class="upload-subtitle">JPG or PNG, maximum 100 KB</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-doc">Government Documents</label>
+                    <div class="upload-zone branch-upload-zone">
+                        <input
+                                type="file"
+                                id="add-doc"
+                                class="file-hidden-input"
+                                accept="image/png,image/jpeg,application/pdf"
+                                multiple
+                        >
+                        <div class="upload-content">
+                            <i class="bi bi-file-earmark-pdf text-orange" aria-hidden="true"></i>
+                            <span class="upload-title">Click or drag documents here</span>
+                            <span class="upload-subtitle">PDF up to 2 MB; JPG or PNG up to 100 KB each</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <div class="form-actions add-branch-actions branch-sticky-actions">
+            <button type="button" id="cancelAddBranchBtn" class="btn-secondary btn-large">
+                <i class="bi bi-x-circle" aria-hidden="true"></i>
+                Cancel
+            </button>
+
+            <button type="submit" class="btn-primary btn-large">
+                <i class="bi bi-save" aria-hidden="true"></i>
+                Save New Branch
+            </button>
         </div>
     </form>
 
-    <!-- Hidden Template for New Rows -->
     <template id="incharge-row-template">
         <tr>
-            <!-- Added aria-labels to fix missing label warnings in table cells -->
-            <td><input type="text" class="incharge-input incharge-name" placeholder="Name" aria-label="Incharge Name"></td>
-            <td><input type="text" class="incharge-input incharge-role" placeholder="Role" aria-label="Incharge Role"></td>
-            <td><input type="text" class="incharge-input incharge-phone" placeholder="Phone" aria-label="Incharge Phone"></td>
-            <td><button type="button" class="action-btn delete-btn remove-incharge-btn" aria-label="Remove Row"><i class="bi bi-trash"></i></button></td>
+            <td>
+                <input
+                        type="text"
+                        class="incharge-input incharge-name"
+                        placeholder="Full name"
+                        aria-label="Incharge full name"
+                        maxlength="150"
+                >
+            </td>
+            <td>
+                <input
+                        type="text"
+                        class="incharge-input incharge-role"
+                        placeholder="Role or position"
+                        aria-label="Incharge role"
+                        maxlength="100"
+                >
+            </td>
+            <td>
+                <input
+                        type="tel"
+                        class="incharge-input incharge-phone"
+                        placeholder="Phone number"
+                        aria-label="Incharge phone"
+                        maxlength="30"
+                >
+            </td>
+            <td>
+                <button
+                        type="button"
+                        class="action-btn delete-btn remove-incharge-btn"
+                        aria-label="Remove incharge row"
+                >
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                </button>
+            </td>
         </tr>
     </template>
 </div>

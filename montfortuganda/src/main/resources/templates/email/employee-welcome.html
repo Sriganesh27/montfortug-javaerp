@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Welcome to the Team</title>
-
-    <!-- This automatically imports the CSS from email-theme.html -->
     <th:block th:replace="~{email/email-theme :: styles}"></th:block>
 </head>
 <body>
@@ -13,86 +11,119 @@
 <table class="email-wrapper" border="0" cellspacing="0" cellpadding="0">
     <tr>
         <td align="center">
-
             <table class="email-container" border="0" cellspacing="0" cellpadding="0">
 
-                <!-- Premium Header (Side-by-Side Layout) -->
                 <tr>
                     <td class="email-header" align="center">
                         <table border="0" cellspacing="0" cellpadding="0" width="100%">
                             <tr>
-                                <!-- Left side: Logo -->
                                 <td width="100" align="center" valign="middle">
-                                    <img th:src="${#strings.contains(frontendUrl, 'localhost') ? 'https://via.placeholder.com/120x120.png?text=Montfort+Logo' : frontendUrl + '/assets/Images/logo_MBSG_UG_8.webp'}" alt="School Logo" class="email-header-logo">
+                                    <img th:src="${schoolLogo}"
+                                         alt="School Logo"
+                                         class="email-header-logo">
                                 </td>
 
-                                <!-- Right side: Typography -->
                                 <td align="left" valign="middle" class="email-header-text-container">
-                                    <p class="email-header-supertitle">Montfort Brothers of St. Gabriel, Uganda</p>
-                                    <h1 class="email-header-title" th:text="${schoolName}">Montfort School</h1>
-                                    <p class="email-header-subtitle">Human Resources Department</p>
+                                    <p class="email-header-supertitle">
+                                        Montfort Brothers of St. Gabriel, Uganda
+                                    </p>
+                                    <h1 class="email-header-title"
+                                        th:text="${schoolName}">
+                                        Montfort School
+                                    </h1>
+                                    <p class="email-header-subtitle">
+                                        Human Resources Department
+                                    </p>
                                 </td>
                             </tr>
                         </table>
                     </td>
                 </tr>
 
-                <!-- Body Content -->
                 <tr>
                     <td class="email-body">
-                        <p class="email-greeting">Dear <span th:text="${employeeName}">Employee</span>,</p>
-
-                        <p class="email-text">
-                            Welcome to the team! Your employee profile and system account have been successfully created. 
-                            You can use the credentials below to log into the ERP system.
+                        <p class="email-greeting">
+                            Dear
+                            <span th:text="${employeeName}">
+                                Employee
+                            </span>,
                         </p>
 
-                        <!-- Highlighted Reference Number Box -->
-                        <table class="email-ref-box" border="0" cellspacing="0" cellpadding="0" width="100%">
+                        <p class="email-text">
+                            Welcome to the team! Your employee profile and system
+                            account have been successfully created. Use the
+                            credentials below to log into the ERP system.
+                        </p>
+
+                        <table class="email-ref-box"
+                               border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%">
                             <tr>
                                 <td align="center">
-                                    <p class="email-ref-label">Your Username</p>
-                                    <h2 class="email-ref-value" th:text="${username}">EMP-1234</h2>
+                                    <p class="email-ref-label">
+                                        Your Username
+                                    </p>
+                                    <h2 class="email-ref-value"
+                                        th:text="${username}">
+                                        EMP-1234
+                                    </h2>
                                 </td>
                             </tr>
                             <tr>
                                 <td align="center" style="padding-top: 15px;">
-                                    <p class="email-ref-label">Temporary Password</p>
-                                    <h3 style="color: #1f2937; margin-top: 5px; font-family: monospace; font-size: 1.2rem; letter-spacing: 1px;" th:text="${tempPassword}">T3mp@P4ss!</h3>
+                                    <p class="email-ref-label">
+                                        Temporary Password
+                                    </p>
+                                    <h3 class="email-password-value"
+                                        th:text="${tempPassword}">
+                                        T3mp@P4ss!
+                                    </h3>
                                 </td>
                             </tr>
                         </table>
 
                         <p class="email-text">
-                            <strong>Security Notice:</strong> Please ensure you change this temporary password immediately upon your first login to secure your account.
+                            <strong>Security Notice:</strong>
+                            Change this temporary password immediately after
+                            your first login.
                         </p>
 
-                        <!-- Call to Action Button -->
-                        <table class="email-button-container" border="0" cellspacing="0" cellpadding="0" width="100%">
+                        <table class="email-button-container"
+                               border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%">
                             <tr>
                                 <td align="center">
-                                    <a th:href="${frontendUrl + '/mbsg-auth'}" class="email-button" target="_blank">Login to ERP System</a>
+                                    <a th:href="${loginUrl}"
+                                       class="email-button"
+                                       target="_blank">
+                                        Login to ERP System
+                                    </a>
                                 </td>
                             </tr>
                         </table>
-
                     </td>
                 </tr>
 
-                <!-- Footer -->
                 <tr>
                     <td class="email-footer" align="center">
                         <p class="email-footer-text">
-                            This is an automated message from the ERP HR System. Please do not reply to this email.
+                            This is an automated message from the ERP HR System.
+                            Please do not reply to this email.
                         </p>
                         <p class="email-footer-copyright">
-                            &copy; <span th:text="${currentYear}">2026</span> <span th:text="${schoolName}">School Name</span>. All rights reserved.
+                            &copy;
+                            <span th:text="${currentYear}">2026</span>
+                            <span th:text="${schoolName}">School Name</span>.
+                            All rights reserved.
                         </p>
                     </td>
                 </tr>
 
             </table>
-
         </td>
     </tr>
 </table>

@@ -1,118 +1,720 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Both pages use the same script, but have different form IDs
-    const loginForm = document.getElementById('loginForm');           // The Public Form
-    const secureForm = document.getElementById('secureAuthForm');     // The Secret Admin Form
+document.addEventListener('DOMContentLoaded', () => {
+    const publicLoginForm =
+        document.getElementById('loginForm');
 
-    // We attach the listener to whichever form exists on the current page
-    const activeForm = loginForm || secureForm;
+    const secureLoginForm =
+        document.getElementById('secureAuthForm');
 
-    const errorMessage = document.getElementById('errorMessage');
-    const passwordInput = document.getElementById('password');
-    const loginBtn = document.getElementById('loginBtn');
-    const btnText = loginBtn ? loginBtn.querySelector('.btn-text') : null;
+    const activeLoginForm =
+        publicLoginForm || secureLoginForm;
 
-    // 1. Password Visibility Toggle Logic
-    const togglePassword = document.getElementById('toggle-password');
-    const eyeIcon = document.getElementById('eye-icon');
+    const loginPanel =
+        document.getElementById('loginPanel');
 
-    if (togglePassword && eyeIcon) {
-        togglePassword.addEventListener('click', function() {
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.className = 'bi bi-eye';
+    const temporaryPasswordPanel =
+        document.getElementById(
+            'temporaryPasswordPanel'
+        );
+
+    const passwordChangeForm =
+        document.getElementById(
+            'temporaryPasswordChangeForm'
+        );
+
+    const loginMessage =
+        document.getElementById('errorMessage');
+
+    const passwordChangeMessage =
+        document.getElementById(
+            'passwordChangeMessage'
+        );
+
+    const usernameInput =
+        document.getElementById('username');
+
+    const passwordInput =
+        document.getElementById('password');
+
+    const newPasswordInput =
+        document.getElementById('newPassword');
+
+    const confirmPasswordInput =
+        document.getElementById(
+            'confirmPassword'
+        );
+
+    const loginButton =
+        document.getElementById('loginBtn');
+
+    const changePasswordButton =
+        document.getElementById(
+            'changePasswordBtn'
+        );
+
+    const backToLoginButton =
+        document.getElementById(
+            'backToLoginBtn'
+        );
+
+    const expiryElement =
+        document.getElementById(
+            'temporaryPasswordExpiry'
+        );
+
+    const currentYearElement =
+        document.getElementById(
+            'currentYear'
+        );
+
+    let passwordChangeToken = null;
+    let temporaryPassword = null;
+
+    if (currentYearElement) {
+        currentYearElement.textContent =
+            String(new Date().getFullYear());
+    }
+
+    function showMessage(
+        element,
+        message,
+        type = 'error'
+    ) {
+        if (!element) {
+            return;
+        }
+
+        element.className =
+            type === 'success'
+                ? 'error-box alert-success'
+                : 'error-box alert-error';
+
+        element.textContent = message;
+    }
+
+    function clearMessage(element) {
+        if (!element) {
+            return;
+        }
+
+        element.className =
+            'error-box hidden';
+
+        element.textContent = '';
+    }
+
+    function setButtonLoading(
+        button,
+        loadingText,
+        loading
+    ) {
+        if (!button) {
+            return '';
+        }
+
+        const textElement =
+            button.querySelector('.btn-text');
+
+        const originalText =
+            textElement
+                ? textElement.textContent
+                : button.textContent;
+
+        button.disabled = loading;
+
+        if (loading) {
+            if (textElement) {
+                textElement.textContent =
+                    loadingText;
             } else {
-                passwordInput.type = 'password';
-                eyeIcon.className = 'bi bi-eye-slash';
+                button.textContent =
+                    loadingText;
             }
-        });
+        }
+
+        return originalText;
     }
 
-    // 2. Handle Form Submission
-    if (activeForm) {
-        activeForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
+    function restoreButtonText(
+        button,
+        originalText
+    ) {
+        if (!button) {
+            return;
+        }
 
-            // Clear previous alerts
-            if (errorMessage) {
-                errorMessage.className = 'error-box hidden';
-                errorMessage.textContent = '';
-            }
+        const textElement =
+            button.querySelector('.btn-text');
 
-            // --- CSP-SAFE PUBLIC LOGIN BLOCKER ---
-            // If they are using the public login.html, stop them and show the error!
-            if (activeForm.id === 'loginForm') {
-                if (errorMessage) {
-                    errorMessage.className = 'error-box alert-error';
-                    errorMessage.textContent = 'The Student and Parent portals are currently under construction. Please check back later!';
-                }
-                return; // Stop right here! Do not call the Java backend.
-            }
-            // -------------------------------------
+        if (textElement) {
+            textElement.textContent =
+                originalText;
+        } else {
+            button.textContent =
+                originalText;
+        }
 
-            // If they made it past the blocker, they must be on mbsg-auth.html!
-            const originalText = btnText ? btnText.textContent : 'Login';
-            if (btnText) btnText.textContent = 'Authenticating...';
-            loginBtn.disabled = true;
-
-            const username = document.getElementById('username').value;
-            const password = passwordInput.value;
-
-            try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: username,
-                        password: password,
-                        role: "SECURE_ADMIN_GATEWAY" // Send the secret flag to Java!
-                    })
-                });
-
-                const data = await response.json();
-
-                if (response.ok) {
-                    let rawRole = data.role ? data.role.toUpperCase().replace(/\s+/g, '_') : '';
-                    let finalRoleString = rawRole;
-
-                    if (rawRole === 'SUPER_USER' || rawRole === 'ROLE_SUPER_ADMIN' || rawRole === 'SUPER_ADMIN') {
-                        finalRoleString = 'SUPER_ADMIN';
-                    }
-
-                    // Save to localStorage
-                    localStorage.setItem('user_role', finalRoleString);
-                    localStorage.setItem('username', username);
-                    if (data.branchId) {
-                        localStorage.setItem('user_branch', data.branchId);
-                    }
-
-                    if (errorMessage) {
-                        errorMessage.className = 'error-box alert-success';
-                        errorMessage.textContent = 'Login Successfully! Redirecting...';
-                    }
-
-                    setTimeout(() => {
-                        if (finalRoleString === 'SUPER_ADMIN') {
-                            window.location.href = '/superadmin';
-                        } else {
-                            window.location.href = '/dashboard';
-                        }
-                    }, 1000);
-
-                } else {
-                    if (errorMessage) {
-                        errorMessage.className = 'error-box alert-error';
-                        errorMessage.textContent = data.message || 'Invalid credentials. Please try again.';
-                    }
-                }
-            } catch (error) {
-                if (errorMessage) {
-                    errorMessage.className = 'error-box alert-error';
-                    errorMessage.textContent = 'Unable to connect to the server.';
-                }
-            } finally {
-                if (btnText) btnText.textContent = originalText;
-                loginBtn.disabled = false;
-            }
-        });
+        button.disabled = false;
     }
+
+    async function readJsonResponse(response) {
+        const responseText =
+            await response.text();
+
+        if (!responseText) {
+            return {};
+        }
+
+        try {
+            return JSON.parse(responseText);
+        } catch (error) {
+            console.error(
+                'Invalid JSON response:',
+                error
+            );
+
+            return {};
+        }
+    }
+
+    function normalizeRole(role) {
+        if (!role) {
+            return '';
+        }
+
+        let normalizedRole =
+            String(role)
+                .trim()
+                .toUpperCase()
+                .replace(/\s+/g, '_');
+
+        while (
+            normalizedRole.startsWith('ROLE_')
+        ) {
+            normalizedRole =
+                normalizedRole.substring(5);
+        }
+
+        if (normalizedRole === 'SUPER_USER') {
+            return 'SUPER_ADMIN';
+        }
+
+        if (normalizedRole === 'SCHOOL_ADMIN') {
+            return 'BRANCH_ADMIN';
+        }
+
+        return normalizedRole;
+    }
+
+    function saveAuthenticatedUser(
+        responseData,
+        username
+    ) {
+        const role =
+            normalizeRole(responseData.role);
+
+        localStorage.setItem(
+            'user_role',
+            role
+        );
+
+        localStorage.setItem(
+            'username',
+            username
+        );
+
+        if (
+            responseData.branchId !== null
+                    && responseData.branchId !== undefined
+        ) {
+            localStorage.setItem(
+                'user_branch',
+                String(responseData.branchId)
+            );
+        } else {
+            localStorage.removeItem(
+                'user_branch'
+            );
+        }
+
+        return role;
+    }
+
+    function redirectAuthenticatedUser(role) {
+        window.setTimeout(() => {
+            window.location.href =
+                role === 'SUPER_ADMIN'
+                    ? '/superadmin'
+                    : '/dashboard';
+        }, 900);
+    }
+
+    function formatExpiry(expiryValue) {
+        if (!expiryValue) {
+            return null;
+        }
+
+        const includesTimezone =
+            /(?:Z|[+-]\d{2}:\d{2})$/.test(
+                expiryValue
+            );
+
+        const normalizedValue =
+            includesTimezone
+                ? expiryValue
+                : `${expiryValue}Z`;
+
+        const expiryDate =
+            new Date(normalizedValue);
+
+        if (Number.isNaN(expiryDate.getTime())) {
+            return String(expiryValue);
+        }
+
+        return expiryDate.toLocaleString(
+            undefined,
+            {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+            }
+        );
+    }
+
+    function showPasswordChangePanel(
+        responseData,
+        currentPassword
+    ) {
+        passwordChangeToken =
+            responseData.passwordChangeToken;
+
+        temporaryPassword =
+            currentPassword;
+
+        if (!passwordChangeToken) {
+            showMessage(
+                loginMessage,
+                'The password-change token was not returned. Contact the ERP administrator.'
+            );
+            return;
+        }
+
+        clearMessage(loginMessage);
+        clearMessage(passwordChangeMessage);
+
+        loginPanel?.classList.add('hidden');
+
+        temporaryPasswordPanel
+            ?.classList.remove('hidden');
+
+        const formattedExpiry =
+            formatExpiry(
+                responseData
+                    .temporaryPasswordExpiresAt
+            );
+
+        if (expiryElement) {
+            expiryElement.textContent =
+                formattedExpiry
+                    ? `Credentials expire on ${formattedExpiry} (your local time).`
+                    : 'These temporary credentials are valid for 72 hours.';
+        }
+
+        if (newPasswordInput) {
+            newPasswordInput.value = '';
+            newPasswordInput.focus();
+        }
+
+        if (confirmPasswordInput) {
+            confirmPasswordInput.value = '';
+        }
+    }
+
+    function returnToLogin(
+        successMessage = null
+    ) {
+        passwordChangeToken = null;
+        temporaryPassword = null;
+
+        passwordChangeForm?.reset();
+
+        temporaryPasswordPanel
+            ?.classList.add('hidden');
+
+        loginPanel?.classList.remove('hidden');
+
+        clearMessage(passwordChangeMessage);
+
+        if (passwordInput) {
+            passwordInput.value = '';
+            passwordInput.focus();
+        }
+
+        if (successMessage) {
+            showMessage(
+                loginMessage,
+                successMessage,
+                'success'
+            );
+        } else {
+            clearMessage(loginMessage);
+        }
+    }
+
+    function validateNewPassword(
+        newPassword,
+        confirmedPassword
+    ) {
+        if (
+            newPassword.length < 8
+                    || newPassword.length > 100
+        ) {
+            return 'Password must contain between 8 and 100 characters.';
+        }
+
+        if (!/[A-Z]/.test(newPassword)) {
+            return 'Password must contain at least one uppercase letter.';
+        }
+
+        if (!/[a-z]/.test(newPassword)) {
+            return 'Password must contain at least one lowercase letter.';
+        }
+
+        if (!/\d/.test(newPassword)) {
+            return 'Password must contain at least one number.';
+        }
+
+        if (!/[^A-Za-z0-9]/.test(newPassword)) {
+            return 'Password must contain at least one special character.';
+        }
+
+        if (newPassword !== confirmedPassword) {
+            return 'New password and confirmation password do not match.';
+        }
+
+        if (newPassword === temporaryPassword) {
+            return 'New password must be different from the temporary password.';
+        }
+
+        return null;
+    }
+
+    document
+        .querySelectorAll('[data-password-toggle]')
+        .forEach(toggleButton => {
+            toggleButton.addEventListener(
+                'click',
+                () => {
+                    const targetId =
+                        toggleButton.dataset.target;
+
+                    const targetInput =
+                        document.getElementById(
+                            targetId
+                        );
+
+                    const icon =
+                        toggleButton.querySelector('i');
+
+                    if (!targetInput) {
+                        return;
+                    }
+
+                    const currentlyVisible =
+                        targetInput.type === 'text';
+
+                    targetInput.type =
+                        currentlyVisible
+                            ? 'password'
+                            : 'text';
+
+                    toggleButton.setAttribute(
+                        'aria-label',
+                        currentlyVisible
+                            ? 'Show password'
+                            : 'Hide password'
+                    );
+
+                    if (icon) {
+                        icon.className =
+                            currentlyVisible
+                                ? 'bi bi-eye-slash'
+                                : 'bi bi-eye';
+                    }
+                }
+            );
+        });
+
+    if (activeLoginForm) {
+        activeLoginForm.addEventListener(
+            'submit',
+            async event => {
+                event.preventDefault();
+                clearMessage(loginMessage);
+
+                if (
+                    activeLoginForm.id ===
+                    'loginForm'
+                ) {
+                    showMessage(
+                        loginMessage,
+                        'The Student and Parent portals are currently under construction. Please check back later!'
+                    );
+                    return;
+                }
+
+                if (
+                    !usernameInput
+                            || !passwordInput
+                            || !loginButton
+                ) {
+                    showMessage(
+                        loginMessage,
+                        'The login form is incomplete. Refresh the page.'
+                    );
+                    return;
+                }
+
+                const username =
+                    usernameInput.value.trim();
+
+                const password =
+                    passwordInput.value;
+
+                if (!username || !password) {
+                    showMessage(
+                        loginMessage,
+                        'Username and password are required.'
+                    );
+                    return;
+                }
+
+                const originalText =
+                    setButtonLoading(
+                        loginButton,
+                        'Authenticating...',
+                        true
+                    );
+
+                try {
+                    const response =
+                        await fetch(
+                            '/api/auth/login',
+                            {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: {
+                                    'Content-Type':
+                                        'application/json'
+                                },
+                                body: JSON.stringify({
+                                    username,
+                                    password,
+                                    role:
+                                        'SECURE_ADMIN_GATEWAY'
+                                })
+                            }
+                        );
+
+                    const responseData =
+                        await readJsonResponse(
+                            response
+                        );
+
+                    if (
+                        responseData.status ===
+                        'PASSWORD_CHANGE_REQUIRED'
+                    ) {
+                        showPasswordChangePanel(
+                            responseData,
+                            password
+                        );
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error(
+                            responseData.message
+                                || 'Invalid credentials. Please try again.'
+                        );
+                    }
+
+                    if (
+                        responseData.status
+                                && responseData.status
+                                !== 'AUTHENTICATED'
+                    ) {
+                        throw new Error(
+                            responseData.message
+                                || 'Login could not be completed.'
+                        );
+                    }
+
+                    const role =
+                        saveAuthenticatedUser(
+                            responseData,
+                            username
+                        );
+
+                    showMessage(
+                        loginMessage,
+                        'Login successful. Redirecting...',
+                        'success'
+                    );
+
+                    redirectAuthenticatedUser(
+                        role
+                    );
+
+                } catch (error) {
+                    console.error(
+                        'Login failed:',
+                        error
+                    );
+
+                    showMessage(
+                        loginMessage,
+                        error.message
+                            || 'Unable to connect to the server.'
+                    );
+
+                } finally {
+                    restoreButtonText(
+                        loginButton,
+                        originalText
+                    );
+                }
+            }
+        );
+    }
+
+    if (passwordChangeForm) {
+        passwordChangeForm.addEventListener(
+            'submit',
+            async event => {
+                event.preventDefault();
+                clearMessage(passwordChangeMessage);
+
+                if (
+                    !newPasswordInput
+                            || !confirmPasswordInput
+                            || !changePasswordButton
+                ) {
+                    showMessage(
+                        passwordChangeMessage,
+                        'The password-change form is incomplete.'
+                    );
+                    return;
+                }
+
+                if (
+                    !passwordChangeToken
+                            || !temporaryPassword
+                ) {
+                    showMessage(
+                        passwordChangeMessage,
+                        'The temporary login session is missing. Return to login and try again.'
+                    );
+                    return;
+                }
+
+                const newPassword =
+                    newPasswordInput.value;
+
+                const confirmPassword =
+                    confirmPasswordInput.value;
+
+                const validationError =
+                    validateNewPassword(
+                        newPassword,
+                        confirmPassword
+                    );
+
+                if (validationError) {
+                    showMessage(
+                        passwordChangeMessage,
+                        validationError
+                    );
+                    return;
+                }
+
+                const originalText =
+                    setButtonLoading(
+                        changePasswordButton,
+                        'Changing Password...',
+                        true
+                    );
+
+                if (backToLoginButton) {
+                    backToLoginButton.disabled = true;
+                }
+
+                try {
+                    const response =
+                        await fetch(
+                            '/api/auth/change-temporary-password',
+                            {
+                                method: 'POST',
+                                credentials: 'same-origin',
+                                headers: {
+                                    'Content-Type':
+                                        'application/json',
+                                    Authorization:
+                                        `Bearer ${passwordChangeToken}`
+                                },
+                                body: JSON.stringify({
+                                    currentPassword:
+                                        temporaryPassword,
+                                    newPassword,
+                                    confirmPassword
+                                })
+                            }
+                        );
+
+                    const responseData =
+                        await readJsonResponse(
+                            response
+                        );
+
+                    if (!response.ok) {
+                        throw new Error(
+                            responseData.message
+                                || 'The password could not be changed.'
+                        );
+                    }
+
+                    returnToLogin(
+                        responseData.message
+                            || 'Password changed successfully. Log in using your new password.'
+                    );
+
+                } catch (error) {
+                    console.error(
+                        'Password change failed:',
+                        error
+                    );
+
+                    showMessage(
+                        passwordChangeMessage,
+                        error.message
+                            || 'Unable to change the temporary password.'
+                    );
+
+                } finally {
+                    restoreButtonText(
+                        changePasswordButton,
+                        originalText
+                    );
+
+                    if (backToLoginButton) {
+                        backToLoginButton.disabled =
+                            false;
+                    }
+                }
+            }
+        );
+    }
+
+    backToLoginButton?.addEventListener(
+        'click',
+        () => returnToLogin()
+    );
 });

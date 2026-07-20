@@ -80,6 +80,6 @@ public class ErpEmployeeContact extends AuditableEntity {
     private String employeeContactRemarks;
 
     @Version
-    @Column(nullable = false)
+    @Column(name = "version", nullable = false)
     private Long version = 0L;
 }
