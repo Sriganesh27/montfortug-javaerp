@@ -34,7 +34,7 @@ async function handleResponse(response) {
             localStorage.removeItem('school_id');
             localStorage.removeItem('branch_id');
             localStorage.removeItem('permissions');
-            
+
             if (!isSessionTimeoutShown) {
                 isSessionTimeoutShown = true;
                 if (typeof window.showSessionTimeoutModal === 'function') {
@@ -52,7 +52,7 @@ async function handleResponse(response) {
         }
         const errorData = await response.json().catch(() => null);
         let errorMessage = errorData?.message || `HTTP Error: ${response.status}`;
-        
+
         // Extract Spring Boot validation field errors if they exist
         if (errorData?.errors && typeof errorData.errors === 'object') {
             const fieldErrors = Object.entries(errorData.errors)
@@ -60,7 +60,7 @@ async function handleResponse(response) {
                 .join('\n');
             errorMessage += `\n\n${fieldErrors}`;
         }
-        
+
         throw new Error(errorMessage);
     }
 
@@ -120,6 +120,31 @@ async function apiPut(endpoint, data) {
         body: JSON.stringify(data),
         credentials: 'include' // <--- FORCES COOKIE TO BE SENT
     });
+    return handleResponse(response);
+}
+
+/**
+ * Standard DELETE Request
+ *
+ * The optional data argument supports endpoints that accept a JSON body.
+ * Employee deactivation calls this method without a body.
+ */
+async function apiDelete(endpoint, data = undefined) {
+    const requestOptions = {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+        credentials: 'include'
+    };
+
+    if (data !== undefined) {
+        requestOptions.body = JSON.stringify(data);
+    }
+
+    const response = await fetch(
+        `${API_BASE_URL}${endpoint}`,
+        requestOptions
+    );
+
     return handleResponse(response);
 }
 

@@ -649,64 +649,6 @@
 
                 <div class="emp-detail-section-body">
 
-                    <div class="emp-detail-grid emp-detail-grid-3">
-                        <div class="form-group">
-                            <label for="edit-empDepartment">
-                                Department
-                            </label>
-
-                            <span
-                                    id="view-empDepartment"
-                                    class="detail-text"
-                            ></span>
-
-                            <select
-                                    id="edit-empDepartment"
-                                    class="detail-input hidden w-100"
-                            >
-                                <option value="">
-                                    -- Select Department --
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="edit-empDesignation">
-                                Designation
-                            </label>
-
-                            <span
-                                    id="view-empDesignation"
-                                    class="detail-text"
-                            ></span>
-
-                            <select
-                                    id="edit-empDesignation"
-                                    class="detail-input hidden w-100"
-                            >
-                                <option value="">
-                                    -- Select Designation --
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>
-                                Reporting Manager
-                            </label>
-
-                            <span
-                                    id="view-empReportingManager"
-                                    class="detail-text"
-                            ></span>
-
-                            <small class="text-muted">
-                                Assigned automatically according to department
-                                and designation.
-                            </small>
-                        </div>
-                    </div>
-
                     <div class="emp-detail-grid emp-detail-grid-4">
                         <div class="form-group">
                             <label for="edit-empCategory">
@@ -810,6 +752,68 @@
                         </div>
                     </div>
 
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-empDepartment">
+                                Department
+                            </label>
+
+                            <span
+                                    id="view-empDepartment"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empDepartment"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">
+                                    -- Select Department --
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empDesignation">
+                                Designation
+                            </label>
+
+                            <span
+                                    id="view-empDesignation"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empDesignation"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">
+                                    -- Select Designation --
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-empReportingManager">
+                                Reporting Manager
+                            </label>
+
+                            <span
+                                    id="view-empReportingManager"
+                                    class="detail-text"
+                            ></span>
+
+                            <select
+                                    id="edit-empReportingManager"
+                                    class="detail-input hidden w-100"
+                            >
+                                <option value="">
+                                    -- No Reporting Manager --
+                                </option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div class="emp-detail-grid emp-detail-grid-4">
                         <div class="form-group">
                             <label for="edit-empStatus">
@@ -887,24 +891,7 @@
                         </div>
                     </div>
 
-                    <div class="emp-detail-grid emp-detail-grid-4">
-                        <div class="form-group">
-                            <label for="edit-empRetirementDate">
-                                Retirement Date
-                            </label>
-
-                            <span
-                                    id="view-empRetirementDate"
-                                    class="detail-text"
-                            ></span>
-
-                            <input
-                                    type="date"
-                                    id="edit-empRetirementDate"
-                                    class="detail-input hidden w-100"
-                            >
-                        </div>
-
+                    <div class="emp-detail-grid emp-detail-grid-3">
                         <div class="form-group">
                             <label for="edit-empResignationDate">
                                 Resignation Date
@@ -940,7 +927,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="edit-empEmploymentEndDate">
+                            <label>
                                 Employment End Date
                             </label>
 
@@ -948,12 +935,6 @@
                                     id="view-empEmploymentEndDate"
                                     class="detail-text"
                             ></span>
-
-                            <input
-                                    type="date"
-                                    id="edit-empEmploymentEndDate"
-                                    class="detail-input hidden w-100"
-                            >
                         </div>
                     </div>
 
@@ -1445,13 +1426,6 @@
                                 <i class="bi bi-box-arrow-up-right"></i>
                                 View Signature
                             </button>
-
-                            <input
-                                    type="file"
-                                    id="edit-empSignature"
-                                    class="detail-input hidden w-100"
-                                    accept="image/jpeg,image/png,image/webp"
-                            >
                         </div>
 
                         <div class="form-group">
@@ -1530,6 +1504,88 @@
                             ></span>
                         </div>
                     </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>
+                                Must Change Password
+                            </label>
+
+                            <span
+                                    id="view-empMustChangePassword"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Temporary Password Expiry
+                            </label>
+
+                            <span
+                                    id="view-empTemporaryPasswordExpiry"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Credential Status
+                            </label>
+
+                            <span
+                                    id="view-empCredentialStatus"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Credentials Sent At
+                            </label>
+
+                            <span
+                                    id="view-empCredentialsSentAt"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label>
+                                Delivery Attempts
+                            </label>
+
+                            <span
+                                    id="view-empCredentialAttempts"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+                    </div>
+
+                    <div
+                            id="employee-login-actions"
+                            class="ba-flex-panel mt-3"
+                    >
+                        <button
+                                type="button"
+                                id="btn-create-employee-login"
+                                class="btn-primary hidden"
+                        >
+                            <i class="bi bi-person-lock"></i>
+                            Create Login Account
+                        </button>
+
+                        <button
+                                type="button"
+                                id="btn-reset-employee-password"
+                                class="btn-secondary hidden"
+                        >
+                            <i class="bi bi-key"></i>
+                            Reset &amp; Send Temporary Password
+                        </button>
+                    </div>
                 </div>
             </fieldset>
 
@@ -1594,7 +1650,7 @@
                     class="emp-detail-section"
             >
                 <legend class="emp-detail-section-header">
-                    Emergency Contacts
+                    Employee Contacts
                     <span id="emp-contact-count"></span>
                 </legend>
 
@@ -1625,11 +1681,6 @@
                 </legend>
 
                 <div class="emp-detail-section-body">
-                    <p class="text-muted">
-                        Select View Document to open a submitted document
-                        in a new browser window.
-                    </p>
-
                     <div
                             id="documents-view-container"
                             class="emp-document-grid"
@@ -1641,6 +1692,253 @@
                     ></div>
                 </div>
             </fieldset>
+
+            <!-- ================================================= -->
+            <!-- AUDIT INFORMATION                                  -->
+            <!-- ================================================= -->
+
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Audit Information
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>
+                                Active Record
+                            </label>
+
+                            <span
+                                    id="view-empActive"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Version
+                            </label>
+
+                            <span
+                                    id="view-empVersion"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Created By
+                            </label>
+
+                            <span
+                                    id="view-empCreatedBy"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Created At
+                            </label>
+
+                            <span
+                                    id="view-empCreatedAt"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label>
+                                Updated By
+                            </label>
+
+                            <span
+                                    id="view-empUpdatedBy"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                Updated At
+                            </label>
+
+                            <span
+                                    id="view-empUpdatedAt"
+                                    class="detail-text"
+                            ></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- CREATE EMPLOYEE LOGIN MODAL                               -->
+<!-- ========================================================= -->
+
+<div
+        id="employee-login-modal"
+        class="ba-modal-backdrop hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="employee-login-title"
+>
+    <div class="ba-modal-box">
+        <form id="employee-login-form" novalidate>
+            <h3 id="employee-login-title">
+                Create Login Account
+            </h3>
+
+            <p
+                    id="employee-login-name"
+                    class="text-muted mb-3"
+            ></p>
+
+            <div class="form-group mb-3 emp-required-field">
+                <label for="employee-login-role">
+                    Login Role
+                </label>
+
+                <select
+                        id="employee-login-role"
+                        class="detail-input w-100"
+                        required
+                        aria-required="true"
+                        data-validation-label="Login Role"
+                >
+                    <option value="">-- Select Role --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input
+                            type="checkbox"
+                            id="employee-login-send-email"
+                            checked
+                    >
+                    Send temporary password to Employee email
+                </label>
+            </div>
+
+            <div class="ba-modal-actions">
+                <button
+                        type="button"
+                        id="employee-login-cancel"
+                        class="btn-secondary"
+                >
+                    Cancel
+                </button>
+
+                <button
+                        type="submit"
+                        id="employee-login-submit"
+                        class="btn-primary"
+                >
+                    <i class="bi bi-person-check"></i>
+                    Create Account
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================================= -->
+<!-- DEACTIVATE EMPLOYEE MODAL                                 -->
+<!-- ========================================================= -->
+
+<div
+        id="employee-deactivation-modal"
+        class="ba-modal-backdrop hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="employee-deactivation-title"
+>
+    <div class="ba-modal-box">
+        <form id="employee-deactivation-form" novalidate>
+            <h3 id="employee-deactivation-title">
+                Deactivate Employee
+            </h3>
+
+            <p
+                    id="employee-deactivation-name"
+                    class="text-muted mb-3"
+            ></p>
+
+            <div class="form-group mb-3 emp-required-field">
+                <label for="employee-deactivation-status">
+                    Final Employment Status
+                </label>
+
+                <select
+                        id="employee-deactivation-status"
+                        class="detail-input w-100"
+                        required
+                        aria-required="true"
+                        data-validation-label="Final Employment Status"
+                >
+                    <option value="">-- Select Status --</option>
+                    <option value="RESIGNED">Resigned</option>
+                    <option value="RETIRED">Retired</option>
+                    <option value="TERMINATED">Terminated</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-3 emp-required-field">
+                <label for="employee-deactivation-date">
+                    Effective Date
+                </label>
+
+                <input
+                        type="date"
+                        id="employee-deactivation-date"
+                        class="detail-input w-100"
+                        required
+                        aria-required="true"
+                        data-validation-label="Effective Date"
+                >
+            </div>
+
+            <div class="form-group emp-required-field">
+                <label for="employee-deactivation-reason">
+                    Exit Reason
+                </label>
+
+                <textarea
+                        id="employee-deactivation-reason"
+                        class="detail-input w-100"
+                        rows="4"
+                        maxlength="10000"
+                        required
+                        aria-required="true"
+                        data-validation-label="Exit Reason"
+                ></textarea>
+            </div>
+
+            <div class="ba-modal-actions">
+                <button
+                        type="button"
+                        id="employee-deactivation-cancel"
+                        class="btn-secondary"
+                >
+                    Cancel
+                </button>
+
+                <button
+                        type="submit"
+                        id="employee-deactivation-confirm"
+                        class="btn-danger"
+                >
+                    <i class="bi bi-person-x"></i>
+                    Deactivate Employee
+                </button>
+            </div>
         </form>
     </div>
 </div>
@@ -1707,7 +2005,7 @@
             <button
                     type="button"
                     class="btn-danger btn-sm delete-btn"
-                    title="Terminate employee"
+                    title="Deactivate employee"
             >
                 <i class="bi bi-person-x"></i>
             </button>

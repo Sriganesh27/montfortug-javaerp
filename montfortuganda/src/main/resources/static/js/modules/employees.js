@@ -1,3 +1,4 @@
+// noinspection SpellCheckingInspection
 /* global apiGet, apiPost, apiPut, apiDelete, showLoader, hideLoader, showPremiumModal, showSuccessMessage, showErrorMessage, CrudTable, loadView, createErpCalendar */
 
 /**
@@ -18,6 +19,7 @@
 
 /**
  * @typedef {Object} EmployeeUserData
+ * @property {(number|string|null)} [id]
  * @property {(string|null)} [username]
  * @property {(string|null)} [status]
  */
@@ -87,21 +89,37 @@
  * @property {(string|null)} [skills]
  * @property {(string|null)} [languagesSpoken]
  * @property {(string|null)} [employeeRemarks]
+ * @property {(number|string|null)} [reportingManagerId]
  * @property {(boolean|null)} [loginEnabled]
+ * @property {(number|string|null)} [userId]
  * @property {(string|null)} [loginId]
  * @property {(string|null)} [username]
  * @property {(string|null)} [loginRole]
+ * @property {Array<string>} [loginRoles]
  * @property {(string|null)} [roleName]
  * @property {(string|null)} [loginStatus]
+ * @property {(boolean|null)} [mustChangePassword]
+ * @property {(string|null)} [temporaryPasswordExpiresAt]
+ * @property {(string|null)} [credentialDeliveryStatus]
+ * @property {(string|null)} [credentialsSentAt]
+ * @property {(number|null)} [credentialDeliveryAttempts]
  * @property {(EmployeeUserData|null)} [user]
+ * @property {(boolean|null)} [profilePhotoAvailable]
  * @property {(string|null)} [profilePhotoUrl]
  * @property {(string|null)} [profilePhoto]
+ * @property {(boolean|null)} [signatureFileAvailable]
  * @property {(string|null)} [signatureFileUrl]
  * @property {(string|null)} [signatureFile]
  * @property {Array<Object>} [contacts]
  * @property {Array<Object>} [qualifications]
  * @property {Array<Object>} [experiences]
  * @property {Array<Object>} [documents]
+ * @property {(boolean|null)} [active]
+ * @property {(number|string|null)} [version]
+ * @property {(string|null)} [createdBy]
+ * @property {(string|null)} [createdAt]
+ * @property {(string|null)} [updatedBy]
+ * @property {(string|null)} [updatedAt]
  */
 
 /**
@@ -332,6 +350,13 @@ function resolveEmployeeCategory(
 }
 let currentDetailEmpId = null;
 
+/** @type {WeakMap<HTMLElement, Object>} */
+const employeeCollectionRecordByRow = new WeakMap();
+
+/**
+ * @param {HTMLElement|null|undefined} row
+ * @returns {(number|null)}
+ */
 function getRowId(row) {
     const raw = row?.dataset?.recordId;
     if (!raw) return null;
@@ -341,14 +366,20 @@ function getRowId(row) {
 }
 
 function collectContacts(viewContainer) {
-    const rows = Array.from(
-        viewContainer.querySelectorAll(
-            '#contacts-container .contact-row'
-        )
-    );
+    const rows =
+        /** @type {HTMLElement[]} */ (
+            Array.from(
+                viewContainer.querySelectorAll(
+                    '#contacts-container .contact-row'
+                )
+            )
+        );
 
-    const contacts = rows
-        .map(row => {
+    return rows
+        .map((row, index) => {
+            const existing =
+                employeeCollectionRecordByRow.get(row) || {};
+
             const employeeContactId = getRowId(row);
             const employeeContactName =
                 row.querySelector('.c-name')
@@ -393,31 +424,57 @@ function collectContacts(viewContainer) {
                 employeeContactId,
                 employeeContactName,
                 employeeContactRelationship,
+                employeeContactType:
+                    existing.employeeContactType || 'EMERGENCY',
                 employeeContactMobile,
-                employeeContactEmail
+                employeeContactAlternateMobile:
+                    existing.employeeContactAlternateMobile || null,
+                employeeContactEmail,
+                employeeContactCountry:
+                    existing.employeeContactCountry || null,
+                employeeContactState:
+                    existing.employeeContactState || null,
+                employeeContactDistrict:
+                    existing.employeeContactDistrict || null,
+                employeeContactVillage:
+                    existing.employeeContactVillage || null,
+                employeeContactStreet:
+                    existing.employeeContactStreet || null,
+                employeeContactPostalCode:
+                    existing.employeeContactPostalCode || null,
+                employeeContactOccupation:
+                    existing.employeeContactOccupation || null,
+                employeeContactWorkplace:
+                    existing.employeeContactWorkplace || null,
+                employeeContactIsPrimary:
+                    existing.employeeContactIsPrimary ?? index === 0,
+                employeeContactIsEmergency:
+                    existing.employeeContactIsEmergency ?? true,
+                employeeContactActive:
+                    existing.employeeContactActive ?? true,
+                employeeContactRemarks:
+                    existing.employeeContactRemarks || null
             };
         })
         .filter(Boolean);
-
-    return contacts.map((contact, index) => ({
-        ...contact,
-        employeeContactType: 'EMERGENCY',
-        employeeContactIsPrimary: index === 0,
-        employeeContactIsEmergency: true,
-        employeeContactActive: true
-    }));
 }
 
 async function collectQualifications(viewContainer) {
-    const rows = Array.from(
-        viewContainer.querySelectorAll(
-            '#qualifications-container .qual-row'
-        )
-    );
+    const rows =
+        /** @type {HTMLElement[]} */ (
+            Array.from(
+                viewContainer.querySelectorAll(
+                    '#qualifications-container .qual-row'
+                )
+            )
+        );
 
     const qualifications = [];
 
     for (const row of rows) {
+        const existing =
+            employeeCollectionRecordByRow.get(row) || {};
+
         const employeeQualificationId = getRowId(row);
         const employeeQualificationLevel =
             row.querySelector('.q-level')
@@ -443,17 +500,22 @@ async function collectQualifications(viewContainer) {
             row.querySelector('.q-grade')
                 ?.value
                 ?.trim() || null;
-        const yearValue =
-            row.querySelector('.q-year')
+        const startYearValue =
+            row.querySelector('.q-start-year')
+                ?.value
+                ?.trim() || null;
+        const employeeQualificationStartYear =
+            startYearValue
+                ? Number.parseInt(startYearValue, 10)
+                : null;
+        const completionYearValue =
+            row.querySelector('.q-completion-year')
                 ?.value
                 ?.trim() || null;
         const employeeQualificationCompletionYear =
-            yearValue
-                ? Number.parseInt(yearValue, 10)
+            completionYearValue
+                ? Number.parseInt(completionYearValue, 10)
                 : null;
-        const file =
-            row.querySelector('.q-file')
-                ?.files?.[0] || null;
 
         const hasAnyValue = Boolean(
             employeeQualificationId ||
@@ -463,41 +525,37 @@ async function collectQualifications(viewContainer) {
             employeeQualificationInstitutionName ||
             employeeQualificationSpecialization ||
             employeeQualificationGrade ||
-            employeeQualificationCompletionYear ||
-            file
+            employeeQualificationStartYear ||
+            employeeQualificationCompletionYear
         );
 
         if (!hasAnyValue) {
             continue;
         }
 
-        const qualificationNameRequired = true;
-
-        const specializationRequired =
-            employeeQualificationLevel ===
-            'SENIOR_SECONDARY';
-
         if (
             !employeeQualificationLevel ||
+            !employeeQualificationName ||
             !employeeQualificationInstitutionName ||
+            !employeeQualificationStartYear ||
             !employeeQualificationCompletionYear
         ) {
             throw new Error(
-                'Each qualification requires level, institution and completion year.'
+                'Each qualification requires level, qualification name, institution, start year and completion year.'
             );
         }
 
         if (
-            qualificationNameRequired &&
-            !employeeQualificationName
+            employeeQualificationCompletionYear <
+            employeeQualificationStartYear
         ) {
             throw new Error(
-                'Qualification name is required for the selected level.'
+                'Qualification completion year cannot be earlier than the start year.'
             );
         }
 
         if (
-            specializationRequired &&
+            employeeQualificationLevel === 'SENIOR_SECONDARY' &&
             !employeeQualificationSpecialization
         ) {
             throw new Error(
@@ -517,24 +575,41 @@ async function collectQualifications(viewContainer) {
         qualifications.push({
             employeeQualificationId,
             employeeQualificationLevel,
-            employeeQualificationName,
             customLevel:
                 employeeQualificationLevel === 'OTHER'
                     ? customLevel
                     : null,
-            employeeQualificationInstitutionName,
+            employeeQualificationName,
             employeeQualificationSpecialization,
-            employeeQualificationGrade,
+            employeeQualificationInstitutionName,
+            qualificationGrade:
+                existing.qualificationGrade ||
+                employeeQualificationGrade,
+            employeeQualificationBoardUniversity:
+                existing.employeeQualificationBoardUniversity || null,
+            employeeQualificationCountry:
+                existing.employeeQualificationCountry || null,
+            employeeQualificationStartYear,
             employeeQualificationCompletionYear,
-            employeeQualificationActive: true,
-            fileData:
-                await EmpCollections.fileToBase64(file),
-            fileName:
-                file?.name || null,
-            contentType:
-                file?.type || null,
-            fileSize:
-                file?.size || null
+            employeeQualificationDurationMonths:
+                existing.employeeQualificationDurationMonths ?? null,
+            employeeQualificationGrade,
+            employeeQualificationPercentage:
+                existing.employeeQualificationPercentage ?? null,
+            employeeQualificationCgpa:
+                existing.employeeQualificationCgpa ?? null,
+            employeeQualificationCertificateNumber:
+                existing.employeeQualificationCertificateNumber || null,
+            employeeQualificationRegistrationNumber:
+                existing.employeeQualificationRegistrationNumber || null,
+            employeeQualificationRemarks:
+                existing.employeeQualificationRemarks || null,
+            employeeQualificationActive:
+                existing.employeeQualificationActive ?? true,
+            fileData: null,
+            fileName: null,
+            contentType: null,
+            fileSize: null
         });
     }
 
@@ -542,15 +617,21 @@ async function collectQualifications(viewContainer) {
 }
 
 async function collectExperiences(viewContainer) {
-    const rows = Array.from(
-        viewContainer.querySelectorAll(
-            '#experiences-container .exp-row'
-        )
-    );
+    const rows =
+        /** @type {HTMLElement[]} */ (
+            Array.from(
+                viewContainer.querySelectorAll(
+                    '#experiences-container .exp-row'
+                )
+            )
+        );
 
     const experiences = [];
 
     for (const row of rows) {
+        const existing =
+            employeeCollectionRecordByRow.get(row) || {};
+
         const employeeExperienceId = getRowId(row);
         const companyName =
             row.querySelector('.e-company')
@@ -570,9 +651,6 @@ async function collectExperiences(viewContainer) {
         const endDate =
             row.querySelector('.e-end')
                 ?.value || null;
-        const file =
-            row.querySelector('.e-file')
-                ?.files?.[0] || null;
 
         const hasAnyValue = Boolean(
             employeeExperienceId ||
@@ -580,8 +658,7 @@ async function collectExperiences(viewContainer) {
             employeeExperienceEmploymentType ||
             jobRole ||
             startDate ||
-            endDate ||
-            file
+            endDate
         );
 
         if (!hasAnyValue) {
@@ -610,126 +687,53 @@ async function collectExperiences(viewContainer) {
 
         experiences.push({
             employeeExperienceId,
-
             employeeExperienceType:
+                employeeExperienceEmploymentType,
+            employeeExperienceCompanyName: companyName,
+            employeeExperienceCompanyAddress:
+                existing.employeeExperienceCompanyAddress || null,
+            employeeExperienceCompanyCountry:
+                existing.employeeExperienceCompanyCountry || null,
+            employeeExperienceCompanyState:
+                existing.employeeExperienceCompanyState || null,
+            employeeExperienceCompanyDistrict:
+                existing.employeeExperienceCompanyDistrict || null,
+            employeeExperienceDesignation: jobRole,
+            employeeExperienceDepartment:
+                existing.employeeExperienceDepartment || null,
             employeeExperienceEmploymentType,
-
-            employeeExperienceCompanyName:
-            companyName,
-
-            employeeExperienceEmploymentType,
-
-            employeeExperienceDesignation:
-            jobRole,
-
-            employeeExperienceStartDate:
-            startDate,
-
-            employeeExperienceEndDate:
-            endDate,
-
-            employeeExperienceCurrentJob:
-                !endDate,
-
+            employeeExperienceStartDate: startDate,
+            employeeExperienceEndDate: endDate,
+            employeeExperienceCurrentJob: !endDate,
+            employeeExperienceTotalMonths:
+                existing.employeeExperienceTotalMonths ?? null,
+            employeeExperienceSalary:
+                existing.employeeExperienceSalary ?? null,
+            employeeExperienceCurrency:
+                existing.employeeExperienceCurrency || null,
+            employeeExperienceSupervisorName:
+                existing.employeeExperienceSupervisorName || null,
+            employeeExperienceSupervisorContact:
+                existing.employeeExperienceSupervisorContact || null,
+            employeeExperienceReasonForLeaving:
+                existing.employeeExperienceReasonForLeaving || null,
+            employeeExperienceResponsibilities:
+                existing.employeeExperienceResponsibilities || null,
+            employeeExperienceAchievements:
+                existing.employeeExperienceAchievements || null,
             employeeExperienceActive:
-                true,
-
-            fileData:
-                await EmpCollections.fileToBase64(file),
-
-            fileName:
-                file?.name || null
+                existing.employeeExperienceActive ?? true,
+            employeeExperienceRemarks:
+                existing.employeeExperienceRemarks || null,
+            fileData: null,
+            fileName: null,
+            contentType: null,
+            fileSize: null
         });
     }
 
     return experiences;
 }
-
-async function collectDocuments(viewContainer) {
-    const rows = Array.from(
-        viewContainer.querySelectorAll(
-            '#documents-container .doc-row'
-        )
-    );
-
-    const documents = [];
-
-    for (const row of rows) {
-        const employeeDocumentId =
-            getRowId(row);
-
-        const employeeDocumentType =
-            row.querySelector('.d-type')
-                ?.value
-                ?.trim() || null;
-
-        const employeeDocumentName =
-            row.querySelector('.d-name')
-                ?.value
-                ?.trim() || null;
-
-        const employeeDocumentRemarks =
-            row.querySelector('.d-remarks')
-                ?.value
-                ?.trim() || null;
-
-        const file =
-            row.querySelector('.d-file')
-                ?.files?.[0] || null;
-
-        const hasAnyValue = Boolean(
-            employeeDocumentId ||
-            employeeDocumentType ||
-            employeeDocumentName ||
-            employeeDocumentRemarks ||
-            file
-        );
-
-        if (!hasAnyValue) {
-            continue;
-        }
-
-        if (
-            !employeeDocumentType ||
-            !employeeDocumentName
-        ) {
-            throw new Error(
-                'Each document requires document type and document name.'
-            );
-        }
-
-        if (!employeeDocumentId && !file) {
-            throw new Error(
-                'Upload a file for every new employee document.'
-            );
-        }
-
-        documents.push({
-            employeeDocumentId,
-            employeeDocumentType,
-            employeeDocumentName,
-            employeeDocumentRemarks,
-            employeeDocumentActive: true,
-
-            fileData:
-                await EmpCollections.fileToBase64(
-                    file
-                ),
-
-            fileName:
-                file?.name || null,
-
-            contentType:
-                file?.type || null,
-
-            fileSize:
-                file?.size || null
-        });
-    }
-
-    return documents;
-}
-
 
 const EmpCollections = {
     contactFields: [
@@ -819,16 +823,16 @@ const EmpCollections = {
             dataKey: 'employeeQualificationGrade'
         },
         {
-            placeholder: 'Completion Year',
-            className: 'q-year',
+            placeholder: 'Start Year',
+            className: 'q-start-year',
             type: 'number',
-            dataKey: 'employeeQualificationCompletionYear'
+            dataKey: 'employeeQualificationStartYear'
         },
         {
-            placeholder: 'Upload Certificate',
-            className: 'q-file',
-            type: 'file',
-            dataKey: 'fileData'
+            placeholder: 'Completion Year',
+            className: 'q-completion-year',
+            type: 'number',
+            dataKey: 'employeeQualificationCompletionYear'
         }
     ],
     expFields: [
@@ -883,67 +887,7 @@ const EmpCollections = {
         },
         { placeholder: 'Post Held', className: 'e-role', dataKey: 'jobRole' },
         { placeholder: 'Start Date', className: 'e-start', type: 'date', dataKey: 'startDate' },
-        { placeholder: 'End Date', className: 'e-end', type: 'date', dataKey: 'endDate' },
-        { placeholder: 'Upload Doc', className: 'e-file', type: 'file', dataKey: 'fileData' }
-    ],
-    docFields: [
-        {
-            placeholder: 'Document Type',
-            className: 'd-type',
-            dataKey: 'employeeDocumentType',
-            type: 'select',
-            options: [
-                { value: '', text: '-- Select Document Type --' },
-                { value: 'NATIONAL_ID', text: 'National ID' },
-                { value: 'PASSPORT', text: 'Passport' },
-                { value: 'WORK_PERMIT', text: 'Work Permit' },
-                { value: 'VISA', text: 'Visa' },
-                { value: 'BIRTH_CERTIFICATE', text: 'Birth Certificate' },
-                { value: 'MARRIAGE_CERTIFICATE', text: 'Marriage Certificate' },
-                { value: 'ACADEMIC_CERTIFICATE', text: 'Academic Certificate' },
-                { value: 'EXPERIENCE_CERTIFICATE', text: 'Experience Certificate' },
-                { value: 'TEACHING_LICENSE', text: 'Teaching License' },
-                { value: 'PROFESSIONAL_LICENSE', text: 'Professional License' },
-                { value: 'MEDICAL_CERTIFICATE', text: 'Medical Certificate' },
-                { value: 'POLICE_CLEARANCE', text: 'Police Clearance' },
-                { value: 'EMPLOYMENT_CONTRACT', text: 'Employment Contract' },
-                { value: 'APPOINTMENT_LETTER', text: 'Appointment Letter' },
-                { value: 'RELIEVING_LETTER', text: 'Relieving Letter' },
-                { value: 'SALARY_CERTIFICATE', text: 'Salary Certificate' },
-                { value: 'TIN_CERTIFICATE', text: 'TIN Certificate' },
-                { value: 'NSSF_DOCUMENT', text: 'NSSF Document' },
-                { value: 'BANK_DOCUMENT', text: 'Bank Document' },
-                { value: 'CURRICULUM_VITAE', text: 'Curriculum Vitae' },
-                { value: 'RESUME', text: 'Resume' },
-                { value: 'PASSPORT_PHOTO', text: 'Passport Photo' },
-                { value: 'SIGNATURE', text: 'Signature' },
-                {
-                    value: 'CODE_OF_CONDUCT_AGREEMENT',
-                    text: 'Code of Conduct Agreement'
-                },
-                {
-                    value: 'CONFIDENTIALITY_AGREEMENT',
-                    text: 'Confidentiality Agreement'
-                },
-                { value: 'OTHER', text: 'Other' }
-            ]
-        },
-        {
-            placeholder: 'Document Name',
-            className: 'd-name',
-            dataKey: 'employeeDocumentName'
-        },
-        {
-            placeholder: 'Remarks',
-            className: 'd-remarks',
-            dataKey: 'employeeDocumentRemarks'
-        },
-        {
-            placeholder: 'Upload Document',
-            className: 'd-file',
-            type: 'file',
-            dataKey: 'fileData'
-        }
+        { placeholder: 'End Date', className: 'e-end', type: 'date', dataKey: 'endDate' }
     ],
     createRow: function(
         containerElement,
@@ -962,6 +906,11 @@ const EmpCollections = {
             `emp-child-row emp-grid-${fieldsDef.length}-cols mb-3 ${rowClass}`;
 
         if (data) {
+            employeeCollectionRecordByRow.set(
+                row,
+                data
+            );
+
             const recordId =
                 data.employeeContactId ??
                 data.employeeQualificationId ??
@@ -1031,7 +980,9 @@ const EmpCollections = {
                         document.createElement('option');
 
                     option.value =
-                        optionDefinition.value;
+                        String(
+                            optionDefinition.value ?? ''
+                        );
 
                     option.textContent =
                         optionDefinition.text;
@@ -1045,7 +996,9 @@ const EmpCollections = {
                     field.type || 'text';
 
                 input.placeholder =
-                    field.placeholder;
+                    String(
+                        field.placeholder || ''
+                    );
             }
 
             input.className =
@@ -1433,10 +1386,8 @@ function initEmployeesView() {
         createErpCalendar('#edit-empJoiningDate');
         createErpCalendar('#edit-empProbationEndDate');
         createErpCalendar('#edit-empConfirmationDate');
-        createErpCalendar('#edit-empRetirementDate');
         createErpCalendar('#edit-empResignationDate');
         createErpCalendar('#edit-empTerminationDate');
-        createErpCalendar('#edit-empEmploymentEndDate');
         createErpCalendar('#edit-empPassportExpiry');
         createErpCalendar('#edit-empWorkPermitExpiry');
     }
@@ -1494,15 +1445,6 @@ function initEmployeesView() {
         '+ Add Experience',
         EmpCollections.expFields,
         'exp-row'
-    );
-
-    EmpCollections.initSection(
-        viewContainer,
-        '#documents-section',
-        '#documents-container',
-        '+ Add Document',
-        EmpCollections.docFields,
-        'doc-row'
     );
 
     async function loadEmployees() {
@@ -1747,7 +1689,10 @@ function initEmployeesView() {
                         .querySelector('.delete-btn')
                         ?.addEventListener(
                             'click',
-                            () => deleteEmp(employeeId)
+                            () => deleteEmp(
+                                employeeId,
+                                fullName
+                            )
                         );
 
                     return rowNode;
@@ -1865,18 +1810,26 @@ function initEmployeesView() {
             await loadEmployees();
         });
 
-    async function loadSelectOptions() {
+    async function loadSelectOptions(excludeEmployeeId = null) {
         const branchId = getRequiredBranchId();
+        const reportingManagerEndpoint =
+            excludeEmployeeId
+                ? `/branchadmin/employees/reporting-managers?excludeEmployeeId=${encodeURIComponent(excludeEmployeeId)}`
+                : '/branchadmin/employees/reporting-managers';
 
-        const [departmentResponse, designationResponse] =
-            await Promise.all([
-                apiGet(
-                    `/departments?branchId=${branchId}&size=100`
-                ),
-                apiGet(
-                    `/designations?branchId=${branchId}&size=100`
-                )
-            ]);
+        const [
+            departmentResponse,
+            designationResponse,
+            reportingManagerResponse
+        ] = await Promise.all([
+            apiGet(
+                `/departments?branchId=${branchId}&size=100`
+            ),
+            apiGet(
+                `/designations?branchId=${branchId}&size=100`
+            ),
+            apiGet(reportingManagerEndpoint)
+        ]);
 
         const departments =
             departmentResponse?.data?.content ??
@@ -1886,6 +1839,11 @@ function initEmployeesView() {
         const designations =
             designationResponse?.data?.content ??
             designationResponse?.data ??
+            [];
+
+        const reportingManagers =
+            reportingManagerResponse?.data ??
+            reportingManagerResponse ??
             [];
 
         const departmentSelect =
@@ -1898,23 +1856,27 @@ function initEmployeesView() {
                 '#edit-empDesignation'
             );
 
+        const reportingManagerSelect =
+            viewContainer.querySelector(
+                '#edit-empReportingManager'
+            );
+
         if (departmentSelect) {
             departmentSelect.innerHTML =
                 '<option value="">-- Select Department --</option>';
 
             departments.forEach(department => {
-                const option =
-                    document.createElement('option');
-
+                const option = document.createElement('option');
                 option.value =
-                    department.departmentId ??
-                    department.id ??
-                    '';
+                    String(
+                        department.departmentId ??
+                        department.id ??
+                        ''
+                    );
                 option.textContent =
                     department.departmentName ??
                     department.name ??
                     'Unnamed Department';
-
                 departmentSelect.appendChild(option);
             });
         }
@@ -1924,19 +1886,37 @@ function initEmployeesView() {
                 '<option value="">-- Select Designation --</option>';
 
             designations.forEach(designation => {
-                const option =
-                    document.createElement('option');
-
+                const option = document.createElement('option');
                 option.value =
-                    designation.designationId ??
-                    designation.id ??
-                    '';
+                    String(
+                        designation.designationId ??
+                        designation.id ??
+                        ''
+                    );
                 option.textContent =
                     designation.designationName ??
                     designation.name ??
                     'Unnamed Designation';
-
                 designationSelect.appendChild(option);
+            });
+        }
+
+        if (reportingManagerSelect) {
+            reportingManagerSelect.innerHTML =
+                '<option value="">-- No Reporting Manager --</option>';
+
+            reportingManagers.forEach(manager => {
+                const option = document.createElement('option');
+                option.value =
+                    String(
+                        manager.employeeId ?? ''
+                    );
+                option.textContent = [
+                    manager.employeeNo,
+                    manager.fullName,
+                    manager.designationName
+                ].filter(Boolean).join(' - ');
+                reportingManagerSelect.appendChild(option);
             });
         }
     }
@@ -1963,10 +1943,32 @@ function initEmployeesView() {
         return item;
     };
 
+    const createSecureViewButton = (
+        label,
+        url
+    ) => {
+        if (!url) return null;
+
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn-primary btn-sm';
+        button.innerHTML =
+            `<i class="bi bi-box-arrow-up-right"></i> ${label}`;
+        button.addEventListener('click', () => {
+            window.open(
+                url,
+                '_blank',
+                'noopener,noreferrer'
+            );
+        });
+        return button;
+    };
+
     const renderSimpleRecords = (
         containerSelector,
         records,
-        mapper
+        mapper,
+        actionFactory = null
     ) => {
         const container =
             viewContainer.querySelector(
@@ -2001,6 +2003,22 @@ function initEmployeesView() {
                 );
             });
 
+            if (typeof actionFactory === 'function') {
+                const actions = actionFactory(record) || [];
+                const validActions = actions.filter(Boolean);
+
+                if (validActions.length) {
+                    const actionContainer =
+                        document.createElement('div');
+                    actionContainer.className =
+                        'emp-document-actions mt-2';
+                    validActions.forEach(action =>
+                        actionContainer.appendChild(action)
+                    );
+                    card.appendChild(actionContainer);
+                }
+            }
+
             container.appendChild(card);
         });
     };
@@ -2017,7 +2035,7 @@ function initEmployeesView() {
         if (!documents.length) {
             const empty = document.createElement('p');
             empty.className = 'text-muted';
-            empty.textContent = 'No documents submitted.';
+            empty.textContent = 'No documents uploaded.';
             container.appendChild(empty);
             return;
         }
@@ -2030,11 +2048,11 @@ function initEmployeesView() {
             header.className = 'emp-document-card-header';
 
             const headingGroup = document.createElement('div');
-
             const name = document.createElement('div');
             name.className = 'emp-document-name';
             name.textContent =
                 documentRecord.employeeDocumentName ||
+                formatEnum(documentRecord.employeeDocumentType) ||
                 'Employee Document';
 
             const type = document.createElement('div');
@@ -2051,12 +2069,14 @@ function initEmployeesView() {
             const meta = document.createElement('div');
             meta.className = 'emp-document-meta';
             meta.textContent = [
-                documentRecord.employeeDocumentOriginalFileName ||
-                documentRecord.employeeDocumentFileName,
+                documentRecord.employeeDocumentOriginalFileName,
                 documentRecord.employeeDocumentMimeType,
                 documentRecord.employeeDocumentFileSize
                     ? `${documentRecord.employeeDocumentFileSize} bytes`
-                    : null
+                    : null,
+                documentRecord.employeeDocumentVerified === true
+                    ? 'Verified'
+                    : 'Not Verified'
             ].filter(Boolean).join(' • ') || 'File information unavailable';
             card.appendChild(meta);
 
@@ -2068,38 +2088,26 @@ function initEmployeesView() {
                 card.appendChild(remarks);
             }
 
-            const actions = document.createElement('div');
-            actions.className = 'emp-document-actions';
+            const employeeId = currentDetailEmpId;
+            const documentId =
+                documentRecord.employeeDocumentId;
+            const available =
+                documentRecord.employeeDocumentAvailable === true &&
+                Boolean(employeeId && documentId);
 
-            const viewButton = document.createElement('button');
-            viewButton.type = 'button';
-            viewButton.className =
-                'btn-primary btn-sm emp-document-view-btn';
-            viewButton.innerHTML =
-                '<i class="bi bi-box-arrow-up-right"></i> View Document';
-
-            viewButton.addEventListener('click', () => {
-                const employeeId = currentDetailEmpId;
-                const documentId =
-                    documentRecord.employeeDocumentId;
-
-                const suppliedUrl =
-                    documentRecord.employeeDocumentViewUrl ||
-                    documentRecord.viewUrl ||
-                    null;
-
-                const url = suppliedUrl ||
-                    `/api/branchadmin/employees/${employeeId}/documents/${documentId}/view`;
-
-                window.open(
-                    url,
-                    '_blank',
-                    'noopener,noreferrer'
+            if (available) {
+                const actions = document.createElement('div');
+                actions.className = 'emp-document-actions';
+                const viewButton = createSecureViewButton(
+                    'View Document',
+                    `/api/branchadmin/employees/${employeeId}/documents/${documentId}/view`
                 );
-            });
+                if (viewButton) {
+                    actions.appendChild(viewButton);
+                    card.appendChild(actions);
+                }
+            }
 
-            actions.appendChild(viewButton);
-            card.appendChild(actions);
             container.appendChild(card);
         });
     };
@@ -2116,10 +2124,6 @@ function initEmployeesView() {
         const experiencesContainer =
             viewContainer.querySelector(
                 '#experiences-container'
-            );
-        const documentsContainer =
-            viewContainer.querySelector(
-                '#documents-container'
             );
 
         if (contactsContainer) {
@@ -2164,19 +2168,6 @@ function initEmployeesView() {
                 });
         }
 
-        if (documentsContainer) {
-            documentsContainer.innerHTML = '';
-            getCollection(employee, 'documents')
-                .forEach(documentRecord => {
-                    EmpCollections.createRow(
-                        documentsContainer,
-                        EmpCollections.docFields,
-                        'doc-row',
-                        documentRecord,
-                        false
-                    );
-                });
-        }
     };
 
     async function openEmpDetail(id) {
@@ -2186,7 +2177,7 @@ function initEmployeesView() {
         showLoader();
 
         try {
-            await loadSelectOptions();
+            await loadSelectOptions(id);
 
             const response = await apiGet(
                 `/branchadmin/employees/${id}`
@@ -2294,7 +2285,6 @@ function initEmployeesView() {
             bindField('empJoiningDate', employee.joiningDate, formatDate);
             bindField('empProbationEndDate', employee.probationEndDate, formatDate);
             bindField('empConfirmationDate', employee.confirmationDate, formatDate);
-            bindField('empRetirementDate', employee.retirementDate, formatDate);
             bindField('empResignationDate', employee.resignationDate, formatDate);
             bindField('empTerminationDate', employee.terminationDate, formatDate);
             bindField('empEmploymentEndDate', employee.employmentEndDate, formatDate);
@@ -2308,7 +2298,11 @@ function initEmployeesView() {
             setText(
                 '#view-empReportingManager',
                 reportingManagerName ||
-                'Not assigned automatically yet'
+                'Not Assigned'
+            );
+            setInput(
+                '#edit-empReportingManager',
+                employee.reportingManagerId
             );
 
             bindField('empNationality', employee.nationality);
@@ -2375,6 +2369,98 @@ function initEmployeesView() {
                 employee.user?.status,
                 formatEnum
             );
+            setText(
+                '#view-empMustChangePassword',
+                employee.mustChangePassword,
+                formatBoolean
+            );
+            setText(
+                '#view-empTemporaryPasswordExpiry',
+                employee.temporaryPasswordExpiresAt
+                    ? String(employee.temporaryPasswordExpiresAt).replace('T', ' ')
+                    : null
+            );
+            setText(
+                '#view-empCredentialStatus',
+                employee.credentialDeliveryStatus,
+                formatEnum
+            );
+            setText(
+                '#view-empCredentialsSentAt',
+                employee.credentialsSentAt
+                    ? String(employee.credentialsSentAt).replace('T', ' ')
+                    : null
+            );
+            setText(
+                '#view-empCredentialAttempts',
+                employee.credentialDeliveryAttempts ?? 0
+            );
+
+            const hasLoginAccount =
+                employee.loginEnabled === true ||
+                Boolean(
+                    employee.userId ||
+                    employee.username ||
+                    employee.loginId ||
+                    employee.user?.id ||
+                    employee.user?.username
+                );
+            const employeeIsActive =
+                employee.active !== false;
+            const createLoginButton =
+                viewContainer.querySelector(
+                    '#btn-create-employee-login'
+                );
+            const resetPasswordButton =
+                viewContainer.querySelector(
+                    '#btn-reset-employee-password'
+                );
+
+            toggleCssClass(
+                createLoginButton,
+                'hidden',
+                hasLoginAccount || !employeeIsActive
+            );
+            toggleCssClass(
+                resetPasswordButton,
+                'hidden',
+                !hasLoginAccount || !employeeIsActive
+            );
+
+            if (resetPasswordButton) {
+                const deliveryStatus = String(
+                    employee.credentialDeliveryStatus || ''
+                ).toUpperCase();
+                resetPasswordButton.innerHTML =
+                    deliveryStatus === 'NOT_REQUIRED' ||
+                    deliveryStatus === 'PENDING' ||
+                    deliveryStatus === 'FAILED'
+                        ? '<i class="bi bi-envelope"></i> Send Temporary Password'
+                        : '<i class="bi bi-key"></i> Reset &amp; Send Temporary Password';
+            }
+
+            toggleCssClass(
+                editBtn,
+                'hidden',
+                !employeeIsActive
+            );
+
+            setText('#view-empActive', employee.active, formatBoolean);
+            setText('#view-empVersion', employee.version);
+            setText('#view-empCreatedBy', employee.createdBy);
+            setText(
+                '#view-empCreatedAt',
+                employee.createdAt
+                    ? String(employee.createdAt).replace('T', ' ')
+                    : null
+            );
+            setText('#view-empUpdatedBy', employee.updatedBy);
+            setText(
+                '#view-empUpdatedAt',
+                employee.updatedAt
+                    ? String(employee.updatedAt).replace('T', ' ')
+                    : null
+            );
 
             const profilePhoto = normalizeImageSource(
                 employee.profilePhotoUrl ??
@@ -2406,15 +2492,18 @@ function initEmployeesView() {
                 );
 
             const signaturePath =
-                employee.signatureFileUrl ??
-                employee.signatureFile ??
-                null;
+                employee.signatureFileAvailable === true
+                    ? (
+                        employee.signatureFileUrl ||
+                        `/api/branchadmin/employees/${id}/signature`
+                    )
+                    : null;
 
             setText(
                 '#view-empSignatureStatus',
                 signaturePath
-                    ? 'Signature available'
-                    : 'No signature uploaded'
+                    ? 'Signature Available'
+                    : 'Not Uploaded'
             );
 
             if (signatureButton) {
@@ -2493,13 +2582,48 @@ function initEmployeesView() {
                     },
                     {
                         label: 'Grade',
-                        value: qualification.employeeQualificationGrade
+                        value:
+                            qualification.employeeQualificationGrade ||
+                            qualification.qualificationGrade
+                    },
+                    {
+                        label: 'Start Year',
+                        value: qualification.employeeQualificationStartYear
                     },
                     {
                         label: 'Completion Year',
                         value: qualification.employeeQualificationCompletionYear
+                    },
+                    {
+                        label: 'Certificate',
+                        value:
+                            qualification.employeeQualificationDocumentAvailable === true
+                                ? 'Uploaded'
+                                : 'Not Uploaded'
+                    },
+                    {
+                        label: 'Verification',
+                        value:
+                            qualification.employeeQualificationVerified === true
+                                ? 'Verified'
+                                : 'Not Verified'
                     }
-                ]
+                ],
+                qualification => {
+                    if (
+                        qualification.employeeQualificationDocumentAvailable !== true ||
+                        !qualification.employeeQualificationId
+                    ) {
+                        return [];
+                    }
+
+                    return [
+                        createSecureViewButton(
+                            'View Certificate',
+                            `/api/branchadmin/employees/${id}/qualifications/${qualification.employeeQualificationId}/view`
+                        )
+                    ];
+                }
             );
 
             renderSimpleRecords(
@@ -2533,8 +2657,60 @@ function initEmployeesView() {
                             : formatDate(
                                 experience.employeeExperienceEndDate
                             )
+                    },
+                    {
+                        label: 'Experience Certificate',
+                        value:
+                            experience.employeeExperienceExperienceCertificateAvailable === true
+                                ? 'Uploaded'
+                                : 'Not Uploaded'
+                    },
+                    {
+                        label: 'Relieving Letter',
+                        value:
+                            experience.employeeExperienceRelievingLetterAvailable === true
+                                ? 'Uploaded'
+                                : 'Not Uploaded'
+                    },
+                    {
+                        label: 'Verification',
+                        value:
+                            experience.employeeExperienceVerified === true
+                                ? 'Verified'
+                                : 'Not Verified'
                     }
-                ]
+                ],
+                experience => {
+                    const experienceId =
+                        experience.employeeExperienceId;
+                    if (!experienceId) return [];
+
+                    const actions = [];
+
+                    if (
+                        experience.employeeExperienceExperienceCertificateAvailable === true
+                    ) {
+                        actions.push(
+                            createSecureViewButton(
+                                'View Experience Certificate',
+                                `/api/branchadmin/employees/${id}/experiences/${experienceId}/certificate/view`
+                            )
+                        );
+                    }
+
+                    if (
+                        experience.employeeExperienceRelievingLetterAvailable === true
+                    ) {
+                        actions.push(
+                            createSecureViewButton(
+                                'View Relieving Letter',
+                                `/api/branchadmin/employees/${id}/experiences/${experienceId}/relieving-letter/view`
+                            )
+                        );
+                    }
+
+                    return actions;
+                }
             );
 
             renderDocuments(documents);
@@ -2554,40 +2730,148 @@ function initEmployeesView() {
         }
     }
 
-    async function deleteEmp(id) {
-        if (!id) return;
+    let pendingDeactivationEmployeeId = null;
+    let pendingDeactivationEmployeeName = null;
 
-        showPremiumModal({
-            title: 'Terminate Employee',
-            type: 'warning',
-            contentText:
-                'Are you sure you want to terminate this employee? The employee login will be disabled.',
-            confirmText: 'Yes, Terminate',
-            cancelText: 'Cancel',
-            onConfirm: async modal => {
-                modal.close();
-                showLoader();
+    const deactivationModal =
+        viewContainer.querySelector(
+            '#employee-deactivation-modal'
+        );
+    const deactivationForm =
+        viewContainer.querySelector(
+            '#employee-deactivation-form'
+        );
+    const deactivationName =
+        viewContainer.querySelector(
+            '#employee-deactivation-name'
+        );
+    const deactivationStatus =
+        viewContainer.querySelector(
+            '#employee-deactivation-status'
+        );
+    const deactivationDate =
+        viewContainer.querySelector(
+            '#employee-deactivation-date'
+        );
+    const deactivationReason =
+        viewContainer.querySelector(
+            '#employee-deactivation-reason'
+        );
 
-                try {
-                    await apiDelete(
-                        `/branchadmin/employees/${id}`
-                    );
-                    showSuccessMessage(
-                        'Employee terminated successfully.'
-                    );
-                    await loadEmployees();
-                } catch (error) {
-                    console.error(error);
-                    showErrorMessage(
-                        error.message ||
-                        'Failed to terminate employee.'
-                    );
-                } finally {
-                    hideLoader();
-                }
-            }
-        });
+    const closeDeactivationModal = () => {
+        addCssClasses(deactivationModal, 'hidden');
+        deactivationForm?.reset();
+        pendingDeactivationEmployeeId = null;
+        pendingDeactivationEmployeeName = null;
+    };
+
+    async function deleteEmp(id, employeeName = null) {
+        if (!id || !deactivationModal) return;
+
+        pendingDeactivationEmployeeId = id;
+        pendingDeactivationEmployeeName =
+            employeeName || 'Selected Employee';
+
+        if (deactivationName) {
+            deactivationName.textContent =
+                pendingDeactivationEmployeeName;
+        }
+
+        const today = new Date()
+            .toISOString()
+            .split('T')[0];
+
+        if (deactivationDate) {
+            deactivationDate.value = today;
+            deactivationDate.max = today;
+        }
+
+        removeCssClasses(deactivationModal, 'hidden');
+        deactivationStatus?.focus();
     }
+
+    viewContainer
+        .querySelector('#employee-deactivation-cancel')
+        ?.addEventListener(
+            'click',
+            closeDeactivationModal
+        );
+
+    deactivationModal?.addEventListener(
+        'click',
+        event => {
+            if (event.target === deactivationModal) {
+                closeDeactivationModal();
+            }
+        }
+    );
+
+    deactivationForm?.addEventListener(
+        'submit',
+        async event => {
+            event.preventDefault();
+
+            const employmentStatus =
+                deactivationStatus?.value?.trim();
+            const effectiveDate =
+                deactivationDate?.value?.trim();
+            const exitReason =
+                deactivationReason?.value?.trim();
+
+            if (
+                !pendingDeactivationEmployeeId ||
+                !employmentStatus ||
+                !effectiveDate ||
+                !exitReason
+            ) {
+                showErrorMessage(
+                    'Final status, effective date and exit reason are required.'
+                );
+                return;
+            }
+
+            showLoader();
+
+            try {
+                await apiDelete(
+                    `/branchadmin/employees/${pendingDeactivationEmployeeId}`,
+                    {
+                        employmentStatus,
+                        effectiveDate,
+                        exitReason
+                    }
+                );
+
+                const deactivatedEmployeeId =
+                    pendingDeactivationEmployeeId;
+
+                closeDeactivationModal();
+                showSuccessMessage(
+                    'Employee deactivated successfully.'
+                );
+
+                if (
+                    currentDetailEmpId ===
+                    deactivatedEmployeeId
+                ) {
+                    currentDetailEmpId = null;
+                    currentEmployee = null;
+                    addCssClasses(detailView, 'hidden');
+                    removeCssClasses(tableView, 'hidden');
+                }
+
+                await loadEmployees();
+            } catch (error) {
+                console.error(error);
+                showErrorMessage(
+                    error.message ||
+                    'Failed to deactivate Employee.'
+                );
+            } finally {
+                hideLoader();
+            }
+        }
+    );
 
     function enterEmpEditMode() {
         viewContainer
@@ -2607,8 +2891,7 @@ function initEmployeesView() {
         [
             '#contacts-view-container',
             '#qualifications-view-container',
-            '#experiences-view-container',
-            '#documents-view-container'
+            '#experiences-view-container'
         ].forEach(selector => {
             addCssClasses(
                 viewContainer.querySelector(selector),
@@ -2619,8 +2902,7 @@ function initEmployeesView() {
         [
             '#contacts-container',
             '#qualifications-container',
-            '#experiences-container',
-            '#documents-container'
+            '#experiences-container'
         ].forEach(selector => {
             removeCssClasses(
                 viewContainer.querySelector(selector),
@@ -2673,8 +2955,7 @@ function initEmployeesView() {
         [
             '#contacts-view-container',
             '#qualifications-view-container',
-            '#experiences-view-container',
-            '#documents-view-container'
+            '#experiences-view-container'
         ].forEach(selector => {
             removeCssClasses(
                 viewContainer.querySelector(selector),
@@ -2685,8 +2966,7 @@ function initEmployeesView() {
         [
             '#contacts-container',
             '#qualifications-container',
-            '#experiences-container',
-            '#documents-container'
+            '#experiences-container'
         ].forEach(selector => {
             addCssClasses(
                 viewContainer.querySelector(selector),
@@ -2712,12 +2992,41 @@ function initEmployeesView() {
         enterEmpEditMode
     );
 
-    cancelEditBtn?.addEventListener('click', async () => {
-        if (currentDetailEmpId) {
-            await openEmpDetail(currentDetailEmpId);
-        } else {
-            resetEmpEditMode();
-        }
+    cancelEditBtn?.addEventListener('click', () => {
+        showPremiumModal({
+            title: 'Discard Employee Changes?',
+            type: 'warning',
+            contentText:
+                'Unsaved changes will be removed and the saved Employee details will be restored.',
+            confirmText: 'Discard Changes',
+            cancelText: 'Continue Editing',
+            onConfirm: async modal => {
+                modal.close();
+                showLoader();
+
+                try {
+                    if (currentDetailEmpId) {
+                        await openEmpDetail(
+                            currentDetailEmpId
+                        );
+                    } else {
+                        resetEmpEditMode();
+                    }
+
+                    showSuccessMessage(
+                        'Unsaved Employee changes were discarded.'
+                    );
+                } catch (error) {
+                    console.error(error);
+                    showErrorMessage(
+                        error?.message ||
+                        'Could not restore the saved Employee details.'
+                    );
+                } finally {
+                    hideLoader();
+                }
+            }
+        });
     });
 
     backBtn?.addEventListener('click', async () => {
@@ -2728,19 +3037,286 @@ function initEmployeesView() {
         await loadEmployees();
     });
 
-    saveBtn?.addEventListener('click', async () => {
-        if (!currentDetailEmpId) return;
+
+    const employeeLoginModal =
+        viewContainer.querySelector(
+            '#employee-login-modal'
+        );
+    const employeeLoginForm =
+        viewContainer.querySelector(
+            '#employee-login-form'
+        );
+    const employeeLoginName =
+        viewContainer.querySelector(
+            '#employee-login-name'
+        );
+    const employeeLoginRole =
+        viewContainer.querySelector(
+            '#employee-login-role'
+        );
+    const employeeLoginSendEmail =
+        viewContainer.querySelector(
+            '#employee-login-send-email'
+        );
+
+    const closeEmployeeLoginModal = () => {
+        addCssClasses(employeeLoginModal, 'hidden');
+        employeeLoginModal?.setAttribute(
+            'aria-hidden',
+            'true'
+        );
+        document.body.style.overflow = '';
+        employeeLoginForm?.reset();
+    };
+
+    const loadLoginRoleOptions = async selectElement => {
+        if (!selectElement) return;
+
+        const response = await apiGet(
+            '/branchadmin/employees/login-role-options'
+        );
+        const roles = response?.data ?? response ?? [];
+
+        selectElement.innerHTML =
+            '<option value="">-- Select Role --</option>';
+
+        roles.forEach(role => {
+            const option = document.createElement('option');
+            option.value =
+                String(
+                    role.roleId ?? ''
+                );
+            option.textContent =
+                role.roleName ||
+                formatEnum(role.roleCode);
+            selectElement.appendChild(option);
+        });
+    };
+
+    let employeeLoginModalOpening = false;
+
+    const openEmployeeLoginModal = async () => {
+        if (
+            employeeLoginModalOpening ||
+            !currentEmployee ||
+            !currentDetailEmpId ||
+            !employeeLoginModal
+        ) {
+            return;
+        }
+
+        if (!currentEmployee.officialEmail) {
+            showErrorMessage(
+                'Official email is required before creating a login account.'
+            );
+            return;
+        }
+
+        employeeLoginModalOpening = true;
+        showLoader();
+
+        try {
+            await loadLoginRoleOptions(
+                employeeLoginRole
+            );
+
+            if (
+                !employeeLoginRole ||
+                employeeLoginRole.options.length <= 1
+            ) {
+                throw new Error(
+                    'No Employee login roles are available.'
+                );
+            }
+
+            if (employeeLoginName) {
+                employeeLoginName.textContent =
+                    currentEmployee.fullName ||
+                    currentEmployee.employeeNo ||
+                    'Selected Employee';
+            }
+
+            if (employeeLoginSendEmail) {
+                employeeLoginSendEmail.checked = true;
+            }
+
+            employeeLoginModal.setAttribute(
+                'aria-hidden',
+                'false'
+            );
+
+            document.body.style.overflow =
+                'hidden';
+
+            removeCssClasses(
+                employeeLoginModal,
+                'hidden'
+            );
+
+            window.setTimeout(
+                () => employeeLoginRole?.focus(),
+                80
+            );
+        } catch (error) {
+            console.error(error);
+            showErrorMessage(
+                error?.message ||
+                'Could not load Employee login roles.'
+            );
+        } finally {
+            employeeLoginModalOpening = false;
+            hideLoader();
+        }
+    };
+
+    /*
+     * Event delegation prevents the Create Login Account button from becoming
+     * inactive after Employee detail content is refreshed.
+     */
+    viewContainer.addEventListener(
+        'click',
+        event => {
+            const target =
+                event.target instanceof Element
+                    ? event.target
+                    : null;
+
+            const createLoginButton =
+                target?.closest(
+                    '#btn-create-employee-login'
+                );
+
+            if (!createLoginButton) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+
+            void openEmployeeLoginModal();
+        }
+    );
+
+    viewContainer
+        .querySelector('#employee-login-cancel')
+        ?.addEventListener(
+            'click',
+            closeEmployeeLoginModal
+        );
+
+    employeeLoginModal?.addEventListener(
+        'click',
+        event => {
+            if (event.target === employeeLoginModal) {
+                closeEmployeeLoginModal();
+            }
+        }
+    );
+
+    employeeLoginForm?.addEventListener(
+        'submit',
+        async event => {
+            event.preventDefault();
+
+            if (!currentDetailEmpId) return;
+
+            const roleId = Number.parseInt(
+                employeeLoginRole?.value || '',
+                10
+            );
+
+            if (!Number.isInteger(roleId) || roleId <= 0) {
+                showErrorMessage(
+                    'Select a valid login role.'
+                );
+                return;
+            }
+
+            showLoader();
+            try {
+                await apiPost(
+                    `/branchadmin/employees/${currentDetailEmpId}/login-account`,
+                    {
+                        roleId,
+                        sendEmail:
+                            employeeLoginSendEmail?.checked === true
+                    }
+                );
+
+                closeEmployeeLoginModal();
+                showSuccessMessage(
+                    'Employee login account created successfully.'
+                );
+                await openEmpDetail(currentDetailEmpId);
+            } catch (error) {
+                console.error(error);
+                showErrorMessage(
+                    error.message ||
+                    'Failed to create Employee login account.'
+                );
+            } finally {
+                hideLoader();
+            }
+        }
+    );
+
+    viewContainer
+        .querySelector('#btn-reset-employee-password')
+        ?.addEventListener('click', () => {
+            if (!currentDetailEmpId || !currentEmployee) {
+                return;
+            }
+
+            showPremiumModal({
+                title: 'Send New Temporary Password',
+                type: 'warning',
+                contentText:
+                    'A new temporary password will replace the current password and be emailed to the Employee.',
+                confirmText: 'Generate & Send',
+                cancelText: 'Cancel',
+                onConfirm: async modal => {
+                    modal.close();
+                    showLoader();
+                    try {
+                        await apiPost(
+                            `/branchadmin/employees/${currentDetailEmpId}/temporary-password`,
+                            { sendEmail: true }
+                        );
+                        showSuccessMessage(
+                            'New temporary password queued for email delivery.'
+                        );
+                        await openEmpDetail(currentDetailEmpId);
+                    } catch (error) {
+                        console.error(error);
+                        showErrorMessage(
+                            error.message ||
+                            'Failed to generate temporary password.'
+                        );
+                    } finally {
+                        hideLoader();
+                    }
+                }
+            });
+        });
+
+    const saveEmployeeChanges = async () => {
+        if (!currentDetailEmpId || !currentEmployee) return;
 
         const valueOrNull = selector => {
             const element =
                 viewContainer.querySelector(selector);
-
             if (!element) return null;
-
-            const value =
-                String(element.value ?? '').trim();
-
+            const value = String(element.value ?? '').trim();
             return value === '' ? null : value;
+        };
+
+        const numberOrNull = selector => {
+            const value = valueOrNull(selector);
+            if (value === null) return null;
+            const parsed = Number.parseInt(value, 10);
+            return Number.isInteger(parsed) && parsed > 0
+                ? parsed
+                : null;
         };
 
         const firstName =
@@ -2768,20 +3344,60 @@ function initEmployeesView() {
             return;
         }
 
+        const version = Number(currentEmployee.version);
+        if (!Number.isInteger(version) || version < 0) {
+            showErrorMessage(
+                'Employee version is missing. Reload the Employee details.'
+            );
+            return;
+        }
+
+        const employmentStatus =
+            valueOrNull('#edit-empStatus') || 'ACTIVE';
+
+        if (
+            ['RESIGNED', 'RETIRED', 'TERMINATED']
+                .includes(employmentStatus) &&
+            currentEmployee.active !== false
+        ) {
+            showErrorMessage(
+                'Use Deactivate Employee to set a final employment status.'
+            );
+            return;
+        }
+
         const profilePhoto =
             viewContainer.querySelector(
                 '#edit-empProfilePhoto'
             )?.files?.[0] || null;
 
-        const signatureFile =
-            viewContainer.querySelector(
-                '#edit-empSignature'
-            )?.files?.[0] || null;
+        if (profilePhoto) {
+            const allowedTypes = new Set([
+                'image/jpeg',
+                'image/png',
+                'image/webp'
+            ]);
+
+            if (!allowedTypes.has(profilePhoto.type)) {
+                showErrorMessage(
+                    'Profile photo must be JPG, PNG or WEBP.'
+                );
+                return;
+            }
+
+            if (profilePhoto.size > 2 * 1024 * 1024) {
+                showErrorMessage(
+                    'Profile photo must not exceed 2 MB.'
+                );
+                return;
+            }
+        }
 
         showLoader();
 
         try {
             const payload = {
+                version,
                 title: valueOrNull('#edit-empTitle'),
                 firstName,
                 middleName: valueOrNull('#edit-empMiddleName'),
@@ -2793,27 +3409,47 @@ function initEmployeesView() {
                 religion: valueOrNull('#edit-empReligion'),
                 subReligion: valueOrNull('#edit-empSubReligion'),
 
+                profilePhotoData:
+                    await EmpCollections.fileToBase64(
+                        profilePhoto
+                    ),
+                profilePhotoFileName:
+                    profilePhoto?.name || null,
+                profilePhotoContentType:
+                    profilePhoto?.type || null,
+                profilePhotoFileSize:
+                    profilePhoto?.size || null,
+
+                signatureFileData: null,
+                signatureFileName: null,
+                signatureContentType: null,
+                signatureFileSize: null,
+
                 officialEmail: valueOrNull('#edit-empEmail'),
                 personalEmail: valueOrNull('#edit-empPersonalEmail'),
                 mobileNo: valueOrNull('#edit-empPhone'),
                 alternateMobile: valueOrNull('#edit-empAlternatePhone'),
 
-                departmentId: valueOrNull('#edit-empDepartment'),
-                designationId: valueOrNull('#edit-empDesignation'),
+                departmentId: numberOrNull('#edit-empDepartment'),
+                designationId: numberOrNull('#edit-empDesignation'),
+                reportingManagerId:
+                    numberOrNull('#edit-empReportingManager'),
                 employeeCategory,
                 employeeType: valueOrNull('#edit-empType'),
                 employmentMode: valueOrNull('#edit-empMode'),
-                employmentStatus:
-                    valueOrNull('#edit-empStatus') || 'ACTIVE',
+                employmentStatus,
 
                 joiningDate: valueOrNull('#edit-empJoiningDate'),
                 probationEndDate: valueOrNull('#edit-empProbationEndDate'),
                 confirmationDate: valueOrNull('#edit-empConfirmationDate'),
-                retirementDate: valueOrNull('#edit-empRetirementDate'),
-                resignationDate: valueOrNull('#edit-empResignationDate'),
-                terminationDate: valueOrNull('#edit-empTerminationDate'),
-                employmentEndDate: valueOrNull('#edit-empEmploymentEndDate'),
-                exitReason: valueOrNull('#edit-empExitReason'),
+                retirementDate:
+                    currentEmployee.retirementDate || null,
+                resignationDate:
+                    currentEmployee.resignationDate || null,
+                terminationDate:
+                    currentEmployee.terminationDate || null,
+                exitReason:
+                    currentEmployee.exitReason || null,
 
                 nationality: valueOrNull('#edit-empNationality'),
                 nationalId: valueOrNull('#edit-empNationalId'),
@@ -2837,42 +3473,39 @@ function initEmployeesView() {
                 languagesSpoken: valueOrNull('#edit-empLanguages'),
                 employeeRemarks: valueOrNull('#edit-empRemarks'),
 
-                profilePhotoData:
-                    await EmpCollections.fileToBase64(
-                        profilePhoto
-                    ),
-                profilePhotoFileName:
-                    profilePhoto?.name || null,
-                profilePhotoContentType:
-                    profilePhoto?.type || null,
-                profilePhotoFileSize:
-                    profilePhoto?.size || null,
-
-                signatureFileData:
-                    await EmpCollections.fileToBase64(
-                        signatureFile
-                    ),
-                signatureFileName:
-                    signatureFile?.name || null,
-                signatureContentType:
-                    signatureFile?.type || null,
-                signatureFileSize:
-                    signatureFile?.size || null,
-
-                contacts:
-                    collectContacts(viewContainer),
+                contacts: collectContacts(viewContainer),
                 qualifications:
-                    await collectQualifications(
-                        viewContainer
-                    ),
+                    await collectQualifications(viewContainer),
                 experiences:
-                    await collectExperiences(
-                        viewContainer
-                    ),
+                    await collectExperiences(viewContainer),
                 documents:
-                    await collectDocuments(
-                        viewContainer
-                    )
+                    getCollection(
+                        currentEmployee,
+                        'documents'
+                    ).map(documentRecord => ({
+                        employeeDocumentId:
+                            documentRecord.employeeDocumentId,
+                        employeeDocumentType:
+                            documentRecord.employeeDocumentType,
+                        employeeDocumentName:
+                            documentRecord.employeeDocumentName || null,
+                        employeeDocumentDescription:
+                            documentRecord.employeeDocumentDescription || null,
+                        employeeDocumentIssueDate:
+                            documentRecord.employeeDocumentIssueDate || null,
+                        employeeDocumentExpiryDate:
+                            documentRecord.employeeDocumentExpiryDate || null,
+                        employeeDocumentIsMandatory:
+                            documentRecord.employeeDocumentIsMandatory ?? false,
+                        employeeDocumentActive:
+                            documentRecord.employeeDocumentActive ?? true,
+                        employeeDocumentRemarks:
+                            documentRecord.employeeDocumentRemarks || null,
+                        fileData: null,
+                        fileName: null,
+                        contentType: null,
+                        fileSize: null
+                    }))
             };
 
             await apiPut(
@@ -2890,12 +3523,34 @@ function initEmployeesView() {
             console.error(error);
             showErrorMessage(
                 error.message ||
-                'Failed to update employee.'
+                'Failed to update Employee.'
             );
         } finally {
             hideLoader();
         }
+    };
+
+    saveBtn?.addEventListener('click', () => {
+        showPremiumModal({
+            title: 'Confirm Employee Update',
+            type: 'warning',
+            contentText:
+                'Review the edited Employee information. Click Save Changes to update the Employee record.',
+            confirmText: 'Save Changes',
+            cancelText: 'Review Again',
+            onConfirm: async modal => {
+                modal.close();
+
+                /*
+                 * saveEmployeeChanges() displays the normal application
+                 * loading animation, completes the update and shows the final
+                 * success or error result.
+                 */
+                await saveEmployeeChanges();
+            }
+        });
     });
+
 
     void (async () => {
         await loadEmployees();
@@ -3239,13 +3894,13 @@ const AddEmployeeValidation = {
         }
 
         const maximumSize =
-            5 * 1024 * 1024;
+            2 * 1024 * 1024;
 
         if (photo.size > maximumSize) {
             this.addError(
                 errors,
                 photoInput,
-                'Passport photo must not exceed 5 MB.'
+                'Passport photo must not exceed 2 MB.'
             );
         }
     },
@@ -3314,12 +3969,45 @@ const AddEmployeeValidation = {
         viewContainer,
         errors
     ) {
+        const generateLogin =
+            viewContainer.querySelector(
+                '#add-generateLogin'
+            )?.checked ?? false;
+
         const sendEmail =
             viewContainer.querySelector(
                 '#add-sendLoginEmail'
             )?.checked ?? false;
 
-        if (!sendEmail) return;
+        if (!generateLogin) {
+            if (sendEmail) {
+                const sendEmailField =
+                    viewContainer.querySelector(
+                        '#add-sendLoginEmail'
+                    );
+
+                this.addError(
+                    errors,
+                    sendEmailField,
+                    'Credential email requires login account creation.'
+                );
+            }
+
+            return;
+        }
+
+        const roleField =
+            viewContainer.querySelector(
+                '#add-employeeRoleId'
+            );
+
+        if (!this.getValue(roleField)) {
+            this.addError(
+                errors,
+                roleField,
+                'Select the Employee login role.'
+            );
+        }
 
         const emailField =
             viewContainer.querySelector(
@@ -3333,13 +4021,14 @@ const AddEmployeeValidation = {
             this.addError(
                 errors,
                 emailField,
-                'Official Email is required when sending login credentials.'
+                'Official Email is required when creating a login account.'
             );
 
             return;
         }
 
         if (
+            emailField instanceof HTMLInputElement &&
             !emailField.checkValidity()
         ) {
             this.addError(
@@ -3350,20 +4039,182 @@ const AddEmployeeValidation = {
         }
     },
 
+    validateEmploymentDates: function(
+        viewContainer,
+        errors
+    ) {
+        const dateOfBirthField =
+            viewContainer.querySelector(
+                '#add-empDob'
+            );
+
+        const joiningDateField =
+            viewContainer.querySelector(
+                '#add-empJoiningDate'
+            );
+
+        const probationDateField =
+            viewContainer.querySelector(
+                '#add-empProbationEndDate'
+            );
+
+        const confirmationDateField =
+            viewContainer.querySelector(
+                '#add-empConfirmationDate'
+            );
+
+        const dateOfBirth =
+            this.getValue(dateOfBirthField);
+
+        const joiningDate =
+            this.getValue(joiningDateField);
+
+        const probationDate =
+            this.getValue(probationDateField);
+
+        const confirmationDate =
+            this.getValue(confirmationDateField);
+
+        if (
+            dateOfBirth &&
+            joiningDate &&
+            dateOfBirth >= joiningDate
+        ) {
+            this.addError(
+                errors,
+                joiningDateField,
+                'Joining Date must be later than Date of Birth.'
+            );
+        }
+
+        if (
+            joiningDate &&
+            probationDate &&
+            probationDate < joiningDate
+        ) {
+            this.addError(
+                errors,
+                probationDateField,
+                'Probation End Date cannot be earlier than Joining Date.'
+            );
+        }
+
+        if (
+            joiningDate &&
+            confirmationDate &&
+            confirmationDate < joiningDate
+        ) {
+            this.addError(
+                errors,
+                confirmationDateField,
+                'Confirmation Date cannot be earlier than Joining Date.'
+            );
+        }
+    },
+
+    validateIdentificationDates: function(
+        viewContainer,
+        errors
+    ) {
+        const passportNumberField =
+            viewContainer.querySelector(
+                '#add-empPassportNo'
+            );
+
+        const passportExpiryField =
+            viewContainer.querySelector(
+                '#add-empPassportExpiry'
+            );
+
+        const workPermitNumberField =
+            viewContainer.querySelector(
+                '#add-empWorkPermit'
+            );
+
+        const workPermitExpiryField =
+            viewContainer.querySelector(
+                '#add-empWorkPermitExpiry'
+            );
+
+        if (
+            this.getValue(passportExpiryField) &&
+            !this.getValue(passportNumberField)
+        ) {
+            this.addError(
+                errors,
+                passportNumberField,
+                'Passport Number is required when Passport Expiry Date is entered.'
+            );
+        }
+
+        if (
+            this.getValue(workPermitExpiryField) &&
+            !this.getValue(workPermitNumberField)
+        ) {
+            this.addError(
+                errors,
+                workPermitNumberField,
+                'Work Permit Number is required when its Expiry Date is entered.'
+            );
+        }
+    },
+
     validateContacts: function(
         viewContainer,
         errors
     ) {
         const rows =
-            viewContainer.querySelectorAll(
-                '#contacts-container .contact-row'
+            Array.from(
+                viewContainer.querySelectorAll(
+                    '#contacts-container .contact-row'
+                )
             );
 
-        rows.forEach((row, index) => {
-            if (!this.hasAnyRowValue(row)) {
-                return;
-            }
+        const populatedRows =
+            rows.filter(row =>
+                this.hasAnyRowValue(row)
+            );
 
+        if (populatedRows.length === 0) {
+            const firstRow = rows[0];
+
+            const name =
+                firstRow?.querySelector(
+                    '.c-name'
+                );
+
+            const relationship =
+                firstRow?.querySelector(
+                    '.c-relation'
+                );
+
+            const mobile =
+                firstRow?.querySelector(
+                    '.c-phone'
+                );
+
+            this.addError(
+                errors,
+                name,
+                'At least one Emergency Contact is required.'
+            );
+
+            this.addError(
+                errors,
+                relationship,
+                'Select the Emergency Contact relationship.'
+            );
+
+            this.addError(
+                errors,
+                mobile,
+                'Emergency Contact mobile number is required.'
+            );
+
+            return;
+        }
+
+        populatedRows.forEach((row, index) => {
             const name =
                 row.querySelector('.c-name');
 
@@ -3434,8 +4285,15 @@ const AddEmployeeValidation = {
                     '.q-specialization'
                 );
 
-            const year =
-                row.querySelector('.q-year');
+            const startYear =
+                row.querySelector(
+                    '.q-start-year'
+                );
+
+            const completionYear =
+                row.querySelector(
+                    '.q-completion-year'
+                );
 
             const selectedLevel =
                 this.getValue(level);
@@ -3489,11 +4347,44 @@ const AddEmployeeValidation = {
                 );
             }
 
-            if (!this.getValue(year)) {
+            const startYearValue =
+                this.getValue(startYear);
+
+            const completionYearValue =
+                this.getValue(completionYear);
+
+            if (!startYearValue) {
                 this.addError(
                     errors,
-                    year,
+                    startYear,
+                    `Qualification ${index + 1}: Start Year is required.`
+                );
+            }
+
+            if (!completionYearValue) {
+                this.addError(
+                    errors,
+                    completionYear,
                     `Qualification ${index + 1}: Completion Year is required.`
+                );
+            }
+
+            if (
+                startYearValue &&
+                completionYearValue &&
+                Number.parseInt(
+                    completionYearValue,
+                    10
+                ) <
+                Number.parseInt(
+                    startYearValue,
+                    10
+                )
+            ) {
+                this.addError(
+                    errors,
+                    completionYear,
+                    `Qualification ${index + 1}: Completion Year cannot be earlier than Start Year.`
                 );
             }
         });
@@ -3564,61 +4455,6 @@ const AddEmployeeValidation = {
         });
     },
 
-    validateDocuments: function(
-        viewContainer,
-        errors
-    ) {
-        const rows =
-            viewContainer.querySelectorAll(
-                '#documents-container .doc-row'
-            );
-
-        rows.forEach((row, index) => {
-            if (!this.hasAnyRowValue(row)) {
-                return;
-            }
-
-            const type =
-                row.querySelector('.d-type');
-
-            const name =
-                row.querySelector('.d-name');
-
-            const file =
-                row.querySelector('.d-file');
-
-            const recordId =
-                getRowId(row);
-
-            if (!this.getValue(type)) {
-                this.addError(
-                    errors,
-                    type,
-                    `Document ${index + 1}: Document Type is required.`
-                );
-            }
-
-            if (!this.getValue(name)) {
-                this.addError(
-                    errors,
-                    name,
-                    `Document ${index + 1}: Document Name is required.`
-                );
-            }
-
-            if (
-                !recordId &&
-                !this.getValue(file)
-            ) {
-                this.addError(
-                    errors,
-                    file,
-                    `Document ${index + 1}: Upload a file for the new document.`
-                );
-            }
-        });
-    },
-
     showSummary: function(
         viewContainer,
         errors
@@ -3677,6 +4513,16 @@ const AddEmployeeValidation = {
             errors
         );
 
+        this.validateEmploymentDates(
+            viewContainer,
+            errors
+        );
+
+        this.validateIdentificationDates(
+            viewContainer,
+            errors
+        );
+
         this.validateLogin(
             viewContainer,
             errors
@@ -3697,11 +4543,6 @@ const AddEmployeeValidation = {
             errors
         );
 
-        this.validateDocuments(
-            viewContainer,
-            errors
-        );
-
         if (errors.length === 0) {
             return true;
         }
@@ -3712,17 +4553,19 @@ const AddEmployeeValidation = {
         );
 
         const firstField =
-            errors[0].field;
+            errors[0]?.field;
 
-        firstField.scrollIntoView({
-            behavior: 'smooth',
-            block: 'center'
-        });
+        if (firstField instanceof HTMLElement) {
+            firstField.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
 
-        window.setTimeout(
-            () => firstField.focus(),
-            250
-        );
+            window.setTimeout(
+                () => firstField.focus(),
+                250
+            );
+        }
 
         return false;
     },
@@ -4264,10 +5107,17 @@ function createEmployeeRegistrationProgressController(
         );
     };
 
-    const close = () => {
-        if (state.processing) {
+    const close = (
+        force = false
+    ) => {
+        if (
+            state.processing &&
+            !force
+        ) {
             return false;
         }
+
+        state.processing = false;
 
         addCssClasses(modal,
             'hidden'
@@ -4671,24 +5521,41 @@ function initAddEmployeeView() {
         try {
             const branchId = getRequiredBranchId();
 
-            const [departmentResponse, designationResponse] =
-                await Promise.all([
-                    apiGet(
-                        `/departments?branchId=${branchId}&size=100`
-                    ),
-                    apiGet(
-                        `/designations?branchId=${branchId}&size=100`
-                    )
-                ]);
+            const [
+                departmentResponse,
+                designationResponse,
+                reportingManagerResponse,
+                loginRoleResponse
+            ] = await Promise.all([
+                apiGet(
+                    `/departments?branchId=${branchId}&size=100`
+                ),
+                apiGet(
+                    `/designations?branchId=${branchId}&size=100`
+                ),
+                apiGet(
+                    '/branchadmin/employees/reporting-managers'
+                ),
+                apiGet(
+                    '/branchadmin/employees/login-role-options'
+                )
+            ]);
 
             const departmentSelect =
                 viewContainer.querySelector(
                     '#add-empDepartment'
                 );
-
             const designationSelect =
                 viewContainer.querySelector(
                     '#add-empDesignation'
+                );
+            const reportingManagerSelect =
+                viewContainer.querySelector(
+                    '#add-empReportingManager'
+                );
+            const loginRoleSelect =
+                viewContainer.querySelector(
+                    '#add-employeeRoleId'
                 );
 
             if (departmentSelect) {
@@ -4700,16 +5567,16 @@ function initAddEmployeeView() {
                 ).forEach(department => {
                     const option =
                         document.createElement('option');
-
                     option.value =
-                        department.departmentId ??
-                        department.id ??
-                        '';
+                        String(
+                            department.departmentId ??
+                            department.id ??
+                            ''
+                        );
                     option.textContent =
                         department.departmentName ??
                         department.name ??
                         'Unnamed Department';
-
                     departmentSelect.appendChild(option);
                 });
             }
@@ -4723,26 +5590,71 @@ function initAddEmployeeView() {
                 ).forEach(designation => {
                     const option =
                         document.createElement('option');
-
                     option.value =
-                        designation.designationId ??
-                        designation.id ??
-                        '';
+                        String(
+                            designation.designationId ??
+                            designation.id ??
+                            ''
+                        );
                     option.textContent =
                         designation.designationName ??
                         designation.name ??
                         'Unnamed Designation';
-
                     designationSelect.appendChild(option);
+                });
+            }
+
+            if (reportingManagerSelect) {
+                reportingManagerSelect.innerHTML =
+                    '<option value="">-- No Reporting Manager --</option>';
+                const managers =
+                    reportingManagerResponse?.data ??
+                    reportingManagerResponse ??
+                    [];
+
+                managers.forEach(manager => {
+                    const option =
+                        document.createElement('option');
+                    option.value =
+                        String(
+                            manager.employeeId ?? ''
+                        );
+                    option.textContent = [
+                        manager.employeeNo,
+                        manager.fullName,
+                        manager.designationName
+                    ].filter(Boolean).join(' - ');
+                    reportingManagerSelect.appendChild(option);
+                });
+            }
+
+            if (loginRoleSelect) {
+                loginRoleSelect.innerHTML =
+                    '<option value="">-- Select Role --</option>';
+                const roles =
+                    loginRoleResponse?.data ??
+                    loginRoleResponse ??
+                    [];
+
+                roles.forEach(role => {
+                    const option =
+                        document.createElement('option');
+                    option.value =
+                        String(
+                            role.roleId ?? ''
+                        );
+                    option.textContent =
+                        role.roleName || role.roleCode || 'Role';
+                    loginRoleSelect.appendChild(option);
                 });
             }
         } catch (error) {
             console.warn(
-                'Could not load departments/designations.',
+                'Could not load Employee form options.',
                 error
             );
             showErrorMessage(
-                'Could not load Department and Designation options.'
+                'Could not load Department, Designation, Reporting Manager and Login Role options.'
             );
         }
     }
@@ -4855,12 +5767,12 @@ function initAddEmployeeView() {
                 return;
             }
 
-            if (photo.size > 5 * 1024 * 1024) {
+            if (photo.size > 2 * 1024 * 1024) {
                 profilePhotoInput.value = '';
                 resetProfilePhotoPreview();
 
                 showErrorMessage(
-                    'Passport photo must not exceed 5 MB.'
+                    'Passport photo must not exceed 2 MB.'
                 );
                 return;
             }
@@ -4996,13 +5908,6 @@ function initAddEmployeeView() {
             button: '+ Add Experience',
             fields: EmpCollections.expFields,
             rowClass: 'exp-row'
-        },
-        {
-            section: '#documents-section',
-            container: '#documents-container',
-            button: '+ Add Document',
-            fields: EmpCollections.docFields,
-            rowClass: 'doc-row'
         }
     ];
 
@@ -5025,6 +5930,24 @@ function initAddEmployeeView() {
             definition.rowClass,
             true
         );
+
+        /*
+         * Registration requires at least one emergency contact. Create the
+         * first editable row automatically so the form cannot silently submit
+         * an empty contacts array.
+         */
+        if (
+            container &&
+            definition.rowClass === 'contact-row'
+        ) {
+            EmpCollections.createRow(
+                container,
+                definition.fields,
+                definition.rowClass,
+                null,
+                true
+            );
+        }
     });
 
     if (typeof createErpCalendar === 'function') {
@@ -5086,8 +6009,21 @@ function initAddEmployeeView() {
                 viewContainer.querySelector(
                     definition.container
                 );
-            if (container) {
-                container.innerHTML = '';
+
+            if (!container) {
+                return;
+            }
+
+            container.innerHTML = '';
+
+            if (definition.rowClass === 'contact-row') {
+                EmpCollections.createRow(
+                    container,
+                    definition.fields,
+                    definition.rowClass,
+                    null,
+                    true
+                );
             }
         });
 
@@ -5340,6 +6276,11 @@ function initAddEmployeeView() {
                 profilePhotoFileSize:
                     profilePhoto?.size || null,
 
+                signatureData: null,
+                signatureFileName: null,
+                signatureContentType: null,
+                signatureFileSize: null,
+
                 officialEmail:
                     valueOrNull('#add-empEmail'),
 
@@ -5357,14 +6298,29 @@ function initAddEmployeeView() {
                     ),
 
                 departmentId:
-                    valueOrNull(
-                        '#add-empDepartment'
+                    Number(
+                        valueOrNull(
+                            '#add-empDepartment'
+                        )
                     ),
 
                 designationId:
-                    valueOrNull(
-                        '#add-empDesignation'
+                    Number(
+                        valueOrNull(
+                            '#add-empDesignation'
+                        )
                     ),
+
+                reportingManagerId:
+                    valueOrNull(
+                        '#add-empReportingManager'
+                    )
+                        ? Number(
+                            valueOrNull(
+                                '#add-empReportingManager'
+                            )
+                        )
+                        : null,
 
                 employeeCategory,
 
@@ -5375,6 +6331,7 @@ function initAddEmployeeView() {
                     valueOrNull('#add-empMode'),
 
                 employmentStatus:
+                    valueOrNull('#add-empStatus') ||
                     'ACTIVE',
 
                 joiningDate:
@@ -5391,6 +6348,8 @@ function initAddEmployeeView() {
                     valueOrNull(
                         '#add-empConfirmationDate'
                     ),
+
+                retirementDate: null,
 
                 nationality:
                     valueOrNull(
@@ -5478,6 +6437,9 @@ function initAddEmployeeView() {
                         '#add-empLanguages'
                     ),
 
+                employeeRemarks:
+                    valueOrNull('#add-empRemarks'),
+
                 contacts:
                     collectContacts(
                         viewContainer
@@ -5493,10 +6455,7 @@ function initAddEmployeeView() {
                         viewContainer
                     ),
 
-                documents:
-                    await collectDocuments(
-                        viewContainer
-                    ),
+                documents: [],
 
                 accountRequest: {
                     generateLogin,
@@ -5518,83 +6477,16 @@ function initAddEmployeeView() {
             };
         };
 
-    const wait = milliseconds =>
-        new Promise(resolve => {
-            window.setTimeout(
-                resolve,
-                milliseconds
-            );
-        });
-
-    const pollEmployeeRegistration =
-        async operationId => {
-            const maximumPolls =
-                15 * 60;
-
-            for (
-                let pollNumber = 0;
-                pollNumber < maximumPolls;
-                pollNumber++
-            ) {
-                await wait(1000);
-
-                const statusResponse =
-                    await apiGet(
-                        `/branchadmin/employees/registrations/${encodeURIComponent(operationId)}/status`
-                    );
-
-                const progress =
-                    statusResponse?.data ??
-                    statusResponse;
-
-                registrationProgress?.update(
-                    progress
-                );
-
-                const status =
-                    String(
-                        progress?.status ||
-                        'PROCESSING'
-                    ).toUpperCase();
-
-                if (status === 'COMPLETED') {
-                    registrationProgress
-                        ?.showSuccess(
-                            progress
-                        );
-
-                    return progress;
-                }
-
-                if (status === 'FAILED') {
-                    registrationProgress
-                        ?.showFailure(
-                            progress
-                        );
-
-                    return progress;
-                }
-            }
-
-            const timeoutFailure = {
-                status: 'FAILED',
-                stage: 'FINALIZATION',
-                percentage: 99,
-                message:
-                    'Registration status timed out.',
-                errors: [
-                    'The server did not return a final registration status within 15 minutes.'
-                ]
-            };
-
-            registrationProgress
-                ?.showFailure(
-                    timeoutFailure
-                );
-
-            return timeoutFailure;
-        };
-
+    /*
+     * Employee registration is currently completed synchronously by the
+     * backend. Do not poll the progress endpoint until registration is moved
+     * to a real background worker that immediately returns HTTP 202.
+     */
+    /*
+     * Employee registration is synchronous on the backend. Use the standard
+     * loading animation while the request is running and display the detailed
+     * result window only after the transaction completes.
+     */
     const startEmployeeRegistration =
         async payload => {
             if (registrationRunning) {
@@ -5602,123 +6494,70 @@ function initAddEmployeeView() {
             }
 
             registrationRunning = true;
-
-            registrationProgress?.open(
-                latestRegistrationName
-            );
-
-            registrationProgress?.update({
-                status: 'PROCESSING',
-                stage: 'REQUEST_ACCEPTED',
-                percentage: 2,
-                message:
-                    'Sending employee registration request...'
-            });
+            showLoader();
 
             try {
-                const startResponse =
+                const response =
                     await apiPost(
                         '/branchadmin/employees/registrations',
                         payload
                     );
 
-                const startResult =
-                    startResponse?.data ??
-                    startResponse;
+                const result =
+                    response?.data ??
+                    response;
 
-                const startStatus =
-                    String(
-                        startResult?.status ||
-                        'PROCESSING'
-                    ).toUpperCase();
-
-                registrationProgress?.update({
-                    ...startResult,
+                const completedResult = {
+                    ...result,
+                    status: 'COMPLETED',
                     stage:
-                        startResult?.stage ||
-                        'REQUEST_ACCEPTED',
-                    percentage:
-                        startResult?.percentage ??
-                        5,
+                        result?.stage ||
+                        'FINALIZATION',
+                    stageTitle:
+                        result?.stageTitle ||
+                        'Registration Complete',
+                    percentage: 100,
                     message:
-                        startResult?.message ||
-                        'Employee registration request accepted.'
-                });
+                        result?.message ||
+                        response?.message ||
+                        'Employee registered successfully.'
+                };
 
-                if (
-                    startStatus ===
-                    'COMPLETED'
-                ) {
-                    registrationProgress
-                        ?.showSuccess(
-                            startResult
-                        );
+                hideLoader();
 
-                    return startResult;
-                }
-
-                if (
-                    startStatus ===
-                    'FAILED'
-                ) {
-                    registrationProgress
-                        ?.showFailure(
-                            startResult
-                        );
-
-                    return startResult;
-                }
-
-                const operationId =
-                    startResult?.operationId;
-
-                if (!operationId) {
-                    const missingOperationFailure = {
-                        status: 'FAILED',
-                        stage: 'REQUEST_ACCEPTED',
-                        stageTitle: 'Registration Reference',
-                        percentage: 5,
-                        message:
-                            'The server did not return a registration operation ID.',
-                        errors: [
-                            'The backend must return operationId after accepting the employee registration request.'
-                        ]
-                    };
-
-                    registrationProgress
-                        ?.showFailure(
-                            missingOperationFailure
-                        );
-
-                    return missingOperationFailure;
-                }
-
-                registrationProgress
-                    ?.setOperationId(
-                        String(operationId)
-                    );
-
-                return await pollEmployeeRegistration(
-                    String(operationId)
+                registrationProgress?.open(
+                    latestRegistrationName
                 );
+                registrationProgress?.showSuccess(
+                    completedResult
+                );
+
+                latestRegistrationPayload =
+                    null;
+
+                return completedResult;
             } catch (error) {
                 console.error(error);
 
                 const failure =
                     extractApiFailure(
                         error,
-                        'REQUEST_ACCEPTED',
-                        2
+                        'SERVER_VALIDATION',
+                        0
                     );
 
-                registrationProgress
-                    ?.showFailure(
-                        failure
-                    );
+                hideLoader();
+                registrationProgress?.close(true);
+
+                showErrorMessage(
+                    failure?.message ||
+                    'Employee registration failed. The form has been preserved.'
+                );
 
                 return failure;
             } finally {
                 registrationRunning = false;
+                hideLoader();
             }
         };
 

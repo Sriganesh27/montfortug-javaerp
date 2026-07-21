@@ -16,9 +16,6 @@
         <div class="view-header mb-4 d-flex justify-content-between align-items-center">
             <div>
                 <h2>Add New Employee</h2>
-                <p class="text-muted">
-                    Register employee personal, employment and supporting details.
-                </p>
             </div>
 
             <div class="action-btn-group">
@@ -263,7 +260,7 @@
                             </span>
 
                             <small class="emp-photo-help">
-                                JPG, PNG or WEBP. Maximum size: 5 MB.
+                                JPG, PNG or WEBP. Maximum size: 2 MB.
                             </small>
                         </div>
                     </aside>
@@ -277,44 +274,8 @@
             <fieldset class="emp-fieldset">
                 <legend class="emp-legend">Employment Details</legend>
 
-                <div class="emp-grid emp-grid-2 mb-3">
-                    <div class="form-group emp-required-field">
-                        <label for="add-empDepartment">
-                            Department
-                        </label>
-
-                        <select
-                                id="add-empDepartment"
-                                class="detail-input w-100"
-                                required
-                                aria-required="true"
-                                data-validation-label="Department"
-                        >
-                            <option value="">-- Select Department --</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group emp-required-field">
-                        <label for="add-empDesignation">
-                            Designation
-                        </label>
-
-                        <select
-                                id="add-empDesignation"
-                                class="detail-input w-100"
-                                required
-                                aria-required="true"
-                                data-validation-label="Designation"
-                        >
-                            <option value="">-- Select Designation --</option>
-                        </select>
-                    </div>
-
-
-                </div>
-
-                <!-- Category Chain Selection -->
-                <div class="emp-grid emp-grid-4 mb-3">
+                <!-- Employment Classification -->
+                <div class="emp-grid emp-grid-3 mb-3">
                     <div class="form-group emp-required-field">
                         <label for="add-empCategory">
                             Employee Category
@@ -402,7 +363,79 @@
                     </div>
                 </div>
 
-                <div class="emp-grid emp-grid-3 mb-2">
+                <!-- Department, Designation and Supervisor -->
+                <div class="emp-grid emp-grid-3 mb-3">
+                    <div class="form-group emp-required-field">
+                        <label for="add-empDepartment">
+                            Department
+                        </label>
+
+                        <select
+                                id="add-empDepartment"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Department"
+                        >
+                            <option value="">-- Select Department --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group emp-required-field">
+                        <label for="add-empDesignation">
+                            Designation
+                        </label>
+
+                        <select
+                                id="add-empDesignation"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Designation"
+                        >
+                            <option value="">-- Select Designation --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-empReportingManager">
+                            Reporting Manager
+                        </label>
+
+                        <select
+                                id="add-empReportingManager"
+                                class="detail-input w-100"
+                                data-validation-label="Reporting Manager"
+                        >
+                            <option value="">-- No Reporting Manager --</option>
+                        </select>
+
+                        <small class="text-muted">
+                            Optional. Select the employee's direct supervisor
+                            from this branch.
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Employment Status and Dates -->
+                <div class="emp-grid emp-grid-4 mb-3">
+                    <div class="form-group emp-required-field">
+                        <label for="add-empStatus">
+                            Employment Status
+                        </label>
+
+                        <select
+                                id="add-empStatus"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Employment Status"
+                        >
+                            <option value="ACTIVE" selected>Active</option>
+                            <option value="PROBATION">Probation</option>
+                        </select>
+                    </div>
+
                     <div class="form-group emp-required-field">
                         <label for="add-empJoiningDate">
                             Joining Date
@@ -442,71 +475,11 @@
                         >
                     </div>
                 </div>
+
             </fieldset>
 
             <!-- ===================================================== -->
-            <!-- SECTION 4: LOGIN ACCOUNT                              -->
-            <!-- ===================================================== -->
-
-            <fieldset class="emp-fieldset">
-                <legend class="emp-legend">Login Account</legend>
-
-                <div class="form-group mb-3">
-                    <div class="emp-checkbox-row">
-                        <input
-                                type="checkbox"
-                                id="add-generateLogin"
-                        >
-
-                        <label for="add-generateLogin">
-                            Generate login account
-                        </label>
-                    </div>
-
-                    <small class="text-muted">
-                        The generated employee code will be used as the login ID.
-                    </small>
-                </div>
-
-                <div id="add-loginOptions" class="hidden">
-                    <div class="emp-grid emp-grid-2 mb-3">
-                        <div class="form-group">
-                            <label for="add-employeeRoleId">
-                                Login Role
-                            </label>
-
-                            <select
-                                    id="add-employeeRoleId"
-                                    class="detail-input w-100"
-                            >
-                                <option value="">
-                                    Default Employee Role
-                                </option>
-                            </select>
-                        </div>
-
-                        <div class="form-group emp-login-email-option">
-                            <div class="emp-checkbox-row">
-                                <input
-                                        type="checkbox"
-                                        id="add-sendLoginEmail"
-                                >
-
-                                <label for="add-sendLoginEmail">
-                                    Send credentials by email
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <small class="text-muted">
-                        Official email is required when credentials are sent.
-                    </small>
-                </div>
-            </fieldset>
-
-            <!-- ===================================================== -->
-            <!-- SECTION 5: IDENTIFICATIONS AND PERMITS                -->
+            <!-- SECTION 4: IDENTIFICATIONS AND PERMITS                -->
             <!-- ===================================================== -->
 
             <fieldset class="emp-fieldset">
@@ -610,7 +583,7 @@
             </fieldset>
 
             <!-- ===================================================== -->
-            <!-- SECTION 6: CONTACT DETAILS                            -->
+            <!-- SECTION 5: CONTACT DETAILS                            -->
             <!-- ===================================================== -->
 
             <fieldset class="emp-fieldset">
@@ -676,7 +649,7 @@
             </fieldset>
 
             <!-- ===================================================== -->
-            <!-- SECTION 7: ADDRESS                                    -->
+            <!-- SECTION 6: ADDRESS                                    -->
             <!-- ===================================================== -->
 
             <fieldset class="emp-fieldset">
@@ -807,7 +780,7 @@
             </fieldset>
 
             <!-- ===================================================== -->
-            <!-- SECTION 8: PROFESSIONAL PROFILE                       -->
+            <!-- SECTION 7: PROFESSIONAL PROFILE                       -->
             <!-- ===================================================== -->
 
             <fieldset class="emp-fieldset">
@@ -841,10 +814,24 @@
                     </div>
                 </div>
 
+                <div class="form-group mb-2">
+                    <label for="add-empRemarks">
+                        Employee Remarks
+                    </label>
+
+                    <textarea
+                            id="add-empRemarks"
+                            class="detail-input w-100"
+                            rows="3"
+                            maxlength="10000"
+                            placeholder="Enter relevant employment or onboarding remarks"
+                    ></textarea>
+                </div>
+
             </fieldset>
 
             <!-- ===================================================== -->
-            <!-- SECTION 9: QUALIFICATIONS                             -->
+            <!-- SECTION 8: QUALIFICATIONS                             -->
             <!-- ===================================================== -->
 
             <fieldset
@@ -859,7 +846,7 @@
             </fieldset>
 
             <!-- ===================================================== -->
-            <!-- SECTION 10: PREVIOUS EXPERIENCE                       -->
+            <!-- SECTION 9: PREVIOUS EXPERIENCE                       -->
             <!-- ===================================================== -->
 
             <fieldset
@@ -870,11 +857,12 @@
                     Previous Experience
                 </legend>
 
+
                 <div id="experiences-container"></div>
             </fieldset>
 
             <!-- ===================================================== -->
-            <!-- SECTION 11: EMERGENCY CONTACTS                        -->
+            <!-- SECTION 10: EMERGENCY CONTACTS                        -->
             <!-- ===================================================== -->
 
             <fieldset
@@ -889,18 +877,66 @@
             </fieldset>
 
             <!-- ===================================================== -->
-            <!-- SECTION 12: SUPPORTING DOCUMENTS                      -->
+            <!-- SECTION 11: LOGIN ACCOUNT                             -->
             <!-- ===================================================== -->
 
-            <fieldset
-                    class="emp-fieldset"
-                    id="documents-section"
-            >
-                <legend class="emp-legend">
-                    Supporting Documents
-                </legend>
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Login Account</legend>
 
-                <div id="documents-container"></div>
+                <div class="form-group mb-3">
+                    <div class="emp-checkbox-row">
+                        <input
+                                type="checkbox"
+                                id="add-generateLogin"
+                        >
+
+                        <label for="add-generateLogin">
+                            Generate login account
+                        </label>
+                    </div>
+
+                    <small class="text-muted">
+                        The generated employee code will be used as the login ID.
+                    </small>
+                </div>
+
+                <div id="add-loginOptions" class="hidden">
+                    <div class="emp-grid emp-grid-2 mb-3">
+                        <div class="form-group">
+                            <label for="add-employeeRoleId">
+                                Login Role
+                            </label>
+
+                            <select
+                                    id="add-employeeRoleId"
+                                    class="detail-input w-100"
+                            >
+                                <option value="">
+                                    Default Employee Role
+                                </option>
+                            </select>
+                        </div>
+
+                        <div class="form-group emp-login-email-option">
+                            <div class="emp-checkbox-row">
+                                <input
+                                        type="checkbox"
+                                        id="add-sendLoginEmail"
+                                >
+
+                                <label for="add-sendLoginEmail">
+                                    Send credentials by email
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <small class="text-muted">
+                        Official email is required when credentials are sent.
+                        A secure temporary password will be emailed after the
+                        Employee registration transaction commits successfully.
+                    </small>
+                </div>
             </fieldset>
 
             <!-- Submit Actions -->

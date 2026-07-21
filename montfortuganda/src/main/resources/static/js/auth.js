@@ -397,51 +397,99 @@ document.addEventListener('DOMContentLoaded', () => {
         return null;
     }
 
-    document
-        .querySelectorAll('[data-password-toggle]')
-        .forEach(toggleButton => {
-            toggleButton.addEventListener(
-                'click',
-                () => {
-                    const targetId =
-                        toggleButton.dataset.target;
+    function bindPasswordToggle(
+        toggleElement,
+        fallbackTargetId = null
+    ) {
+        if (
+            !toggleElement
+                    || toggleElement.dataset.passwordToggleBound === 'true'
+        ) {
+            return;
+        }
 
-                    const targetInput =
-                        document.getElementById(
-                            targetId
-                        );
+        const targetId =
+            toggleElement.dataset.target
+                    || fallbackTargetId;
 
-                    const icon =
-                        toggleButton.querySelector('i');
+        const targetInput =
+            targetId
+                ? document.getElementById(targetId)
+                : null;
 
-                    if (!targetInput) {
-                        return;
-                    }
+        if (!targetInput) {
+            console.warn(
+                'Password toggle target was not found:',
+                targetId
+            );
+            return;
+        }
 
-                    const currentlyVisible =
-                        targetInput.type === 'text';
+        toggleElement.dataset.passwordToggleBound =
+            'true';
 
-                    targetInput.type =
-                        currentlyVisible
-                            ? 'password'
-                            : 'text';
+        toggleElement.addEventListener(
+            'click',
+            event => {
+                event.preventDefault();
+                event.stopPropagation();
 
-                    toggleButton.setAttribute(
-                        'aria-label',
-                        currentlyVisible
-                            ? 'Show password'
-                            : 'Hide password'
+                const showPassword =
+                    targetInput.type === 'password';
+
+                targetInput.type =
+                    showPassword
+                        ? 'text'
+                        : 'password';
+
+                const icon =
+                    toggleElement.querySelector('i')
+                    || (
+                        toggleElement.id === 'toggle-password'
+                            ? document.getElementById('eye-icon')
+                            : null
                     );
 
-                    if (icon) {
-                        icon.className =
-                            currentlyVisible
-                                ? 'bi bi-eye-slash'
-                                : 'bi bi-eye';
-                    }
+                if (icon) {
+                    icon.className =
+                        showPassword
+                            ? 'bi bi-eye'
+                            : 'bi bi-eye-slash';
                 }
-            );
+
+                toggleElement.setAttribute(
+                    'aria-label',
+                    showPassword
+                        ? 'Hide password'
+                        : 'Show password'
+                );
+
+                toggleElement.setAttribute(
+                    'aria-pressed',
+                    String(showPassword)
+                );
+
+                targetInput.focus({
+                    preventScroll: true
+                });
+            }
+        );
+    }
+
+    document
+        .querySelectorAll('[data-password-toggle]')
+        .forEach(toggleElement => {
+            bindPasswordToggle(toggleElement);
         });
+
+    /*
+     * Backward compatibility for the earlier login HTML that used:
+     * <span id="toggle-password"><i id="eye-icon"></i></span>
+     */
+    bindPasswordToggle(
+        document.getElementById('toggle-password'),
+        'password'
+    );
 
     if (activeLoginForm) {
         activeLoginForm.addEventListener(
