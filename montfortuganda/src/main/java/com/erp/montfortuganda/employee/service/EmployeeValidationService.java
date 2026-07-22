@@ -52,7 +52,7 @@ import java.util.Set;
  * - reporting hierarchy safety;
  * - nested-record ownership during updates;
  * - duplicate records inside nested request collections;
- * - collection size and primary/emergency contact rules.
+ * - collection size and primary-contact rules.
  */
 @SuppressWarnings("unused")
 @Service
@@ -893,9 +893,7 @@ public class EmployeeValidationService {
             List<EmployeeContactRequest> contacts
     ) {
         if (contacts.isEmpty()) {
-            throw new BadRequestException(
-                    "At least one Employee contact is required."
-            );
+            return;
         }
 
         long activePrimaryContacts =
@@ -911,21 +909,6 @@ public class EmployeeValidationService {
         if (activePrimaryContacts != 1) {
             throw new BadRequestException(
                     "Exactly one active primary Employee contact is required."
-            );
-        }
-
-        boolean activeEmergencyContactExists =
-                contacts.stream()
-                        .filter(this::isActiveContact)
-                        .anyMatch(contact ->
-                                Boolean.TRUE.equals(
-                                        contact.employeeContactIsEmergency()
-                                )
-                        );
-
-        if (!activeEmergencyContactExists) {
-            throw new BadRequestException(
-                    "At least one active emergency contact is required."
             );
         }
 

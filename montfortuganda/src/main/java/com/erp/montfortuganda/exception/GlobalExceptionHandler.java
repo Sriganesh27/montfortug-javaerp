@@ -96,7 +96,88 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.BAD_REQUEST)
                 .body(response);
     }
+    /*
+     * Handles safe business-validation failures.
+     */
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<Map<String, Object>>
+    handleBadRequestException(
+            BadRequestException exception
+    ) {
+        return buildErrorResponse(
+                HttpStatus.BAD_REQUEST,
+                exception.getMessage() == null
+                        ? "Invalid Employee information."
+                        : exception.getMessage()
+        );
+    }
 
+    /*
+     * Handles duplicate Employee data and records currently in use.
+     */
+    @ExceptionHandler({
+            DuplicateResourceException.class,
+            EntityInUseException.class
+    })
+    public ResponseEntity<Map<String, Object>>
+    handleConflictException(
+            RuntimeException exception
+    ) {
+        return buildErrorResponse(
+                HttpStatus.CONFLICT,
+                exception.getMessage() == null
+                        ? "The submitted record already exists."
+                        : exception.getMessage()
+        );
+    }
+
+    /*
+     * Handles application resource lookup failures.
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, Object>>
+    handleResourceNotFoundException(
+            ResourceNotFoundException exception
+    ) {
+        return buildErrorResponse(
+                HttpStatus.NOT_FOUND,
+                exception.getMessage() == null
+                        ? "Requested record was not found."
+                        : exception.getMessage()
+        );
+    }
+
+    /*
+     * Handles users without an assigned branch.
+     */
+    @ExceptionHandler(BranchNotAssignedException.class)
+    public ResponseEntity<Map<String, Object>>
+    handleBranchNotAssignedException(
+            BranchNotAssignedException exception
+    ) {
+        return buildErrorResponse(
+                HttpStatus.FORBIDDEN,
+                exception.getMessage() == null
+                        ? "No branch is assigned to the current user."
+                        : exception.getMessage()
+        );
+    }
+
+    /*
+     * Handles authentication failures.
+     */
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<Map<String, Object>>
+    handleUnauthorizedException(
+            UnauthorizedException exception
+    ) {
+        return buildErrorResponse(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage() == null
+                        ? "Authentication is required."
+                        : exception.getMessage()
+        );
+    }
     /*
      * Handles records that do not exist.
      */

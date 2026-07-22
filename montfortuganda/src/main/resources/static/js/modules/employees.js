@@ -1,5 +1,5 @@
 // noinspection SpellCheckingInspection
-/* global apiGet, apiPost, apiPut, apiDelete, showLoader, hideLoader, showPremiumModal, showSuccessMessage, showErrorMessage, CrudTable, loadView, createErpCalendar */
+/* global apiGet, apiPost, apiPut, apiDelete, showLoader, hideLoader, showPremiumModal, showSuccessMessage, showErrorMessage, CrudTable, createErpCalendar */
 
 /**
  * @typedef {Object} EmployeeDepartmentData
@@ -147,7 +147,7 @@
 
 /**
  * @typedef {Object} FlatpickrAdapter
- * @property {function((string|Date|null), boolean=): void} setDate
+ * @property {(value: (string|Date|null), triggerChange?: boolean) => void} setDate
  */
 
 /**
@@ -293,13 +293,19 @@ function removeDomElement(element) {
 }
 
 
-document.addEventListener('viewLoaded', function(e) {
-    if (e.detail.role === 'admin') {
-        if (e.detail.view === 'employees') {
-            initEmployeesView();
-        } else if (e.detail.view === 'add-employee') {
-            initAddEmployeeView();
-        }
+document.addEventListener('viewLoaded', function(event) {
+    if (event.detail.role !== 'admin') return;
+
+    if (event.detail.view === 'employees') {
+        event.detail.waitUntil(
+            initEmployeesView(event.detail)
+        );
+    } else if (event.detail.view === 'add-employee') {
+        event.detail.waitUntil(
+            Promise.resolve().then(() => {
+                initAddEmployeeView();
+            })
+        );
     }
 });
 function getRequiredBranchId() {
@@ -1147,13 +1153,13 @@ const EmpCollections = {
     }
 };
 
-function initEmployeesView() {
+function initEmployeesView(routeInfo = {}) {
     const viewContainer =
         /** @type {(HTMLElement|null)} */ (
         document.querySelector('#ba-employees-view')
     );
 
-    if (!viewContainer) return;
+    if (!viewContainer) return Promise.resolve();
 
     const tableView =
         viewContainer.querySelector('#emp-tableView');
@@ -1392,31 +1398,45 @@ function initEmployeesView() {
         createErpCalendar('#edit-empWorkPermitExpiry');
     }
 
-    addEmpBtn?.addEventListener('click', () => {
-        const mainContent =
-            document.getElementById('main-content-area');
-
-        window.history.pushState(
-            {
-                view: 'add-employee',
-                title: 'Add Employee'
-            },
-            '',
-            '/admin/add-employee'
+    const navigateToEmployee = (
+        employeeId,
+        mode = null
+    ) => {
+        const normalizedEmployeeId = Number.parseInt(
+            String(employeeId || ''),
+            10
         );
 
-        const pageTitleElement =
-            document.getElementById('pageTitle');
-
-        if (pageTitleElement) {
-            pageTitleElement.textContent =
-                'Add Employee';
+        if (
+            !Number.isInteger(normalizedEmployeeId) ||
+            normalizedEmployeeId <= 0
+        ) {
+            showErrorMessage('A valid Employee ID is required.');
+            return Promise.resolve(false);
         }
 
-        void loadView(
-            'admin',
-            'add-employee',
-            mainContent
+        return window.erpNavigate({
+            role: 'admin',
+            view: 'employees',
+            routeParams: [
+                String(normalizedEmployeeId),
+                ...(mode === 'edit' ? ['edit'] : [])
+            ],
+            title: mode === 'edit'
+                ? 'Edit Employee'
+                : 'Employee Details'
+        });
+    };
+
+    addEmpBtn?.addEventListener('click', event => {
+        void window.erpWithButtonFeedback(
+            event.currentTarget,
+            'Opening Form...',
+            () => window.erpNavigate({
+            role: 'admin',
+            view: 'add-employee',
+            title: 'Add Employee'
+            })
         );
     });
 
@@ -1585,7 +1605,9 @@ function initEmployeesView() {
 
                     nameCell?.addEventListener(
                         'click',
-                        () => openEmpDetail(employeeId)
+                        () => {
+                            void navigateToEmployee(employeeId);
+                        }
                     );
 
                     const workCell =
@@ -1672,16 +1694,30 @@ function initEmployeesView() {
                         .querySelector('.view-more-btn')
                         ?.addEventListener(
                             'click',
-                            () => openEmpDetail(employeeId)
+                            event => {
+                                void window.erpWithButtonFeedback(
+                                    event.currentTarget,
+                                    'Opening...',
+                                    () => navigateToEmployee(
+                                        employeeId
+                                    )
+                                );
+                            }
                         );
 
                     rowNode
                         .querySelector('.edit-row-btn')
                         ?.addEventListener(
                             'click',
-                            async () => {
-                                await openEmpDetail(employeeId);
-                                enterEmpEditMode();
+                            event => {
+                                void window.erpWithButtonFeedback(
+                                    event.currentTarget,
+                                    'Opening...',
+                                    () => navigateToEmployee(
+                                        employeeId,
+                                        'edit'
+                                    )
+                                );
                             }
                         );
 
@@ -2170,11 +2206,17 @@ function initEmployeesView() {
 
     };
 
-    async function openEmpDetail(id) {
-        if (!id) return;
+    async function openEmpDetail(
+        id,
+        { showLoading = true } = {}
+    ) {
+        if (!id) return false;
 
         currentDetailEmpId = id;
-        showLoader();
+
+        if (showLoading) {
+            showLoader('Opening Employee details...');
+        }
 
         try {
             await loadSelectOptions(id);
@@ -2719,14 +2761,18 @@ function initEmployeesView() {
             addCssClasses(tableView, 'hidden');
             removeCssClasses(detailView, 'hidden');
             resetEmpEditMode();
+            return true;
         } catch (error) {
             console.error(error);
             showErrorMessage(
                 error.message ||
                 'Failed to load employee details.'
             );
+            return false;
         } finally {
-            hideLoader();
+            if (showLoading) {
+                hideLoader();
+            }
         }
     }
 
@@ -2830,7 +2876,9 @@ function initEmployeesView() {
                 return;
             }
 
-            showLoader();
+            const loaderToken = showLoader();
+            let deactivationSucceeded = false;
+            let deactivationErrorMessage = null;
 
             try {
                 await apiDelete(
@@ -2846,9 +2894,6 @@ function initEmployeesView() {
                     pendingDeactivationEmployeeId;
 
                 closeDeactivationModal();
-                showSuccessMessage(
-                    'Employee deactivated successfully.'
-                );
 
                 if (
                     currentDetailEmpId ===
@@ -2861,14 +2906,24 @@ function initEmployeesView() {
                 }
 
                 await loadEmployees();
+                deactivationSucceeded = true;
             } catch (error) {
                 console.error(error);
-                showErrorMessage(
+                deactivationErrorMessage =
                     error.message ||
-                    'Failed to deactivate Employee.'
-                );
+                    'Failed to deactivate Employee.';
             } finally {
-                hideLoader();
+                hideLoader(loaderToken);
+            }
+
+            await waitForEmployeeFeedbackExit();
+
+            if (deactivationErrorMessage) {
+                showErrorMessage(deactivationErrorMessage);
+            } else if (deactivationSucceeded) {
+                showSuccessMessage(
+                    'Employee deactivated successfully.'
+                );
             }
         }
     );
@@ -2989,54 +3044,377 @@ function initEmployeesView() {
 
     editBtn?.addEventListener(
         'click',
-        enterEmpEditMode
+        event => {
+            void window.erpWithButtonFeedback(
+                event.currentTarget,
+                'Opening Edit Mode...',
+                async () => {
+                    await new Promise(resolve =>
+                        requestAnimationFrame(resolve)
+                    );
+                    enterEmpEditMode();
+                }
+            );
+        }
     );
 
-    cancelEditBtn?.addEventListener('click', () => {
-        showPremiumModal({
-            title: 'Discard Employee Changes?',
-            type: 'warning',
-            contentText:
-                'Unsaved changes will be removed and the saved Employee details will be restored.',
-            confirmText: 'Discard Changes',
-            cancelText: 'Continue Editing',
-            onConfirm: async modal => {
-                modal.close();
-                showLoader();
+    backBtn?.addEventListener('click', event => {
+        void window.erpWithButtonFeedback(
+            event.currentTarget,
+            'Opening Employee List...',
+            () => window.erpNavigate({
+                role: 'admin',
+                view: 'employees',
+                routeParams: [],
+                title: 'Manage Employees'
+            })
+        );
+    });
+    /**
+     * @type {{
+     *     confirmationResolver:
+     *         (((confirmed: boolean) => void) | null),
+     *     previousFocus: (HTMLElement | null),
+     *     operationRunning: boolean
+     * }}
+     */
+    const employeeDialogState = {
+        confirmationResolver: null,
+        previousFocus: null,
+        operationRunning: false
+    };
 
-                try {
-                    if (currentDetailEmpId) {
-                        await openEmpDetail(
-                            currentDetailEmpId
-                        );
-                    } else {
-                        resetEmpEditMode();
-                    }
+    function getEmployeeDialogElements() {
+        return {
+            confirmationOverlay:
+                viewContainer.querySelector(
+                    '#employee-confirm-overlay'
+                ),
+            confirmationDialog:
+                viewContainer.querySelector(
+                    '#employee-confirm-dialog'
+                ),
+            confirmationTitle:
+                viewContainer.querySelector(
+                    '#employee-confirm-title'
+                ),
+            confirmationMessage:
+                viewContainer.querySelector(
+                    '#employee-confirm-message'
+                ),
+            confirmButton:
+                viewContainer.querySelector(
+                    '#employee-confirm-submit'
+                ),
+            cancelButton:
+                viewContainer.querySelector(
+                    '#employee-confirm-cancel'
+                ),
+            operationOverlay:
+                viewContainer.querySelector(
+                    '#employee-operation-overlay'
+                ),
+            operationTitle:
+                viewContainer.querySelector(
+                    '#employee-operation-title'
+                ),
+            operationMessage:
+                viewContainer.querySelector(
+                    '#employee-operation-message'
+                )
+        };
+    }
 
-                    showSuccessMessage(
-                        'Unsaved Employee changes were discarded.'
-                    );
-                } catch (error) {
-                    console.error(error);
-                    showErrorMessage(
-                        error?.message ||
-                        'Could not restore the saved Employee details.'
-                    );
-                } finally {
-                    hideLoader();
+    /**
+     * @param {boolean} confirmed
+     * @returns {void}
+     */
+    function closeEmployeeConfirmation(confirmed) {
+        const elements = getEmployeeDialogElements();
+
+        removeCssClasses(
+            elements.confirmationOverlay,
+            'is-visible'
+        );
+
+        elements.confirmationOverlay
+            ?.setAttribute('aria-hidden', 'true');
+
+        const resolver =
+            employeeDialogState.confirmationResolver;
+
+        employeeDialogState.confirmationResolver = null;
+
+        window.setTimeout(() => {
+            if (
+                employeeDialogState.previousFocus &&
+                employeeDialogState.previousFocus.isConnected
+            ) {
+                employeeDialogState.previousFocus.focus();
+            }
+
+            employeeDialogState.previousFocus = null;
+            resolver?.(confirmed);
+        }, 180);
+    }
+
+    /**
+     * @param {{
+     *     title: string,
+     *     message: string,
+     *     confirmText?: string,
+     *     cancelText?: string
+     * }} options
+     * @returns {Promise<boolean>}
+     */
+    function showEmployeeConfirmation(options) {
+        const {
+            title,
+            message,
+            confirmText = 'Confirm',
+            cancelText = 'Cancel'
+        } = options;
+
+        const elements = getEmployeeDialogElements();
+
+        if (
+            !elements.confirmationOverlay ||
+            !elements.confirmationDialog ||
+            !elements.confirmationTitle ||
+            !elements.confirmationMessage ||
+            !elements.confirmButton ||
+            !elements.cancelButton
+        ) {
+            console.error(
+                'Employee confirmation dialog elements are missing.'
+            );
+
+            return Promise.resolve(false);
+        }
+
+        if (employeeDialogState.confirmationResolver) {
+            return Promise.resolve(false);
+        }
+
+        elements.confirmationTitle.textContent = title;
+        elements.confirmationMessage.textContent = message;
+        elements.confirmButton.textContent = confirmText;
+        elements.cancelButton.textContent = cancelText;
+
+        employeeDialogState.previousFocus =
+            document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
+
+        addCssClasses(
+            elements.confirmationOverlay,
+            'is-visible'
+        );
+
+        elements.confirmationOverlay
+            .setAttribute('aria-hidden', 'false');
+
+        window.requestAnimationFrame(() => {
+            elements.confirmationDialog.focus();
+        });
+
+        return new Promise(resolve => {
+            employeeDialogState.confirmationResolver =
+                confirmed => resolve(Boolean(confirmed));
+        });
+    }
+
+    /**
+     * @param {{
+     *     title?: string,
+     *     message?: string
+     * }} [options]
+     * @returns {boolean}
+     */
+    function showEmployeeOperation(options = {}) {
+        const {
+            title = 'Processing',
+            message = 'Please wait...'
+        } = options;
+
+        const elements = getEmployeeDialogElements();
+
+        if (
+            !elements.operationOverlay ||
+            !elements.operationTitle ||
+            !elements.operationMessage
+        ) {
+            console.error(
+                'Employee operation overlay elements are missing.'
+            );
+
+            return false;
+        }
+
+        elements.operationTitle.textContent = title;
+        elements.operationMessage.textContent = message;
+
+        addCssClasses(
+            elements.operationOverlay,
+            'is-visible'
+        );
+        elements.operationOverlay.setAttribute(
+            'aria-hidden',
+            'false'
+        );
+
+        return true;
+    }
+
+    function hideEmployeeOperation() {
+        const elements = getEmployeeDialogElements();
+
+        removeCssClasses(
+            elements.operationOverlay,
+            'is-visible'
+        );
+
+        elements.operationOverlay
+            ?.setAttribute('aria-hidden', 'true');
+    }
+
+    /**
+     * Allows the 180 ms overlay/feedback exit transition to finish before
+     * opening a success or error dialog.
+     *
+     * @returns {Promise<void>}
+     */
+    function waitForEmployeeFeedbackExit() {
+        return new Promise(resolve => {
+            window.setTimeout(resolve, 200);
+        });
+    }
+
+    function initializeEmployeeDialogs() {
+        const elements = getEmployeeDialogElements();
+
+        if (
+            !elements.confirmationOverlay ||
+            !elements.confirmButton ||
+            !elements.cancelButton
+        ) {
+            console.error(
+                'Employee dialog initialization failed.'
+            );
+
+            return;
+        }
+
+        if (
+            elements.confirmationOverlay
+                .dataset.initialized === 'true'
+        ) {
+            return;
+        }
+
+        elements.confirmationOverlay
+            .dataset.initialized = 'true';
+
+        elements.confirmButton.addEventListener(
+            'click',
+            () => closeEmployeeConfirmation(true)
+        );
+
+        elements.cancelButton.addEventListener(
+            'click',
+            () => closeEmployeeConfirmation(false)
+        );
+
+        elements.confirmationOverlay.addEventListener(
+            'click',
+            event => {
+                if (
+                    event.target ===
+                    elements.confirmationOverlay
+                ) {
+                    closeEmployeeConfirmation(false);
                 }
             }
-        });
-    });
+        );
 
-    backBtn?.addEventListener('click', async () => {
-        currentDetailEmpId = null;
-        currentEmployee = null;
-        addCssClasses(detailView, 'hidden');
-        removeCssClasses(tableView, 'hidden');
-        await loadEmployees();
-    });
+        elements.confirmationOverlay.addEventListener(
+            'keydown',
+            event => {
+                if (event.key === 'Escape') {
+                    closeEmployeeConfirmation(false);
+                }
+            }
+        );
+    }
 
+    initializeEmployeeDialogs();
+
+    cancelEditBtn?.addEventListener(
+        'click',
+        async () => {
+            if (employeeDialogState.operationRunning) {
+                return;
+            }
+
+            const confirmed =
+                await showEmployeeConfirmation({
+                    title: 'Discard Employee Changes?',
+                    message:
+                        'Unsaved changes will be removed and the saved Employee details will be restored.',
+                    confirmText: 'Discard Changes',
+                    cancelText: 'Continue Editing'
+                });
+
+            if (!confirmed) {
+                return;
+            }
+
+            employeeDialogState.operationRunning = true;
+
+            showEmployeeOperation({
+                title: 'Restoring Details',
+                message:
+                    'Please wait while the saved Employee details are restored.'
+            });
+
+            let restored = false;
+
+            try {
+                restored = true;
+
+                if (currentDetailEmpId) {
+                    restored = await openEmpDetail(
+                        currentDetailEmpId,
+                        { showLoading: false }
+                    );
+                } else {
+                    resetEmpEditMode();
+                }
+
+                if (!restored) {
+                    return;
+                }
+
+            } catch (error) {
+                console.error(error);
+
+                showErrorMessage(
+                    error?.message ||
+                    'Could not restore the saved Employee details.'
+                );
+            } finally {
+                employeeDialogState.operationRunning = false;
+                hideEmployeeOperation();
+            }
+
+            if (restored) {
+                await waitForEmployeeFeedbackExit();
+                showSuccessMessage(
+                    'Unsaved Employee changes were discarded.'
+                );
+            }
+        }
+    );
 
     const employeeLoginModal =
         viewContainer.querySelector(
@@ -3113,7 +3491,7 @@ function initEmployeesView() {
         }
 
         employeeLoginModalOpening = true;
-        showLoader();
+        showLoader('Loading Employee account options...');
 
         try {
             await loadLoginRoleOptions(
@@ -3124,9 +3502,11 @@ function initEmployeesView() {
                 !employeeLoginRole ||
                 employeeLoginRole.options.length <= 1
             ) {
-                throw new Error(
+                showErrorMessage(
                     'No Employee login roles are available.'
                 );
+
+                return;
             }
 
             if (employeeLoginName) {
@@ -3232,7 +3612,10 @@ function initEmployeesView() {
                 return;
             }
 
-            showLoader();
+            const loaderToken = showLoader();
+            let loginCreated = false;
+            let loginCreationErrorMessage = null;
+
             try {
                 await apiPost(
                     `/branchadmin/employees/${currentDetailEmpId}/login-account`,
@@ -3244,18 +3627,27 @@ function initEmployeesView() {
                 );
 
                 closeEmployeeLoginModal();
+                loginCreated = await openEmpDetail(
+                    currentDetailEmpId,
+                    { showLoading: false }
+                );
+            } catch (error) {
+                console.error(error);
+                loginCreationErrorMessage =
+                    error.message ||
+                    'Failed to create Employee login account.';
+            } finally {
+                hideLoader(loaderToken);
+            }
+
+            await waitForEmployeeFeedbackExit();
+
+            if (loginCreationErrorMessage) {
+                showErrorMessage(loginCreationErrorMessage);
+            } else if (loginCreated) {
                 showSuccessMessage(
                     'Employee login account created successfully.'
                 );
-                await openEmpDetail(currentDetailEmpId);
-            } catch (error) {
-                console.error(error);
-                showErrorMessage(
-                    error.message ||
-                    'Failed to create Employee login account.'
-                );
-            } finally {
-                hideLoader();
             }
         }
     );
@@ -3276,31 +3668,47 @@ function initEmployeesView() {
                 cancelText: 'Cancel',
                 onConfirm: async modal => {
                     modal.close();
-                    showLoader();
+                    const loaderToken = showLoader();
+                    let passwordReset = false;
+                    let passwordResetErrorMessage = null;
+
                     try {
                         await apiPost(
                             `/branchadmin/employees/${currentDetailEmpId}/temporary-password`,
                             { sendEmail: true }
                         );
+                        passwordReset = await openEmpDetail(
+                            currentDetailEmpId,
+                            { showLoading: false }
+                        );
+                    } catch (error) {
+                        console.error(error);
+                        passwordResetErrorMessage =
+                            error.message ||
+                            'Failed to generate temporary password.';
+                    } finally {
+                        hideLoader(loaderToken);
+                    }
+
+                    await waitForEmployeeFeedbackExit();
+
+                    if (passwordResetErrorMessage) {
+                        showErrorMessage(
+                            passwordResetErrorMessage
+                        );
+                    } else if (passwordReset) {
                         showSuccessMessage(
                             'New temporary password queued for email delivery.'
                         );
-                        await openEmpDetail(currentDetailEmpId);
-                    } catch (error) {
-                        console.error(error);
-                        showErrorMessage(
-                            error.message ||
-                            'Failed to generate temporary password.'
-                        );
-                    } finally {
-                        hideLoader();
                     }
                 }
             });
         });
 
     const saveEmployeeChanges = async () => {
-        if (!currentDetailEmpId || !currentEmployee) return;
+        if (!currentDetailEmpId || !currentEmployee) {
+            return false;
+        }
 
         const valueOrNull = selector => {
             const element =
@@ -3328,7 +3736,7 @@ function initEmployeesView() {
             showErrorMessage(
                 'First Name and Last Name are required.'
             );
-            return;
+            return false;
         }
 
         const employeeCategory =
@@ -3341,7 +3749,7 @@ function initEmployeesView() {
             showErrorMessage(
                 'Select a valid Employee Category.'
             );
-            return;
+            return false;
         }
 
         const version = Number(currentEmployee.version);
@@ -3349,7 +3757,7 @@ function initEmployeesView() {
             showErrorMessage(
                 'Employee version is missing. Reload the Employee details.'
             );
-            return;
+            return false;
         }
 
         const employmentStatus =
@@ -3363,7 +3771,7 @@ function initEmployeesView() {
             showErrorMessage(
                 'Use Deactivate Employee to set a final employment status.'
             );
-            return;
+            return false;
         }
 
         const profilePhoto =
@@ -3382,18 +3790,18 @@ function initEmployeesView() {
                 showErrorMessage(
                     'Profile photo must be JPG, PNG or WEBP.'
                 );
-                return;
+                return false;
             }
 
             if (profilePhoto.size > 2 * 1024 * 1024) {
                 showErrorMessage(
                     'Profile photo must not exceed 2 MB.'
                 );
-                return;
+                return false;
             }
         }
 
-        showLoader();
+
 
         try {
             const payload = {
@@ -3513,79 +3921,90 @@ function initEmployeesView() {
                 payload
             );
 
-            showSuccessMessage(
-                'Employee updated successfully.'
+            return await openEmpDetail(
+                currentDetailEmpId,
+                { showLoading: false }
             );
-
-            await openEmpDetail(currentDetailEmpId);
-            await loadEmployees();
         } catch (error) {
             console.error(error);
+
             showErrorMessage(
                 error.message ||
                 'Failed to update Employee.'
             );
-        } finally {
-            hideLoader();
+
+            return false;
         }
     };
 
-    saveBtn?.addEventListener('click', () => {
-        showPremiumModal({
-            title: 'Confirm Employee Update',
-            type: 'warning',
-            contentText:
-                'Review the edited Employee information. Click Save Changes to update the Employee record.',
-            confirmText: 'Save Changes',
-            cancelText: 'Review Again',
-            onConfirm: async modal => {
-                modal.close();
-
-                /*
-                 * saveEmployeeChanges() displays the normal application
-                 * loading animation, completes the update and shows the final
-                 * success or error result.
-                 */
-                await saveEmployeeChanges();
+    saveBtn?.addEventListener(
+        'click',
+        async () => {
+            if (employeeDialogState.operationRunning) {
+                return;
             }
-        });
-    });
 
+            const confirmed =
+                await showEmployeeConfirmation({
+                    title: 'Confirm Employee Update',
+                    message:
+                        'Review the edited Employee information. Select Save Changes to update the Employee record.',
+                    confirmText: 'Save Changes',
+                    cancelText: 'Review Again'
+                });
 
-    void (async () => {
-        await loadEmployees();
+            if (!confirmed) {
+                return;
+            }
 
-        let employeeIdToOpen = null;
+            employeeDialogState.operationRunning = true;
 
-        try {
-            employeeIdToOpen =
-                Number.parseInt(
-                    sessionStorage.getItem(
-                        'employeeDetailToOpen'
-                    ),
-                    10
+            showEmployeeOperation({
+                title: 'Saving Changes',
+                message:
+                    'Please wait while the Employee record is updated.'
+            });
+
+            let saved = false;
+
+            try {
+                saved = await saveEmployeeChanges();
+            } finally {
+                employeeDialogState.operationRunning = false;
+                hideEmployeeOperation();
+            }
+
+            if (saved) {
+                await waitForEmployeeFeedbackExit();
+                showSuccessMessage(
+                    'Employee updated successfully.'
                 );
-
-            sessionStorage.removeItem(
-                'employeeDetailToOpen'
-            );
-        } catch (error) {
-            console.warn(
-                'Could not read pending employee detail.',
-                error
-            );
+            }
         }
+    );
 
+    const routeEmployeeId = Number.parseInt(
+        String(routeInfo?.routeParams?.[0] || ''),
+        10
+    );
+    const routeMode = String(
+        routeInfo?.routeParams?.[1] || ''
+    ).toLowerCase();
+
+    return (async () => {
         if (
-            Number.isInteger(
-                employeeIdToOpen
-            ) &&
-            employeeIdToOpen > 0
+            Number.isInteger(routeEmployeeId) &&
+            routeEmployeeId > 0
         ) {
-            await openEmpDetail(
-                employeeIdToOpen
-            );
+            const opened = await openEmpDetail(routeEmployeeId);
+
+            if (opened && routeMode === 'edit') {
+                enterEmpEditMode();
+            }
+            return;
         }
+
+        await loadEmployees();
     })();
 }
 
@@ -4176,41 +4595,6 @@ const AddEmployeeValidation = {
             );
 
         if (populatedRows.length === 0) {
-            const firstRow = rows[0];
-
-            const name =
-                firstRow?.querySelector(
-                    '.c-name'
-                );
-
-            const relationship =
-                firstRow?.querySelector(
-                    '.c-relation'
-                );
-
-            const mobile =
-                firstRow?.querySelector(
-                    '.c-phone'
-                );
-
-            this.addError(
-                errors,
-                name,
-                'At least one Emergency Contact is required.'
-            );
-
-            this.addError(
-                errors,
-                relationship,
-                'Select the Emergency Contact relationship.'
-            );
-
-            this.addError(
-                errors,
-                mobile,
-                'Emergency Contact mobile number is required.'
-            );
-
             return;
         }
 
@@ -4632,7 +5016,7 @@ function createEmployeeRegistrationProgressController(
     /*
      * Render the registration dialog directly under <body>.
      * The Add Employee view uses animated/transformed containers,
-     * which can make a fixed modal centre against the full form
+     * which can make a fixed modal center against the full form
      * instead of the visible browser viewport.
      */
     document
@@ -4755,6 +5139,14 @@ function createEmployeeRegistrationProgressController(
         'FINALIZATION'
     ];
 
+    /**
+     * @type {{
+     *     processing: boolean,
+     *     operationId: (string|null),
+     *     employeeId: (number|string|null),
+     *     previousBodyOverflow: string
+     * }}
+     */
     const state = {
         processing: false,
         operationId: null,
@@ -5092,12 +5484,17 @@ function createEmployeeRegistrationProgressController(
     };
 
     const open = displayName => {
+        const wasHidden =
+            modal.classList.contains('hidden');
+
         reset(displayName);
 
         state.processing = true;
 
-        state.previousBodyOverflow =
-            document.body.style.overflow;
+        if (wasHidden) {
+            state.previousBodyOverflow =
+                document.body.style.overflow;
+        }
 
         document.body.style.overflow =
             'hidden';
@@ -5225,6 +5622,12 @@ function createEmployeeRegistrationProgressController(
         return percentage;
     };
 
+    /**
+     * @param {string} selector
+     * @param {*} value
+     * @param {string} [fallback]
+     * @returns {void}
+     */
     const setResultValue = (
         selector,
         value,
@@ -5235,7 +5638,9 @@ function createEmployeeRegistrationProgressController(
 
         if (element) {
             element.textContent =
-                value || fallback;
+                value
+                    ? String(value)
+                    : fallback;
         }
     };
 
@@ -5462,7 +5867,7 @@ function createEmployeeRegistrationProgressController(
 
     closeButton?.addEventListener(
         'click',
-        close
+        () => close()
     );
 
     return {
@@ -5931,23 +6336,6 @@ function initAddEmployeeView() {
             true
         );
 
-        /*
-         * Registration requires at least one emergency contact. Create the
-         * first editable row automatically so the form cannot silently submit
-         * an empty contacts array.
-         */
-        if (
-            container &&
-            definition.rowClass === 'contact-row'
-        ) {
-            EmpCollections.createRow(
-                container,
-                definition.fields,
-                definition.rowClass,
-                null,
-                true
-            );
-        }
     });
 
     if (typeof createErpCalendar === 'function') {
@@ -6016,15 +6404,6 @@ function initAddEmployeeView() {
 
             container.innerHTML = '';
 
-            if (definition.rowClass === 'contact-row') {
-                EmpCollections.createRow(
-                    container,
-                    definition.fields,
-                    definition.rowClass,
-                    null,
-                    true
-                );
-            }
         });
 
         setTodayAsJoiningDate();
@@ -6033,33 +6412,11 @@ function initAddEmployeeView() {
     viewContainer
         .querySelector('#backToEmployeesBtn')
         ?.addEventListener('click', () => {
-            const mainContent =
-                document.getElementById(
-                    'main-content-area'
-                );
-
-            window.history.pushState(
-                {
-                    view: 'employees',
-                    title: 'Manage Employees'
-                },
-                '',
-                '/admin/employees'
-            );
-
-            const pageTitleElement =
-                document.getElementById('pageTitle');
-
-            if (pageTitleElement) {
-                pageTitleElement.textContent =
-                    'Manage Employees';
-            }
-
-            void loadView(
-                'admin',
-                'employees',
-                mainContent
-            );
+            void window.erpNavigate({
+                role: 'admin',
+                view: 'employees',
+                title: 'Manage Employees'
+            });
         });
 
     viewContainer
@@ -6077,25 +6434,11 @@ function initAddEmployeeView() {
                 'Import Employees',
                 'Upload the Excel file containing Employee records.',
                 () => {
-                    const mainContent =
-                        document.getElementById(
-                            'main-content-area'
-                        );
-
-                    window.history.pushState(
-                        {
-                            view: 'employees',
-                            title: 'Manage Employees'
-                        },
-                        '',
-                        '/admin/employees'
-                    );
-
-                    void loadView(
-                        'admin',
-                        'employees',
-                        mainContent
-                    );
+                    void window.erpNavigate({
+                        role: 'admin',
+                        view: 'employees',
+                        title: 'Manage Employees'
+                    });
                 }
             );
         });
@@ -6202,9 +6545,11 @@ function initAddEmployeeView() {
                 );
 
             if (!employeeCategory) {
-                throw new Error(
+                showErrorMessage(
                     'Select a valid Employee Category.'
                 );
+
+                return null;
             }
 
             const profilePhoto =
@@ -6483,9 +6828,9 @@ function initAddEmployeeView() {
      * to a real background worker that immediately returns HTTP 202.
      */
     /*
-     * Employee registration is synchronous on the backend. Use the standard
-     * loading animation while the request is running and display the detailed
-     * result window only after the transaction completes.
+     * Employee registration is synchronous on the backend. Keep one Employee
+     * registration dialog visible from request start through success/failure;
+     * do not overlap it with the global loading indicator.
      */
     const startEmployeeRegistration =
         async payload => {
@@ -6494,7 +6839,17 @@ function initAddEmployeeView() {
             }
 
             registrationRunning = true;
-            showLoader();
+            registrationProgress?.open(
+                latestRegistrationName
+            );
+            registrationProgress?.update({
+                status: 'PROCESSING',
+                stage: 'REQUEST_ACCEPTED',
+                stageTitle: 'Creating Employee',
+                percentage: 5,
+                message:
+                    'Please wait while the Employee record is being created.'
+            });
 
             try {
                 const response =
@@ -6523,11 +6878,6 @@ function initAddEmployeeView() {
                         'Employee registered successfully.'
                 };
 
-                hideLoader();
-
-                registrationProgress?.open(
-                    latestRegistrationName
-                );
                 registrationProgress?.showSuccess(
                     completedResult
                 );
@@ -6546,72 +6896,36 @@ function initAddEmployeeView() {
                         0
                     );
 
-                hideLoader();
-                registrationProgress?.close(true);
-
-                showErrorMessage(
-                    failure?.message ||
-                    'Employee registration failed. The form has been preserved.'
+                registrationProgress?.showFailure(
+                    failure
                 );
 
                 return failure;
             } finally {
                 registrationRunning = false;
-                hideLoader();
             }
         };
 
-    const navigateToEmployeeList =
-        employeeId => {
-            if (
-                Number.isInteger(
-                    Number(employeeId)
-                ) &&
-                Number(employeeId) > 0
-            ) {
-                try {
-                    sessionStorage.setItem(
-                        'employeeDetailToOpen',
-                        String(employeeId)
-                    );
-                } catch (error) {
-                    console.warn(
-                        'Could not save employee detail navigation state.',
-                        error
-                    );
-                }
-            }
+    const navigateToEmployeeList = employeeId => {
+        const normalizedEmployeeId = Number.parseInt(
+            String(employeeId || ''),
+            10
+        );
+        const hasEmployeeId =
+            Number.isInteger(normalizedEmployeeId) &&
+            normalizedEmployeeId > 0;
 
-            const mainContent =
-                document.getElementById(
-                    'main-content-area'
-                );
-
-            window.history.pushState(
-                {
-                    view: 'employees',
-                    title: 'Manage Employees'
-                },
-                '',
-                '/admin/employees'
-            );
-
-            const pageTitleElement =
-                document.getElementById(
-                    'pageTitle'
-                );
-
-            if (pageTitleElement) {
-                pageTitleElement.textContent =
-                    'Manage Employees';
-            }
-
-            void loadView(
-                'admin',
-                'employees',
-                mainContent
-            );
-        };
+        return window.erpNavigate({
+            role: 'admin',
+            view: 'employees',
+            routeParams: hasEmployeeId
+                ? [String(normalizedEmployeeId)]
+                : [],
+            title: hasEmployeeId
+                ? 'Employee Details'
+                : 'Manage Employees'
+        });
+    };
 
     registrationProgress?.modal
         .querySelector(
@@ -6663,9 +6977,17 @@ function initAddEmployeeView() {
         )
         ?.addEventListener(
             'click',
-            () => {
-                registrationProgress.close();
-                navigateToEmployeeList(null);
+            async event => {
+                const loaded =
+                    await window.erpWithButtonFeedback(
+                        event.currentTarget,
+                        'Opening Employee List...',
+                        () => navigateToEmployeeList(null)
+                    );
+
+                if (loaded) {
+                    registrationProgress.close();
+                }
             }
         );
 
@@ -6675,16 +6997,23 @@ function initAddEmployeeView() {
         )
         ?.addEventListener(
             'click',
-            () => {
+            async event => {
                 const employeeId =
                     registrationProgress
                         .getEmployeeId();
 
-                registrationProgress.close();
+                const loaded =
+                    await window.erpWithButtonFeedback(
+                        event.currentTarget,
+                        'Opening Employee...',
+                        () => navigateToEmployeeList(
+                            employeeId
+                        )
+                    );
 
-                navigateToEmployeeList(
-                    employeeId
-                );
+                if (loaded) {
+                    registrationProgress.close();
+                }
             }
         );
 
@@ -6728,8 +7057,15 @@ function initAddEmployeeView() {
                 latestRegistrationName =
                     getEmployeeFormName();
 
-                latestRegistrationPayload =
+                const registrationPayload =
                     await buildEmployeePayload();
+
+                if (!registrationPayload) {
+                    return;
+                }
+
+                latestRegistrationPayload =
+                    registrationPayload;
 
                 submitButton.innerHTML =
                     '<i class="bi bi-arrow-repeat"></i> Registering...';
@@ -6751,5 +7087,5 @@ function initAddEmployeeView() {
             }
         }
     );
-}
 
+}

@@ -7,6 +7,47 @@ const ERP_LAST_ACTIVITY_KEY = 'erp_last_activity';
 let erpIdleTimer = null;
 let erpLogoutStarted = false;
 
+function normalizeErpRole(role) {
+    let normalizedRole = String(role || '')
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, '_');
+
+    while (normalizedRole.startsWith('ROLE_')) {
+        normalizedRole =
+            normalizedRole.substring(5);
+    }
+
+    if (normalizedRole === 'SCHOOL_ADMIN') {
+        return 'BRANCH_ADMIN';
+    }
+
+    if (normalizedRole === 'SUPER_USER') {
+        return 'SUPER_ADMIN';
+    }
+
+    return normalizedRole;
+}
+
+function resolvePortalRole(userRole) {
+    const portalByRole = {
+        SUPER_ADMIN: 'superadmin',
+        BRANCH_ADMIN: 'admin',
+        PARENT: 'parent',
+        ACADEMIC_COORDINATOR:
+            'academiccoordinator',
+        ADMISSION_STAFF: 'admissionstaff',
+        FEE_OFFICER: 'feeofficer',
+        TEACHER: 'teacher',
+        AUDITOR: 'auditor'
+    };
+
+    return portalByRole[userRole] ||
+        userRole
+            .toLowerCase()
+            .replaceAll('_', '');
+}
+
 function clearLocalSessionData() {
     localStorage.removeItem('user_role');
     localStorage.removeItem('username');
@@ -106,11 +147,27 @@ window.renderFetchingMessage = function(tbody, colSpan, message) {
 
 document.addEventListener('DOMContentLoaded', async function() {
     // 1. Strict Security Check
-    const userRole = localStorage.getItem('user_role'); // e.g., "SUPER_ADMIN"
-    if (!userRole) {
+    const storedUserRole =
+        localStorage.getItem('user_role');
+
+    if (!storedUserRole) {
         window.location.href = '/login';
         return;
     }
+
+    const userRole =
+        normalizeErpRole(storedUserRole);
+
+    if (!userRole) {
+        clearLocalSessionData();
+        window.location.href = '/login';
+        return;
+    }
+
+    localStorage.setItem(
+        'user_role',
+        userRole
+    );
     const activityEvents = [
         'mousedown',
         'keydown',
@@ -138,17 +195,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             scheduleIdleTimeout();
         }
     });
-    // Convert SUPER_ADMIN to superadmin for the secure clean URL
-    let urlRole = 'admin'; // Default fallback
-    let safeUserRole = userRole ? userRole.toUpperCase().replace(/\s+/g, '_') : '';
-
-    if (safeUserRole === 'SUPER_ADMIN' || safeUserRole === 'ROLE_SUPER_ADMIN') {
-        urlRole = 'superadmin';
-    } else if (safeUserRole === 'ROLE_SCHOOL_ADMIN' || safeUserRole === 'SCHOOL_ADMIN') {
-        urlRole = 'admin';
-    } else if (safeUserRole.startsWith('ROLE_')) {
-        urlRole = safeUserRole.replace('ROLE_', '').toLowerCase();
-    }
+    const urlRole =
+        resolvePortalRole(userRole);
 
     // 2. Load Core Layout Components
     try {
@@ -160,12 +208,17 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         // Enforce Role-Based Visibility in Sidebar (Uses Pure CSS Class)
         document.querySelectorAll('#sidebarMenu li').forEach(li => {
-            const requiredRole = li.getAttribute('data-role');
+            const requiredRole =
+                normalizeErpRole(
+                    li.getAttribute('data-role')
+                );
 
             if (requiredRole === 'ALL' && userRole === 'SUPER_ADMIN') {
                 li.classList.add('hidden');
             } else if (requiredRole !== 'ALL' && requiredRole !== userRole) {
                 li.classList.add('hidden');
+            } else {
+                li.classList.remove('hidden');
             }
         });
 
@@ -274,127 +327,164 @@ document.addEventListener('DOMContentLoaded', async function() {
 });
 
 function setupRouter(urlRole) {
-    const mainContent = document.getElementById('main-content-area');
+    const mainContent =
+        document.getElementById('main-content-area');
+    const sidebarLinks = () => Array.from(
+        document.querySelectorAll(
+            '.sidebar-nav a:not(.dropdown-toggle)'
+        )
+    );
 
-    document.querySelectorAll('.sidebar-nav a:not(.dropdown-toggle)').forEach(link => {
-        link.addEventListener('click', async function(e) {
-            e.preventDefault();
+    function decodePathSegment(segment) {
+        try {
+            return decodeURIComponent(segment);
+        } catch (error) {
+            console.warn('Invalid encoded route segment.', error);
+            return segment;
+        }
+    }
 
-            let viewName = this.getAttribute('href').replace('.html', '').replace('/', '');
-            if (viewName === 'dashboard' || viewName === 'superadmin') {
-                viewName = 'home';
-            }
+    function readCurrentRoute(historyState = null) {
+        const pathSegments = window.location.pathname
+            .split('/')
+            .filter(Boolean)
+            .map(decodePathSegment);
+        const pathRole = String(pathSegments[0] || '')
+            .toLowerCase();
+        const routeRole =
+            historyState?.role ||
+            (
+                pathRole === 'admin' ||
+                pathRole === 'superadmin'
+                    ? pathRole
+                    : urlRole
+            );
+        let viewName =
+            historyState?.view ||
+            (
+                pathRole === 'admin' ||
+                pathRole === 'superadmin'
+                    ? pathSegments[1]
+                    : null
+            ) ||
+            'home';
 
-            const newTitle = this.textContent.trim();
-            const pageTitleElement = document.getElementById('pageTitle');
-            if (pageTitleElement) pageTitleElement.textContent = newTitle;
+        viewName = String(viewName)
+            .trim()
+            .toLowerCase()
+            .replace(/\.html$/i, '');
 
-            document.querySelectorAll('.sidebar-nav a').forEach(nav => nav.classList.remove('active'));
-            this.classList.add('active');
+        if (
+            !viewName ||
+            viewName === 'dashboard' ||
+            viewName === 'admin' ||
+            viewName === 'superadmin' ||
+            viewName === routeRole
+        ) {
+            viewName = 'home';
+        }
 
-            const newUrl = `/${urlRole}/${viewName}`;
-            window.history.pushState({ view: viewName, title: newTitle }, "", newUrl);
+        const routeParams = Array.isArray(
+            historyState?.routeParams
+        )
+            ? historyState.routeParams.map(String)
+            : (
+                pathRole === 'admin' ||
+                pathRole === 'superadmin'
+                    ? pathSegments.slice(2)
+                    : []
+            );
 
-            await loadView(urlRole, viewName, mainContent);
+        return {
+            role: routeRole,
+            view: viewName,
+            routeParams,
+            title: String(historyState?.title || '').trim()
+        };
+    }
+
+    function findLinkForView(viewName) {
+        return sidebarLinks().find(link => {
+            return window.getSidebarViewName?.(link) === viewName;
+        }) || null;
+    }
+
+    function resolveRouteTitle(route, matchedLink = null) {
+        if (route.title) return route.title;
+
+        if (
+            route.view === 'employees' &&
+            route.routeParams.length > 0
+        ) {
+            return route.routeParams[1] === 'edit'
+                ? 'Edit Employee'
+                : 'Employee Details';
+        }
+
+        const titleOverrides = {
+            'add-branch': 'Add New Branch',
+            'add-user': 'Add New User',
+            'add-employee': 'Add Employee'
+        };
+
+        return titleOverrides[route.view] ||
+            matchedLink?.textContent?.trim() ||
+            'Dashboard';
+    }
+
+    sidebarLinks().forEach(link => {
+        link.addEventListener('click', async function(event) {
+            event.preventDefault();
+
+            const viewName =
+                window.getSidebarViewName?.(this);
+            if (!viewName) return;
+
+            await window.erpNavigate({
+                role: urlRole,
+                view: viewName,
+                routeParams: [],
+                title: this.textContent.trim(),
+                historyMode: 'push',
+                container: mainContent,
+                sidebarLink: this
+            });
         });
     });
 
-    window.addEventListener('popstate', async function(event) {
-        const viewName = event.state ? event.state.view : 'home';
-        const title = event.state && event.state.title ? event.state.title : 'Dashboard';
+    window.addEventListener('popstate', async event => {
+        const route = readCurrentRoute(event.state);
+        const matchedLink = findLinkForView(route.view);
 
-        const pageTitleElement = document.getElementById('pageTitle');
-        if (pageTitleElement) pageTitleElement.textContent = title;
+        route.title = resolveRouteTitle(route, matchedLink);
 
-        await loadView(urlRole, viewName, mainContent);
+        await window.erpNavigate({
+            ...route,
+            historyMode: 'none',
+            container: mainContent,
+            sidebarLink: matchedLink
+        });
     });
 
-    let initialView = window.location.pathname.split('/').pop();
-    if (initialView === urlRole || initialView === 'dashboard' || initialView === '') {
-        initialView = 'home';
-    }
+    const initialRoute = readCurrentRoute();
+    const matchedLink = findLinkForView(initialRoute.view);
+    initialRoute.title = resolveRouteTitle(
+        initialRoute,
+        matchedLink
+    );
 
-    // SMART REFRESH MAGIC
-    document.querySelectorAll('.sidebar-nav a').forEach(nav => nav.classList.remove('active'));
-
-    let matchedLink = document.querySelector(`.sidebar-nav a[href*="${initialView}"]`);
-    if (!matchedLink && initialView === 'home') {
-        matchedLink = document.querySelector(`.sidebar-nav a[href*="${urlRole}"]`);
-    }
-
-    let pageTitle = "Dashboard";
-
-    if (matchedLink) {
-        matchedLink.classList.add('active');
-        pageTitle = matchedLink.textContent.trim();
-
-        const parentDropdown = matchedLink.closest('.has-dropdown');
-        if (parentDropdown) parentDropdown.classList.add('open');
-
-    } else if (initialView === 'add-branch') {
-        const branchesLink = document.querySelector(`.sidebar-nav a[href*="branches"]`);
-        if (branchesLink) {
-            branchesLink.classList.add('active');
-            const parentDropdown = branchesLink.closest('.has-dropdown');
-            if (parentDropdown) parentDropdown.classList.add('open');
-        }
-        pageTitle = "Add New Branch";
-    } else if (initialView === 'add-user') {
-        const usersLink = document.querySelector(`.sidebar-nav a[href*="users"]`);
-        if (usersLink) {
-            usersLink.classList.add('active');
-            const parentDropdown = usersLink.closest('.has-dropdown');
-            if (parentDropdown) parentDropdown.classList.add('open');
-        }
-        pageTitle = "Add New User";
-    }
-
-    const pageTitleElement = document.getElementById('pageTitle');
-    if (pageTitleElement) pageTitleElement.textContent = pageTitle;
-
-    void loadView(urlRole, initialView, mainContent);
-}
-
-async function loadView(urlRole, viewName, container) {
-    try {
-        const loader = document.getElementById('loaderTemplate').content.cloneNode(true);
-        container.textContent = '';
-        container.appendChild(loader);
-
-        const response = await fetch(`/views/${urlRole}/${viewName}.html`);
-
-        if (response.ok) {
-            const htmlText = await response.text();
-            
-            // Inject with initial hidden state for animation
-            container.innerHTML = `<div class="view-transition-wrapper" style="opacity: 0; transform: translateY(15px); transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);">${htmlText}</div>`;
-            
-            // Force a browser reflow to ensure the initial state is painted before animating
-            void container.offsetWidth;
-            
-            // Trigger the smooth fade-in and slide-up
-            const wrapper = container.querySelector('.view-transition-wrapper');
-            if (wrapper) {
-                wrapper.style.opacity = '1';
-                wrapper.style.transform = 'translateY(0)';
-            }
-            
-            document.dispatchEvent(new CustomEvent('viewLoaded', { detail: { role: urlRole, view: viewName } }));
-        } else {
-            container.textContent = '';
-            container.appendChild(document.getElementById('errorTemplate').content.cloneNode(true));
-        }
-    } catch (error) {
-        container.textContent = '';
-        container.appendChild(document.getElementById('systemErrorTemplate').content.cloneNode(true));
-    }
+    void window.erpNavigate({
+        ...initialRoute,
+        historyMode: 'replace',
+        container: mainContent,
+        sidebarLink: matchedLink
+    });
 }
 
 // ==========================================
 // UI UTILITIES & GLOBAL MODAL ENGINE
 // ==========================================
-function showLoader() { const l = document.getElementById('global-loader'); if(l) l.classList.remove('hidden'); }
-function hideLoader() { const l = document.getElementById('global-loader'); if(l) l.classList.add('hidden'); }
+/* showLoader() and hideLoader() are provided by global.js. */
 
 // 1. The Engine is now global for all modules (superadmin, admin, teacher, etc.)
 /**

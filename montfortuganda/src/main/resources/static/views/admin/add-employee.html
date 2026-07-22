@@ -862,7 +862,7 @@
             </fieldset>
 
             <!-- ===================================================== -->
-            <!-- SECTION 10: EMERGENCY CONTACTS                        -->
+            <!-- SECTION 10: OPTIONAL EMERGENCY CONTACTS               -->
             <!-- ===================================================== -->
 
             <fieldset
@@ -870,7 +870,7 @@
                     id="contacts-section"
             >
                 <legend class="emp-legend">
-                    Emergency Contacts
+                    Emergency Contacts (Optional)
                 </legend>
 
                 <div id="contacts-container"></div>
@@ -1008,180 +1008,43 @@
                     id="employee-registration-processing-view"
                     class="emp-registration-view"
             >
-                <!-- Percentage -->
                 <div class="emp-registration-progress-heading">
-                    <span>Registration Progress</span>
-
-                    <strong id="employee-registration-percentage">
-                        0%
-                    </strong>
+                    <span>Registration in progress</span>
                 </div>
 
-                <!-- Progress Bar -->
                 <div
                         id="employee-registration-progress"
                         class="emp-registration-progress"
                         role="progressbar"
-                        aria-valuemin="0"
-                        aria-valuemax="100"
-                        aria-valuenow="0"
-                        aria-label="Employee registration progress"
+                        aria-label="Employee registration is processing"
+                        aria-valuetext="Processing"
                 >
                     <div
                             id="employee-registration-progress-fill"
-                            class="emp-registration-progress-fill"
+                            class="emp-registration-progress-fill is-indeterminate"
                     ></div>
                 </div>
 
-                <!-- Tab / Stage Bar -->
-                <ol
-                        id="employee-registration-steps"
-                        class="emp-registration-steps"
-                        aria-label="Employee registration stages"
-                >
-                    <!-- Step 1 -->
-                    <li
-                            class="emp-registration-step is-waiting"
-                            data-stage="REQUEST_ACCEPTED"
-                    >
-                    <span class="emp-registration-step-icon">
-                        <i class="bi bi-circle"></i>
-                    </span>
-
-                        <span class="emp-registration-step-label">
-                        Request
-                    </span>
-                    </li>
-
-                    <!-- Step 2 -->
-                    <li
-                            class="emp-registration-step is-waiting"
-                            data-stage="SERVER_VALIDATION"
-                    >
-                    <span class="emp-registration-step-icon">
-                        <i class="bi bi-circle"></i>
-                    </span>
-
-                        <span class="emp-registration-step-label">
-                        Validation
-                    </span>
-                    </li>
-
-                    <!-- Step 3 -->
-                    <li
-                            class="emp-registration-step is-waiting"
-                            data-stage="EMPLOYEE_CREATION"
-                    >
-                    <span class="emp-registration-step-icon">
-                        <i class="bi bi-circle"></i>
-                    </span>
-
-                        <span class="emp-registration-step-label">
-                        Employee
-                    </span>
-                    </li>
-
-                    <!-- Step 4 -->
-                    <li
-                            class="emp-registration-step is-waiting"
-                            data-stage="RELATED_RECORDS"
-                    >
-                    <span class="emp-registration-step-icon">
-                        <i class="bi bi-circle"></i>
-                    </span>
-
-                        <span class="emp-registration-step-label">
-                        Records
-                    </span>
-                    </li>
-
-                    <!-- Step 5 -->
-                    <li
-                            class="emp-registration-step is-waiting"
-                            data-stage="REPORTING_MANAGER"
-                    >
-                    <span class="emp-registration-step-icon">
-                        <i class="bi bi-circle"></i>
-                    </span>
-
-                        <span class="emp-registration-step-label">
-                        Manager
-                    </span>
-                    </li>
-
-                    <!-- Step 6 -->
-                    <li
-                            class="emp-registration-step is-waiting"
-                            data-stage="LOGIN_ACCOUNT"
-                    >
-                    <span class="emp-registration-step-icon">
-                        <i class="bi bi-circle"></i>
-                    </span>
-
-                        <span class="emp-registration-step-label">
-                        Account
-                    </span>
-                    </li>
-
-                    <!-- Step 7 -->
-                    <li
-                            class="emp-registration-step is-waiting"
-                            data-stage="FINALIZATION"
-                    >
-                    <span class="emp-registration-step-icon">
-                        <i class="bi bi-circle"></i>
-                    </span>
-
-                        <span class="emp-registration-step-label">
-                        Complete
-                    </span>
-                    </li>
-                </ol>
-
-                <!-- Current Backend Process -->
                 <div class="emp-registration-current-process">
-                    <div class="emp-registration-spinner" aria-hidden="true">
+                    <div
+                            class="emp-registration-spinner"
+                            aria-hidden="true"
+                    >
                         <i class="bi bi-arrow-repeat"></i>
                     </div>
 
                     <div>
                         <strong id="employee-registration-stage-title">
-                            Preparing registration
+                            Registering employee
                         </strong>
 
                         <p
                                 id="employee-registration-message"
                                 aria-live="polite"
                         >
-                            Preparing employee information for registration.
+                            Please wait while the employee registration is completed.
                         </p>
                     </div>
-                </div>
-
-                <!-- Optional Child Record Progress -->
-                <div
-                        id="employee-registration-item-progress"
-                        class="emp-registration-item-progress hidden"
-                >
-                <span id="employee-registration-item-message">
-                    Processing records
-                </span>
-
-                    <strong>
-                        <span id="employee-registration-completed-items">0</span>
-                        /
-                        <span id="employee-registration-total-items">0</span>
-                    </strong>
-                </div>
-
-                <!-- Operation Reference -->
-                <div
-                        id="employee-registration-operation-wrapper"
-                        class="emp-registration-operation hidden"
-                >
-                    <span>Operation Reference</span>
-
-                    <code id="employee-registration-operation-id"></code>
                 </div>
 
                 <p class="emp-registration-lock-message">
@@ -1301,23 +1164,7 @@
                     Employee registration could not be completed.
                 </p>
 
-                <div class="emp-registration-failure-details">
-                    <div>
-                        <span>Failed Stage</span>
 
-                        <strong id="employee-registration-failed-stage">
-                            -
-                        </strong>
-                    </div>
-
-                    <div>
-                        <span>Progress Reached</span>
-
-                        <strong id="employee-registration-failed-percentage">
-                            0%
-                        </strong>
-                    </div>
-                </div>
 
                 <div
                         id="employee-registration-error-container"
@@ -1330,9 +1177,6 @@
                     </ul>
                 </div>
 
-                <p class="emp-registration-rollback-message">
-                    Incomplete database records and temporary files will be rolled back.
-                </p>
 
                 <div class="emp-registration-actions">
                     <button

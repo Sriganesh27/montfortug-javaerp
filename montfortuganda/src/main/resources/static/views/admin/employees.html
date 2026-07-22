@@ -1776,7 +1776,107 @@
             </fieldset>
         </form>
     </div>
+
+<!-- ===================================================== -->
+<!-- EMPLOYEE SAVE CONFIRMATION                            -->
+<!-- ===================================================== -->
+
+<div
+        id="employee-confirm-overlay"
+        class="employee-confirm-overlay"
+        aria-hidden="true"
+>
+    <section
+            id="employee-confirm-dialog"
+            class="employee-confirm-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="employee-confirm-title"
+            aria-describedby="employee-confirm-message"
+            tabindex="-1"
+    >
+        <header class="employee-confirm-header">
+                <span
+                        class="employee-confirm-icon"
+                        aria-hidden="true"
+                >
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </span>
+
+            <h3
+                    id="employee-confirm-title"
+                    class="employee-confirm-title"
+            >
+                Confirm Action
+            </h3>
+        </header>
+
+        <div class="employee-confirm-body">
+            <p
+                    id="employee-confirm-message"
+                    class="employee-confirm-message"
+            >
+                Please confirm this action.
+            </p>
+        </div>
+
+        <footer class="employee-confirm-actions">
+            <button
+                    type="button"
+                    id="employee-confirm-cancel"
+                    class="btn-secondary"
+            >
+                Review Again
+            </button>
+
+            <button
+                    type="button"
+                    id="employee-confirm-submit"
+                    class="btn-primary"
+            >
+                Save Changes
+            </button>
+        </footer>
+    </section>
 </div>
+
+<!-- ===================================================== -->
+<!-- EMPLOYEE OPERATION OVERLAY                            -->
+<!-- ===================================================== -->
+
+<div
+        id="employee-operation-overlay"
+        class="employee-operation-overlay"
+        role="status"
+        aria-live="polite"
+        aria-hidden="true"
+>
+    <section class="employee-operation-card">
+            <span
+                    class="employee-operation-spinner"
+                    aria-hidden="true"
+            ></span>
+
+        <div class="employee-operation-content">
+            <strong
+                    id="employee-operation-title"
+                    class="employee-operation-title"
+            >
+                Saving Changes
+            </strong>
+
+            <span
+                    id="employee-operation-message"
+                    class="employee-operation-message"
+            >
+                    Please wait while the Employee record is updated.
+                </span>
+        </div>
+    </section>
+</div>
+
+<!-- ========================================================= -->
+<!-- CREATE EMPLOYEE LOGIN MODAL                               -->
 
 <!-- ========================================================= -->
 <!-- CREATE EMPLOYEE LOGIN MODAL                               -->
@@ -2012,3 +2112,4 @@
         </td>
     </tr>
 </template>
+</div>

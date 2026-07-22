@@ -1,18 +1,16 @@
 /* ========================================= */
-/* --- STRICTLY SCOPED BRANCH ADMIN CSS ---  */
+
+/* --- STRICTLY SCOPED BRANCH ADMIN CSS --- */
+
 /* ========================================= */
 
 /* ----------------------------------------- */
-/* 1. BASE LAYOUT & HEADERS                  */
+
+/* 1. BASE LAYOUT & HEADERS */
+
 /* ----------------------------------------- */
-#admin-branch-dashboard-view,
-#ba-applications-view,
-#ba-departments-view,
-#ba-designations-view,
-#ba-add-dept-view,
-#ba-add-desig-view,
-#ba-employees-view,
-#ba-add-employee-view {
+
+#admin-branch-dashboard-view, #ba-applications-view, #ba-departments-view, #ba-designations-view, #ba-add-dept-view, #ba-add-desig-view, #ba-employees-view, #ba-add-employee-view {
     max-width: 1600px;
     margin: 0 auto;
     padding: 0.75rem;
@@ -20,14 +18,18 @@
 }
 
 /* ----------------------------------------- */
-/* 2. DASHBOARD HOME CARDS                   */
+
+/* 2. DASHBOARD HOME CARDS */
+
 /* ----------------------------------------- */
+
 #admin-branch-dashboard-view .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 1rem;
     margin-top: 1.5rem;
 }
+
 #admin-branch-dashboard-view .stat-card {
     background: #ffffff;
     border-radius: 8px;
@@ -38,11 +40,13 @@
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     transition: all 0.2s ease;
 }
+
 #admin-branch-dashboard-view .stat-card:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
     border-color: #cbd5e1;
     transform: translateY(-2px);
 }
+
 #admin-branch-dashboard-view .stat-icon {
     width: 48px;
     height: 48px;
@@ -53,9 +57,22 @@
     font-size: clamp(1rem, 1.5vw, 1.25rem);
     margin-right: 1rem;
 }
-#admin-branch-dashboard-view .icon-blue { background: #eff6ff; color: #2563eb; }
-#admin-branch-dashboard-view .icon-green { background: #ecfdf5; color: #059669; }
-#admin-branch-dashboard-view .icon-orange { background: #fffbeb; color: #d97706; }
+
+#admin-branch-dashboard-view .icon-blue {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+#admin-branch-dashboard-view .icon-green {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+#admin-branch-dashboard-view .icon-orange {
+    background: #fffbeb;
+    color: #d97706;
+}
+
 #admin-branch-dashboard-view .stat-details h3 {
     margin: 0;
     font-size: clamp(0.7rem, 1.2vw, 0.8rem);
@@ -63,6 +80,7 @@
     text-transform: uppercase;
     font-weight: 600;
 }
+
 #admin-branch-dashboard-view .stat-details h1 {
     margin: 0.15rem 0 0 0;
     font-size: clamp(1.25rem, 2.5vw, 1.75rem);
@@ -71,17 +89,24 @@
 }
 
 /* ----------------------------------------- */
-/* 3. BRANCH ADMIN SPECIFIC MODALS & PANELS  */
+
+/* 3. BRANCH ADMIN SPECIFIC MODALS & PANELS */
+
 /* ----------------------------------------- */
+
 .ba-modal-backdrop {
     position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1050;
     display: flex;
     align-items: center;
     justify-content: center;
 }
+
 .ba-modal-box {
     background-color: #ffffff;
     width: 400px;
@@ -89,28 +114,36 @@
     border-radius: 6px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
+
 .ba-modal-actions {
     display: flex;
     justify-content: flex-end;
     gap: 8px;
     margin-top: 15px;
 }
+
 .ba-form-container {
     position: relative;
 }
+
 .ba-form-overlay {
     position: absolute;
-    top: 0; left: 0; width: 100%; height: 100%;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     background-color: rgba(255, 255, 255, 0.7);
     z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
 }
+
 .ba-form-locked {
     pointer-events: none;
     opacity: 0.5;
 }
+
 .ba-flex-panel {
     display: flex;
     gap: 10px;
@@ -118,14 +151,18 @@
     flex-wrap: wrap;
     margin-bottom: 12px;
 }
+
 .ba-flex-1 {
     flex: 1;
     min-width: 150px;
 }
 
 /* ----------------------------------------- */
-/* 4. PAGINATION UI                          */
+
+/* 4. PAGINATION UI */
+
 /* ----------------------------------------- */
+
 .ba-pagination-footer {
     display: flex;
     align-items: center;
@@ -138,11 +175,13 @@
     flex-wrap: wrap;
     gap: 10px;
 }
+
 .ba-pagination-controls {
     display: flex;
     align-items: center;
     gap: 8px;
 }
+
 .ba-pagination-controls span.text-muted {
     color: #64748b;
     font-size: 0.85rem;
@@ -150,72 +189,70 @@
 }
 
 /* ----------------------------------------- */
-/* 5. MODULE UTILITIES & FORMS               */
+
+/* 5. MODULE UTILITIES & FORMS */
+
 /* ----------------------------------------- */
+
 .filter-grid-layout {
     grid-template-columns: 1fr 1fr 1fr auto;
     align-items: end;
 }
-#ba-departments-view .ba-filter-grid,
-#ba-designations-view .ba-filter-grid {
+
+#ba-departments-view .ba-filter-grid, #ba-designations-view .ba-filter-grid {
     display: grid;
     gap: 10px;
 }
+
 .btn-filter-search {
     margin-bottom: 4px;
 }
+
 .required-mark {
     color: #ef4444;
     margin-left: 2px;
 }
 
 /* --- ADD DEPARTMENT & DESIGNATION FORM STYLES --- */
-#ba-add-dept-view .form-card,
-#ba-add-employee-view .form-card,
-#ba-add-desig-view .form-card {
+
+#ba-add-dept-view .form-card, #ba-add-employee-view .form-card, #ba-add-desig-view .form-card {
     max-width: 600px;
     margin: 0 auto;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
-#ba-add-dept-view .form-card .card-body,
-#ba-add-employee-view .form-card .card-body,
-#ba-add-desig-view .form-card .card-body {
+
+#ba-add-dept-view .form-card .card-body, #ba-add-employee-view .form-card .card-body, #ba-add-desig-view .form-card .card-body {
     padding: 1rem 1.25rem;
 }
 
 /* Shared 2-Column Detail Grid for both List Views and Add Forms */
-#ba-departments-view .ba-detail-grid,
-#ba-designations-view .ba-detail-grid,
-#ba-add-dept-view .ba-detail-grid,
-#ba-add-employee-view .ba-detail-grid,
-#ba-add-desig-view .ba-detail-grid {
+
+#ba-departments-view .ba-detail-grid, #ba-designations-view .ba-detail-grid, #ba-add-dept-view .ba-detail-grid, #ba-add-employee-view .ba-detail-grid, #ba-add-desig-view .ba-detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem 1rem;
     margin-bottom: 1rem;
 }
-#ba-departments-view .ba-detail-full-width,
-#ba-add-employee-view .ba-detail-full-width,
-#ba-designations-view .ba-detail-full-width {
+
+#ba-departments-view .ba-detail-full-width, #ba-add-employee-view .ba-detail-full-width, #ba-designations-view .ba-detail-full-width {
     grid-column: span 2;
 }
 
 /* Remove compounding margins inside the grid */
-#ba-add-dept-view .ba-detail-grid .form-group,
-#ba-add-employee-view .ba-detail-grid .form-group,
-#ba-add-desig-view .ba-detail-grid .form-group {
+
+#ba-add-dept-view .ba-detail-grid .form-group, #ba-add-employee-view .ba-detail-grid .form-group, #ba-add-desig-view .ba-detail-grid .form-group {
     margin-bottom: 0;
 }
+
 /* Standard tight form group spacing */
-#ba-add-dept-view .form-group,
-#ba-add-employee-view .form-group,
-#ba-add-desig-view .form-group {
+
+#ba-add-dept-view .form-group, #ba-add-employee-view .form-group, #ba-add-desig-view .form-group {
     margin-bottom: 0.75rem;
 }
+
 /* Crisp, professional labels */
-#ba-add-dept-view .form-group label,
-#ba-add-employee-view .form-group label,
-#ba-add-desig-view .form-group label {
+
+#ba-add-dept-view .form-group label, #ba-add-employee-view .form-group label, #ba-add-desig-view .form-group label {
     display: block;
     margin-bottom: 0.25rem;
     font-size: 0.8rem;
@@ -224,9 +261,8 @@
 }
 
 /* Sleek, dense enterprise inputs */
-#ba-add-dept-view .detail-input,
-#ba-add-employee-view .detail-input,
-#ba-add-desig-view .detail-input {
+
+#ba-add-dept-view .detail-input, #ba-add-employee-view .detail-input, #ba-add-desig-view .detail-input {
     background-color: #f8fafc;
     border: 1px solid #cbd5e1;
     color: #0f172a;
@@ -236,51 +272,60 @@
     box-shadow: inset 0 1px 2px rgba(0,0,0,0.02);
     transition: all 0.2s ease;
 }
-#ba-add-dept-view .detail-input::placeholder,
-#ba-add-employee-view .detail-input::placeholder,
-#ba-add-desig-view .detail-input::placeholder {
+
+#ba-add-dept-view .detail-input::placeholder, #ba-add-employee-view .detail-input::placeholder, #ba-add-desig-view .detail-input::placeholder {
     color: #94a3b8;
 }
-#ba-add-dept-view .detail-input:hover,
-#ba-add-employee-view .detail-input:hover,
-#ba-add-desig-view .detail-input:hover {
+
+#ba-add-dept-view .detail-input:hover, #ba-add-employee-view .detail-input:hover, #ba-add-desig-view .detail-input:hover {
     background-color: #f1f5f9;
     border-color: #94a3b8;
 }
-#ba-add-dept-view .detail-input:focus,
-#ba-add-employee-view .detail-input:focus,
-#ba-add-desig-view .detail-input:focus {
+
+#ba-add-dept-view .detail-input:focus, #ba-add-employee-view .detail-input:focus, #ba-add-desig-view .detail-input:focus {
     background-color: #ffffff;
     border-color: #d4af37;
     box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
     outline: none;
 }
-#ba-add-dept-view textarea.detail-input,
-#ba-add-employee-view textarea.detail-input,
-#ba-add-desig-view textarea.detail-input {
+
+#ba-add-dept-view textarea.detail-input, #ba-add-employee-view textarea.detail-input, #ba-add-desig-view textarea.detail-input {
     min-height: 60px;
     resize: vertical;
 }
-#ba-add-dept-view .form-actions,
-#ba-add-employee-view .form-actions,
-#ba-add-desig-view .form-actions {
+
+#ba-add-dept-view .form-actions, #ba-add-employee-view .form-actions, #ba-add-desig-view .form-actions {
     margin-top: 0.5rem;
     padding-top: 1rem;
     border-top: 1px solid #e2e8f0;
 }
 
 /* ========================================================= */
-/* --- ADD EMPLOYEE: DENSE FIELDSET & GRID LAYOUTS ---       */
+
+/* --- ADD EMPLOYEE: DENSE FIELDSET & GRID LAYOUTS --- */
+
 /* ========================================================= */
 
 #ba-add-employee-view .emp-grid {
     display: grid;
     gap: 0.75rem 1rem;
 }
-#ba-add-employee-view .emp-grid-2 { grid-template-columns: repeat(2, 1fr); }
-#ba-add-employee-view .emp-grid-3 { grid-template-columns: repeat(3, 1fr); }
-#ba-add-employee-view .emp-grid-4 { grid-template-columns: repeat(4, 1fr); }
-#ba-add-employee-view .span-2-cols { grid-column: span 2; }
+
+#ba-add-employee-view .emp-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+#ba-add-employee-view .emp-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+#ba-add-employee-view .emp-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+#ba-add-employee-view .span-2-cols {
+    grid-column: span 2;
+}
 
 #ba-add-employee-view .emp-name-container {
     display: flex;
@@ -288,6 +333,7 @@
 }
 
 /* --- Tight Fieldset & Legend Styling --- */
+
 #ba-add-employee-view .emp-fieldset {
     border: 1px solid #e2e8f0;
     border-radius: 4px;
@@ -302,13 +348,14 @@
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
     font-weight: 700;
-    color: #475569; /* Slate 600 - Matches labels */
+    color: #475569;
     border: none;
     background: transparent;
     box-shadow: none;
 }
 
 /* --- Dense Dynamic Sections Container --- */
+
 #ba-add-employee-view .emp-child-row {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
@@ -319,16 +366,27 @@
     align-items: center;
     margin-bottom: 0.5rem;
 }
+
 #ba-add-employee-view .emp-child-row > * {
     min-width: 0;
 }
 
 /* Grid sizes for the dynamic rows - tightened */
-#ba-add-employee-view .emp-grid-3-cols, #ba-employees-view .emp-grid-3-cols { grid-template-columns: repeat(3, 1fr) 28px; }
-#ba-add-employee-view .emp-grid-4-cols, #ba-employees-view .emp-grid-4-cols { grid-template-columns: repeat(4, 1fr) 28px; }
-#ba-add-employee-view .emp-grid-5-cols, #ba-employees-view .emp-grid-5-cols { grid-template-columns: repeat(5, 1fr) 28px; }
+
+#ba-add-employee-view .emp-grid-3-cols, #ba-employees-view .emp-grid-3-cols {
+    grid-template-columns: repeat(3, 1fr) 28px;
+}
+
+#ba-add-employee-view .emp-grid-4-cols, #ba-employees-view .emp-grid-4-cols {
+    grid-template-columns: repeat(4, 1fr) 28px;
+}
+
+#ba-add-employee-view .emp-grid-5-cols, #ba-employees-view .emp-grid-5-cols {
+    grid-template-columns: repeat(5, 1fr) 28px;
+}
 
 /* The Add "+ New" Buttons (Subtle, Slate color) */
+
 #ba-add-employee-view .add-row-btn {
     background-color: transparent;
     color: #475569;
@@ -343,6 +401,7 @@
     cursor: pointer;
     margin-top: 4px;
 }
+
 #ba-add-employee-view .add-row-btn:hover {
     background-color: #f1f5f9;
     border-color: #94a3b8;
@@ -350,9 +409,10 @@
 }
 
 /* Delete (X) Button inside dynamic rows */
+
 #ba-add-employee-view .emp-child-row .text-danger.btn-sm {
     background-color: transparent;
-    color: #ef4444; /* Standard red */
+    color: #ef4444;
     border: 1px solid #fca5a5;
     border-radius: 4px;
     height: 28px;
@@ -365,12 +425,14 @@
     transition: all 0.2s;
     padding: 0;
 }
+
 #ba-add-employee-view .emp-child-row .text-danger.btn-sm:hover {
     background-color: #fef2f2;
     border-color: #ef4444;
 }
 
 /* --- Dense File Input Styling --- */
+
 #ba-add-employee-view input[type="file"].detail-input {
     padding: 0.2rem 0.5rem;
     background-color: #ffffff;
@@ -380,9 +442,11 @@
     color: #475569;
     cursor: pointer;
 }
+
 #ba-add-employee-view input[type="file"].detail-input:hover {
     border-color: #94a3b8;
 }
+
 #ba-add-employee-view input[type="file"].detail-input::file-selector-button {
     background-color: #f1f5f9;
     color: #475569;
@@ -394,9 +458,11 @@
     font-weight: 600;
     transition: background-color 0.2s;
 }
+
 #ba-add-employee-view input[type="file"].detail-input::file-selector-button:hover {
     background-color: #e2e8f0;
 }
+
 #erp-import-modal .import-file-input {
     display: block;
     width: 100%;
@@ -410,18 +476,24 @@
 }
 
 /* --- IMPORT MODAL CSS --- */
+
 #erp-import-modal {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background-color: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
     z-index: 9999;
 }
+
 #erp-import-modal.hidden {
     display: none !important;
 }
+
 #erp-import-modal-box {
     background: #ffffff;
     border-radius: 8px;
@@ -429,52 +501,66 @@
     min-width: 400px;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
+
 #erp-import-modal-box h3 {
     margin: 0 0 8px 0;
     color: #1e293b;
 }
+
 #import-file-group {
     margin: 16px 0;
 }
+
 #import-progress-container {
     margin-bottom: 16px;
 }
+
 #import-progress-container.hidden {
     display: none;
 }
+
 #import-status-text {
     font-weight: 600;
     margin-bottom: 4px;
 }
+
 #import-progress-bar {
     width: 100%;
     height: 20px;
 }
+
 #import-result-container {
     padding: 12px;
     border: 1px solid #e2e8f0;
     border-radius: 4px;
     margin-bottom: 16px;
 }
+
 #import-result-container.hidden {
     display: none;
 }
+
 #import-result-msg {
     margin: 0 0 8px 0;
     font-weight: 500;
 }
+
 .import-success-text {
     color: #16a34a;
 }
+
 .import-success-text::before {
     content: "? ";
 }
+
 .import-error-text {
     color: #dc2626;
 }
+
 .import-error-text::before {
     content: "? ";
 }
+
 #import-download-errors {
     background-color: #dc2626;
     color: white;
@@ -484,18 +570,22 @@
     cursor: pointer;
     font-size: 0.85rem;
 }
+
 #import-download-errors:hover {
     background-color: #b91c1c;
 }
+
 #import-download-errors.hidden {
     display: none;
 }
+
 #import-actions {
     margin-top: 24px;
     display: flex;
     justify-content: flex-end;
     gap: 12px;
 }
+
 #import-actions button {
     padding: 8px 16px;
     border-radius: 4px;
@@ -503,23 +593,29 @@
     font-weight: 600;
     border: none;
 }
+
 #import-btn-cancel {
     background-color: #e2e8f0;
     color: #475569;
 }
+
 #import-btn-cancel:hover {
     background-color: #cbd5e1;
 }
+
 #import-btn-upload {
     background-color: #2563eb;
     color: white;
 }
+
 #import-btn-upload:hover {
     background-color: #1d4ed8;
 }
 
 /* ========================================================= */
-/* ADD EMPLOYEE VALIDATION — STRICTLY SCOPED                  */
+
+/* ADD EMPLOYEE VALIDATION — STRICTLY SCOPED */
+
 /* ========================================================= */
 
 #ba-add-employee-view .view-header .action-btn-group {
@@ -568,8 +664,7 @@
     padding-bottom: 1.45rem;
 }
 
-#ba-add-employee-view .form-group.emp-field-invalid::after,
-#ba-add-employee-view .emp-child-field.emp-field-invalid::after {
+#ba-add-employee-view .form-group.emp-field-invalid::after, #ba-add-employee-view .emp-child-field.emp-field-invalid::after {
     content: attr(data-error);
     display: block;
     margin-top: 0.25rem;
@@ -586,19 +681,13 @@
     bottom: 0;
 }
 
-#ba-add-employee-view .detail-input.emp-input-invalid,
-#ba-add-employee-view input.emp-input-invalid,
-#ba-add-employee-view select.emp-input-invalid,
-#ba-add-employee-view textarea.emp-input-invalid {
+#ba-add-employee-view .detail-input.emp-input-invalid, #ba-add-employee-view input.emp-input-invalid, #ba-add-employee-view select.emp-input-invalid, #ba-add-employee-view textarea.emp-input-invalid {
     border-color: #ef4444 !important;
     background-color: #fff7f7;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
 }
 
-#ba-add-employee-view .detail-input.emp-input-invalid:focus,
-#ba-add-employee-view input.emp-input-invalid:focus,
-#ba-add-employee-view select.emp-input-invalid:focus,
-#ba-add-employee-view textarea.emp-input-invalid:focus {
+#ba-add-employee-view .detail-input.emp-input-invalid:focus, #ba-add-employee-view input.emp-input-invalid:focus, #ba-add-employee-view select.emp-input-invalid:focus, #ba-add-employee-view textarea.emp-input-invalid:focus {
     border-color: #dc2626 !important;
     background-color: #ffffff;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
@@ -619,12 +708,17 @@
         width: 100%;
     }
 }
+
 /* ========================================================= */
-/* EMPLOYEE FRONTEND MODIFICATIONS — STRICTLY SCOPED         */
+
+/* EMPLOYEE FRONTEND MODIFICATIONS — STRICTLY SCOPED */
+
 /* ========================================================= */
 
 /* --------------------------------------------------------- */
-/* ADD EMPLOYEE — PERSONAL DETAILS WITH PHOTO                */
+
+/* ADD EMPLOYEE — PERSONAL DETAILS WITH PHOTO */
+
 /* --------------------------------------------------------- */
 
 #ba-add-employee-view .emp-personal-photo-layout {
@@ -733,20 +827,20 @@
     text-align: center;
 }
 
-#ba-add-employee-view .emp-photo-file-input:focus-visible
-+ .emp-photo-upload-btn {
+#ba-add-employee-view .emp-photo-file-input:focus-visible + .emp-photo-upload-btn {
     outline: 2px solid #d4af37;
     outline-offset: 2px;
 }
 
-#ba-add-employee-view .emp-photo-panel .form-group.emp-field-invalid
-.emp-photo-preview-box {
+#ba-add-employee-view .emp-photo-panel .form-group.emp-field-invalid .emp-photo-preview-box {
     border-color: #ef4444;
     background-color: #fff7f7;
 }
 
 /* --------------------------------------------------------- */
-/* ADD EMPLOYEE — MANAGEMENT CHAIN SELECTION                 */
+
+/* ADD EMPLOYEE — MANAGEMENT CHAIN SELECTION */
+
 /* --------------------------------------------------------- */
 
 #ba-add-employee-view .emp-management-type-group {
@@ -757,9 +851,10 @@
     display: none !important;
 }
 
-
 /* --------------------------------------------------------- */
-/* ADD EMPLOYEE — LOGIN OPTIONS                              */
+
+/* ADD EMPLOYEE — LOGIN OPTIONS */
+
 /* --------------------------------------------------------- */
 
 #ba-add-employee-view .emp-checkbox-row {
@@ -782,17 +877,11 @@
     padding-top: 1.45rem;
 }
 
-
-/* --------------------------------------------------------- */
-/* EMPLOYEE DETAIL / EDIT VIEW                               */
 /* --------------------------------------------------------- */
 
-#ba-employees-view .emp-detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1.25rem;
-    padding: 1.5rem;
-}
+/* EMPLOYEE DETAIL / EDIT VIEW */
+
+/* --------------------------------------------------------- */
 
 #ba-employees-view .emp-edit-name-grid {
     display: grid;
@@ -800,61 +889,10 @@
     gap: 0.625rem;
 }
 
-#ba-employees-view .emp-detail-section {
-    margin-bottom: 1rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    background-color: #ffffff;
-}
-
-#ba-employees-view .emp-detail-section-header {
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid #e2e8f0;
-    background-color: #f8fafc;
-    color: #334155;
-    font-size: 0.9rem;
-    font-weight: 700;
-}
-
-#ba-employees-view .emp-detail-section-body {
-    padding: 1rem;
-}
-
-#ba-employees-view .emp-profile-header {
-    display: grid;
-    grid-template-columns: 140px minmax(0, 1fr);
-    gap: 1.25rem;
-    align-items: start;
-}
-
-#ba-employees-view .emp-profile-photo-box {
-    width: 130px;
-    height: 155px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    overflow: hidden;
-    background-color: #f8fafc;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-#ba-employees-view .emp-profile-photo {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-#ba-employees-view .emp-profile-photo-placeholder {
-    padding: 0.75rem;
-    color: #64748b;
-    font-size: 0.8rem;
-    text-align: center;
-}
-
-
 /* --------------------------------------------------------- */
-/* EMPLOYEE CHILD RECORDS                                    */
+
+/* EMPLOYEE CHILD RECORDS */
+
 /* --------------------------------------------------------- */
 
 #ba-employees-view .emp-child-row {
@@ -872,73 +910,16 @@
     min-width: 0;
 }
 
-
-/* --------------------------------------------------------- */
-/* EMPLOYEE DOCUMENT VIEW                                    */
 /* --------------------------------------------------------- */
 
-#ba-employees-view .emp-document-grid {
-    display: grid;
-    grid-template-columns: repeat(
-        auto-fill,
-        minmax(260px, 1fr)
-    );
-    gap: 0.75rem;
-}
-
-#ba-employees-view .emp-document-card {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    padding: 0.875rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    background-color: #ffffff;
-}
-
-#ba-employees-view .emp-document-card-header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem;
-}
-
-#ba-employees-view .emp-document-name {
-    color: #0f172a;
-    font-size: 0.85rem;
-    font-weight: 700;
-    overflow-wrap: anywhere;
-}
-
-#ba-employees-view .emp-document-type {
-    color: #64748b;
-    font-size: 0.75rem;
-}
-
-#ba-employees-view .emp-document-meta {
-    color: #64748b;
-    font-size: 0.75rem;
-    line-height: 1.5;
-}
-
-#ba-employees-view .emp-document-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: auto;
-}
-
-#ba-employees-view .emp-document-view-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.35rem;
-    text-decoration: none;
-}
-
+/* EMPLOYEE DOCUMENT VIEW */
 
 /* --------------------------------------------------------- */
-/* RESPONSIVE EMPLOYEE LAYOUT                                */
+
+/* --------------------------------------------------------- */
+
+/* RESPONSIVE EMPLOYEE LAYOUT */
+
 /* --------------------------------------------------------- */
 
 @media (max-width: 991.98px) {
@@ -952,10 +933,7 @@
 }
 
 @media (max-width: 767.98px) {
-    #ba-add-employee-view .emp-grid-2,
-    #ba-add-employee-view .emp-grid-3,
-    #ba-add-employee-view .emp-grid-4,
-    #ba-add-employee-view .emp-grid-5 {
+    #ba-add-employee-view .emp-grid-2, #ba-add-employee-view .emp-grid-3, #ba-add-employee-view .emp-grid-4, #ba-add-employee-view .emp-grid-5 {
         grid-template-columns: 1fr;
     }
 
@@ -978,14 +956,19 @@
         grid-template-columns: 1fr;
     }
 }
-/* ========================================================= */
-/* FINAL EMPLOYEE TABLE + DETAIL/EDIT CSS                    */
-/* STRICTLY SCOPED                                           */
+
 /* ========================================================= */
 
+/* FINAL EMPLOYEE TABLE + DETAIL/EDIT CSS */
+
+/* STRICTLY SCOPED */
+
+/* ========================================================= */
 
 /* --------------------------------------------------------- */
-/* MANAGE EMPLOYEES — FILTERS                                */
+
+/* MANAGE EMPLOYEES — FILTERS */
+
 /* --------------------------------------------------------- */
 
 #ba-employees-view .ba-flex-panel {
@@ -1014,10 +997,9 @@
     color: #0f172a;
     font-size: 0.85rem;
     box-sizing: border-box;
-    transition:
-            border-color 0.2s ease,
-            background-color 0.2s ease,
-            box-shadow 0.2s ease;
+    transition: border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 #ba-employees-view .detail-input:hover {
@@ -1044,9 +1026,10 @@
     flex-wrap: wrap;
 }
 
-
 /* --------------------------------------------------------- */
-/* EMPLOYEE TABLE                                            */
+
+/* EMPLOYEE TABLE */
+
 /* --------------------------------------------------------- */
 
 #ba-employees-view #emp-tableComponent {
@@ -1054,8 +1037,7 @@
     table-layout: auto;
 }
 
-#ba-employees-view #emp-tableComponent th,
-#ba-employees-view #emp-tableComponent td {
+#ba-employees-view #emp-tableComponent th, #ba-employees-view #emp-tableComponent td {
     vertical-align: middle;
 }
 
@@ -1117,11 +1099,7 @@
     line-height: 1;
 }
 
-#ba-employees-view .col-name strong,
-#ba-employees-view .col-name small,
-#ba-employees-view .col-work span,
-#ba-employees-view .col-work small,
-#ba-employees-view .col-contact small {
+#ba-employees-view .col-name strong, #ba-employees-view .col-name small, #ba-employees-view .col-work span, #ba-employees-view .col-work small, #ba-employees-view .col-contact small {
     display: block;
 }
 
@@ -1131,9 +1109,7 @@
     overflow-wrap: anywhere;
 }
 
-#ba-employees-view .col-name small,
-#ba-employees-view .col-work small,
-#ba-employees-view .col-contact small {
+#ba-employees-view .col-name small, #ba-employees-view .col-work small, #ba-employees-view .col-contact small {
     margin-top: 0.18rem;
     font-size: 0.75rem;
     line-height: 1.35;
@@ -1158,9 +1134,10 @@
     margin: 0 0.12rem;
 }
 
-
 /* --------------------------------------------------------- */
-/* PROFILE SUMMARY                                           */
+
+/* PROFILE SUMMARY */
+
 /* --------------------------------------------------------- */
 
 #ba-employees-view .emp-profile-summary-card {
@@ -1283,12 +1260,14 @@
     overflow-wrap: anywhere;
 }
 
-
 /* --------------------------------------------------------- */
-/* DETAIL / EDIT SECTIONS                                    */
+
+/* DETAIL / EDIT SECTIONS */
+
 /* --------------------------------------------------------- */
 
 #ba-employees-view .emp-detail-section {
+    margin-bottom: 1rem;
     margin: 0 0 1rem;
     padding: 0;
     border: 1px solid #e2e8f0;
@@ -1314,6 +1293,7 @@
 }
 
 #ba-employees-view .emp-detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     display: grid;
     gap: 0.9rem 1rem;
     padding: 0;
@@ -1366,9 +1346,10 @@
     display: none !important;
 }
 
-
 /* --------------------------------------------------------- */
-/* EDIT VALIDATION                                           */
+
+/* EDIT VALIDATION */
+
 /* --------------------------------------------------------- */
 
 #ba-employees-view .emp-validation-summary {
@@ -1398,18 +1379,18 @@
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
 }
 
-
-/* --------------------------------------------------------- */
-/* CHILD RECORDS                                             */
-/* CONTACTS / QUALIFICATIONS / EXPERIENCE / DOCUMENT EDIT    */
 /* --------------------------------------------------------- */
 
-#ba-add-employee-view .emp-child-row,
-#ba-employees-view .emp-child-row {
+/* CHILD RECORDS */
+
+/* CONTACTS / QUALIFICATIONS / EXPERIENCE / DOCUMENT EDIT */
+
+/* --------------------------------------------------------- */
+
+#ba-add-employee-view .emp-child-row, #ba-employees-view .emp-child-row {
     position: relative;
     display: grid;
-    grid-template-columns:
-        repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 0.65rem;
     align-items: center;
     margin-bottom: 0.65rem;
@@ -1419,27 +1400,15 @@
     background-color: #f8fafc;
 }
 
-#ba-add-employee-view .emp-grid-3-cols,
-#ba-add-employee-view .emp-grid-4-cols,
-#ba-add-employee-view .emp-grid-5-cols,
-#ba-add-employee-view .emp-grid-6-cols,
-#ba-add-employee-view .emp-grid-8-cols,
-#ba-employees-view .emp-grid-3-cols,
-#ba-employees-view .emp-grid-4-cols,
-#ba-employees-view .emp-grid-5-cols,
-#ba-employees-view .emp-grid-6-cols,
-#ba-employees-view .emp-grid-8-cols {
-    grid-template-columns:
-        repeat(auto-fit, minmax(150px, 1fr));
+#ba-add-employee-view .emp-grid-3-cols, #ba-add-employee-view .emp-grid-4-cols, #ba-add-employee-view .emp-grid-5-cols, #ba-add-employee-view .emp-grid-6-cols, #ba-add-employee-view .emp-grid-8-cols, #ba-employees-view .emp-grid-3-cols, #ba-employees-view .emp-grid-4-cols, #ba-employees-view .emp-grid-5-cols, #ba-employees-view .emp-grid-6-cols, #ba-employees-view .emp-grid-8-cols {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
-#ba-add-employee-view .emp-child-field,
-#ba-employees-view .emp-child-field {
+#ba-add-employee-view .emp-child-field, #ba-employees-view .emp-child-field {
     min-width: 0;
 }
 
-#ba-add-employee-view .emp-child-row > button,
-#ba-employees-view .emp-child-row > button {
+#ba-add-employee-view .emp-child-row > button, #ba-employees-view .emp-child-row > button {
     position: absolute;
     top: 50%;
     right: 0.65rem;
@@ -1472,9 +1441,10 @@
     color: #0f172a;
 }
 
-
 /* --------------------------------------------------------- */
-/* CHILD RECORD VIEW LIST                                    */
+
+/* CHILD RECORD VIEW LIST */
+
 /* --------------------------------------------------------- */
 
 #ba-employees-view .emp-record-list {
@@ -1493,15 +1463,15 @@
     text-align: center;
 }
 
-
 /* --------------------------------------------------------- */
-/* EMPLOYEE DOCUMENT CARDS                                   */
+
+/* EMPLOYEE DOCUMENT CARDS */
+
 /* --------------------------------------------------------- */
 
 #ba-employees-view .emp-document-grid {
     display: grid;
-    grid-template-columns:
-        repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 0.75rem;
 }
 
@@ -1554,6 +1524,7 @@
 }
 
 #ba-employees-view .emp-document-actions {
+    align-items: center;
     display: flex;
     gap: 0.5rem;
     margin-top: auto;
@@ -1567,13 +1538,13 @@
     text-decoration: none;
 }
 
-
-/* --------------------------------------------------------- */
-/* FORM ACTIONS                                              */
 /* --------------------------------------------------------- */
 
-#ba-add-employee-view .emp-form-actions,
-#ba-employees-view .emp-form-actions {
+/* FORM ACTIONS */
+
+/* --------------------------------------------------------- */
+
+#ba-add-employee-view .emp-form-actions, #ba-employees-view .emp-form-actions {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
@@ -1582,20 +1553,19 @@
     border-top: 1px solid #e2e8f0;
 }
 
-
 /* --------------------------------------------------------- */
-/* TABLET RESPONSIVE                                         */
+
+/* TABLET RESPONSIVE */
+
 /* --------------------------------------------------------- */
 
 @media (max-width: 1199.98px) {
     #ba-employees-view .emp-profile-summary-grid {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     #ba-employees-view .emp-detail-grid-4 {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     #ba-employees-view #emp-tableComponent .col-work {
@@ -1605,8 +1575,7 @@
 
 @media (max-width: 991.98px) {
     #ba-employees-view .emp-detail-grid-3 {
-        grid-template-columns:
-            repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     #ba-employees-view .emp-profile-header {
@@ -1623,9 +1592,10 @@
     }
 }
 
-
 /* --------------------------------------------------------- */
-/* MOBILE RESPONSIVE                                         */
+
+/* MOBILE RESPONSIVE */
+
 /* --------------------------------------------------------- */
 
 @media (max-width: 767.98px) {
@@ -1635,8 +1605,7 @@
         gap: 0.75rem;
     }
 
-    #ba-employees-view .view-header > button,
-    #ba-employees-view .view-header .action-btn-group {
+    #ba-employees-view .view-header > button, #ba-employees-view .view-header .action-btn-group {
         width: 100%;
     }
 
@@ -1661,10 +1630,7 @@
         text-align: center;
     }
 
-    #ba-employees-view .emp-profile-summary-grid,
-    #ba-employees-view .emp-detail-grid-2,
-    #ba-employees-view .emp-detail-grid-3,
-    #ba-employees-view .emp-detail-grid-4 {
+    #ba-employees-view .emp-profile-summary-grid, #ba-employees-view .emp-detail-grid-2, #ba-employees-view .emp-detail-grid-3, #ba-employees-view .emp-detail-grid-4 {
         grid-template-columns: 1fr;
     }
 
@@ -1672,15 +1638,13 @@
         text-align: left;
     }
 
-    #ba-employees-view .emp-child-row,
-    #ba-add-employee-view .emp-child-row {
+    #ba-employees-view .emp-child-row, #ba-add-employee-view .emp-child-row {
         grid-template-columns: 1fr;
         padding-right: 0.7rem;
         padding-bottom: 3rem;
     }
 
-    #ba-employees-view .emp-child-row > button,
-    #ba-add-employee-view .emp-child-row > button {
+    #ba-employees-view .emp-child-row > button, #ba-add-employee-view .emp-child-row > button {
         top: auto;
         right: 0.7rem;
         bottom: 0.7rem;
@@ -1695,13 +1659,11 @@
         flex-basis: 100%;
     }
 
-    #ba-employees-view .ba-flex-panel
-    .ba-pagination-controls {
+    #ba-employees-view .ba-flex-panel .ba-pagination-controls {
         width: 100%;
     }
 
-    #ba-employees-view .ba-flex-panel
-    .ba-pagination-controls button {
+    #ba-employees-view .ba-flex-panel .ba-pagination-controls button {
         flex: 1;
     }
 
@@ -1710,25 +1672,23 @@
         flex-direction: column;
     }
 
-    #ba-employees-view .ba-pagination-footer
-    .ba-pagination-controls {
+    #ba-employees-view .ba-pagination-footer .ba-pagination-controls {
         justify-content: center;
     }
 }
 
-
 /* --------------------------------------------------------- */
-/* SMALL MOBILE                                              */
+
+/* SMALL MOBILE */
+
 /* --------------------------------------------------------- */
 
 @media (max-width: 575.98px) {
-    #ba-employees-view,
-    #ba-add-employee-view {
+    #ba-employees-view, #ba-add-employee-view {
         padding: 0.4rem;
     }
 
-    #ba-employees-view .emp-profile-summary-card,
-    #ba-employees-view .emp-detail-section-body {
+    #ba-employees-view .emp-profile-summary-card, #ba-employees-view .emp-detail-section-body {
         padding: 0.75rem;
     }
 
@@ -1745,15 +1705,18 @@
         height: 160px;
     }
 
-    #ba-add-employee-view .emp-photo-upload-btn,
-    #ba-add-employee-view .emp-photo-help {
+    #ba-add-employee-view .emp-photo-upload-btn, #ba-add-employee-view .emp-photo-help {
         width: 130px;
         max-width: 130px;
     }
 }
+
 /* ========================================================= */
-/* EMPLOYEE REGISTRATION PROGRESS DIALOG                     */
-/* STRICTLY SCOPED                                           */
+
+/* EMPLOYEE REGISTRATION PROGRESS DIALOG */
+
+/* STRICTLY SCOPED */
+
 /* ========================================================= */
 
 #ba-add-employee-view .emp-registration-modal {
@@ -1973,40 +1936,34 @@
     overflow-wrap: anywhere;
 }
 
-#ba-add-employee-view .emp-registration-step.is-processing
-.emp-registration-step-icon {
+#ba-add-employee-view .emp-registration-step.is-processing .emp-registration-step-icon {
     border-color: #2563eb;
     background: #eff6ff;
     color: #2563eb;
     animation: empRegistrationPulse 1.25s infinite;
 }
 
-#ba-add-employee-view .emp-registration-step.is-processing
-.emp-registration-step-label {
+#ba-add-employee-view .emp-registration-step.is-processing .emp-registration-step-label {
     color: #1d4ed8;
 }
 
-#ba-add-employee-view .emp-registration-step.is-completed
-.emp-registration-step-icon {
+#ba-add-employee-view .emp-registration-step.is-completed .emp-registration-step-icon {
     border-color: #16a34a;
     background: #16a34a;
     color: #ffffff;
 }
 
-#ba-add-employee-view .emp-registration-step.is-completed
-.emp-registration-step-label {
+#ba-add-employee-view .emp-registration-step.is-completed .emp-registration-step-label {
     color: #15803d;
 }
 
-#ba-add-employee-view .emp-registration-step.is-failed
-.emp-registration-step-icon {
+#ba-add-employee-view .emp-registration-step.is-failed .emp-registration-step-icon {
     border-color: #dc2626;
     background: #dc2626;
     color: #ffffff;
 }
 
-#ba-add-employee-view .emp-registration-step.is-failed
-.emp-registration-step-label {
+#ba-add-employee-view .emp-registration-step.is-failed .emp-registration-step-label {
     color: #dc2626;
 }
 
@@ -2127,20 +2084,14 @@
     background: #fef2f2;
 }
 
-#ba-add-employee-view
-#employee-registration-success-view > h3,
-#ba-add-employee-view
-#employee-registration-failure-view > h3 {
+#ba-add-employee-view #employee-registration-success-view > h3, #ba-add-employee-view #employee-registration-failure-view > h3 {
     margin: 0;
     color: #0f172a;
     font-size: 1.05rem;
     text-align: center;
 }
 
-#ba-add-employee-view
-#employee-registration-success-view > p,
-#ba-add-employee-view
-#employee-registration-failure-view > p {
+#ba-add-employee-view #employee-registration-success-view > p, #ba-add-employee-view #employee-registration-failure-view > p {
     margin: 0.45rem 0 1rem;
     color: #64748b;
     font-size: 0.8rem;
@@ -2154,8 +2105,7 @@
     gap: 0.75rem;
 }
 
-#ba-add-employee-view .emp-registration-result-details > div,
-#ba-add-employee-view .emp-registration-failure-details > div {
+#ba-add-employee-view .emp-registration-result-details > div, #ba-add-employee-view .emp-registration-failure-details > div {
     min-width: 0;
     padding: 0.75rem;
     border: 1px solid #e2e8f0;
@@ -2163,16 +2113,14 @@
     background: #f8fafc;
 }
 
-#ba-add-employee-view .emp-registration-result-details span,
-#ba-add-employee-view .emp-registration-failure-details span {
+#ba-add-employee-view .emp-registration-result-details span, #ba-add-employee-view .emp-registration-failure-details span {
     display: block;
     margin-bottom: 0.25rem;
     color: #64748b;
     font-size: 0.7rem;
 }
 
-#ba-add-employee-view .emp-registration-result-details strong,
-#ba-add-employee-view .emp-registration-failure-details strong {
+#ba-add-employee-view .emp-registration-result-details strong, #ba-add-employee-view .emp-registration-failure-details strong {
     display: block;
     color: #1e293b;
     font-size: 0.82rem;
@@ -2243,8 +2191,7 @@
 }
 
 @keyframes empRegistrationPulse {
-    0%,
-    100% {
+    0%, 100% {
         box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.18);
     }
 
@@ -2302,8 +2249,7 @@
         padding: 0.85rem;
     }
 
-    #ba-add-employee-view .emp-registration-item-progress,
-    #ba-add-employee-view .emp-registration-operation {
+    #ba-add-employee-view .emp-registration-item-progress, #ba-add-employee-view .emp-registration-operation {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.35rem;
@@ -2321,21 +2267,14 @@
         width: 100%;
     }
 }
-/* ========================================================= */
-/* EMPLOYEE REGISTRATION MODAL — BODY PORTAL FIX             */
-/* Append this complete block at the end of Branch Admin CSS */
+
 /* ========================================================= */
 
-#employee-registration-modal {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 99999 !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    box-sizing: border-box;
-}
+/* EMPLOYEE REGISTRATION MODAL — BODY PORTAL FIX */
+
+/* Append this complete block at the end of Branch Admin CSS */
+
+/* ========================================================= */
 
 #employee-registration-modal.hidden {
     display: none !important;
@@ -2343,62 +2282,6 @@
 
 #employee-registration-modal .hidden {
     display: none !important;
-}
-
-#employee-registration-modal .emp-registration-backdrop {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    background: rgba(15, 23, 42, 0.68);
-    backdrop-filter: blur(2px);
-}
-
-#employee-registration-modal .emp-registration-dialog {
-    position: relative;
-    z-index: 1;
-    display: block;
-    width: min(760px, 100%);
-    max-height: calc(100vh - 2rem);
-    overflow-y: auto;
-    box-sizing: border-box;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    background: #ffffff;
-    color: #0f172a;
-    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.3);
-}
-
-#employee-registration-modal .emp-registration-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid #e2e8f0;
-    background: #f8fafc;
-}
-
-#employee-registration-modal .emp-registration-header-content {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    min-width: 0;
-}
-
-#employee-registration-modal .emp-registration-main-icon {
-    flex: 0 0 auto;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-}
-
-#employee-registration-modal .emp-registration-main-icon.is-processing {
-    color: #2563eb;
-    background: #eff6ff;
 }
 
 #employee-registration-modal .emp-registration-main-icon.is-success {
@@ -2409,20 +2292,6 @@
 #employee-registration-modal .emp-registration-main-icon.is-failed {
     color: #dc2626;
     background: #fef2f2;
-}
-
-#employee-registration-modal .emp-registration-header h3 {
-    margin: 0;
-    color: #0f172a;
-    font-size: 1rem;
-    font-weight: 700;
-}
-
-#employee-registration-modal .emp-registration-employee-name {
-    margin: 0.2rem 0 0;
-    color: #64748b;
-    font-size: 0.8rem;
-    overflow-wrap: anywhere;
 }
 
 #employee-registration-modal .emp-registration-close-btn {
@@ -2440,33 +2309,9 @@
     cursor: pointer;
 }
 
-#employee-registration-modal .emp-registration-view {
-    padding: 1.25rem;
-}
-
-#employee-registration-modal .emp-registration-progress-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
-    color: #475569;
-    font-size: 0.82rem;
-    font-weight: 600;
-}
-
 #employee-registration-modal .emp-registration-progress-heading strong {
     color: #0f172a;
     font-size: 0.95rem;
-}
-
-#employee-registration-modal .emp-registration-progress {
-    width: 100%;
-    height: 10px;
-    margin-bottom: 1.4rem;
-    border-radius: 999px;
-    background: #e2e8f0;
-    overflow: hidden;
 }
 
 #employee-registration-modal .emp-registration-progress-fill {
@@ -2475,6 +2320,16 @@
     border-radius: inherit;
     background: #2563eb;
     transition: width 0.35s ease;
+}
+
+@keyframes employeeRegistrationIndeterminate {
+    from {
+        transform: translateX(-120%);
+    }
+
+    to {
+        transform: translateX(320%);
+    }
 }
 
 #employee-registration-modal .emp-registration-progress-fill.is-success {
@@ -2566,48 +2421,11 @@
     color: #dc2626;
 }
 
-#employee-registration-modal .emp-registration-current-process {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.85rem;
-    padding: 1rem;
-    border: 1px solid #bfdbfe;
-    border-radius: 7px;
-    background: #eff6ff;
-}
-
-#employee-registration-modal .emp-registration-spinner {
-    flex: 0 0 auto;
-    width: 34px;
-    height: 34px;
-    border-radius: 50%;
-    background: #dbeafe;
-    color: #2563eb;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 #employee-registration-modal .emp-registration-spinner i {
     animation: employeeRegistrationSpin 1s linear infinite;
 }
 
-#employee-registration-modal .emp-registration-current-process strong {
-    display: block;
-    margin-bottom: 0.2rem;
-    color: #1e3a8a;
-    font-size: 0.85rem;
-}
-
-#employee-registration-modal .emp-registration-current-process p {
-    margin: 0;
-    color: #475569;
-    font-size: 0.8rem;
-    line-height: 1.45;
-}
-
-#employee-registration-modal .emp-registration-item-progress,
-#employee-registration-modal .emp-registration-operation {
+#employee-registration-modal .emp-registration-item-progress, #employee-registration-modal .emp-registration-operation {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2631,13 +2449,6 @@
     overflow-wrap: anywhere;
 }
 
-#employee-registration-modal .emp-registration-lock-message {
-    margin: 1rem 0 0;
-    color: #64748b;
-    font-size: 0.74rem;
-    text-align: center;
-}
-
 #employee-registration-modal .emp-registration-result-icon {
     width: 64px;
     height: 64px;
@@ -2659,16 +2470,14 @@
     background: #fef2f2;
 }
 
-#employee-registration-modal #employee-registration-success-view > h3,
-#employee-registration-modal #employee-registration-failure-view > h3 {
+#employee-registration-modal #employee-registration-success-view > h3, #employee-registration-modal #employee-registration-failure-view > h3 {
     margin: 0;
     color: #0f172a;
     font-size: 1.05rem;
     text-align: center;
 }
 
-#employee-registration-modal #employee-registration-success-view > p,
-#employee-registration-modal #employee-registration-failure-view > p {
+#employee-registration-modal #employee-registration-success-view > p, #employee-registration-modal #employee-registration-failure-view > p {
     margin: 0.45rem 0 1rem;
     color: #64748b;
     font-size: 0.8rem;
@@ -2676,15 +2485,13 @@
     text-align: center;
 }
 
-#employee-registration-modal .emp-registration-result-details,
-#employee-registration-modal .emp-registration-failure-details {
+#employee-registration-modal .emp-registration-result-details, #employee-registration-modal .emp-registration-failure-details {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
 }
 
-#employee-registration-modal .emp-registration-result-details > div,
-#employee-registration-modal .emp-registration-failure-details > div {
+#employee-registration-modal .emp-registration-result-details > div, #employee-registration-modal .emp-registration-failure-details > div {
     min-width: 0;
     padding: 0.75rem;
     border: 1px solid #e2e8f0;
@@ -2692,16 +2499,14 @@
     background: #f8fafc;
 }
 
-#employee-registration-modal .emp-registration-result-details span,
-#employee-registration-modal .emp-registration-failure-details span {
+#employee-registration-modal .emp-registration-result-details span, #employee-registration-modal .emp-registration-failure-details span {
     display: block;
     margin-bottom: 0.25rem;
     color: #64748b;
     font-size: 0.7rem;
 }
 
-#employee-registration-modal .emp-registration-result-details strong,
-#employee-registration-modal .emp-registration-failure-details strong {
+#employee-registration-modal .emp-registration-result-details strong, #employee-registration-modal .emp-registration-failure-details strong {
     display: block;
     color: #1e293b;
     font-size: 0.82rem;
@@ -2750,14 +2555,20 @@
 }
 
 @keyframes employeeRegistrationSpin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes employeeRegistrationPulse {
     0%, 100% {
         box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.18);
     }
+
     50% {
         box-shadow: 0 0 0 7px rgba(37, 99, 235, 0);
     }
@@ -2783,8 +2594,7 @@
         padding: 0.5rem;
     }
 
-    #employee-registration-modal .emp-registration-header,
-    #employee-registration-modal .emp-registration-view {
+    #employee-registration-modal .emp-registration-header, #employee-registration-modal .emp-registration-view {
         padding: 0.85rem;
     }
 
@@ -2792,8 +2602,7 @@
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    #employee-registration-modal .emp-registration-item-progress,
-    #employee-registration-modal .emp-registration-operation {
+    #employee-registration-modal .emp-registration-item-progress, #employee-registration-modal .emp-registration-operation {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.35rem;
@@ -2809,5 +2618,382 @@
 
     #employee-registration-modal .emp-registration-actions .btn {
         width: 100%;
+    }
+}
+
+/* Compact Employee Registration Window — ERP Theme */
+
+#employee-registration-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 0.75rem;
+}
+
+#employee-registration-modal .emp-registration-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: none;
+}
+
+#employee-registration-modal .emp-registration-dialog {
+    position: relative;
+    z-index: 1;
+    display: block;
+    overflow-y: auto;
+    box-sizing: border-box;
+    color: #0f172a;
+    width: min(480px, 100%);
+    max-height: calc(100vh - 1.5rem);
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+#employee-registration-modal .emp-registration-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 0.9rem;
+    background: #0f172a;
+    border-bottom: none;
+}
+
+#employee-registration-modal .emp-registration-header-content {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    gap: 0.65rem;
+}
+
+#employee-registration-modal .emp-registration-main-icon {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+#employee-registration-modal .emp-registration-main-icon.is-processing {
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.14);
+}
+
+#employee-registration-modal .emp-registration-header h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+#employee-registration-modal .emp-registration-employee-name {
+    margin: 0.2rem 0 0;
+    overflow-wrap: anywhere;
+    margin-top: 0.1rem;
+    color: #cbd5e1;
+    font-size: 0.72rem;
+}
+
+#employee-registration-modal .emp-registration-view {
+    padding: 0.9rem;
+}
+
+#employee-registration-modal .emp-registration-progress-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: #475569;
+    font-size: 0.76rem;
+}
+
+#employee-registration-modal .emp-registration-progress {
+    width: 100%;
+    height: 5px;
+    margin-bottom: 0.85rem;
+    border-radius: 2px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+#employee-registration-modal .emp-registration-progress-fill.is-indeterminate {
+    width: 35% !important;
+    border-radius: 2px;
+    background: #d4af37;
+    animation: employeeRegistrationIndeterminate
+    1.1s
+    ease-in-out
+    infinite;
+    transition: none;
+}
+
+#employee-registration-modal .emp-registration-current-process {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    padding: 0.7rem;
+    border: 1px solid #e2e8f0;
+    border-left: 3px solid #d4af37;
+    border-radius: 4px;
+    background: #f8fafc;
+}
+
+#employee-registration-modal .emp-registration-spinner {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 4px;
+    background: transparent;
+    color: #d4af37;
+}
+
+#employee-registration-modal .emp-registration-current-process strong {
+    display: block;
+    margin-bottom: 0.1rem;
+    color: #0f172a;
+    font-size: 0.8rem;
+}
+
+#employee-registration-modal .emp-registration-current-process p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.74rem;
+    line-height: 1.4;
+}
+
+#employee-registration-modal .emp-registration-lock-message {
+    text-align: center;
+    margin: 0.65rem 0 0;
+    color: #64748b;
+    font-size: 0.68rem;
+}
+
+@keyframes employeeRegistrationIndeterminate {
+    from {
+        transform: translateX(-120%);
+    }
+
+    to {
+        transform: translateX(320%);
+    }
+}
+
+@media (max-width: 575.98px) {
+    #employee-registration-modal {
+        padding: 0.5rem;
+    }
+
+    #employee-registration-modal .emp-registration-dialog {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   EMPLOYEE CONFIRMATION
+   Scope: #ba-employees-view
+   ========================================================= */
+
+#ba-employees-view .employee-confirm-overlay, #ba-employees-view .employee-operation-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: rgba(15, 23, 42, 0.56);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 180ms ease,
+    visibility 180ms ease;
+}
+
+#ba-employees-view .employee-confirm-overlay.is-visible, #ba-employees-view .employee-operation-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+#ba-employees-view .employee-confirm-dialog {
+    width: min(440px, calc(100vw - 32px));
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    border-radius: 14px;
+    box-shadow: 0 24px 65px rgba(15, 23, 42, 0.4);
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+    transition: opacity 180ms ease,
+    transform 180ms ease;
+}
+
+#ba-employees-view .employee-confirm-overlay.is-visible .employee-confirm-dialog {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+#ba-employees-view .employee-confirm-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 22px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #172033, #253652);
+    border-bottom: 3px solid #d4af37;
+}
+
+#ba-employees-view .employee-confirm-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.13);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    border-radius: 50%;
+    font-size: 1.1rem;
+}
+
+#ba-employees-view .employee-confirm-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+#ba-employees-view .employee-confirm-body {
+    padding: 24px 24px 12px;
+}
+
+#ba-employees-view .employee-confirm-message {
+    margin: 0;
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.65;
+}
+
+#ba-employees-view .employee-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px 22px;
+}
+
+#ba-employees-view .employee-confirm-actions button {
+    min-width: 125px;
+}
+
+#ba-employees-view .employee-confirm-dialog:focus-visible {
+    outline: 3px solid rgba(212, 175, 55, 0.45);
+    outline-offset: 4px;
+}
+
+/* =========================================================
+   EMPLOYEE OPERATION OVERLAY
+   ========================================================= */
+
+#ba-employees-view .employee-operation-overlay {
+    z-index: 1000002;
+}
+
+#ba-employees-view .employee-operation-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: min(430px, calc(100vw - 32px));
+    padding: 22px 24px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #172033, #24324a);
+    border: 1px solid rgba(212, 175, 55, 0.7);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.44);
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+    transition: opacity 180ms ease,
+    transform 180ms ease;
+}
+
+#ba-employees-view .employee-operation-overlay.is-visible .employee-operation-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+#ba-employees-view .employee-operation-spinner {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border: 4px solid rgba(255, 255, 255, 0.22);
+    border-top-color: #d4af37;
+    border-radius: 50%;
+    animation: ba-employee-operation-spin 700ms linear infinite;
+}
+
+#ba-employees-view .employee-operation-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#ba-employees-view .employee-operation-title {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+#ba-employees-view .employee-operation-message {
+    color: #cbd5e1;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+@keyframes ba-employee-operation-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 576px) {
+    #ba-employees-view .employee-confirm-actions {
+        flex-direction: column-reverse;
+    }
+
+    #ba-employees-view .employee-confirm-actions button {
+        width: 100%;
+    }
+
+    #ba-employees-view .employee-operation-card {
+        gap: 13px;
+        padding: 19px;
+    }
+
+    #ba-employees-view .employee-operation-spinner {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
     }
 }

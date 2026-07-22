@@ -61,7 +61,18 @@ async function handleResponse(response) {
             errorMessage += `\n\n${fieldErrors}`;
         }
 
-        throw new Error(errorMessage);
+        const apiError = new Error(errorMessage);
+
+        apiError.name = 'ApiError';
+        apiError.status = response.status;
+        apiError.data = errorData;
+        apiError.response = {
+            status: response.status,
+            statusText: response.statusText,
+            data: errorData
+        };
+
+        throw apiError;
     }
 
     let text = await response.text();
