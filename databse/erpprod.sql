@@ -1,8 +1,8 @@
 -- MySQL dump 10.13  Distrib 8.0.43, for Win64 (x86_64)
 --
--- Host: 68.178.237.26    Database: montfortug
+-- Host: localhost    Database: montfortug_erp_dev
 -- ------------------------------------------------------
--- Server version	5.5.5-10.11.17-MariaDB-cll-lve
+-- Server version	8.0.46-0ubuntu0.24.04.3
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -23,26 +23,26 @@ DROP TABLE IF EXISTS `erp_academic_terms`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_academic_terms` (
-  `term_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `academic_year_id` bigint(20) NOT NULL,
+  `term_id` bigint NOT NULL AUTO_INCREMENT,
+  `academic_year_id` bigint NOT NULL,
   `term_code` varchar(20) NOT NULL,
   `term_name` varchar(100) NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `display_order` int(11) NOT NULL,
+  `display_order` int NOT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'PLANNED',
-  `current_term` tinyint(1) NOT NULL DEFAULT 0,
+  `current_term` tinyint(1) NOT NULL DEFAULT '0',
   `description` varchar(500) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_by` bigint DEFAULT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`term_id`),
   UNIQUE KEY `uk_year_term_code` (`academic_year_id`,`term_code`),
   CONSTRAINT `fk_term_year` FOREIGN KEY (`academic_year_id`) REFERENCES `erp_academic_years` (`academic_year_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -62,7 +62,7 @@ DROP TABLE IF EXISTS `erp_academic_years`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_academic_years` (
-  `academic_year_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `academic_year_id` bigint NOT NULL AUTO_INCREMENT,
   `academic_year_code` varchar(20) NOT NULL,
   `academic_year_name` varchar(100) NOT NULL,
   `start_date` date NOT NULL,
@@ -70,18 +70,18 @@ CREATE TABLE `erp_academic_years` (
   `admission_start_date` date DEFAULT NULL,
   `admission_end_date` date DEFAULT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'PLANNED',
-  `current_year` tinyint(1) NOT NULL DEFAULT 0,
+  `current_year` tinyint(1) NOT NULL DEFAULT '0',
   `description` varchar(500) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`academic_year_id`),
   UNIQUE KEY `uk_academic_year_code` (`academic_year_code`),
-  CONSTRAINT `chk_academic_year_status` CHECK (`status` in ('PLANNED','ACTIVE','CLOSED'))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CONSTRAINT `chk_academic_year_status` CHECK ((`status` in (_utf8mb3'PLANNED',_utf8mb3'ACTIVE',_utf8mb3'CLOSED')))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -101,25 +101,26 @@ DROP TABLE IF EXISTS `erp_application_documents`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_application_documents` (
-  `document_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `application_id` bigint(20) NOT NULL,
+  `document_id` bigint NOT NULL AUTO_INCREMENT,
+  `application_id` bigint NOT NULL,
   `document_type` varchar(50) NOT NULL,
   `verification_status` varchar(20) NOT NULL DEFAULT 'PENDING',
   `original_file_name` varchar(255) NOT NULL,
   `stored_file_name` varchar(255) NOT NULL,
   `file_path` varchar(500) NOT NULL,
-  `uploaded_at` datetime DEFAULT current_timestamp(),
+  `uploaded_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL,
-  `file_size` bigint(20) DEFAULT NULL,
+  `file_size` bigint DEFAULT NULL,
   `content_type` varchar(100) DEFAULT NULL,
   `file_hash` varchar(64) DEFAULT NULL,
-  `uploaded_by` bigint(20) DEFAULT NULL,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
+  `uploaded_by` bigint DEFAULT NULL,
+  `version` bigint NOT NULL DEFAULT '0',
+  `active` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`document_id`),
-  KEY `fk_application_document_application` (`application_id`),
+  KEY `idx_application_document_branch_status` (`verification_status`),
+  KEY `idx_application_document_application_status` (`application_id`,`verification_status`),
   CONSTRAINT `fk_application_document_application` FOREIGN KEY (`application_id`) REFERENCES `erp_applications` (`application_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -128,7 +129,6 @@ CREATE TABLE `erp_application_documents` (
 
 LOCK TABLES `erp_application_documents` WRITE;
 /*!40000 ALTER TABLE `erp_application_documents` DISABLE KEYS */;
-INSERT INTO `erp_application_documents` VALUES (1,1,'PHOTO','PENDING','Screenshot24.jpeg','photo_1782899073071_aa106764.jpeg','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-001/photo_1782899073071_aa106764.jpeg','2026-07-01 09:44:33',NULL,NULL,NULL,NULL,NULL,0,1),(2,2,'PHOTO','PENDING','Screenshot24.jpeg','photo_1782899658052_258e0834.jpeg','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-002/photo_1782899658052_258e0834.jpeg','2026-07-01 09:54:18',NULL,NULL,NULL,NULL,NULL,0,1),(3,3,'PHOTO','PENDING','Screenshot24.jpeg','photo_1782900179290_a1efd19b.jpeg','/uploads/applications/U031-Pere Achte Secondary _ Senior Secondary School,Isunga/APP-2026-U031-001/photo_1782900179290_a1efd19b.jpeg','2026-07-01 10:02:59',NULL,NULL,NULL,NULL,NULL,0,1),(4,4,'PHOTO','PENDING','Screenshot24.jpeg','photo_1782900439677_98a61d45.jpeg','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-001/photo_1782900439677_98a61d45.jpeg','2026-07-01 10:07:19',NULL,NULL,NULL,NULL,NULL,0,1),(5,5,'PHOTO','PENDING','Screenshot24.jpeg','photo_1782901940649_7964978a.jpeg','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-003/photo_1782901940649_7964978a.jpeg','2026-07-01 10:32:20',NULL,NULL,NULL,NULL,NULL,0,1),(6,5,'DOCUMENT','PENDING','Montfort_Application_APP-U031-2026-0001.pdf','doc_1782901940666_2579778c.pdf','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-003/doc_1782901940666_2579778c.pdf','2026-07-01 10:32:20',NULL,NULL,NULL,NULL,NULL,0,1),(7,6,'PHOTO','PENDING','Screenshot24.jpeg','photo_1782907247078_26d0e9c4.jpeg','/uploads/applications/U031-Pere Achte Secondary _ Senior Secondary School,Isunga/APP-2026-U031-002/photo_1782907247078_26d0e9c4.jpeg','2026-07-01 12:00:47',NULL,NULL,NULL,NULL,NULL,0,1),(8,6,'DOCUMENT','PENDING','Montfort_Application_APP-U031-2026-0001.pdf','doc_1782907247101_64b18ed3.pdf','/uploads/applications/U031-Pere Achte Secondary _ Senior Secondary School,Isunga/APP-2026-U031-002/doc_1782907247101_64b18ed3.pdf','2026-07-01 12:00:47',NULL,NULL,NULL,NULL,NULL,0,1),(9,7,'PHOTO','PENDING','Screenshot24.jpeg','photo_1782908680940_e24faa98.jpeg','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-004/photo_1782908680940_e24faa98.jpeg','2026-07-01 12:24:40',NULL,NULL,NULL,NULL,NULL,0,1),(10,7,'DOCUMENT','PENDING','bharath resume (2).pdf','doc_1782908680956_0f8b26f7.pdf','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-004/doc_1782908680956_0f8b26f7.pdf','2026-07-01 12:24:40',NULL,NULL,NULL,NULL,NULL,0,1),(11,8,'PHOTO','PENDING','Screenshot24.jpeg','photo_1782909458376_86e95df1.jpeg','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-005/photo_1782909458376_86e95df1.jpeg','2026-07-01 12:37:38',NULL,NULL,NULL,NULL,NULL,0,1),(12,8,'DOCUMENT','PENDING','Montfort_Application_APP-U031-2026-0001.pdf','doc_1782909458395_1f0a7a1f.pdf','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-005/doc_1782909458395_1f0a7a1f.pdf','2026-07-01 12:37:38',NULL,NULL,NULL,NULL,NULL,0,1),(13,9,'PHOTO','PENDING','Screenshot24.jpeg','photo_1782912293668_5a468c1d.jpeg','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-002/photo_1782912293668_5a468c1d.jpeg','2026-07-01 13:24:53',NULL,NULL,NULL,NULL,NULL,0,1),(14,9,'DOCUMENT','PENDING','Montfort_Application_APP-U031-2026-0001.pdf','doc_1782912293672_bb65484d.pdf','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-002/doc_1782912293672_bb65484d.pdf','2026-07-01 13:24:53',NULL,NULL,NULL,NULL,NULL,0,1),(15,10,'PHOTO','PENDING','Screenshot24.jpeg','photo_1782978897130_50f0bd55.jpeg','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-003/photo_1782978897130_50f0bd55.jpeg','2026-07-02 07:54:57',NULL,NULL,NULL,NULL,NULL,0,1),(16,10,'DOCUMENT','PENDING','Montfort_Application_APP-U031-2026-0001.pdf','doc_1782978897130_86c418c5.pdf','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-003/doc_1782978897130_86c418c5.pdf','2026-07-02 07:54:57',NULL,NULL,NULL,NULL,NULL,0,1),(17,11,'PHOTO','PENDING','Screenshot24.jpeg','photo_1782979827572_c1d518d2.jpeg','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-004/photo_1782979827572_c1d518d2.jpeg','2026-07-02 08:10:27',NULL,NULL,NULL,NULL,NULL,0,1),(18,11,'DOCUMENT','PENDING','Montfort_Application_APP-U031-2026-0001.pdf','doc_1782979827600_b3d1f4d9.pdf','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-004/doc_1782979827600_b3d1f4d9.pdf','2026-07-02 08:10:27',NULL,NULL,NULL,NULL,NULL,0,1),(19,14,'PHOTO','PENDING','Screenshot24.jpeg','photo_1783005354997_3f41ce74.jpeg','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-008/photo_1783005354997_3f41ce74.jpeg','2026-07-02 15:15:55',NULL,NULL,NULL,NULL,NULL,0,1),(20,14,'DOCUMENT','PENDING','Montfort_Application_APP-2026-U021-001.pdf','doc_1783005355009_ca91e0bd.pdf','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-008/doc_1783005355009_ca91e0bd.pdf','2026-07-02 15:15:55',NULL,NULL,NULL,NULL,NULL,0,1),(21,14,'DOCUMENT','PENDING','j.pdf','doc_1783005355011_01b40eef.pdf','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-008/doc_1783005355011_01b40eef.pdf','2026-07-02 15:15:55',NULL,NULL,NULL,NULL,NULL,0,1),(22,15,'PHOTO','PENDING','Screenshot24.jpeg','photo_1783006785964_dae4189c.jpeg','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-009/photo_1783006785964_dae4189c.jpeg','2026-07-02 15:39:45',NULL,NULL,NULL,NULL,NULL,0,1),(23,15,'DOCUMENT','PENDING','j.pdf','doc_1783006785967_3fe38833.pdf','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-009/doc_1783006785967_3fe38833.pdf','2026-07-02 15:39:45',NULL,NULL,NULL,NULL,NULL,0,1);
 /*!40000 ALTER TABLE `erp_application_documents` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -140,25 +140,25 @@ DROP TABLE IF EXISTS `erp_application_fees`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_application_fees` (
-  `fee_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `application_id` bigint(20) NOT NULL,
+  `fee_id` bigint NOT NULL AUTO_INCREMENT,
+  `application_id` bigint NOT NULL,
   `base_fee_amount` decimal(12,2) NOT NULL,
-  `scholarship_discount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `scholarship_discount` decimal(12,2) NOT NULL DEFAULT '0.00',
   `final_payable` decimal(12,2) NOT NULL,
-  `amount_paid` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `amount_paid` decimal(12,2) NOT NULL DEFAULT '0.00',
   `payment_status` varchar(30) NOT NULL DEFAULT 'PENDING',
   `payment_date` datetime DEFAULT NULL,
   `payment_mode` varchar(30) DEFAULT NULL,
   `receipt_no` varchar(150) DEFAULT NULL,
   `receipt_reference` varchar(150) DEFAULT NULL,
-  `collected_by` bigint(20) DEFAULT NULL,
+  `collected_by` bigint DEFAULT NULL,
   `remarks` varchar(500) DEFAULT NULL,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`fee_id`),
   UNIQUE KEY `uk_application_fee` (`application_id`),
   UNIQUE KEY `receipt_no` (`receipt_no`),
@@ -166,7 +166,7 @@ CREATE TABLE `erp_application_fees` (
   KEY `idx_fee_status` (`payment_status`),
   KEY `idx_fee_receipt` (`receipt_no`),
   CONSTRAINT `fk_application_fee` FOREIGN KEY (`application_id`) REFERENCES `erp_applications` (`application_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -186,27 +186,27 @@ DROP TABLE IF EXISTS `erp_application_interviews`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_application_interviews` (
-  `interview_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `application_id` bigint(20) NOT NULL,
-  `teacher_id` bigint(20) NOT NULL,
+  `interview_id` bigint NOT NULL AUTO_INCREMENT,
+  `application_id` bigint NOT NULL,
+  `teacher_id` bigint NOT NULL,
   `interview_date` datetime DEFAULT NULL,
   `test_score` decimal(5,2) DEFAULT NULL,
-  `teacher_remarks` text DEFAULT NULL,
-  `recommendation` enum('RECOMMENDED','NOT_RECOMMENDED','WAITLIST') NOT NULL,
-  `status` enum('PENDING','SUBMITTED') NOT NULL DEFAULT 'PENDING',
-  `created_by` bigint(20) DEFAULT NULL,
+  `teacher_remarks` text,
+  `recommendation` enum('NOT_RECOMMENDED','RECOMMENDED','WAITLIST') NOT NULL,
+  `status` enum('IN_PROGRESS','PENDING','REVIEWED','SUBMITTED') NOT NULL,
+  `created_by` bigint DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_by` bigint DEFAULT NULL,
   `updated_at` datetime NOT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`interview_id`),
   UNIQUE KEY `uk_application_interview` (`application_id`),
   KEY `idx_interview_application` (`application_id`),
   KEY `idx_interview_teacher` (`teacher_id`),
   KEY `idx_interview_status` (`status`),
   CONSTRAINT `fk_interview_application` FOREIGN KEY (`application_id`) REFERENCES `erp_applications` (`application_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -226,19 +226,19 @@ DROP TABLE IF EXISTS `erp_application_status_history`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_application_status_history` (
-  `history_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `application_id` bigint(20) NOT NULL,
+  `history_id` bigint NOT NULL AUTO_INCREMENT,
+  `application_id` bigint NOT NULL,
   `old_status` varchar(30) DEFAULT NULL,
   `new_status` varchar(30) NOT NULL,
-  `changed_by` bigint(20) DEFAULT NULL,
-  `changed_at` datetime DEFAULT current_timestamp(),
-  `remarks` text DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `changed_by` bigint DEFAULT NULL,
+  `changed_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `remarks` text,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`history_id`),
   KEY `fk_application_status_history_application` (`application_id`),
   CONSTRAINT `fk_application_status_history_application` FOREIGN KEY (`application_id`) REFERENCES `erp_applications` (`application_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -247,7 +247,6 @@ CREATE TABLE `erp_application_status_history` (
 
 LOCK TABLES `erp_application_status_history` WRITE;
 /*!40000 ALTER TABLE `erp_application_status_history` DISABLE KEYS */;
-INSERT INTO `erp_application_status_history` VALUES (1,1,NULL,'SUBMITTED',NULL,'2026-07-01 09:44:32','Application submitted by user',1,0),(2,2,NULL,'SUBMITTED',NULL,'2026-07-01 09:54:17','Application submitted by user',1,0),(3,3,NULL,'SUBMITTED',NULL,'2026-07-01 10:02:58','Application submitted by user',1,0),(4,4,NULL,'SUBMITTED',NULL,'2026-07-01 10:07:18','Application submitted by user',1,0),(5,5,NULL,'SUBMITTED',NULL,'2026-07-01 10:32:19','Application submitted by user',1,0),(6,6,NULL,'SUBMITTED',NULL,'2026-07-01 12:00:45','Application submitted by user',1,0),(7,7,NULL,'SUBMITTED',NULL,'2026-07-01 12:24:40','Application submitted by user',1,0),(8,8,NULL,'SUBMITTED',NULL,'2026-07-01 12:37:37','Application submitted by user',1,0),(9,9,NULL,'SUBMITTED',NULL,'2026-07-01 13:24:50','Application submitted by user',1,0),(10,10,NULL,'SUBMITTED',NULL,'2026-07-02 07:54:55','Application submitted by user',1,0),(11,11,NULL,'SUBMITTED',NULL,'2026-07-02 08:10:26','Application submitted by user',1,0),(12,12,NULL,'SUBMITTED',NULL,'2026-07-02 09:24:02','Application submitted by user',1,0),(13,13,NULL,'SUBMITTED',NULL,'2026-07-02 09:24:11','Application submitted by user',1,0),(14,14,NULL,'SUBMITTED',NULL,'2026-07-02 15:15:53','Application submitted by user',1,0),(15,15,NULL,'SUBMITTED',NULL,'2026-07-02 15:39:42','Application submitted by user',1,0),(16,16,NULL,'SUBMITTED',NULL,'2026-07-02 17:28:33','Application submitted by user',1,0),(17,17,NULL,'SUBMITTED',NULL,'2026-07-03 09:58:26','Application submitted by user',1,0),(18,18,NULL,'SUBMITTED',NULL,'2026-07-03 10:27:24','Application submitted by user',1,0);
 /*!40000 ALTER TABLE `erp_application_status_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -259,15 +258,15 @@ DROP TABLE IF EXISTS `erp_applications`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_applications` (
-  `application_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `application_id` bigint NOT NULL AUTO_INCREMENT,
   `application_no` varchar(50) NOT NULL,
-  `branch_id` bigint(20) NOT NULL,
-  `academic_year_id` bigint(20) NOT NULL,
-  `branch_class_id` bigint(20) NOT NULL,
+  `branch_id` bigint NOT NULL,
+  `academic_year_id` bigint NOT NULL,
+  `branch_class_id` bigint NOT NULL,
   `term` varchar(20) NOT NULL DEFAULT '',
   `admission_type` varchar(20) DEFAULT 'NEW',
-  `student_id` bigint(20) DEFAULT NULL,
-  `student_created` tinyint(1) NOT NULL DEFAULT 0,
+  `student_id` bigint DEFAULT NULL,
+  `student_created` tinyint(1) NOT NULL DEFAULT '0',
   `primary_email` varchar(100) DEFAULT NULL,
   `primary_mobile` varchar(20) DEFAULT NULL,
   `first_name` varchar(50) NOT NULL,
@@ -279,56 +278,56 @@ CREATE TABLE `erp_applications` (
   `date_of_registration` varchar(20) NOT NULL DEFAULT '',
   `scholarship_status` varchar(50) NOT NULL DEFAULT '',
   `previous_school` varchar(150) DEFAULT NULL,
-  `former_school` text DEFAULT NULL,
+  `former_school` text,
   `former_school_code` varchar(50) NOT NULL DEFAULT '',
   `former_school_lin` varchar(50) NOT NULL DEFAULT '',
   `ple_ref` varchar(50) NOT NULL DEFAULT '',
   `ple_score` double DEFAULT NULL,
   `uce_ref` varchar(50) NOT NULL DEFAULT '',
   `uce_score` double DEFAULT NULL,
-  `subject_marks` text DEFAULT NULL,
-  `prev_marks_doc` text DEFAULT NULL,
+  `subject_marks` text,
+  `prev_marks_doc` text,
   `father_name` varchar(50) NOT NULL DEFAULT '',
   `father_contact` varchar(20) NOT NULL DEFAULT '',
   `father_email` varchar(100) NOT NULL DEFAULT '',
-  `father_occupation` text DEFAULT NULL,
+  `father_occupation` text,
   `father_education` varchar(50) NOT NULL DEFAULT '',
-  `father_age` int(11) DEFAULT 0,
+  `father_age` int DEFAULT '0',
   `mother_name` varchar(50) NOT NULL DEFAULT '',
   `mother_contact` varchar(20) NOT NULL DEFAULT '',
   `mother_email` varchar(100) NOT NULL DEFAULT '',
-  `mother_occupation` text DEFAULT NULL,
+  `mother_occupation` text,
   `mother_education` varchar(50) NOT NULL DEFAULT '',
-  `mother_age` int(11) DEFAULT 0,
+  `mother_age` int DEFAULT '0',
   `guardian_name` varchar(50) NOT NULL DEFAULT '',
   `guardian_mobile` varchar(20) DEFAULT NULL,
   `guardian_contact` varchar(20) NOT NULL DEFAULT '',
   `guardian_email` varchar(100) DEFAULT NULL,
   `guardian_relation` varchar(50) NOT NULL DEFAULT '',
-  `guardian_occupation` text DEFAULT NULL,
+  `guardian_occupation` text,
   `guardian_education` varchar(50) NOT NULL DEFAULT '',
-  `guardian_location` text DEFAULT NULL,
-  `guardian_age` int(11) DEFAULT 0,
+  `guardian_location` text,
+  `guardian_age` int DEFAULT '0',
   `address_region` varchar(50) NOT NULL DEFAULT '',
   `address_district` varchar(50) NOT NULL DEFAULT '',
   `address_village` varchar(50) NOT NULL DEFAULT '',
-  `address_street` text DEFAULT NULL,
+  `address_street` text,
   `address_house` varchar(50) NOT NULL DEFAULT '',
   `address_postal` varchar(50) NOT NULL DEFAULT '',
   `application_status` varchar(50) DEFAULT 'DRAFT',
-  `photo_path` text DEFAULT NULL,
-  `more_info` text DEFAULT NULL,
-  `remarks` text DEFAULT NULL,
-  `created_by` bigint(20) DEFAULT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime DEFAULT current_timestamp(),
-  `updated_at` datetime DEFAULT current_timestamp(),
-  `status` int(11) DEFAULT 1,
+  `photo_path` text,
+  `more_info` text,
+  `remarks` text,
+  `created_by` bigint DEFAULT NULL,
+  `updated_by` bigint DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `status` int DEFAULT '1',
   PRIMARY KEY (`application_id`),
   UNIQUE KEY `uk_application_no` (`application_no`),
   KEY `fk_applications_student` (`student_id`),
   CONSTRAINT `fk_applications_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci ROW_FORMAT=DYNAMIC;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -337,8 +336,43 @@ CREATE TABLE `erp_applications` (
 
 LOCK TABLES `erp_applications` WRITE;
 /*!40000 ALTER TABLE `erp_applications` DISABLE KEYS */;
-INSERT INTO `erp_applications` VALUES (1,'APP-2026-U011-001',1,2026,6,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','MALE','2026-03-04','Uganda','','','koo','koo','','kkkk','',NULL,'',NULL,'','','Sri Ganesh Sudhagani','5555','sriganeshgoud9154@gmail.com','44','55',55,'Sri Ganesh Sudhagani','55646','sriganeshgoud9154@gmail.com','5','555',556,'Sri Ganesh Sudhagani','555','','sriganeshgoud9154@gmail.com','Sibling','55','55','kk',55,'central','gg','ho','j','5','5588','SUBMITTED','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-001/photo_1782899073071_aa106764.jpeg','',NULL,NULL,NULL,'2026-07-01 09:44:32','2026-07-01 09:44:32',1),(2,'APP-2026-U011-002',1,2026,2,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','MALE','2026-03-04','Uganda','','','koo','koo','','kkkk','',NULL,'',NULL,'','','Sri Ganesh Sudhagani','5555','sriganeshgoud9154@gmail.com','44','55',55,'Sri Ganesh Sudhagani','55646','sriganeshgoud9154@gmail.com','5','555',556,'Sri Ganesh Sudhagani','555','','sriganeshgoud9154@gmail.com','Sibling','55','55','kk',55,'central','gg','ho','j','5','5588','SUBMITTED','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-002/photo_1782899658052_258e0834.jpeg','',NULL,NULL,NULL,'2026-07-01 09:54:17','2026-07-01 09:54:17',1),(3,'APP-2026-U031-001',3,2026,12,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','MALE','2026-03-04','Uganda','','','koo','koo','','kkkk','',NULL,'',NULL,'','','Sri Ganesh Sudhagani','5555','sriganeshgoud9154@gmail.com','44','55',55,'Sri Ganesh Sudhagani','55646','sriganeshgoud9154@gmail.com','5','555',556,'Sri Ganesh Sudhagani','555','','sriganeshgoud9154@gmail.com','Brother','55','55','kk',55,'central','gg','ho','j','5','5588','SUBMITTED','/uploads/applications/U031-Pere Achte Secondary _ Senior Secondary School,Isunga/APP-2026-U031-001/photo_1782900179290_a1efd19b.jpeg','',NULL,NULL,NULL,'2026-07-01 10:02:58','2026-07-01 10:02:58',1),(4,'APP-2026-U021-001',2,2026,1,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','MALE','2026-03-04','Uganda','','','koo','koo','','kkkk','',NULL,'',NULL,'','','Sri Ganesh Sudhagani','5555','sriganeshgoud9154@gmail.com','44','55',55,'Sri Ganesh Sudhagani','55646','sriganeshgoud9154@gmail.com','5','555',556,'Sri Ganesh Sudhagani','555','','sriganeshgoud9154@gmail.com','Step-father','55','55','kk',55,'central','gg','ho','j','5','5588','SUBMITTED','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-001/photo_1782900439677_98a61d45.jpeg','',NULL,NULL,NULL,'2026-07-01 10:07:18','2026-07-01 10:07:18',1),(5,'APP-2026-U011-003',1,2026,6,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','MALE','2026-03-04','Uganda','2026-07-01','','koo','koo','','kkkk','',NULL,'',NULL,'','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-003/doc_1782901940666_2579778c.pdf;','Sri Ganesh Sudhagani','5555','sriganeshgoud9154@gmail.com','44','55',55,'Sri Ganesh Sudhagani','55646','sriganeshgoud9154@gmail.com','5','555',556,'Sri Ganesh Sudhagani','555','','sriganeshgoud9154@gmail.com','Brother','55','55','kk',55,'central','gg','ho','j','5','5588','SUBMITTED','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-003/photo_1782901940649_7964978a.jpeg','',NULL,NULL,NULL,'2026-07-01 10:32:19','2026-07-01 10:32:19',1),(6,'APP-2026-U031-002',3,2026,11,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','FEMALE','2003-07-02','Uganda','2026-07-01','','koo','koo','','kkkk','p',44,'',NULL,'','/uploads/applications/U031-Pere Achte Secondary _ Senior Secondary School,Isunga/APP-2026-U031-002/doc_1782907247101_64b18ed3.pdf;','Sri Ganesh Sudhagani','5555','sriganeshgoud9154@gmail.com','44','55',55,'Sri Ganesh Sudhagani','55646','sriganeshgoud9154@gmail.com','5','555',556,'Sri Ganesh Sudhagani','555','','sriganeshgoud9154@gmail.com','Brother','55','55','kk',55,'central','d','ho','j','5','5588','SUBMITTED','/uploads/applications/U031-Pere Achte Secondary _ Senior Secondary School,Isunga/APP-2026-U031-002/photo_1782907247078_26d0e9c4.jpeg','',NULL,NULL,NULL,'2026-07-01 12:00:45','2026-07-01 12:00:45',1),(7,'APP-2026-U011-004',1,2026,2,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','MALE','2003-07-02','Uganda','2026-07-01','','koo','koo','','kkkk','',NULL,'',NULL,'','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-004/doc_1782908680956_0f8b26f7.pdf;','Sri Ganesh Sudhagani','5555','sriganeshgoud9154@gmail.com','44','55',55,'Sri Ganesh Sudhagani','55646','sriganeshgoud9154@gmail.com','5','555',556,'Sri Ganesh Sudhagani','555','','sriganeshgoud9154@gmail.com','Brother','55','55','kk',55,'central','d','ho','j','5','5588','SUBMITTED','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-004/photo_1782908680940_e24faa98.jpeg','',NULL,NULL,NULL,'2026-07-01 12:24:40','2026-07-01 12:24:40',1),(8,'APP-2026-U011-005',1,2026,6,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','MALE','2003-07-02','Uganda','2026-07-01','','koo','koo','','kkkk','',NULL,'',NULL,'','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-005/doc_1782909458395_1f0a7a1f.pdf;','Sri Ganesh Sudhagani','5555','sriganeshgoud9154@gmail.com','44','55',55,'Sri Ganesh Sudhagani','55646','sriganeshgoud9154@gmail.com','5','555',556,'Sri Ganesh Sudhagani','555','','sriganeshgoud9154@gmail.com','Brother','55','55','kk',55,'central','gg','ho','j','5','5588','SUBMITTED','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-005/photo_1782909458376_86e95df1.jpeg','',NULL,NULL,NULL,'2026-07-01 12:37:37','2026-07-01 12:37:37',1),(9,'APP-2026-U021-002',2,2026,1,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','MALE','2002-01-01','Uganda','2026-07-01','','koo','koo','','','',NULL,'',NULL,'','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-002/doc_1782912293672_bb65484d.pdf;','Sri Ganesh Sudhagani','','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','','sriganeshgoud9154@gmail.com','','','','',0,'central','d','ho','j','5','5588','SUBMITTED','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-002/photo_1782912293668_5a468c1d.jpeg','',NULL,NULL,NULL,'2026-07-01 13:24:50','2026-07-01 13:24:50',1),(10,'APP-2026-U021-003',2,2026,1,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','MALE','2026-06-30','Uganda','2026-07-02','','koo','koo','','kkkk','',NULL,'',NULL,'','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-003/doc_1782978897130_86c418c5.pdf;','Sri Ganesh Sudhagani','5555','sriganeshgoud9154@gmail.com','44','55',55,'Sri Ganesh Sudhagani','55646','sriganeshgoud9154@gmail.com','5','555',556,'Sri Ganesh Sudhagani','555','','sriganeshgoud9154@gmail.com','Aunt','55','55','kk',55,'central','gg','ho','j','5','5588','SUBMITTED','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-003/photo_1782978897130_50f0bd55.jpeg','',NULL,NULL,NULL,'2026-07-02 07:54:55','2026-07-02 07:54:55',1),(11,'APP-2026-U021-004',2,2026,1,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','MALE','2026-06-29','Uganda','2026-07-02','','koo','koo','','kkkk','',NULL,'',NULL,'','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-004/doc_1782979827600_b3d1f4d9.pdf;','Sri Ganesh Sudhagani','5555','sriganeshgoud9154@gmail.com','44','55',55,'Sri Ganesh Sudhagani','55646','sriganeshgoud9154@gmail.com','5','555',556,'Sri Ganesh Sudhagani','555','','sriganeshgoud9154@gmail.com','Aunt','55','55','kk',55,'central','gg','ho','j','5','5588','SUBMITTED','/uploads/applications/U021-St.Montfort Nursery _ Primary School,Mpala/APP-2026-U021-004/photo_1782979827572_c1d518d2.jpeg','',NULL,NULL,NULL,'2026-07-02 08:10:26','2026-07-02 08:10:26',1),(12,'APP-2026-U011-006',1,2026,1,'','NEW',NULL,0,'jai@gmail','+256786844243','jai','','mana','MALE','2024-08-14','Uganda','2026-07-02','','','','','','',NULL,'',NULL,'','','','','','','',0,'','','','','',0,'','','','','Grandparent','','','',0,'','Wakisa','','','','','SUBMITTED','','',NULL,NULL,NULL,'2026-07-02 09:24:02','2026-07-02 09:24:02',1),(13,'APP-2026-U011-007',1,2026,1,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+919154763356','SRI','GANESH','SUDHAGANI','MALE','2002-01-01','Uganda','2026-07-02','','','','','','',NULL,'',NULL,'','','Sri Ganesh Sudhagani','','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','','sriganeshgoud9154@gmail.com','','','','',0,'central','gg','ho','j','5','5588','SUBMITTED','','',NULL,NULL,NULL,'2026-07-02 09:24:11','2026-07-02 09:24:11',1),(14,'APP-2026-U011-008',1,2026,3,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+256 88','Shiva','GANESH','Kurada','MALE','2002-01-01','Uganda','2026-07-02','','koo','koo','','kkkk','',NULL,'',NULL,'','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-008/doc_1783005355009_ca91e0bd.pdf;/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-008/doc_1783005355011_01b40eef.pdf;','Sri Ganesh Sudhagani','+256 6','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','','sriganeshgoud9154@gmail.com','Brother','','','',0,'','gg','','Miyapur','','','SUBMITTED','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-008/photo_1783005354997_3f41ce74.jpeg','',NULL,NULL,NULL,'2026-07-02 15:15:53','2026-07-02 15:15:53',1),(15,'APP-2026-U011-009',1,2026,2,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+256 123','Shiva','','Kurada','MALE','2022-11-28','Uganda','2026-07-02','','','','','','',NULL,'',NULL,'','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-009/doc_1783006785967_3fe38833.pdf;','Sri Ganesh Sudhagani','','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','','sriganeshgoud9154@gmail.com','Grandparent','','','',0,'central','gg','ho','Miyapur','5','5588','SUBMITTED','/uploads/applications/U011-St. Kizito Nursery _ Primary School,Kyebando/APP-2026-U011-009/photo_1783006785964_dae4189c.jpeg','',NULL,NULL,NULL,'2026-07-02 15:39:42','2026-07-02 15:39:42',1),(16,'APP-2026-U011-010',1,2026,2,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+256 79','Sudhagani','','Ganesh','MALE','2022-12-01','Uganda','2026-07-02','','','','','','',NULL,'',NULL,'','','Hh','','','','',0,'Nv','','','','',0,'','','','','','','','',0,'','G','','','','','SUBMITTED','','',NULL,NULL,NULL,'2026-07-02 17:28:33','2026-07-02 17:28:33',1),(17,'APP-2026-U011-011',1,2026,2,'','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+256 90','Shiva','GANESH','Kurada','MALE','2002-01-01','Uganda','2026-07-03','','koo','koo','','','',NULL,'',NULL,'','','Sri Ganesh Sudhagani','+256 6','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','','sriganeshgoud9154@gmail.com','Brother','','','',0,'','gg','','Miyapur','','','SUBMITTED','','',NULL,NULL,NULL,'2026-07-03 09:58:26','2026-07-03 09:58:26',1),(18,'APP-2026-U011-012',1,2026,1,'Term II','NEW',NULL,0,'sriganeshgoud9154@gmail.com','+256 90','Shiva','GANESH','Kurada','MALE','2002-01-01','Uganda','2026-07-03','','koo','koo','','','',NULL,'',NULL,'','','Sri Ganesh Sudhagani','+256 6','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','sriganeshgoud9154@gmail.com','','',0,'Sri Ganesh Sudhagani','','','sriganeshgoud9154@gmail.com','Aunt','','','',0,'','gg','','Miyapur','','','SUBMITTED','','',NULL,NULL,NULL,'2026-07-03 10:27:24','2026-07-03 10:27:24',1);
 /*!40000 ALTER TABLE `erp_applications` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `erp_audit_log`
+--
+
+DROP TABLE IF EXISTS `erp_audit_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `erp_audit_log` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `branch_id` int NOT NULL,
+  `user_id` int NOT NULL,
+  `action` varchar(255) NOT NULL,
+  `entity` varchar(255) NOT NULL,
+  `entity_id` bigint DEFAULT NULL,
+  `audit_timestamp` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `details` text,
+  PRIMARY KEY (`id`),
+  KEY `fk_erp_audit_user` (`user_id`),
+  KEY `idx_erp_audit_branch_user` (`branch_id`,`user_id`),
+  KEY `idx_erp_audit_timestamp` (`audit_timestamp`),
+  KEY `idx_erp_audit_entity` (`entity`),
+  KEY `idx_erp_audit_action` (`action`),
+  CONSTRAINT `fk_erp_audit_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`),
+  CONSTRAINT `fk_erp_audit_user` FOREIGN KEY (`user_id`) REFERENCES `erp_users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `erp_audit_log`
+--
+
+LOCK TABLES `erp_audit_log` WRITE;
+/*!40000 ALTER TABLE `erp_audit_log` DISABLE KEYS */;
+/*!40000 ALTER TABLE `erp_audit_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -349,23 +383,22 @@ DROP TABLE IF EXISTS `erp_branch_fund_allocations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_branch_fund_allocations` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `branch_id` bigint(20) NOT NULL,
-  `donation_id` bigint(20) DEFAULT NULL,
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint NOT NULL,
+  `donation_id` bigint DEFAULT NULL,
   `amount_allocated_ugx` decimal(15,2) NOT NULL,
   `purpose` varchar(255) DEFAULT 'Branch Scholarship Pool',
   `academic_year` varchar(20) NOT NULL,
-  `allocated_by_user_id` bigint(20) NOT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `allocated_by_user_id` bigint NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   `updated_by` varchar(255) DEFAULT NULL,
   `allocated_amount_ugx` decimal(38,2) NOT NULL,
   `term` varchar(50) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `FKq42vuybrj74gyw9csy6angbis` (`donation_id`),
-  CONSTRAINT `FKq42vuybrj74gyw9csy6angbis` FOREIGN KEY (`donation_id`) REFERENCES `web_donations` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  KEY `FKq42vuybrj74gyw9csy6angbis` (`donation_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -385,10 +418,10 @@ DROP TABLE IF EXISTS `erp_branch_levels`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_branch_levels` (
-  `branch_level_id` int(11) NOT NULL AUTO_INCREMENT,
-  `branch_id` int(11) NOT NULL,
-  `level_id` int(11) NOT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `branch_level_id` int NOT NULL AUTO_INCREMENT,
+  `branch_id` int NOT NULL,
+  `level_id` int NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`branch_level_id`),
   UNIQUE KEY `uk_branch_level` (`branch_id`,`level_id`),
@@ -396,7 +429,7 @@ CREATE TABLE `erp_branch_levels` (
   KEY `fk_branch_level_level` (`level_id`),
   CONSTRAINT `fk_branch_level_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_branch_level_level` FOREIGN KEY (`level_id`) REFERENCES `erp_levels` (`level_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -405,7 +438,7 @@ CREATE TABLE `erp_branch_levels` (
 
 LOCK TABLES `erp_branch_levels` WRITE;
 /*!40000 ALTER TABLE `erp_branch_levels` DISABLE KEYS */;
-INSERT INTO `erp_branch_levels` VALUES (1,1,1,'2026-06-29 14:35:26',NULL),(2,2,1,'2026-06-29 14:35:26',NULL),(5,2,2,'2026-06-29 14:35:26',NULL),(7,3,3,'2026-06-29 14:35:27',NULL),(9,3,4,'2026-06-29 23:26:48','SUPER_ADMIN'),(10,1,2,'2026-06-30 01:25:57','SUPER_ADMIN');
+INSERT INTO `erp_branch_levels` VALUES (1,1,1,'2026-07-23 01:53:41','SUPER_ADMIN'),(2,1,2,'2026-07-23 01:53:41','SUPER_ADMIN');
 /*!40000 ALTER TABLE `erp_branch_levels` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -417,23 +450,39 @@ DROP TABLE IF EXISTS `erp_branches`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_branches` (
-  `branch_id` int(11) NOT NULL AUTO_INCREMENT,
+  `branch_id` int NOT NULL AUTO_INCREMENT,
   `branch_name` varchar(255) NOT NULL,
   `school_code` varchar(10) DEFAULT NULL,
   `branch_location` varchar(255) DEFAULT NULL,
-  `is_active` int(11) DEFAULT 1,
+  `address_line_1` varchar(255) DEFAULT NULL,
+  `address_line_2` varchar(255) DEFAULT NULL,
+  `po_box` varchar(100) DEFAULT NULL,
+  `locality` varchar(150) DEFAULT NULL,
+  `city` varchar(150) DEFAULT NULL,
+  `district` varchar(150) DEFAULT NULL,
+  `region` varchar(150) DEFAULT NULL,
+  `country` varchar(100) NOT NULL DEFAULT 'Uganda',
+  `postal_code` varchar(30) DEFAULT NULL,
+  `is_active` int DEFAULT '1',
   `created_at` datetime(6) DEFAULT NULL,
   `created_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   `updated_by` varchar(255) DEFAULT NULL,
-  `contact_details` text DEFAULT NULL,
+  `contact_details` text,
+  `primary_phone` varchar(30) DEFAULT NULL,
+  `secondary_phone` varchar(30) DEFAULT NULL,
+  `whatsapp_phone` enum('NONE','PRIMARY','SECONDARY','BOTH') NOT NULL DEFAULT 'NONE',
+  `branch_email` varchar(150) DEFAULT NULL,
+  `email_from_name` varchar(150) DEFAULT NULL,
+  `email_reply_to` varchar(150) DEFAULT NULL,
+  `email_enabled` tinyint(1) NOT NULL DEFAULT '1',
   `foundation_date` varchar(255) DEFAULT NULL,
   `gov_document_url` varchar(255) DEFAULT NULL,
-  `incharge_details` text DEFAULT NULL,
+  `incharge_details` text,
   `school_photo_url` varchar(255) DEFAULT NULL,
-  `branch_type` varchar(255) DEFAULT NULL,
+  `branch_logo_url` varchar(500) DEFAULT NULL,
   PRIMARY KEY (`branch_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -442,7 +491,6 @@ CREATE TABLE `erp_branches` (
 
 LOCK TABLES `erp_branches` WRITE;
 /*!40000 ALTER TABLE `erp_branches` DISABLE KEYS */;
-INSERT INTO `erp_branches` VALUES (1,'St. Kizito Nursery & Primary School','U011','Kyebando',1,'2026-06-25 08:43:09.000000',NULL,'2026-06-25 08:43:09.000000',NULL,'-','2024-05-25',NULL,'[]',NULL,NULL),(2,'St.Montfort Nursery & Primary School','U021','Mpala',1,'2026-06-25 08:45:46.000000',NULL,'2026-06-25 08:45:46.000000',NULL,'-','2022-04-25',NULL,'[]',NULL,NULL),(3,'Pere Achte Secondary & Senior Secondary School','U031','Isunga',1,'2026-06-25 08:46:45.000000',NULL,'2026-06-25 08:46:45.000000',NULL,'-','2022-04-25',NULL,'[]',NULL,NULL);
 /*!40000 ALTER TABLE `erp_branches` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -454,19 +502,19 @@ DROP TABLE IF EXISTS `erp_classes`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_classes` (
-  `class_id` int(11) NOT NULL AUTO_INCREMENT,
-  `level_id` int(11) NOT NULL,
+  `class_id` int NOT NULL AUTO_INCREMENT,
+  `level_id` int NOT NULL,
   `class_code` varchar(255) NOT NULL,
   `class_name` varchar(255) NOT NULL,
-  `display_order` int(11) NOT NULL,
-  `status` int(11) DEFAULT 1,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `display_order` int NOT NULL,
+  `status` int DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`class_id`),
   UNIQUE KEY `class_code` (`class_code`),
   KEY `fk_school_class_level` (`level_id`),
   CONSTRAINT `fk_school_class_level` FOREIGN KEY (`level_id`) REFERENCES `erp_levels` (`level_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -487,23 +535,24 @@ DROP TABLE IF EXISTS `erp_departments`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_departments` (
-  `department_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `branch_id` int(11) NOT NULL,
+  `department_id` bigint NOT NULL AUTO_INCREMENT,
+  `branch_id` int NOT NULL,
   `department_code` varchar(20) NOT NULL,
   `department_name` varchar(100) NOT NULL,
-  `is_academic` tinyint(1) NOT NULL DEFAULT 1,
+  `is_academic` tinyint(1) NOT NULL DEFAULT '1',
   `description` varchar(500) DEFAULT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'ACTIVE',
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`department_id`),
   UNIQUE KEY `uk_branch_dept_code` (`branch_id`,`department_code`),
+  UNIQUE KEY `uk_branch_dept_name` (`branch_id`,`department_name`),
   CONSTRAINT `fk_department_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=30 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -512,6 +561,7 @@ CREATE TABLE `erp_departments` (
 
 LOCK TABLES `erp_departments` WRITE;
 /*!40000 ALTER TABLE `erp_departments` DISABLE KEYS */;
+INSERT INTO `erp_departments` VALUES (1,1,'ACA','Academics',1,'General teaching and academic activities','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(2,1,'EXAM','Examinations',1,'Examinations, grading, and assessments','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(3,1,'LIB','Library',1,'School library and resources management','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(4,1,'DISC','Discipline',1,'Student discipline and welfare','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(5,1,'GNC','Guidance & Counseling',1,'Student mental health and career guidance','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(6,1,'MATH','Mathematics',1,'Mathematics Department','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(7,1,'ENG','English',1,'English Language and Literature','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(8,1,'SCI','Science',1,'Physics, Chemistry, and Biology','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(9,1,'SST','Social Studies',1,'History, Geography, and Social Studies','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(10,1,'LANG','Languages',1,'Local and Foreign Languages (e.g. Swahili, French)','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(11,1,'COMP','Computer Studies',1,'Computer Science and IT Academics','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(12,1,'ARTS','Arts & Crafts',1,'Fine Art, Music, Dance, and Drama','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(13,1,'PET','Physical Education & Sports',1,'Sports and Co-curricular activities','ACTIVE',1,1,'1','2026-07-14 09:24:37','1','2026-07-14 16:44:44'),(14,1,'REL','Religious Education',1,'CRE, IRE, and Moral Education','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(15,1,'VOC','Vocational Studies',1,'Agriculture, Home Economics, Woodwork, etc.','ACTIVE',1,0,'1','2026-07-14 09:24:37','1','2026-07-14 09:24:37'),(16,1,'ADMN','Administration',0,'School administration and management','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(17,1,'ADMS','Admissions',0,'Admissions and student enrollment','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(18,1,'FIN','Finance',0,'Accounts and school finance','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(19,1,'HR','Human Resources',0,'Human resource and staff management','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(20,1,'ICT','ICT Support',0,'IT infrastructure and technical support','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(21,1,'HLTH','Health Unit',0,'School clinic and medical services','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(22,1,'TRAN','Transport',0,'School transport and fleet management','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(23,1,'HSTL','Hostel',0,'Boarding and hostel management','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(24,1,'PROC','Procurement',0,'Purchasing and school procurement','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(25,1,'MNT','Maintenance',0,'Maintenance of school facilities','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(26,1,'SEC','Security',0,'School security and guarding','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(27,1,'EST','Estate',0,'Estate and infrastructure management','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(28,1,'STR','Store',0,'Stores and inventory management','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38'),(29,1,'PR','Public Relations',0,'Public relations and communication','ACTIVE',1,0,'1','2026-07-14 09:24:38','1','2026-07-14 09:24:38');
 /*!40000 ALTER TABLE `erp_departments` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -523,21 +573,21 @@ DROP TABLE IF EXISTS `erp_designations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_designations` (
-  `designation_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `designation_id` bigint NOT NULL AUTO_INCREMENT,
   `designation_code` varchar(20) NOT NULL,
   `designation_name` varchar(100) NOT NULL,
   `description` varchar(500) DEFAULT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'ACTIVE',
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`designation_id`),
   UNIQUE KEY `uk_designation_code` (`designation_code`),
   UNIQUE KEY `uk_designation_name` (`designation_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -546,8 +596,43 @@ CREATE TABLE `erp_designations` (
 
 LOCK TABLES `erp_designations` WRITE;
 /*!40000 ALTER TABLE `erp_designations` DISABLE KEYS */;
-INSERT INTO `erp_designations` VALUES (1,'PRINCIPAL','Principal','Head of the school','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(2,'VICE_PRINCIPAL','Vice Principal','Assists the Principal','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(3,'HEAD_TEACHER','Head Teacher','Head of academic activities','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(4,'TEACHER','Teacher','Teaching staff','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(5,'ADMISSIONS_OFFICER','Admissions Officer','Handles admissions and enrollment process','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(6,'ACCOUNTANT','Accountant','Manages finance and accounts','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(7,'LIBRARIAN','Librarian','Manages library resources','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(8,'ICT_OFFICER','ICT Officer','Provides IT support','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(9,'SECRETARY','Secretary','Administrative secretary','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(10,'RECEPTIONIST','Receptionist','Front office and visitor management','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(11,'SCHOOL_NURSE','School Nurse','Provides medical assistance','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(12,'COUNSELOR','Counselor','Student guidance and counseling','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(13,'DRIVER','Driver','School transport driver','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(14,'SECURITY_GUARD','Security Guard','Campus security','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23'),(15,'CLEANER','Cleaner','Cleaning and housekeeping','ACTIVE',1,0,NULL,'2026-07-06 09:11:23',NULL,'2026-07-06 09:11:23');
+INSERT INTO `erp_designations` VALUES (1,'DIRECTOR','Director','School Director','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(2,'PRINCIPAL','Principal','Head of the school','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(3,'VICE_PRINCIPAL','Vice Principal','Assists the Principal','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(4,'HEAD_TEACHER','Head Teacher','Head of academic activities','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(5,'DOS','Dean of Studies (DOS)','Dean of Studies','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(6,'HOD','HOD','Head of Department','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(7,'TEACHER','Teacher','Teaching staff','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(8,'BURSAR','Bursar','School Bursar','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(9,'ADMISSIONS_OFFICER','Admissions Officer','Handles admissions and enrollment','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(10,'ACCOUNTANT','Accountants','Manages finance and accounts','ACTIVE',1,1,NULL,'2026-07-14 07:27:59','26','2026-07-20 21:59:47'),(11,'LIBRARIAN','Librarian','Manages library resources','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(12,'ICT_OFFICER','ICT Officer','Provides IT support','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(13,'SECRETARY','Secretary','Administrative secretary','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(14,'RECEPTIONIST','Receptionist','Front office and visitor management','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(15,'SCHOOL_NURSE','School Nurse','Provides medical assistance','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(16,'COUNSELOR','Counselor','Student guidance and counseling','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(17,'DRIVER','Driver','School transport driver','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(18,'SECURITY_GUARD','Security Guard','Campus security','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59'),(19,'CLEANER','Cleaner','Cleaning and housekeeping','ACTIVE',1,0,NULL,'2026-07-14 07:27:59',NULL,'2026-07-14 07:27:59');
 /*!40000 ALTER TABLE `erp_designations` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `erp_document_sequences`
+--
+
+DROP TABLE IF EXISTS `erp_document_sequences`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `erp_document_sequences` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint NOT NULL,
+  `module_code` varchar(255) NOT NULL,
+  `running_year` int NOT NULL,
+  `current_sequence` bigint NOT NULL DEFAULT '0',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `created_by` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` varchar(255) DEFAULT NULL,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `active` bit(1) NOT NULL,
+  `version` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_doc_seq` (`branch_id`,`module_code`,`running_year`),
+  UNIQUE KEY `UKhhwyasi3o241inhufw6ki7k1l` (`branch_id`,`module_code`,`running_year`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `erp_document_sequences`
+--
+
+LOCK TABLES `erp_document_sequences` WRITE;
+/*!40000 ALTER TABLE `erp_document_sequences` DISABLE KEYS */;
+/*!40000 ALTER TABLE `erp_document_sequences` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -558,11 +643,11 @@ DROP TABLE IF EXISTS `erp_employee_contacts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_employee_contacts` (
-  `employee_contact_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `employee_id` bigint(20) NOT NULL,
+  `employee_contact_id` bigint NOT NULL AUTO_INCREMENT,
+  `employee_id` bigint NOT NULL,
   `employee_contact_name` varchar(255) NOT NULL,
-  `employee_contact_relationship` enum('FATHER','MOTHER','SPOUSE','SON','DAUGHTER','BROTHER','SISTER','GUARDIAN','RELATIVE','FRIEND','MANAGER','REFERENCE','OTHER') NOT NULL,
-  `employee_contact_type` enum('EMERGENCY','NEXT_OF_KIN','REFERENCE','GUARDIAN','OTHER') NOT NULL DEFAULT 'EMERGENCY',
+  `employee_contact_relationship` enum('BROTHER','DAUGHTER','FATHER','FRIEND','GUARDIAN','MANAGER','MOTHER','OTHER','REFERENCE','RELATIVE','SISTER','SON','SPOUSE') NOT NULL,
+  `employee_contact_type` enum('EMERGENCY','GUARDIAN','NEXT_OF_KIN','OTHER','REFERENCE') NOT NULL,
   `employee_contact_mobile` varchar(30) NOT NULL,
   `employee_contact_alternate_mobile` varchar(30) DEFAULT NULL,
   `employee_contact_email` varchar(150) DEFAULT NULL,
@@ -574,23 +659,21 @@ CREATE TABLE `erp_employee_contacts` (
   `employee_contact_postal_code` varchar(30) DEFAULT NULL,
   `employee_contact_occupation` varchar(150) DEFAULT NULL,
   `employee_contact_workplace` varchar(255) DEFAULT NULL,
-  `employee_contact_is_primary` tinyint(1) NOT NULL DEFAULT 0,
-  `employee_contact_is_emergency` tinyint(1) NOT NULL DEFAULT 1,
-  `employee_contact_active` tinyint(1) NOT NULL DEFAULT 1,
-  `employee_contact_remarks` text DEFAULT NULL,
-  `created_by` int(11) DEFAULT NULL,
+  `employee_contact_is_primary` tinyint(1) NOT NULL DEFAULT '0',
+  `employee_contact_is_emergency` tinyint(1) NOT NULL DEFAULT '1',
+  `employee_contact_active` tinyint(1) NOT NULL DEFAULT '1',
+  `employee_contact_remarks` text,
+  `created_by` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` int(11) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime NOT NULL,
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`employee_contact_id`),
   KEY `fk_empcontact_employee` (`employee_id`),
   KEY `fk_empcontact_createdby` (`created_by`),
   KEY `fk_empcontact_updatedby` (`updated_by`),
-  CONSTRAINT `fk_empcontact_createdby` FOREIGN KEY (`created_by`) REFERENCES `erp_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  CONSTRAINT `fk_empcontact_employee` FOREIGN KEY (`employee_id`) REFERENCES `erp_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE,
-  CONSTRAINT `fk_empcontact_updatedby` FOREIGN KEY (`updated_by`) REFERENCES `erp_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CONSTRAINT `fk_empcontact_employee` FOREIGN KEY (`employee_id`) REFERENCES `erp_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -610,36 +693,36 @@ DROP TABLE IF EXISTS `erp_employee_documents`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_employee_documents` (
-  `employee_document_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `employee_id` bigint(20) NOT NULL,
-  `employee_document_type` enum('PASSPORT_PHOTO','SIGNATURE','RESUME','CURRICULUM_VITAE','NATIONAL_ID','PASSPORT','BIRTH_CERTIFICATE','MARRIAGE_CERTIFICATE','MEDICAL_CERTIFICATE','POLICE_CLEARANCE','APPOINTMENT_LETTER','EMPLOYMENT_CONTRACT','CONFIDENTIALITY_AGREEMENT','CODE_OF_CONDUCT_AGREEMENT','EXPERIENCE_CERTIFICATE','RELIEVING_LETTER','SALARY_CERTIFICATE','BANK_DOCUMENT','NSSF_DOCUMENT','TIN_CERTIFICATE','WORK_PERMIT','VISA','TEACHING_LICENSE','PROFESSIONAL_LICENSE','ACADEMIC_CERTIFICATE','OTHER') NOT NULL,
+  `employee_document_id` bigint NOT NULL AUTO_INCREMENT,
+  `employee_id` bigint NOT NULL,
+  `employee_document_type` varchar(100) NOT NULL,
   `employee_document_name` varchar(255) NOT NULL,
-  `employee_document_description` text DEFAULT NULL,
+  `employee_document_description` text,
   `employee_document_file_name` varchar(255) NOT NULL,
   `employee_document_original_file_name` varchar(255) DEFAULT NULL,
   `employee_document_file_path` varchar(500) NOT NULL,
   `employee_document_file_extension` varchar(20) DEFAULT NULL,
   `employee_document_mime_type` varchar(100) DEFAULT NULL,
-  `employee_document_file_size` bigint(20) DEFAULT NULL,
+  `employee_document_file_size` bigint DEFAULT NULL,
   `employee_document_issue_date` date DEFAULT NULL,
   `employee_document_expiry_date` date DEFAULT NULL,
-  `employee_document_verified` tinyint(1) NOT NULL DEFAULT 0,
-  `employee_document_verified_by` int(11) DEFAULT NULL,
+  `employee_document_verified` tinyint(1) NOT NULL DEFAULT '0',
+  `employee_document_verified_by` int DEFAULT NULL,
   `employee_document_verified_at` datetime DEFAULT NULL,
-  `employee_document_is_mandatory` tinyint(1) NOT NULL DEFAULT 0,
-  `employee_document_active` tinyint(1) NOT NULL DEFAULT 1,
-  `employee_document_remarks` text DEFAULT NULL,
-  `created_by` int(11) DEFAULT NULL,
+  `employee_document_is_mandatory` tinyint(1) NOT NULL DEFAULT '0',
+  `employee_document_active` tinyint(1) NOT NULL DEFAULT '1',
+  `employee_document_remarks` text,
+  `created_by` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` int(11) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime NOT NULL,
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`employee_document_id`),
   KEY `fk_empdocument_employee` (`employee_id`),
   KEY `fk_empdocument_verifiedby` (`employee_document_verified_by`),
   CONSTRAINT `fk_empdocument_employee` FOREIGN KEY (`employee_id`) REFERENCES `erp_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_empdocument_verifiedby` FOREIGN KEY (`employee_document_verified_by`) REFERENCES `erp_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -659,8 +742,9 @@ DROP TABLE IF EXISTS `erp_employee_experience`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_employee_experience` (
-  `employee_experience_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `employee_id` bigint(20) NOT NULL,
+  `employee_experience_id` bigint NOT NULL AUTO_INCREMENT,
+  `employee_id` bigint NOT NULL,
+  `employee_experience_type` enum('FULL_TIME','PART_TIME','CONTRACT','TEMPORARY','INTERNSHIP','CONSULTANT','VOLUNTEER','SELF_EMPLOYED','OTHER') DEFAULT 'FULL_TIME',
   `employee_experience_company_name` varchar(255) NOT NULL,
   `employee_experience_company_address` varchar(255) DEFAULT NULL,
   `employee_experience_company_country` varchar(100) DEFAULT NULL,
@@ -668,36 +752,36 @@ CREATE TABLE `erp_employee_experience` (
   `employee_experience_company_district` varchar(100) DEFAULT NULL,
   `employee_experience_designation` varchar(150) DEFAULT NULL,
   `employee_experience_department` varchar(150) DEFAULT NULL,
-  `employee_experience_employment_type` enum('FULL_TIME','PART_TIME','CONTRACT','TEMPORARY','INTERNSHIP','CONSULTANT','VOLUNTEER','OTHER') NOT NULL,
+  `employee_experience_employment_type` enum('FULL_TIME','PART_TIME','CONTRACT','TEMPORARY','INTERNSHIP','CONSULTANT','VOLUNTEER','SELF_EMPLOYED','OTHER') NOT NULL,
   `employee_experience_start_date` date NOT NULL,
   `employee_experience_end_date` date DEFAULT NULL,
-  `employee_experience_current_job` tinyint(1) NOT NULL DEFAULT 0,
-  `employee_experience_total_months` int(11) DEFAULT NULL,
+  `employee_experience_current_job` tinyint(1) NOT NULL DEFAULT '0',
+  `employee_experience_total_months` int DEFAULT NULL,
   `employee_experience_salary` decimal(15,2) DEFAULT NULL,
   `employee_experience_currency` varchar(10) DEFAULT NULL,
   `employee_experience_supervisor_name` varchar(255) DEFAULT NULL,
   `employee_experience_supervisor_contact` varchar(100) DEFAULT NULL,
   `employee_experience_reason_for_leaving` varchar(255) DEFAULT NULL,
-  `employee_experience_responsibilities` text DEFAULT NULL,
-  `employee_experience_achievements` text DEFAULT NULL,
+  `employee_experience_responsibilities` text,
+  `employee_experience_achievements` text,
   `employee_experience_experience_certificate_file` varchar(500) DEFAULT NULL,
   `employee_experience_relieving_letter_file` varchar(500) DEFAULT NULL,
-  `employee_experience_verified` tinyint(1) NOT NULL DEFAULT 0,
-  `employee_experience_verified_by` int(11) DEFAULT NULL,
+  `employee_experience_verified` tinyint(1) NOT NULL DEFAULT '0',
+  `employee_experience_verified_by` int DEFAULT NULL,
   `employee_experience_verified_at` datetime DEFAULT NULL,
-  `employee_experience_active` tinyint(1) NOT NULL DEFAULT 1,
-  `employee_experience_remarks` text DEFAULT NULL,
-  `created_by` int(11) DEFAULT NULL,
+  `employee_experience_active` tinyint(1) NOT NULL DEFAULT '1',
+  `employee_experience_remarks` text,
+  `created_by` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` int(11) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime NOT NULL,
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`employee_experience_id`),
   KEY `fk_empexperience_employee` (`employee_id`),
   KEY `fk_empexperience_verifiedby` (`employee_experience_verified_by`),
   CONSTRAINT `fk_empexperience_employee` FOREIGN KEY (`employee_id`) REFERENCES `erp_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_empexperience_verifiedby` FOREIGN KEY (`employee_experience_verified_by`) REFERENCES `erp_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -717,39 +801,41 @@ DROP TABLE IF EXISTS `erp_employee_qualifications`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_employee_qualifications` (
-  `employee_qualification_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `employee_id` bigint(20) NOT NULL,
-  `employee_qualification_level` enum('PRIMARY','O_LEVEL','A_LEVEL','CERTIFICATE','DIPLOMA','ADVANCED_DIPLOMA','BACHELOR','POST_GRADUATE','POST_GRADUATE_DIPLOMA','MASTER','M_PHIL','PHD','PROFESSIONAL','VOCATIONAL','SHORT_COURSE','TRAINING','CERTIFICATION','OTHER') NOT NULL,
+  `employee_qualification_id` bigint NOT NULL AUTO_INCREMENT,
+  `employee_id` bigint NOT NULL,
+  `employee_qualification_level` enum('PRIMARY','SECONDARY','SENIOR_SECONDARY','DIPLOMA','CERTIFICATE','GRADUATION','POST_GRADUATION','DR_PHD','OTHER') NOT NULL,
+  `custom_level` varchar(255) DEFAULT NULL,
   `employee_qualification_name` varchar(255) NOT NULL,
   `employee_qualification_specialization` varchar(255) DEFAULT NULL,
   `employee_qualification_institution_name` varchar(255) NOT NULL,
+  `qualification_grade` varchar(100) DEFAULT NULL,
   `employee_qualification_board_university` varchar(255) DEFAULT NULL,
   `employee_qualification_country` varchar(100) DEFAULT NULL,
-  `employee_qualification_start_year` year(4) DEFAULT NULL,
-  `employee_qualification_completion_year` year(4) DEFAULT NULL,
-  `employee_qualification_duration_months` int(11) DEFAULT NULL,
+  `employee_qualification_start_year` int DEFAULT NULL,
+  `employee_qualification_completion_year` int DEFAULT NULL,
+  `employee_qualification_duration_months` int DEFAULT NULL,
   `employee_qualification_grade` varchar(50) DEFAULT NULL,
   `employee_qualification_percentage` decimal(5,2) DEFAULT NULL,
   `employee_qualification_cgpa` decimal(4,2) DEFAULT NULL,
   `employee_qualification_certificate_number` varchar(100) DEFAULT NULL,
   `employee_qualification_registration_number` varchar(100) DEFAULT NULL,
   `employee_qualification_document_file` varchar(500) DEFAULT NULL,
-  `employee_qualification_verified` tinyint(1) NOT NULL DEFAULT 0,
-  `employee_qualification_verified_by` int(11) DEFAULT NULL,
+  `employee_qualification_verified` tinyint(1) NOT NULL DEFAULT '0',
+  `employee_qualification_verified_by` int DEFAULT NULL,
   `employee_qualification_verified_at` datetime DEFAULT NULL,
-  `employee_qualification_remarks` text DEFAULT NULL,
-  `employee_qualification_active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` int(11) DEFAULT NULL,
+  `employee_qualification_remarks` text,
+  `employee_qualification_active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` int(11) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime NOT NULL,
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`employee_qualification_id`),
   KEY `fk_empqualification_employee` (`employee_id`),
   KEY `fk_empqualification_verifiedby` (`employee_qualification_verified_by`),
   CONSTRAINT `fk_empqualification_employee` FOREIGN KEY (`employee_id`) REFERENCES `erp_employees` (`employee_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_empqualification_verifiedby` FOREIGN KEY (`employee_qualification_verified_by`) REFERENCES `erp_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -762,6 +848,36 @@ LOCK TABLES `erp_employee_qualifications` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `erp_employee_sequences`
+--
+
+DROP TABLE IF EXISTS `erp_employee_sequences`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `erp_employee_sequences` (
+  `sequence_id` bigint NOT NULL AUTO_INCREMENT,
+  `branch_id` int NOT NULL,
+  `employee_category` varchar(50) NOT NULL,
+  `sequence_year` int NOT NULL,
+  `last_number` int NOT NULL DEFAULT '0',
+  `version` bigint NOT NULL DEFAULT '0',
+  PRIMARY KEY (`sequence_id`),
+  UNIQUE KEY `uk_employee_sequence` (`branch_id`,`employee_category`,`sequence_year`),
+  CONSTRAINT `fk_employee_sequence_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `erp_employee_sequences`
+--
+
+LOCK TABLES `erp_employee_sequences` WRITE;
+/*!40000 ALTER TABLE `erp_employee_sequences` DISABLE KEYS */;
+INSERT INTO `erp_employee_sequences` VALUES (1,1,'TEACHING',2026,4,4);
+/*!40000 ALTER TABLE `erp_employee_sequences` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `erp_employees`
 --
 
@@ -769,19 +885,19 @@ DROP TABLE IF EXISTS `erp_employees`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_employees` (
-  `employee_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) DEFAULT NULL,
-  `branch_id` int(11) NOT NULL,
-  `department_id` bigint(20) DEFAULT NULL,
-  `designation_id` bigint(20) DEFAULT NULL,
-  `reporting_manager_id` bigint(20) DEFAULT NULL,
+  `employee_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT NULL,
+  `branch_id` int NOT NULL,
+  `department_id` bigint DEFAULT NULL,
+  `designation_id` bigint DEFAULT NULL,
+  `reporting_manager_id` bigint DEFAULT NULL,
   `employee_no` varchar(50) NOT NULL,
   `title` varchar(20) DEFAULT NULL,
   `first_name` varchar(100) NOT NULL,
   `middle_name` varchar(100) DEFAULT NULL,
   `last_name` varchar(100) NOT NULL,
   `full_name` varchar(255) DEFAULT NULL,
-  `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
+  `gender` enum('FEMALE','MALE','OTHER') DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
   `profile_photo` varchar(500) DEFAULT NULL,
   `signature_file` varchar(500) DEFAULT NULL,
@@ -792,6 +908,7 @@ CREATE TABLE `erp_employees` (
   `marital_status` varchar(50) DEFAULT NULL,
   `blood_group` varchar(20) DEFAULT NULL,
   `religion` varchar(100) DEFAULT NULL,
+  `sub_religion` varchar(100) DEFAULT NULL,
   `official_email` varchar(150) DEFAULT NULL,
   `personal_email` varchar(150) DEFAULT NULL,
   `mobile_no` varchar(30) DEFAULT NULL,
@@ -799,13 +916,16 @@ CREATE TABLE `erp_employees` (
   `address_country` varchar(100) DEFAULT NULL,
   `address_state` varchar(100) DEFAULT NULL,
   `address_district` varchar(100) DEFAULT NULL,
+  `address_county` varchar(100) DEFAULT NULL,
+  `address_sub_county` varchar(100) DEFAULT NULL,
+  `address_parish` varchar(100) DEFAULT NULL,
   `address_village` varchar(150) DEFAULT NULL,
   `address_street` varchar(255) DEFAULT NULL,
   `postal_code` varchar(30) DEFAULT NULL,
-  `employee_category` enum('TEACHING','NON_TEACHING','MANAGEMENT','SUPPORT_STAFF') DEFAULT NULL,
-  `employee_type` enum('PERMANENT','CONTRACT','TEMPORARY','PART_TIME','INTERN','VOLUNTEER') NOT NULL,
-  `employment_mode` enum('FULL_TIME','PART_TIME','REMOTE','ON_CALL') NOT NULL DEFAULT 'FULL_TIME',
-  `employment_status` enum('ACTIVE','PROBATION','ON_LEAVE','SUSPENDED','RESIGNED','RETIRED','TERMINATED') NOT NULL DEFAULT 'ACTIVE',
+  `employee_category` enum('TEACHING','NON_TEACHING','MANAGEMENT_TEACHING','MANAGEMENT_NON_TEACHING','SUPPORT_STAFF') DEFAULT NULL,
+  `employee_type` enum('PERMANENT','CONTRACT','TEMPORARY','PART_TIME','INTERN','VOLUNTEER','HONORY') NOT NULL,
+  `employment_mode` enum('FULL_TIME','ON_CALL','PART_TIME','REMOTE') NOT NULL,
+  `employment_status` enum('ACTIVE','ON_LEAVE','PROBATION','RESIGNED','RETIRED','SUSPENDED','TERMINATED') NOT NULL,
   `joining_date` date DEFAULT NULL,
   `probation_end_date` date DEFAULT NULL,
   `confirmation_date` date DEFAULT NULL,
@@ -816,15 +936,17 @@ CREATE TABLE `erp_employees` (
   `work_permit_expiry_date` date DEFAULT NULL,
   `passport_expiry_date` date DEFAULT NULL,
   `employment_end_date` date DEFAULT NULL,
-  `exit_reason` text DEFAULT NULL,
-  `employee_remarks` text DEFAULT NULL,
-  `login_enabled` tinyint(1) NOT NULL DEFAULT 0,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` int(11) DEFAULT NULL,
+  `exit_reason` text,
+  `skills` text,
+  `languages_spoken` text,
+  `employee_remarks` text,
+  `login_enabled` tinyint(1) NOT NULL DEFAULT '0',
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` int(11) DEFAULT NULL,
+  `updated_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime NOT NULL,
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`employee_id`),
   UNIQUE KEY `employee_no` (`employee_no`),
   UNIQUE KEY `user_id` (`user_id`),
@@ -839,7 +961,7 @@ CREATE TABLE `erp_employees` (
   CONSTRAINT `fk_employee_designation` FOREIGN KEY (`designation_id`) REFERENCES `erp_designations` (`designation_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_employee_reporting_manager` FOREIGN KEY (`reporting_manager_id`) REFERENCES `erp_employees` (`employee_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_employee_user` FOREIGN KEY (`user_id`) REFERENCES `erp_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -852,6 +974,85 @@ LOCK TABLES `erp_employees` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `erp_import_errors`
+--
+
+DROP TABLE IF EXISTS `erp_import_errors`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `erp_import_errors` (
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `job_id` varchar(36) NOT NULL,
+  `excel_row_number` int NOT NULL,
+  `row_index` int DEFAULT NULL,
+  `column_name` varchar(100) DEFAULT NULL,
+  `cell_value` varchar(1000) DEFAULT NULL,
+  `error_code` varchar(50) NOT NULL,
+  `severity` varchar(20) DEFAULT NULL,
+  `message` varchar(1000) NOT NULL,
+  `suggested_fix` varchar(1000) DEFAULT NULL,
+  `created_by` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` varchar(255) DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_import_errors_job_id` (`job_id`),
+  KEY `idx_import_errors_job_row` (`job_id`,`excel_row_number`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `erp_import_errors`
+--
+
+LOCK TABLES `erp_import_errors` WRITE;
+/*!40000 ALTER TABLE `erp_import_errors` DISABLE KEYS */;
+INSERT INTO `erp_import_errors` VALUES (1,'8d5956b7-aab8-4254-98b2-61bfd2e0ff10',2,NULL,'Employee','John Doe','EMPLOYEE_CREATE_FAILED','ERROR','Default Employee profile image is missing: static/images/default-employee-profile.png','Correct the Employee row and retry this row.','system','2026-07-23 14:04:58','system','2026-07-23 14:04:58'),(2,'a6c11f86-9c2d-4df9-997c-0bd7f82bb133',2,NULL,'Employee','John Doe','EMPLOYEE_CREATE_FAILED','ERROR','Default Employee profile image is missing: static/images/default-employee-profile.png','Correct the Employee row and retry this row.','system','2026-07-23 14:13:44','system','2026-07-23 14:13:44'),(3,'34113603-bd5c-4f90-8c05-db2579d74863',2,NULL,'Employee','John Doe','EMPLOYEE_DUPLICATE','ERROR','Another Employee already uses official email john.doe@school.ac.ug.','Correct the Employee row and retry this row.','system','2026-07-23 14:36:22','system','2026-07-23 14:36:22');
+/*!40000 ALTER TABLE `erp_import_errors` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `erp_import_jobs`
+--
+
+DROP TABLE IF EXISTS `erp_import_jobs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `erp_import_jobs` (
+  `job_id` varchar(36) NOT NULL,
+  `branch_id` varchar(36) DEFAULT NULL,
+  `module` varchar(50) NOT NULL,
+  `status` varchar(50) DEFAULT NULL,
+  `total_rows` int DEFAULT '0',
+  `processed_rows` int DEFAULT '0',
+  `success_rows` int DEFAULT '0',
+  `failed_rows` int DEFAULT '0',
+  `uploaded_file_name` varchar(255) DEFAULT NULL,
+  `error_report_url` varchar(1000) DEFAULT NULL,
+  `file_hash` varchar(64) DEFAULT NULL,
+  `import_mode` varchar(20) NOT NULL,
+  `last_checkpoint` varchar(500) DEFAULT NULL,
+  `created_by` varchar(255) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` varchar(255) DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `completed_at` timestamp NULL DEFAULT NULL,
+  `started_at` timestamp NULL DEFAULT NULL,
+  PRIMARY KEY (`job_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `erp_import_jobs`
+--
+
+LOCK TABLES `erp_import_jobs` WRITE;
+/*!40000 ALTER TABLE `erp_import_jobs` DISABLE KEYS */;
+INSERT INTO `erp_import_jobs` VALUES ('0c423cb9-6a6a-4527-a7c3-d376e51e07b5','1','EMPLOYEE','COMPLETED_WITH_ERRORS',0,50,0,50,'2b8e80a9-42f7-4b67-9cf5-0f0315679c5f_Employee_Bulk_Import_.xlsx',NULL,'9d009cfa7dac298a432ad812c2bfc1a874e5c57dfaa316faeb064c4295cbac08','INSERT',NULL,NULL,'2026-07-23 16:28:45',NULL,'2026-07-23 16:28:55','2026-07-23 13:28:54','2026-07-23 13:28:43'),('34113603-bd5c-4f90-8c05-db2579d74863','1','EMPLOYEE','COMPLETED_WITH_ERRORS',0,1,0,1,'fbf963aa-3ee1-4565-acbe-4653031fbdc9_Employee_Bulk_Import___1_.xlsx',NULL,'3c2ec642981e8d63a31bb1cfa014534a43f611392ff00147d865654488cf4423','INSERT',NULL,NULL,'2026-07-23 17:36:15',NULL,'2026-07-23 17:36:26','2026-07-23 14:36:25','2026-07-23 14:36:14'),('35b5962f-ec77-4c53-b356-ff5df141d1db','1','EMPLOYEE','FAILED',0,0,0,0,'4f9e2d08-19ab-4362-9ae0-487d7c8bf9a6_Employee_Bulk_Import___1_.xlsx',NULL,'3c2ec642981e8d63a31bb1cfa014534a43f611392ff00147d865654488cf4423','INSERT','ERROR: org.springframework.dao.DataIntegrityViolationException: could not execute statement [Data truncation: Data too long for column \'error_code\' at row 1] [insert into erp_import_errors (cell_value,column_name,created_at,created_by,error_code,job_id,message,excel_row_number,severity,suggested_fix,updated_at,updated_by) values (?,?,?,?,?,?,?,?,?,?,?,?)]; SQL [insert into erp_import_errors (cell_value,column_name,created_at,created_by,error_code,job_id,message,excel_row_number,severity,sugge',NULL,'2026-07-23 16:36:01',NULL,'2026-07-23 16:36:11','2026-07-23 13:36:10','2026-07-23 13:36:00'),('571ac9c0-bb58-4c53-9589-1bf7efc8189b','1','EMPLOYEE','FAILED',0,0,0,0,'727ae152-2d32-4062-a026-6cdcf976971f_Employee_Bulk_Import___1_.xlsx',NULL,'3c2ec642981e8d63a31bb1cfa014534a43f611392ff00147d865654488cf4423','INSERT','ERROR: org.springframework.dao.DataIntegrityViolationException: could not execute statement [Data truncation: Data too long for column \'error_code\' at row 1] [insert into erp_import_errors (cell_value,column_name,created_at,created_by,error_code,job_id,message,excel_row_number,severity,suggested_fix,updated_at,updated_by) values (?,?,?,?,?,?,?,?,?,?,?,?)]; SQL [insert into erp_import_errors (cell_value,column_name,created_at,created_by,error_code,job_id,message,excel_row_number,severity,sugge',NULL,'2026-07-23 16:41:49',NULL,'2026-07-23 16:42:00','2026-07-23 13:41:59','2026-07-23 13:41:48'),('646383b3-5221-4142-9f01-98f3b3589cca','1','EMPLOYEE','FAILED',0,0,0,0,'02b11662-f98a-402f-9357-39a2caa8c4e4_Employee_Bulk_Import___1_.xlsx',NULL,'3c2ec642981e8d63a31bb1cfa014534a43f611392ff00147d865654488cf4423','INSERT','ERROR: org.springframework.dao.InvalidDataAccessResourceUsageException: could not execute statement [You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near \'row_number,severity,suggested_fix,updated_at,updated_by) values (\'John Doe\',\'Emp\' at line 1] [insert into erp_import_errors (cell_value,column_name,created_at,created_by,error_code,job_id,message,row_number,severity,suggested_fix,updated_at,updated_by) values (',NULL,'2026-07-23 16:13:46',NULL,'2026-07-23 16:13:56','2026-07-23 13:13:55','2026-07-23 13:13:45'),('8d5956b7-aab8-4254-98b2-61bfd2e0ff10','1','EMPLOYEE','COMPLETED_WITH_ERRORS',0,1,0,1,'ff0b4069-e12b-4cf1-9ce9-62378b3b5da9_Employee_Bulk_Import___1_.xlsx',NULL,'3c2ec642981e8d63a31bb1cfa014534a43f611392ff00147d865654488cf4423','INSERT',NULL,NULL,'2026-07-23 17:04:52',NULL,'2026-07-23 17:05:02','2026-07-23 14:05:01','2026-07-23 14:04:51'),('a6c11f86-9c2d-4df9-997c-0bd7f82bb133','1','EMPLOYEE','COMPLETED_WITH_ERRORS',0,1,0,1,'48cdee90-4bdd-48a8-bdd8-98414422e43e_Employee_Bulk_Import___1_.xlsx',NULL,'3c2ec642981e8d63a31bb1cfa014534a43f611392ff00147d865654488cf4423','INSERT',NULL,NULL,'2026-07-23 17:13:38',NULL,'2026-07-23 17:13:48','2026-07-23 14:13:47','2026-07-23 14:13:37'),('e9de1f21-6a2c-43e5-9b9d-4fcad18b6fde','1','EMPLOYEE','COMPLETED',0,1,1,0,'6699ac7f-e1a0-449c-84d3-c6681f8940cc_Employee_Bulk_Import___1_.xlsx',NULL,'3c2ec642981e8d63a31bb1cfa014534a43f611392ff00147d865654488cf4423','INSERT',NULL,NULL,'2026-07-23 17:25:47',NULL,'2026-07-23 17:26:05','2026-07-23 14:26:04','2026-07-23 14:25:46');
+/*!40000 ALTER TABLE `erp_import_jobs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `erp_levels`
 --
 
@@ -859,17 +1060,17 @@ DROP TABLE IF EXISTS `erp_levels`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_levels` (
-  `level_id` int(11) NOT NULL AUTO_INCREMENT,
+  `level_id` int NOT NULL AUTO_INCREMENT,
   `level_name` varchar(255) NOT NULL,
-  `display_order` int(11) NOT NULL,
-  `status` int(11) DEFAULT 1,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `display_order` int NOT NULL,
+  `status` int DEFAULT '1',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `created_by` varchar(255) DEFAULT NULL,
   `updated_by` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`level_id`),
   UNIQUE KEY `level_name` (`level_name`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -890,18 +1091,18 @@ DROP TABLE IF EXISTS `erp_login_history`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_login_history` (
-  `login_history_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
-  `branch_id` int(11) DEFAULT NULL,
+  `login_history_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `branch_id` int DEFAULT NULL,
   `login_time` datetime NOT NULL,
   `logout_time` datetime DEFAULT NULL,
   `ip_address` varchar(100) DEFAULT NULL,
   `device_name` varchar(255) DEFAULT NULL,
   `browser_name` varchar(255) DEFAULT NULL,
-  `login_status` enum('SUCCESS','FAILED','LOCKED','LOGOUT') NOT NULL DEFAULT 'SUCCESS',
+  `login_status` enum('FAILED','LOCKED','LOGOUT','SUCCESS') NOT NULL,
   `remarks` varchar(500) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
   `created_by` varchar(255) DEFAULT NULL,
   `created_at` datetime NOT NULL,
   `updated_by` varchar(255) DEFAULT NULL,
@@ -913,7 +1114,7 @@ CREATE TABLE `erp_login_history` (
   KEY `idx_loginhistory_time` (`login_time`),
   CONSTRAINT `fk_loginhistory_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_loginhistory_user` FOREIGN KEY (`user_id`) REFERENCES `erp_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -933,9 +1134,9 @@ DROP TABLE IF EXISTS `erp_parents`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_parents` (
-  `parent_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `parent_id` bigint NOT NULL AUTO_INCREMENT,
+  `student_id` bigint NOT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
   `father_name` varchar(150) DEFAULT NULL,
   `father_uin` varchar(20) DEFAULT NULL,
@@ -962,19 +1163,19 @@ CREATE TABLE `erp_parents` (
   `guardian_alternate_phone` varchar(30) DEFAULT NULL,
   `guardian_email` varchar(150) DEFAULT NULL,
   `guardian_occupation` varchar(150) DEFAULT NULL,
-  `preferred_contact` enum('FATHER','MOTHER','GUARDIAN') DEFAULT 'FATHER',
-  `fee_responsibility` enum('FATHER','MOTHER','GUARDIAN','SPONSOR') NOT NULL DEFAULT 'FATHER',
-  `parents_living_together` tinyint(1) NOT NULL DEFAULT 1,
+  `preferred_contact` enum('FATHER','GUARDIAN','MOTHER') NOT NULL,
+  `fee_responsibility` enum('FATHER','GUARDIAN','MOTHER','SPONSOR') NOT NULL,
+  `parents_living_together` tinyint(1) NOT NULL DEFAULT '1',
   `emergency_contact_name` varchar(150) DEFAULT NULL,
   `emergency_contact_phone` varchar(30) DEFAULT NULL,
   `emergency_contact_relationship` varchar(100) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `remarks` text DEFAULT NULL,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `remarks` text,
+  `created_by` bigint DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`parent_id`),
   UNIQUE KEY `uk_parent_student` (`student_id`),
   KEY `idx_parent_branch` (`branch_id`),
@@ -992,7 +1193,7 @@ CREATE TABLE `erp_parents` (
   KEY `idx_emergency_phone` (`emergency_contact_phone`),
   CONSTRAINT `fk_parent_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_parent_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1012,20 +1213,20 @@ DROP TABLE IF EXISTS `erp_permissions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_permissions` (
-  `permission_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `permission_id` bigint NOT NULL AUTO_INCREMENT,
   `permission_code` varchar(100) NOT NULL,
   `permission_name` varchar(150) NOT NULL,
   `module_name` varchar(100) NOT NULL,
   `description` varchar(500) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_by` bigint DEFAULT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`permission_id`),
   UNIQUE KEY `uk_permission_code` (`permission_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=59 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=61 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1046,21 +1247,21 @@ DROP TABLE IF EXISTS `erp_role_permissions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_role_permissions` (
-  `role_permission_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `role_id` bigint(20) NOT NULL,
-  `permission_id` bigint(20) NOT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
+  `role_permission_id` bigint NOT NULL AUTO_INCREMENT,
+  `role_id` bigint NOT NULL,
+  `permission_id` bigint NOT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_by` bigint DEFAULT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`role_permission_id`),
   UNIQUE KEY `uk_role_permission` (`role_id`,`permission_id`),
   KEY `fk_rolepermission_permission` (`permission_id`),
   CONSTRAINT `fk_rolepermission_permission` FOREIGN KEY (`permission_id`) REFERENCES `erp_permissions` (`permission_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_rolepermission_role` FOREIGN KEY (`role_id`) REFERENCES `erp_roles` (`role_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1080,19 +1281,19 @@ DROP TABLE IF EXISTS `erp_roles`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_roles` (
-  `role_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `role_id` bigint NOT NULL AUTO_INCREMENT,
   `role_code` varchar(50) NOT NULL,
   `role_name` varchar(100) NOT NULL,
   `description` varchar(500) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_by` bigint DEFAULT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`role_id`),
   UNIQUE KEY `uk_role_code` (`role_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1101,7 +1302,7 @@ CREATE TABLE `erp_roles` (
 
 LOCK TABLES `erp_roles` WRITE;
 /*!40000 ALTER TABLE `erp_roles` DISABLE KEYS */;
-INSERT INTO `erp_roles` VALUES (1,'SUPER_ADMIN','Super Administrator','Complete system administrator with unrestricted access to the ERP.',1,0,NULL,'2026-07-06 09:35:05',NULL,'2026-07-06 09:35:05'),(2,'ERP_ADMIN','ERP Administrator','Manages ERP operations, users, admissions, academics and system administration excluding Super Admin functions.',1,0,NULL,'2026-07-06 09:35:05',NULL,'2026-07-06 09:35:05');
+INSERT INTO `erp_roles` VALUES (1,'SUPER_ADMIN','Super Admin','Full system access',1,0,NULL,'2026-07-06 09:35:05',NULL,'2026-07-08 04:27:08'),(2,'ERP_ADMIN','ERP Admin','Manage schools and system settings',1,0,NULL,'2026-07-06 09:35:05',NULL,'2026-07-08 04:27:08'),(3,'BRANCH_ADMIN','Branch Admin','Manage branch operations',1,0,NULL,'2026-07-08 04:27:08',NULL,'2026-07-08 04:27:08'),(4,'PRINCIPAL','Principal','Principal employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(5,'VICE_PRINCIPAL','Vice Principal','Vice Principal employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(6,'HEAD_TEACHER','Head Teacher','Head Teacher employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(7,'TEACHER','Teacher','Teaching staff employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(8,'CLASS_TEACHER','Class Teacher','Class Teacher employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(9,'OFFICE_STAFF','Office Staff','General office staff employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(10,'ACCOUNTANT','Accountant','Accounts employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(11,'LIBRARIAN','Librarian','Library employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(12,'HOSTEL_ADMIN','Hostel Admin','Hostel administration employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(13,'TRANSPORT_ADMIN','Transport Admin','Transport administration employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(14,'FEE_OFFICER','Fee Officer','Fee collection employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(15,'ADMISSION_STAFF','Admission Staff','Admissions employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02'),(16,'ACADEMIC_COORDINATOR','Academic Coordinator','Academic coordination employee login role.',1,0,NULL,'2026-07-21 12:01:02',NULL,'2026-07-21 12:01:02');
 /*!40000 ALTER TABLE `erp_roles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1113,24 +1314,23 @@ DROP TABLE IF EXISTS `erp_scholarship_allocations`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_scholarship_allocations` (
-  `id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `branch_id` bigint(20) NOT NULL,
-  `student_id` bigint(20) NOT NULL,
-  `donation_id` bigint(20) NOT NULL,
+  `id` bigint NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint NOT NULL,
+  `student_id` bigint NOT NULL,
+  `donation_id` bigint NOT NULL,
   `amount_allocated_ugx` decimal(15,2) NOT NULL,
   `terms_covered` varchar(100) NOT NULL,
   `academic_year` varchar(20) NOT NULL,
-  `allocated_by_user_id` bigint(20) NOT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `allocated_by_user_id` bigint NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `created_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   `updated_by` varchar(255) DEFAULT NULL,
   `allocated_amount_ugx` decimal(38,2) NOT NULL,
   `term` varchar(50) NOT NULL,
   PRIMARY KEY (`id`),
-  KEY `FKs8cxscphnnfi82r2h9153yyw3` (`donation_id`),
-  CONSTRAINT `FKs8cxscphnnfi82r2h9153yyw3` FOREIGN KEY (`donation_id`) REFERENCES `web_donations` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+  KEY `FKs8cxscphnnfi82r2h9153yyw3` (`donation_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1150,25 +1350,25 @@ DROP TABLE IF EXISTS `erp_scholarship_application_docs`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_scholarship_application_docs` (
-  `document_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `scholarship_app_id` bigint(20) NOT NULL,
+  `document_id` bigint NOT NULL AUTO_INCREMENT,
+  `scholarship_app_id` bigint NOT NULL,
   `document_type` varchar(50) NOT NULL,
   `verification_status` varchar(20) NOT NULL DEFAULT 'PENDING',
   `original_file_name` varchar(255) NOT NULL,
   `stored_file_name` varchar(255) NOT NULL,
   `file_path` varchar(500) NOT NULL,
-  `file_size` bigint(20) DEFAULT NULL,
+  `file_size` bigint DEFAULT NULL,
   `content_type` varchar(100) DEFAULT NULL,
   `file_hash` varchar(64) DEFAULT NULL,
-  `uploaded_by` bigint(20) DEFAULT NULL,
+  `uploaded_by` bigint DEFAULT NULL,
   `uploaded_at` datetime NOT NULL,
   `updated_at` datetime NOT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`document_id`),
   KEY `idx_document_scholarship` (`scholarship_app_id`),
   CONSTRAINT `fk_scholarship_doc_app` FOREIGN KEY (`scholarship_app_id`) REFERENCES `erp_scholarship_applications` (`scholarship_app_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1188,10 +1388,14 @@ DROP TABLE IF EXISTS `erp_scholarship_applications`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_scholarship_applications` (
-  `scholarship_app_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `application_id` bigint(20) DEFAULT NULL,
-  `student_id` bigint(20) DEFAULT NULL,
+  `scholarship_app_id` bigint NOT NULL AUTO_INCREMENT,
+  `branch_id` bigint NOT NULL DEFAULT '1',
+  `application_id` bigint DEFAULT NULL,
+  `student_id` bigint DEFAULT NULL,
   `academic_year` varchar(20) NOT NULL,
+  `amount_requested_ugx` decimal(38,2) NOT NULL DEFAULT '0.00',
+  `term_requested` varchar(50) NOT NULL DEFAULT 'TERM_1',
+  `category` varchar(100) NOT NULL DEFAULT 'GENERAL',
   `scholarship_type` enum('MERIT','NEED_BASED','SPORTS','STAFF_CHILD','SIBLING','DONOR','OTHER') DEFAULT 'OTHER',
   `requested_percentage` decimal(5,2) NOT NULL,
   `approved_percentage` decimal(5,2) DEFAULT NULL,
@@ -1200,14 +1404,15 @@ CREATE TABLE `erp_scholarship_applications` (
   `parent_income_declared` decimal(15,2) DEFAULT NULL,
   `reason` varchar(500) DEFAULT NULL,
   `reviewer_remarks` varchar(500) DEFAULT NULL,
-  `status` enum('PENDING_DOCS','PENDING_REVIEW','APPROVED','REJECTED') NOT NULL DEFAULT 'PENDING_DOCS',
-  `reviewed_by` bigint(20) DEFAULT NULL,
+  `status` varchar(50) NOT NULL DEFAULT 'Pending',
+  `reviewed_by` bigint DEFAULT NULL,
   `approved_at` datetime DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`scholarship_app_id`),
   UNIQUE KEY `uk_scholarship_application` (`application_id`),
   UNIQUE KEY `uk_scholarship_student` (`student_id`),
@@ -1217,7 +1422,7 @@ CREATE TABLE `erp_scholarship_applications` (
   KEY `idx_scholarship_year` (`academic_year`),
   CONSTRAINT `fk_scholarship_application` FOREIGN KEY (`application_id`) REFERENCES `erp_applications` (`application_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_scholarship_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1237,20 +1442,20 @@ DROP TABLE IF EXISTS `erp_sections`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_sections` (
-  `section_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `branch_id` int(11) NOT NULL,
-  `academic_year_id` bigint(20) NOT NULL,
-  `class_id` int(11) NOT NULL,
+  `section_id` bigint NOT NULL AUTO_INCREMENT,
+  `branch_id` int NOT NULL,
+  `academic_year_id` bigint NOT NULL,
+  `class_id` int NOT NULL,
   `section_code` varchar(20) NOT NULL,
   `section_name` varchar(100) NOT NULL,
-  `capacity` int(11) NOT NULL DEFAULT 40,
+  `capacity` int NOT NULL DEFAULT '40',
   `description` varchar(500) DEFAULT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'ACTIVE',
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_by` bigint DEFAULT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`section_id`),
   UNIQUE KEY `uk_branch_year_class_section` (`branch_id`,`academic_year_id`,`class_id`,`section_code`),
@@ -1259,7 +1464,7 @@ CREATE TABLE `erp_sections` (
   CONSTRAINT `fk_section_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_section_class` FOREIGN KEY (`class_id`) REFERENCES `erp_classes` (`class_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_section_year` FOREIGN KEY (`academic_year_id`) REFERENCES `erp_academic_years` (`academic_year_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1279,16 +1484,16 @@ DROP TABLE IF EXISTS `erp_site_settings`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_site_settings` (
-  `setting_id` int(11) NOT NULL AUTO_INCREMENT,
+  `setting_id` int NOT NULL AUTO_INCREMENT,
   `setting_key` varchar(100) DEFAULT NULL,
-  `setting_value` text DEFAULT NULL,
+  `setting_value` text,
   `created_at` datetime(6) DEFAULT NULL,
   `created_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
   `updated_by` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`setting_id`),
   UNIQUE KEY `setting_key` (`setting_key`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1309,16 +1514,16 @@ DROP TABLE IF EXISTS `erp_student_academic_history`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_academic_history` (
-  `academic_history_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `academic_history_id` bigint NOT NULL AUTO_INCREMENT,
+  `student_id` bigint NOT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `version` bigint NOT NULL DEFAULT '0',
   `former_school_name` varchar(255) DEFAULT NULL,
   `former_school_code` varchar(50) DEFAULT NULL,
   `former_school_lin` varchar(50) DEFAULT NULL,
   `former_school_address` varchar(255) DEFAULT NULL,
-  `school_type` enum('GOVERNMENT','PRIVATE','INTERNATIONAL','OTHER') DEFAULT 'PRIVATE',
+  `school_type` enum('GOVERNMENT','INTERNATIONAL','OTHER','PRIVATE') DEFAULT NULL,
   `transfer_reason` varchar(255) DEFAULT NULL,
   `previous_academic_year` varchar(20) DEFAULT NULL,
   `previous_class` varchar(50) DEFAULT NULL,
@@ -1330,18 +1535,18 @@ CREATE TABLE `erp_student_academic_history` (
   `uce_result` varchar(50) DEFAULT NULL,
   `uace_index_number` varchar(50) DEFAULT NULL,
   `uace_result` varchar(50) DEFAULT NULL,
-  `subject_marks` longtext DEFAULT NULL,
+  `subject_marks` longtext,
   `previous_report_card` varchar(255) DEFAULT NULL,
   `transfer_certificate` varchar(255) DEFAULT NULL,
   `leaving_certificate` varchar(255) DEFAULT NULL,
-  `verification_status` enum('PENDING','VERIFIED','REJECTED') NOT NULL DEFAULT 'PENDING',
-  `verified_by` bigint(20) DEFAULT NULL,
+  `verification_status` enum('PENDING','REJECTED','VERIFIED') NOT NULL,
+  `verified_by` bigint DEFAULT NULL,
   `verified_at` datetime DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `remarks` longtext DEFAULT NULL,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `remarks` longtext,
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`academic_history_id`),
   UNIQUE KEY `uk_student_academic_history` (`student_id`),
   KEY `idx_academic_student` (`student_id`),
@@ -1352,9 +1557,12 @@ CREATE TABLE `erp_student_academic_history` (
   KEY `idx_branch_ple` (`branch_id`,`ple_index_number`),
   KEY `idx_branch_uce` (`branch_id`,`uce_index_number`),
   KEY `idx_branch_uace` (`branch_id`,`uace_index_number`),
+  KEY `idx_ple` (`ple_index_number`),
+  KEY `idx_uce` (`uce_index_number`),
+  KEY `idx_uace` (`uace_index_number`),
   CONSTRAINT `fk_academic_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_academic_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1374,28 +1582,28 @@ DROP TABLE IF EXISTS `erp_student_accounts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_accounts` (
-  `account_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
+  `account_id` bigint NOT NULL AUTO_INCREMENT,
+  `student_id` bigint NOT NULL,
   `admission_no` varchar(50) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `branch_id` int NOT NULL,
   `username` varchar(100) NOT NULL,
   `password_hash` varchar(255) NOT NULL,
-  `account_status` enum('ACTIVE','LOCKED','DISABLED','SUSPENDED') NOT NULL DEFAULT 'ACTIVE',
-  `password_changed` tinyint(1) NOT NULL DEFAULT 0,
-  `password_reset_required` tinyint(1) NOT NULL DEFAULT 0,
-  `failed_attempts` int(11) NOT NULL DEFAULT 0,
-  `account_locked` tinyint(1) NOT NULL DEFAULT 0,
+  `account_status` enum('ACTIVE','DISABLED','LOCKED','SUSPENDED') NOT NULL,
+  `password_changed` tinyint(1) NOT NULL DEFAULT '0',
+  `password_reset_required` tinyint(1) NOT NULL DEFAULT '0',
+  `failed_attempts` int NOT NULL DEFAULT '0',
+  `account_locked` tinyint(1) NOT NULL DEFAULT '0',
   `last_login` datetime DEFAULT NULL,
   `last_login_ip` varchar(100) DEFAULT NULL,
   `last_login_device` varchar(255) DEFAULT NULL,
   `last_password_change` datetime DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `remarks` text DEFAULT NULL,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `remarks` text,
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`account_id`),
   UNIQUE KEY `uk_student_username` (`username`),
   UNIQUE KEY `uk_student_account` (`student_id`),
@@ -1404,7 +1612,7 @@ CREATE TABLE `erp_student_accounts` (
   KEY `idx_student_account_admission` (`admission_no`),
   CONSTRAINT `fk_student_account_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_student_account_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1424,23 +1632,23 @@ DROP TABLE IF EXISTS `erp_student_alumni`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_alumni` (
-  `alumni_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `alumni_id` bigint NOT NULL AUTO_INCREMENT,
+  `student_id` bigint NOT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
-  `graduation_year` int(11) NOT NULL,
+  `graduation_year` int NOT NULL,
   `graduation_date` date DEFAULT NULL,
   `final_class` varchar(50) DEFAULT NULL,
   `final_stream` varchar(50) DEFAULT NULL,
   `final_grade` varchar(50) DEFAULT NULL,
   `certificate_number` varchar(100) DEFAULT NULL,
-  `notes` text DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `notes` text,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`alumni_id`),
   UNIQUE KEY `uk_alumni_student` (`student_id`),
   KEY `idx_alumni_branch` (`branch_id`),
@@ -1448,9 +1656,10 @@ CREATE TABLE `erp_student_alumni` (
   KEY `idx_alumni_grad_year` (`graduation_year`),
   KEY `idx_alumni_graduation_date` (`graduation_date`),
   KEY `idx_alumni_certificate` (`certificate_number`),
+  KEY `idx_alumni_student` (`student_id`),
   CONSTRAINT `fk_alumni_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_alumni_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1470,22 +1679,22 @@ DROP TABLE IF EXISTS `erp_student_archives`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_archives` (
-  `archive_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `student_id` bigint(20) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `archive_id` bigint NOT NULL AUTO_INCREMENT,
+  `version` bigint NOT NULL DEFAULT '0',
+  `student_id` bigint NOT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
-  `archive_status` enum('ARCHIVED','RESTORED') NOT NULL DEFAULT 'ARCHIVED',
-  `archive_reason` enum('GRADUATED','TRANSFERRED','WITHDRAWN','EXPELLED','DECEASED','DROPPED_OUT','OTHER') NOT NULL,
+  `archive_status` enum('ARCHIVED','RESTORED') NOT NULL,
+  `archive_reason` enum('DECEASED','DROPPED_OUT','EXPELLED','GRADUATED','OTHER','TRANSFERRED','WITHDRAWN') NOT NULL,
   `date_of_leaving` date NOT NULL,
-  `restored_by` bigint(20) DEFAULT NULL,
+  `restored_by` bigint DEFAULT NULL,
   `restored_at` datetime DEFAULT NULL,
   `restore_reason` varchar(255) DEFAULT NULL,
-  `remarks` text DEFAULT NULL,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `remarks` tinytext,
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`archive_id`),
   KEY `idx_archive_student` (`student_id`),
   KEY `idx_archive_branch` (`branch_id`),
@@ -1495,7 +1704,7 @@ CREATE TABLE `erp_student_archives` (
   KEY `idx_archive_leaving_date` (`date_of_leaving`),
   CONSTRAINT `fk_archive_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_archive_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1515,10 +1724,10 @@ DROP TABLE IF EXISTS `erp_student_documents`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_documents` (
-  `document_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
+  `document_id` bigint NOT NULL AUTO_INCREMENT,
+  `student_id` bigint NOT NULL,
   `admission_no` varchar(50) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `branch_id` int NOT NULL,
   `document_type` varchar(100) NOT NULL,
   `document_name` varchar(150) NOT NULL,
   `document_number` varchar(100) DEFAULT NULL,
@@ -1527,25 +1736,26 @@ CREATE TABLE `erp_student_documents` (
   `file_path` varchar(500) NOT NULL,
   `file_extension` varchar(20) DEFAULT NULL,
   `mime_type` varchar(100) DEFAULT NULL,
-  `file_size` bigint(20) DEFAULT NULL,
+  `file_size` bigint DEFAULT NULL,
   `document_status` enum('PENDING','VERIFIED','REJECTED','EXPIRED') DEFAULT 'PENDING',
-  `remarks` text DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `uploaded_by` bigint(20) DEFAULT NULL,
-  `uploaded_at` timestamp NULL DEFAULT current_timestamp(),
-  `verified_by` bigint(20) DEFAULT NULL,
+  `remarks` tinytext,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `uploaded_by` bigint DEFAULT NULL,
+  `uploaded_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `verified_by` bigint DEFAULT NULL,
   `verified_at` timestamp NULL DEFAULT NULL,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `created_by` bigint DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`document_id`),
   KEY `idx_student_documents_student` (`student_id`),
   KEY `idx_student_documents_branch` (`branch_id`),
   KEY `idx_student_documents_status` (`document_status`),
   KEY `idx_student_documents_type` (`document_type`),
+  KEY `idx_student_documents_admission_no` (`admission_no`),
   CONSTRAINT `fk_student_documents_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_student_documents_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1565,35 +1775,35 @@ DROP TABLE IF EXISTS `erp_student_enrollment`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_enrollment` (
-  `enrollment_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
+  `enrollment_id` bigint NOT NULL AUTO_INCREMENT,
+  `student_id` bigint NOT NULL,
   `admission_no` varchar(50) NOT NULL,
-  `branch_id` int(11) NOT NULL,
-  `academic_year_id` bigint(20) NOT NULL,
-  `class_id` bigint(20) NOT NULL,
-  `section_id` bigint(20) DEFAULT NULL,
-  `stream_id` bigint(20) DEFAULT NULL,
-  `house_id` bigint(20) DEFAULT NULL,
-  `hostel_id` bigint(20) DEFAULT NULL,
-  `bed_id` bigint(20) DEFAULT NULL,
+  `branch_id` int NOT NULL,
+  `academic_year_id` bigint NOT NULL,
+  `class_id` bigint NOT NULL,
+  `section_id` bigint DEFAULT NULL,
+  `stream_id` bigint DEFAULT NULL,
+  `house_id` bigint DEFAULT NULL,
+  `hostel_id` bigint DEFAULT NULL,
+  `bed_id` bigint DEFAULT NULL,
   `roll_no` varchar(20) DEFAULT NULL,
-  `admission_type` enum('NEW','TRANSFER','READMISSION') NOT NULL DEFAULT 'NEW',
-  `promotion_type` enum('NEW','PROMOTED','RETAINED','TRANSFERRED') NOT NULL DEFAULT 'NEW',
-  `enrollment_status` enum('ACTIVE','PROMOTED','TRANSFERRED','WITHDRAWN','GRADUATED','SUSPENDED','EXPELLED') NOT NULL DEFAULT 'ACTIVE',
+  `admission_type` enum('NEW','READMISSION','TRANSFER') NOT NULL,
+  `promotion_type` enum('NEW','PROMOTED','RETAINED','TRANSFERRED') NOT NULL,
+  `enrollment_status` enum('ACTIVE','EXPELLED','GRADUATED','PROMOTED','SUSPENDED','TRANSFERRED','WITHDRAWN') NOT NULL,
   `joining_date` date NOT NULL,
   `leaving_date` date DEFAULT NULL,
-  `class_teacher_id` bigint(20) DEFAULT NULL,
-  `fee_structure_id` bigint(20) DEFAULT NULL,
-  `scholarship_id` bigint(20) DEFAULT NULL,
-  `approved_by` bigint(20) DEFAULT NULL,
+  `class_teacher_id` bigint DEFAULT NULL,
+  `fee_structure_id` bigint DEFAULT NULL,
+  `scholarship_id` bigint DEFAULT NULL,
+  `approved_by` bigint DEFAULT NULL,
   `approved_at` datetime DEFAULT NULL,
-  `is_locked` tinyint(1) NOT NULL DEFAULT 0,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `remarks` text DEFAULT NULL,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `is_locked` tinyint(1) NOT NULL DEFAULT '0',
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `remarks` tinytext,
+  `created_by` bigint DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`enrollment_id`),
   UNIQUE KEY `uk_student_current` (`student_id`),
   KEY `idx_enrollment_student` (`student_id`),
@@ -1604,7 +1814,7 @@ CREATE TABLE `erp_student_enrollment` (
   KEY `idx_enrollment_status` (`enrollment_status`),
   CONSTRAINT `fk_enrollment_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_enrollment_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1624,18 +1834,18 @@ DROP TABLE IF EXISTS `erp_student_enrollment_history`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_enrollment_history` (
-  `enrollment_history_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
-  `enrollment_id` bigint(20) DEFAULT NULL,
-  `branch_id` int(11) NOT NULL,
+  `enrollment_history_id` bigint NOT NULL AUTO_INCREMENT,
+  `student_id` bigint NOT NULL,
+  `enrollment_id` bigint DEFAULT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
-  `academic_year_id` bigint(20) NOT NULL,
-  `class_id` bigint(20) NOT NULL,
-  `section_id` bigint(20) DEFAULT NULL,
-  `stream_id` bigint(20) DEFAULT NULL,
-  `house_id` bigint(20) DEFAULT NULL,
-  `hostel_id` bigint(20) DEFAULT NULL,
-  `bed_id` bigint(20) DEFAULT NULL,
+  `academic_year_id` bigint NOT NULL,
+  `class_id` bigint NOT NULL,
+  `section_id` bigint DEFAULT NULL,
+  `stream_id` bigint DEFAULT NULL,
+  `house_id` bigint DEFAULT NULL,
+  `hostel_id` bigint DEFAULT NULL,
+  `bed_id` bigint DEFAULT NULL,
   `roll_no` varchar(20) DEFAULT NULL,
   `admission_type` varchar(20) NOT NULL,
   `promotion_type` varchar(20) NOT NULL,
@@ -1644,11 +1854,11 @@ CREATE TABLE `erp_student_enrollment_history` (
   `leaving_date` date DEFAULT NULL,
   `effective_date` date NOT NULL,
   `change_reason` varchar(255) DEFAULT NULL,
-  `remarks` text DEFAULT NULL,
-  `approved_by` bigint(20) DEFAULT NULL,
+  `remarks` tinytext,
+  `approved_by` bigint DEFAULT NULL,
   `approved_at` datetime DEFAULT NULL,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
+  `created_by` bigint DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`enrollment_history_id`),
   KEY `idx_hist_student` (`student_id`),
   KEY `idx_hist_enrollment` (`enrollment_id`),
@@ -1662,7 +1872,7 @@ CREATE TABLE `erp_student_enrollment_history` (
   CONSTRAINT `fk_hist_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_hist_enrollment` FOREIGN KEY (`enrollment_id`) REFERENCES `erp_student_enrollment` (`enrollment_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_hist_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1682,32 +1892,32 @@ DROP TABLE IF EXISTS `erp_student_fee_assignments`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_fee_assignments` (
-  `fee_assignment_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `fee_assignment_id` bigint NOT NULL AUTO_INCREMENT,
+  `student_id` bigint NOT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
   `academic_year` varchar(20) NOT NULL,
   `term` varchar(30) NOT NULL,
   `fee_name` varchar(150) NOT NULL,
   `fee_type` varchar(50) NOT NULL,
   `total_fee` decimal(12,2) NOT NULL,
-  `scholarship_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `concession_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `discount_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `fine_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `scholarship_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `concession_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `discount_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `fine_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
   `payable_amount` decimal(12,2) NOT NULL,
-  `paid_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `paid_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
   `balance_amount` decimal(12,2) NOT NULL,
   `assignment_date` date NOT NULL,
   `due_date` date DEFAULT NULL,
-  `fee_status` enum('PENDING','PARTIAL','PAID','OVERDUE','CANCELLED') NOT NULL DEFAULT 'PENDING',
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `remarks` text DEFAULT NULL,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `version` bigint(20) NOT NULL DEFAULT 0,
+  `fee_status` enum('CANCELLED','OVERDUE','PAID','PARTIAL','PENDING') NOT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `remarks` tinytext,
+  `created_by` bigint DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`fee_assignment_id`),
   UNIQUE KEY `uk_student_fee_assignment` (`student_id`,`academic_year`,`term`,`fee_name`),
   KEY `idx_fee_assignment_student` (`student_id`),
@@ -1720,7 +1930,7 @@ CREATE TABLE `erp_student_fee_assignments` (
   KEY `idx_fee_assignment_fee_name` (`fee_name`),
   CONSTRAINT `fk_fee_assignment_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_fee_assignment_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1740,31 +1950,31 @@ DROP TABLE IF EXISTS `erp_student_fee_ledger`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_fee_ledger` (
-  `fee_ledger_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `fee_assignment_id` bigint(20) NOT NULL,
-  `fee_receipt_id` bigint(20) DEFAULT NULL,
-  `student_id` bigint(20) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `fee_ledger_id` bigint NOT NULL AUTO_INCREMENT,
+  `fee_assignment_id` bigint NOT NULL,
+  `fee_receipt_id` bigint DEFAULT NULL,
+  `student_id` bigint NOT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
   `academic_year` varchar(20) NOT NULL,
   `term` varchar(30) NOT NULL,
   `fee_name` varchar(150) NOT NULL,
   `fee_type` varchar(50) NOT NULL,
-  `transaction_type` enum('FEE_ASSIGNED','PAYMENT','PARTIAL_PAYMENT','SCHOLARSHIP','CONCESSION','DISCOUNT','FINE','WAIVER','REFUND','REVERSAL','ADJUSTMENT') NOT NULL,
-  `payment_mode` enum('CASH','CHEQUE','BANK_TRANSFER','MOBILE_MONEY','CREDIT_CARD','DEBIT_CARD','ONLINE','SCHOLARSHIP','WAIVER') DEFAULT NULL,
+  `transaction_type` enum('ADJUSTMENT','CONCESSION','DISCOUNT','FEE_ASSIGNED','FINE','PARTIAL_PAYMENT','PAYMENT','REFUND','REVERSAL','SCHOLARSHIP','WAIVER') NOT NULL,
+  `payment_mode` enum('BANK_TRANSFER','CASH','CHEQUE','CREDIT_CARD','DEBIT_CARD','MOBILE_MONEY','ONLINE','SCHOLARSHIP','WAIVER') DEFAULT NULL,
   `transaction_reference` varchar(150) DEFAULT NULL,
   `transaction_date_time` datetime NOT NULL,
-  `debit_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `credit_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `debit_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `credit_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
   `running_balance` decimal(12,2) NOT NULL,
   `currency` char(3) NOT NULL DEFAULT 'UGX',
-  `ledger_status` enum('ACTIVE','CANCELLED','REVERSED') NOT NULL DEFAULT 'ACTIVE',
-  `remarks` text DEFAULT NULL,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `ledger_status` enum('ACTIVE','CANCELLED','REVERSED') NOT NULL,
+  `remarks` text,
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`fee_ledger_id`),
   KEY `idx_fee_ledger_assignment` (`fee_assignment_id`),
   KEY `idx_fee_ledger_receipt` (`fee_receipt_id`),
@@ -1782,10 +1992,10 @@ CREATE TABLE `erp_student_fee_ledger` (
   CONSTRAINT `fk_fee_ledger_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_fee_ledger_receipt` FOREIGN KEY (`fee_receipt_id`) REFERENCES `erp_student_fee_payments` (`fee_receipt_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_fee_ledger_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE,
-  CONSTRAINT `chk_fee_ledger_currency` CHECK (`currency` = 'UGX'),
-  CONSTRAINT `chk_fee_ledger_debit` CHECK (`debit_amount` >= 0),
-  CONSTRAINT `chk_fee_ledger_credit` CHECK (`credit_amount` >= 0)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CONSTRAINT `chk_fee_ledger_credit` CHECK ((`credit_amount` >= 0)),
+  CONSTRAINT `chk_fee_ledger_currency` CHECK ((`currency` = _utf8mb3'UGX')),
+  CONSTRAINT `chk_fee_ledger_debit` CHECK ((`debit_amount` >= 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1805,29 +2015,29 @@ DROP TABLE IF EXISTS `erp_student_fee_payments`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_fee_payments` (
-  `fee_receipt_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `fee_assignment_id` bigint(20) NOT NULL,
-  `student_id` bigint(20) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `fee_receipt_id` bigint NOT NULL AUTO_INCREMENT,
+  `fee_assignment_id` bigint NOT NULL,
+  `student_id` bigint NOT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
   `receipt_no` varchar(150) NOT NULL,
   `payment_date_time` datetime NOT NULL,
-  `payment_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `excess_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `payment_mode` enum('CASH','CHEQUE','BANK_TRANSFER','MOBILE_MONEY','CREDIT_CARD','DEBIT_CARD','ONLINE','SCHOLARSHIP','WAIVER') NOT NULL,
+  `payment_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `excess_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `payment_mode` enum('BANK_TRANSFER','CASH','CHEQUE','CREDIT_CARD','DEBIT_CARD','MOBILE_MONEY','ONLINE','SCHOLARSHIP','WAIVER') NOT NULL,
   `transaction_reference` varchar(150) DEFAULT NULL,
   `collection_point` varchar(100) DEFAULT NULL,
-  `payment_status` enum('PENDING','SUCCESS','FAILED','CANCELLED','REVERSED','REFUNDED') NOT NULL DEFAULT 'SUCCESS',
-  `receipt_printed` tinyint(1) NOT NULL DEFAULT 0,
-  `collected_by` bigint(20) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `remarks` longtext DEFAULT NULL,
-  `cancel_reason` longtext DEFAULT NULL,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `payment_status` enum('CANCELLED','FAILED','PENDING','REFUNDED','REVERSED','SUCCESS') NOT NULL,
+  `receipt_printed` tinyint(1) NOT NULL DEFAULT '0',
+  `collected_by` bigint DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `remarks` longtext,
+  `cancel_reason` longtext,
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`fee_receipt_id`),
   UNIQUE KEY `uk_fee_payment_receipt` (`receipt_no`),
   KEY `idx_fee_payment_assignment` (`fee_assignment_id`),
@@ -1840,7 +2050,7 @@ CREATE TABLE `erp_student_fee_payments` (
   CONSTRAINT `fk_fee_payment_assignment` FOREIGN KEY (`fee_assignment_id`) REFERENCES `erp_student_fee_assignments` (`fee_assignment_id`),
   CONSTRAINT `fk_fee_payment_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`),
   CONSTRAINT `fk_fee_payment_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1860,32 +2070,32 @@ DROP TABLE IF EXISTS `erp_student_hostel`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_hostel` (
-  `hostel_allocation_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `hostel_allocation_id` bigint NOT NULL AUTO_INCREMENT,
+  `student_id` bigint NOT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
   `academic_year` varchar(20) NOT NULL,
-  `hostel_id` bigint(20) NOT NULL,
-  `room_id` bigint(20) DEFAULT NULL,
-  `bed_id` bigint(20) DEFAULT NULL,
+  `hostel_id` bigint NOT NULL,
+  `room_id` bigint DEFAULT NULL,
+  `bed_id` bigint DEFAULT NULL,
   `allocation_start_date` date NOT NULL,
   `allocation_end_date` date DEFAULT NULL,
-  `monthly_fee` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `annual_fee` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `discount_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `payable_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `allocation_status` enum('ACTIVE','INACTIVE','SUSPENDED','VACATED','CANCELLED') NOT NULL DEFAULT 'ACTIVE',
-  `payment_status` enum('PENDING','PARTIAL','PAID') NOT NULL DEFAULT 'PENDING',
+  `monthly_fee` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `annual_fee` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `discount_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `payable_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `allocation_status` enum('ACTIVE','CANCELLED','INACTIVE','SUSPENDED','VACATED') NOT NULL,
+  `payment_status` enum('PAID','PARTIAL','PENDING') NOT NULL,
   `local_guardian_name` varchar(150) DEFAULT NULL,
   `local_guardian_mobile` varchar(20) DEFAULT NULL,
   `local_guardian_relation` varchar(50) DEFAULT NULL,
   `remarks` varchar(500) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`hostel_allocation_id`),
   UNIQUE KEY `uk_student_hostel_allocation` (`student_id`,`academic_year`),
   KEY `idx_hostel_student` (`student_id`),
@@ -1899,12 +2109,12 @@ CREATE TABLE `erp_student_hostel` (
   KEY `idx_hostel_admission` (`admission_no`),
   CONSTRAINT `fk_hostel_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_hostel_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE,
-  CONSTRAINT `chk_hostel_monthly_fee` CHECK (`monthly_fee` >= 0),
-  CONSTRAINT `chk_hostel_annual_fee` CHECK (`annual_fee` >= 0),
-  CONSTRAINT `chk_hostel_discount` CHECK (`discount_amount` >= 0),
-  CONSTRAINT `chk_hostel_payable` CHECK (`payable_amount` >= 0),
-  CONSTRAINT `chk_hostel_dates` CHECK (`allocation_end_date` is null or `allocation_end_date` >= `allocation_start_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CONSTRAINT `chk_hostel_annual_fee` CHECK ((`annual_fee` >= 0)),
+  CONSTRAINT `chk_hostel_dates` CHECK (((`allocation_end_date` is null) or (`allocation_end_date` >= `allocation_start_date`))),
+  CONSTRAINT `chk_hostel_discount` CHECK ((`discount_amount` >= 0)),
+  CONSTRAINT `chk_hostel_monthly_fee` CHECK ((`monthly_fee` >= 0)),
+  CONSTRAINT `chk_hostel_payable` CHECK ((`payable_amount` >= 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1924,28 +2134,28 @@ DROP TABLE IF EXISTS `erp_student_medical`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_medical` (
-  `medical_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `medical_id` bigint NOT NULL AUTO_INCREMENT,
+  `student_id` bigint NOT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
-  `blood_group` enum('A+','A-','B+','B-','AB+','AB-','O+','O-','UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
+  `blood_group` enum('AB_MINUS','AB_PLUS','A_MINUS','A_PLUS','B_MINUS','B_PLUS','O_MINUS','O_PLUS','UNKNOWN') NOT NULL,
   `height_cm` decimal(5,2) DEFAULT NULL,
   `weight_kg` decimal(5,2) DEFAULT NULL,
   `allergies` varchar(500) DEFAULT NULL,
   `chronic_conditions` varchar(500) DEFAULT NULL,
   `ongoing_medication` varchar(500) DEFAULT NULL,
   `special_needs` varchar(500) DEFAULT NULL,
-  `fit_for_sports` tinyint(1) NOT NULL DEFAULT 1,
+  `fit_for_sports` tinyint(1) NOT NULL DEFAULT '1',
   `emergency_doctor_name` varchar(150) DEFAULT NULL,
   `emergency_doctor_mobile` varchar(20) DEFAULT NULL,
   `preferred_hospital` varchar(150) DEFAULT NULL,
   `remarks` varchar(500) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`medical_id`),
   UNIQUE KEY `uk_student_medical` (`student_id`),
   KEY `idx_medical_branch` (`branch_id`),
@@ -1954,9 +2164,9 @@ CREATE TABLE `erp_student_medical` (
   KEY `idx_medical_sports` (`fit_for_sports`),
   CONSTRAINT `fk_medical_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_medical_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE,
-  CONSTRAINT `chk_medical_height` CHECK (`height_cm` is null or `height_cm` > 0),
-  CONSTRAINT `chk_medical_weight` CHECK (`weight_kg` is null or `weight_kg` > 0)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CONSTRAINT `chk_medical_height` CHECK (((`height_cm` is null) or (`height_cm` > 0))),
+  CONSTRAINT `chk_medical_weight` CHECK (((`weight_kg` is null) or (`weight_kg` > 0)))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1976,32 +2186,32 @@ DROP TABLE IF EXISTS `erp_student_transport`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_student_transport` (
-  `transport_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `student_id` bigint(20) NOT NULL,
-  `branch_id` int(11) NOT NULL,
+  `transport_id` bigint NOT NULL AUTO_INCREMENT,
+  `student_id` bigint NOT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
   `academic_year` varchar(20) NOT NULL,
-  `route_id` bigint(20) NOT NULL,
-  `vehicle_id` bigint(20) DEFAULT NULL,
-  `pickup_point_id` bigint(20) DEFAULT NULL,
+  `route_id` bigint NOT NULL,
+  `vehicle_id` bigint DEFAULT NULL,
+  `pickup_point_id` bigint DEFAULT NULL,
   `transport_start_date` date NOT NULL,
   `transport_end_date` date DEFAULT NULL,
-  `monthly_fee` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `annual_fee` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `discount_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `payable_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
-  `transport_status` enum('ACTIVE','INACTIVE','SUSPENDED','COMPLETED','CANCELLED') NOT NULL DEFAULT 'ACTIVE',
-  `payment_status` enum('PENDING','PARTIAL','PAID') NOT NULL DEFAULT 'PENDING',
+  `monthly_fee` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `annual_fee` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `discount_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `payable_amount` decimal(12,2) NOT NULL DEFAULT '0.00',
+  `transport_status` enum('ACTIVE','CANCELLED','COMPLETED','INACTIVE','SUSPENDED') NOT NULL,
+  `payment_status` enum('PAID','PARTIAL','PENDING') NOT NULL,
   `seat_number` varchar(20) DEFAULT NULL,
   `emergency_contact` varchar(100) DEFAULT NULL,
   `emergency_mobile` varchar(20) DEFAULT NULL,
   `remarks` varchar(500) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated_by` bigint(20) DEFAULT NULL,
-  `updated_at` datetime NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` bigint DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`transport_id`),
   UNIQUE KEY `uk_student_transport` (`student_id`,`academic_year`),
   KEY `idx_transport_student` (`student_id`),
@@ -2015,12 +2225,12 @@ CREATE TABLE `erp_student_transport` (
   KEY `idx_transport_admission` (`admission_no`),
   CONSTRAINT `fk_transport_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE,
   CONSTRAINT `fk_transport_student` FOREIGN KEY (`student_id`) REFERENCES `erp_students` (`student_id`) ON UPDATE CASCADE,
-  CONSTRAINT `chk_monthly_fee` CHECK (`monthly_fee` >= 0),
-  CONSTRAINT `chk_annual_fee` CHECK (`annual_fee` >= 0),
-  CONSTRAINT `chk_discount` CHECK (`discount_amount` >= 0),
-  CONSTRAINT `chk_payable` CHECK (`payable_amount` >= 0),
-  CONSTRAINT `chk_transport_dates` CHECK (`transport_end_date` is null or `transport_end_date` >= `transport_start_date`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  CONSTRAINT `chk_annual_fee` CHECK ((`annual_fee` >= 0)),
+  CONSTRAINT `chk_discount` CHECK ((`discount_amount` >= 0)),
+  CONSTRAINT `chk_monthly_fee` CHECK ((`monthly_fee` >= 0)),
+  CONSTRAINT `chk_payable` CHECK ((`payable_amount` >= 0)),
+  CONSTRAINT `chk_transport_dates` CHECK (((`transport_end_date` is null) or (`transport_end_date` >= `transport_start_date`)))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2040,12 +2250,12 @@ DROP TABLE IF EXISTS `erp_students`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_students` (
-  `student_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `application_id` bigint(20) DEFAULT NULL,
-  `branch_id` int(11) NOT NULL,
+  `student_id` bigint NOT NULL AUTO_INCREMENT,
+  `application_id` bigint DEFAULT NULL,
+  `branch_id` int NOT NULL,
   `admission_no` varchar(50) NOT NULL,
   `learner_lin` varchar(50) DEFAULT NULL,
-  `admission_year` int(11) NOT NULL,
+  `admission_year` int NOT NULL,
   `student_code` varchar(50) NOT NULL,
   `first_name` varchar(100) NOT NULL,
   `middle_name` varchar(100) DEFAULT NULL,
@@ -2054,9 +2264,9 @@ CREATE TABLE `erp_students` (
   `gender` varchar(20) DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
   `nationality` varchar(100) DEFAULT NULL,
-  `blood_group_id` bigint(20) DEFAULT NULL,
-  `religion_id` bigint(20) DEFAULT NULL,
-  `category_id` bigint(20) DEFAULT NULL,
+  `blood_group_id` bigint DEFAULT NULL,
+  `religion_id` bigint DEFAULT NULL,
+  `category_id` bigint DEFAULT NULL,
   `house_no` varchar(50) DEFAULT NULL,
   `street` varchar(150) DEFAULT NULL,
   `village` varchar(100) DEFAULT NULL,
@@ -2067,10 +2277,11 @@ CREATE TABLE `erp_students` (
   `postal_code` varchar(20) DEFAULT NULL,
   `photo_path` varchar(255) DEFAULT NULL,
   `student_status` varchar(30) NOT NULL DEFAULT 'ACTIVE',
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `created_by` bigint(20) DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT current_timestamp(),
-  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `created_by` bigint DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `version` bigint NOT NULL DEFAULT '0',
   PRIMARY KEY (`student_id`),
   UNIQUE KEY `admission_no` (`admission_no`),
   UNIQUE KEY `student_code` (`student_code`),
@@ -2078,7 +2289,7 @@ CREATE TABLE `erp_students` (
   KEY `fk_students_branch` (`branch_id`),
   CONSTRAINT `fk_students_application` FOREIGN KEY (`application_id`) REFERENCES `erp_applications` (`application_id`) ON DELETE SET NULL ON UPDATE CASCADE,
   CONSTRAINT `fk_students_branch` FOREIGN KEY (`branch_id`) REFERENCES `erp_branches` (`branch_id`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2098,24 +2309,24 @@ DROP TABLE IF EXISTS `erp_subjects`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_subjects` (
-  `subject_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `subject_id` bigint NOT NULL AUTO_INCREMENT,
   `subject_code` varchar(20) NOT NULL,
   `subject_name` varchar(100) NOT NULL,
   `subject_short_name` varchar(50) DEFAULT NULL,
   `subject_type` varchar(30) NOT NULL DEFAULT 'CORE',
-  `is_practical` tinyint(1) NOT NULL DEFAULT 0,
-  `display_order` int(11) NOT NULL DEFAULT 1,
+  `is_practical` tinyint(1) NOT NULL DEFAULT '0',
+  `display_order` int NOT NULL DEFAULT '1',
   `description` varchar(500) DEFAULT NULL,
   `status` varchar(20) NOT NULL DEFAULT 'ACTIVE',
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_by` bigint DEFAULT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`subject_id`),
   UNIQUE KEY `uk_subject_code` (`subject_code`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2128,6 +2339,67 @@ LOCK TABLES `erp_subjects` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `erp_tasks`
+--
+
+DROP TABLE IF EXISTS `erp_tasks`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `erp_tasks` (
+  `task_id` bigint NOT NULL AUTO_INCREMENT,
+  `module` varchar(30) NOT NULL DEFAULT 'ADMISSION',
+  `reference_type` varchar(30) NOT NULL,
+  `reference_id` bigint NOT NULL,
+  `task_type` varchar(100) NOT NULL,
+  `action_code` varchar(100) DEFAULT NULL,
+  `title` varchar(255) NOT NULL,
+  `description` text,
+  `assigned_to` int DEFAULT NULL,
+  `assigned_role` varchar(50) DEFAULT NULL,
+  `assigned_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `accepted_at` datetime DEFAULT NULL,
+  `status` enum('PENDING','IN_PROGRESS','COMPLETED','CANCELLED') NOT NULL DEFAULT 'PENDING',
+  `priority` enum('LOW','NORMAL','HIGH','URGENT') NOT NULL DEFAULT 'NORMAL',
+  `due_date` datetime DEFAULT NULL,
+  `started_at` datetime DEFAULT NULL,
+  `completed_at` datetime DEFAULT NULL,
+  `completed_by` int DEFAULT NULL,
+  `parent_task_id` bigint DEFAULT NULL,
+  `sequence_no` int NOT NULL DEFAULT '0',
+  `branch_id` int DEFAULT NULL,
+  `school_id` int DEFAULT NULL,
+  `remarks` text,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `deleted` tinyint(1) NOT NULL DEFAULT '0',
+  `version` int NOT NULL DEFAULT '0',
+  `created_by` varchar(255) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` varchar(255) DEFAULT NULL,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`task_id`),
+  KEY `idx_task_reference` (`reference_type`,`reference_id`),
+  KEY `idx_task_assigned` (`assigned_to`,`status`),
+  KEY `idx_task_module` (`module`,`status`),
+  KEY `idx_task_due` (`status`,`due_date`),
+  KEY `idx_task_branch` (`branch_id`,`status`),
+  KEY `idx_task_parent` (`parent_task_id`),
+  KEY `fk_task_completed_user` (`completed_by`),
+  CONSTRAINT `fk_task_assigned_user` FOREIGN KEY (`assigned_to`) REFERENCES `erp_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_task_completed_user` FOREIGN KEY (`completed_by`) REFERENCES `erp_users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `fk_task_parent` FOREIGN KEY (`parent_task_id`) REFERENCES `erp_tasks` (`task_id`) ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `erp_tasks`
+--
+
+LOCK TABLES `erp_tasks` WRITE;
+/*!40000 ALTER TABLE `erp_tasks` DISABLE KEYS */;
+/*!40000 ALTER TABLE `erp_tasks` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `erp_user_roles`
 --
 
@@ -2135,21 +2407,21 @@ DROP TABLE IF EXISTS `erp_user_roles`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_user_roles` (
-  `user_role_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
-  `role_id` bigint(20) NOT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
+  `user_role_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
+  `role_id` bigint NOT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_by` bigint DEFAULT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`user_role_id`),
   UNIQUE KEY `uk_user_role` (`user_id`,`role_id`),
   KEY `fk_userrole_role` (`role_id`),
   CONSTRAINT `fk_userrole_role` FOREIGN KEY (`role_id`) REFERENCES `erp_roles` (`role_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_userrole_user` FOREIGN KEY (`user_id`) REFERENCES `erp_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2158,6 +2430,7 @@ CREATE TABLE `erp_user_roles` (
 
 LOCK TABLES `erp_user_roles` WRITE;
 /*!40000 ALTER TABLE `erp_user_roles` DISABLE KEYS */;
+INSERT INTO `erp_user_roles` VALUES (1,1,1,1,0,NULL,'2026-07-08 04:27:08',NULL,'2026-07-08 04:27:08'),(15,33,3,1,0,NULL,'2026-07-23 04:53:44',NULL,'2026-07-23 04:53:44'),(16,34,10,1,0,33,'2026-07-23 13:36:19',33,'2026-07-23 13:36:19'),(17,35,7,1,0,33,'2026-07-23 15:25:44',33,'2026-07-23 15:25:44');
 /*!40000 ALTER TABLE `erp_user_roles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -2169,8 +2442,8 @@ DROP TABLE IF EXISTS `erp_user_sessions`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_user_sessions` (
-  `session_id` bigint(20) NOT NULL AUTO_INCREMENT,
-  `user_id` int(11) NOT NULL,
+  `session_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL,
   `session_token` varchar(255) NOT NULL,
   `login_time` datetime NOT NULL,
   `last_activity_time` datetime NOT NULL,
@@ -2179,11 +2452,11 @@ CREATE TABLE `erp_user_sessions` (
   `device_name` varchar(255) DEFAULT NULL,
   `browser` varchar(150) DEFAULT NULL,
   `operating_system` varchar(150) DEFAULT NULL,
-  `active` tinyint(1) NOT NULL DEFAULT 1,
-  `version` bigint(20) NOT NULL DEFAULT 0,
-  `created_by` bigint(20) DEFAULT NULL,
+  `active` tinyint(1) NOT NULL DEFAULT '1',
+  `version` bigint NOT NULL DEFAULT '0',
+  `created_by` bigint DEFAULT NULL,
   `created_at` datetime NOT NULL,
-  `updated_by` bigint(20) DEFAULT NULL,
+  `updated_by` bigint DEFAULT NULL,
   `updated_at` datetime NOT NULL,
   PRIMARY KEY (`session_id`),
   UNIQUE KEY `uk_session_token` (`session_token`),
@@ -2191,7 +2464,7 @@ CREATE TABLE `erp_user_sessions` (
   KEY `idx_usersession_expiry` (`expiry_time`),
   KEY `idx_usersession_active` (`active`),
   CONSTRAINT `fk_usersession_user` FOREIGN KEY (`user_id`) REFERENCES `erp_users` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2211,12 +2484,20 @@ DROP TABLE IF EXISTS `erp_users`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `erp_users` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int NOT NULL AUTO_INCREMENT,
   `username` varchar(100) NOT NULL,
   `password` varchar(255) NOT NULL,
   `role` varchar(50) DEFAULT NULL,
-  `assigned_branch` int(11) DEFAULT NULL,
-  `is_active` int(11) DEFAULT 1,
+  `assigned_branch` int DEFAULT NULL,
+  `is_active` int DEFAULT '1',
+  `must_change_password` tinyint(1) NOT NULL DEFAULT '0',
+  `temporary_password_created_at` datetime DEFAULT NULL,
+  `temporary_password_expires_at` datetime DEFAULT NULL,
+  `password_changed_at` datetime DEFAULT NULL,
+  `credential_delivery_status` varchar(30) NOT NULL DEFAULT 'NOT_REQUIRED',
+  `credentials_sent_at` datetime DEFAULT NULL,
+  `credential_delivery_attempts` int NOT NULL DEFAULT '0',
+  `credential_version` int NOT NULL DEFAULT '0',
   `created_at` datetime(6) DEFAULT NULL,
   `created_by` varchar(255) DEFAULT NULL,
   `updated_at` datetime(6) DEFAULT NULL,
@@ -2224,8 +2505,9 @@ CREATE TABLE `erp_users` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`),
   KEY `assigned_branch` (`assigned_branch`),
+  KEY `idx_erp_users_temp_credentials` (`must_change_password`,`temporary_password_expires_at`),
   CONSTRAINT `erp_users_ibfk_1` FOREIGN KEY (`assigned_branch`) REFERENCES `erp_branches` (`branch_id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -2234,7 +2516,7 @@ CREATE TABLE `erp_users` (
 
 LOCK TABLES `erp_users` WRITE;
 /*!40000 ALTER TABLE `erp_users` DISABLE KEYS */;
-INSERT INTO `erp_users` VALUES (1,'erpsadmin','$2a$10$95vGGFy8A47oEfW0F.DDe.mlC4LceWJXhFeXBRWp7ECXnEPPotct6','SUPER_ADMIN',NULL,1,'2026-06-25 08:42:22.000000',NULL,'2026-06-25 08:42:22.000000',NULL),(2,'u011@montfort.ug','$2a$10$1Kxi4QIxq7np1CycnakyLeK5SuH44cgkRUL1ZG2FyiPopJ02RfNiK','School Admin',1,1,'2026-06-25 08:43:11.000000',NULL,'2026-06-25 08:43:11.000000',NULL),(3,'u021@montfort.ug','$2a$10$ltJEDZUSj9WL5o3PYLB9k.8xJYUtg2sGBwNTDg/RTQYYnrYDyy6/C','School Admin',2,1,'2026-06-25 08:45:46.000000',NULL,'2026-06-25 08:45:46.000000',NULL),(4,'u031@montfort.ug','$2a$10$YYFEuPbY2quMsZAaWyFJneR5I0gdwXoCKXyjufpe5jRq59l1h.zDK','School Admin',3,1,'2026-06-25 08:46:46.000000',NULL,'2026-06-25 08:46:46.000000',NULL);
+INSERT INTO `erp_users` VALUES (1,'erpsadmin','$2a$10$95vGGFy8A47oEfW0F.DDe.mlC4LceWJXhFeXBRWp7ECXnEPPotct6','SUPER_ADMIN',NULL,1,0,NULL,NULL,NULL,'NOT_REQUIRED',NULL,0,0,'2026-06-25 08:42:22.000000',NULL,'2026-06-25 08:42:22.000000',NULL),(33,'u011@montfort.ug','$2a$10$4.FJN435M1fbe7H5kIzlpuUhwQoHRgcW2JE1oeE9VJkjhHfI80o52','BRANCH_ADMIN',1,1,0,NULL,NULL,'2026-07-23 09:43:26','ACCEPTED','2026-07-23 09:42:20',1,9,'2026-07-23 04:53:43.394239','1','2026-07-23 15:13:26.153930','system'),(34,'U011-T-26-002','$2a$10$lbxPPWXRDu1Pk257ZNE8tumRqmZX83JvLKac4ipcrh2rxUI0pZze.','ACCOUNTANT',1,1,1,'2026-07-23 08:06:19','2026-07-26 08:06:19',NULL,'SENT','2026-07-23 08:06:38',1,1,'2026-07-23 13:36:18.805638','33','2026-07-23 13:36:38.051051','system'),(35,'U011-T-26-003','$2a$10$fvTBdyJlZXyftT6y5xE2d.1aAsIyZCKJJOVbKEfx.Yv9wTRrtC1DW','TEACHER',1,1,0,NULL,NULL,'2026-07-23 10:13:29','ACCEPTED','2026-07-23 10:12:13',1,4,'2026-07-23 15:25:44.211206','33','2026-07-23 15:43:28.518865','system');
 /*!40000 ALTER TABLE `erp_users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -2247,4 +2529,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-08 15:07:03
+-- Dump completed on 2026-07-23 23:21:10
