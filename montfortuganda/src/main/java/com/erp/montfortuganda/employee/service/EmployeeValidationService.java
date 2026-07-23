@@ -1289,4 +1289,89 @@ public class EmployeeValidationService {
             ErpEmployee reportingManager
     ) {
     }
+    /**
+     * Validates an Employee registration for a trusted, explicitly supplied
+     * branch context such as an asynchronous bulk-import job.
+     *
+     * <p>The caller must obtain branch and user IDs from an authenticated and
+     * authorized import job. Browser-supplied branch ownership must never be
+     * passed directly to this method.</p>
+     */
+    public RegistrationReferences validateForBulkRegistration(
+            EmployeeRegistrationRequest request,
+            Branch branch,
+            Integer createdByUserId,
+            String createdByUsername
+    ) {
+        if (request == null) {
+            throw new BadRequestException(
+                    "Employee registration information is required."
+            );
+        }
+
+        if (
+                branch == null
+                        || branch.getBranchId() == null
+                        || branch.getBranchId() <= 0
+        ) {
+            throw new BadRequestException(
+                    "A valid Employee branch is required."
+            );
+        }
+
+        if (!Integer.valueOf(1).equals(branch.getIsActive())) {
+            throw new BadRequestException(
+                    "The Employee branch is inactive."
+            );
+        }
+
+        Department department =
+                requireActiveDepartment(
+                        request.departmentId(),
+                        branch.getBranchId()
+                );
+
+        Designation designation =
+                requireActiveDesignation(
+                        request.designationId()
+                );
+
+        ErpEmployee reportingManager =
+                requireOptionalActiveReportingManager(
+                        request.reportingManagerId(),
+                        branch.getBranchId()
+                );
+
+        validateMinimumJoiningAge(
+                request.dateOfBirth(),
+                request.joiningDate()
+        );
+
+        validateRegistrationStatus(
+                request.employmentStatus()
+        );
+
+        validateEmployeeIdentifierUniquenessForCreate(
+                branch.getBranchId(),
+                request
+        );
+
+        validateNestedCollections(
+                request.contacts(),
+                request.qualifications(),
+                request.experiences(),
+                request.documents()
+        );
+
+        return new RegistrationReferences(
+                new BranchContext(
+                        branch,
+                        createdByUserId,
+                        createdByUsername
+                ),
+                department,
+                designation,
+                reportingManager
+        );
+    }
 }

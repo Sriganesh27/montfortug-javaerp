@@ -156,24 +156,29 @@ public class EmployeeFileService {
                 request,
                 "Employee registration request is required."
         );
+
         requireEmployeeStorageIdentity(employee);
 
-        StoredFile profilePhoto =
-                storeEncodedFile(
-                        request.profilePhotoData(),
-                        request.profilePhotoFileName(),
-                        request.profilePhotoContentType(),
-                        request.profilePhotoFileSize(),
-                        MAX_PROFILE_PHOTO_BYTES,
-                        IMAGE_MIME_TYPES,
-                        employee,
-                        "profile",
-                        "profile-photo"
-                );
+        if (hasText(request.profilePhotoData())) {
+            StoredFile profilePhoto =
+                    storeEncodedFile(
+                            request.profilePhotoData(),
+                            request.profilePhotoFileName(),
+                            request.profilePhotoContentType(),
+                            request.profilePhotoFileSize(),
+                            MAX_PROFILE_PHOTO_BYTES,
+                            IMAGE_MIME_TYPES,
+                            employee,
+                            "profile",
+                            "profile-photo"
+                    );
 
-        employee.setProfilePhoto(
-                profilePhoto.relativePath()
-        );
+            employee.setProfilePhoto(
+                    profilePhoto.relativePath()
+            );
+        } else {
+            employee.setProfilePhoto(null);
+        }
 
         if (hasText(request.signatureData())) {
             StoredFile signature =
@@ -192,6 +197,8 @@ public class EmployeeFileService {
             employee.setSignatureFile(
                     signature.relativePath()
             );
+        } else {
+            employee.setSignatureFile(null);
         }
     }
 

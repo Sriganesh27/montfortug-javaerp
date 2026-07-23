@@ -4,6 +4,7 @@ import com.erp.montfortuganda.school.entity.Designation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
+import java.util.List;
 
 import java.util.Optional;
 
@@ -11,4 +12,10 @@ import java.util.Optional;
 public interface DesignationRepository extends JpaRepository<Designation, Long>, JpaSpecificationExecutor<Designation> {
     Optional<Designation> findByDesignationCode(String code);
     Optional<Designation> findByDesignationName(String name);
+    List<Designation> findAllByActiveTrueOrderByDesignationNameAsc();
+
+    Optional<Designation>
+    findByDesignationNameIgnoreCaseAndActiveTrue(
+            String designationName
+    );
 }

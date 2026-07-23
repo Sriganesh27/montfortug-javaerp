@@ -25,7 +25,15 @@ public class ImportContext {
 
     // NEW: Fast-forward target rows for efficient retries (Null means process all)
     private final Set<Integer> targetRowNumbers;
-
+    /**
+     * Module-specific options captured when the import job is submitted.
+     *
+     * <p>Employee import uses this for credential creation, email delivery
+     * and the selected login role.</p>
+     */
+    @Builder.Default
+    private final Map<String, Object> importOptions =
+            new ConcurrentHashMap<>();
     // NEW: Thread-safe job cache for cross-row validation state (e.g. intra-file duplicates)
     @Builder.Default
     private final Map<String, Object> jobStateCache = new ConcurrentHashMap<>();

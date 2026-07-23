@@ -8,11 +8,15 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface ErpImportErrorRepository extends JpaRepository<ErpImportError, Long> {
+public interface ErpImportErrorRepository
+        extends JpaRepository<ErpImportError, Long> {
 
-    // Original list (kept for compatibility)
-    List<ErpImportError> findByJobId(String jobId);
+    List<ErpImportError> findByJobId(
+            String jobId
+    );
 
-    // NEW: Paginated query to prevent JVM crashes on massive error reports
-    Page<ErpImportError> findByJobId(String jobId, Pageable pageable);
+    Page<ErpImportError> findByJobId(
+            String jobId,
+            Pageable pageable
+    );
 }

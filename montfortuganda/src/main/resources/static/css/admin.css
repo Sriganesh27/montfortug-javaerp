@@ -2997,3 +2997,547 @@
         flex-basis: 40px;
     }
 }
+
+/* ==========================================================
+   ENTERPRISE BULK IMPORT MODAL
+   ========================================================== */
+
+#erp-import-modal,
+#erp-import-modal * {
+    box-sizing: border-box;
+}
+
+#erp-import-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 12000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.62);
+    backdrop-filter: blur(4px);
+}
+
+#erp-import-modal.hidden,
+#erp-import-modal .hidden {
+    display: none !important;
+}
+
+#erp-import-modal-box {
+    width: min(680px, 100%);
+    max-height: min(840px, calc(100vh - 48px));
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    background: #ffffff;
+    box-shadow:
+        0 28px 70px rgba(15, 23, 42, 0.25),
+        0 8px 20px rgba(15, 23, 42, 0.12);
+}
+
+#erp-import-modal .erp-import-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 24px 26px 18px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#erp-import-modal .erp-import-eyebrow {
+    display: inline-block;
+    margin-bottom: 5px;
+    color: #b91c1c;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+#erp-import-modal h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.35rem;
+    line-height: 1.25;
+}
+
+#erp-import-desc {
+    margin: 7px 0 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+#erp-import-modal .erp-import-icon-btn {
+    display: inline-grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+    color: #64748b;
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+#erp-import-modal .erp-import-icon-btn:hover:not(:disabled) {
+    border-color: #cbd5e1;
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+#erp-import-modal .erp-import-icon-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+#erp-import-modal .erp-import-step {
+    padding: 24px 26px;
+}
+
+#erp-import-modal .erp-import-drop-zone {
+    display: flex;
+    min-height: 190px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 24px;
+    border: 2px dashed #cbd5e1;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #334155;
+    text-align: center;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+#erp-import-modal .erp-import-drop-zone:hover,
+#erp-import-modal .erp-import-drop-zone:focus,
+#erp-import-modal .erp-import-drop-zone.dragging {
+    border-color: #b91c1c;
+    background: #fff7f7;
+    outline: none;
+}
+
+#erp-import-modal .erp-import-drop-icon {
+    display: grid;
+    place-items: center;
+    width: 58px;
+    height: 58px;
+    margin-bottom: 12px;
+    border-radius: 16px;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 1.65rem;
+}
+
+#erp-import-modal .erp-import-drop-zone strong {
+    color: #0f172a;
+    font-size: 0.98rem;
+}
+
+#erp-import-modal .erp-import-drop-zone > span {
+    margin-top: 4px;
+    color: #64748b;
+    font-size: 0.86rem;
+}
+
+#erp-import-modal .erp-import-drop-zone small {
+    margin-top: 12px;
+    color: #94a3b8;
+    font-size: 0.75rem;
+}
+
+#erp-import-modal .erp-import-file-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px;
+    border: 1px solid #dbeafe;
+    border-radius: 12px;
+    background: #f8fbff;
+}
+
+#erp-import-modal .erp-import-file-icon {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 11px;
+    background: #dcfce7;
+    color: #15803d;
+    font-size: 1.3rem;
+}
+
+#erp-import-modal .erp-import-file-details {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+}
+
+#erp-import-modal .erp-import-file-details strong {
+    overflow: hidden;
+    color: #0f172a;
+    font-size: 0.88rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#erp-import-modal .erp-import-file-details span {
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 0.76rem;
+}
+
+#erp-import-modal .erp-import-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+}
+
+#erp-import-modal .erp-import-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+#erp-import-modal .erp-import-option:has(input:checked) {
+    border-color: #fca5a5;
+    background: #fff7f7;
+}
+
+#erp-import-modal .erp-import-option:has(input:disabled) {
+    cursor: not-allowed;
+    opacity: 0.56;
+}
+
+#erp-import-modal .erp-import-option input {
+    width: 17px;
+    height: 17px;
+    margin: 2px 0 0;
+    accent-color: #b91c1c;
+}
+
+#erp-import-modal .erp-import-option span {
+    display: flex;
+    flex-direction: column;
+}
+
+#erp-import-modal .erp-import-option strong {
+    color: #1e293b;
+    font-size: 0.83rem;
+}
+
+#erp-import-modal .erp-import-option small {
+    margin-top: 3px;
+    color: #64748b;
+    font-size: 0.72rem;
+    line-height: 1.4;
+}
+
+#erp-import-modal .erp-import-information {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 16px;
+    padding: 12px 14px;
+    border: 1px solid #bae6fd;
+    border-radius: 10px;
+    background: #f0f9ff;
+    color: #075985;
+}
+
+#erp-import-modal .erp-import-information i {
+    margin-top: 1px;
+}
+
+#erp-import-modal .erp-import-information p {
+    margin: 0;
+    font-size: 0.77rem;
+    line-height: 1.48;
+}
+
+#erp-import-modal .erp-import-alert {
+    margin-top: 14px;
+    padding: 11px 13px;
+    border: 1px solid #fecaca;
+    border-radius: 9px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
+#erp-import-modal .erp-import-progress-heading > div {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+#erp-import-modal #import-stage-label {
+    color: #0f172a;
+    font-size: 0.96rem;
+    font-weight: 750;
+}
+
+#erp-import-modal #import-progress-percent {
+    color: #b91c1c;
+    font-size: 0.95rem;
+}
+
+#erp-import-modal #import-status-text {
+    margin: 6px 0 14px;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+#erp-import-modal .erp-import-progress-track {
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+#erp-import-modal .erp-import-progress-fill {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #dc2626, #991b1b);
+    transition: width 0.35s ease;
+}
+
+#erp-import-modal .erp-import-stage-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 22px;
+}
+
+#erp-import-modal .erp-import-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 70px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+#erp-import-modal .erp-import-stage i {
+    font-size: 1.12rem;
+}
+
+#erp-import-modal .erp-import-stage.active {
+    border-color: #fca5a5;
+    background: #fff7f7;
+    color: #b91c1c;
+}
+
+#erp-import-modal .erp-import-stage.complete {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+#erp-import-modal .erp-import-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+}
+
+#erp-import-modal .erp-import-stat {
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #ffffff;
+}
+
+#erp-import-modal .erp-import-stat span {
+    display: block;
+    color: #64748b;
+    font-size: 0.68rem;
+}
+
+#erp-import-modal .erp-import-stat strong {
+    display: block;
+    margin-top: 4px;
+    color: #0f172a;
+    font-size: 1.05rem;
+}
+
+#erp-import-modal .erp-import-stat.success strong {
+    color: #15803d;
+}
+
+#erp-import-modal .erp-import-stat.danger strong {
+    color: #b91c1c;
+}
+
+#erp-import-modal .erp-import-running-note {
+    margin: 16px 0 0;
+    color: #94a3b8;
+    font-size: 0.72rem;
+    text-align: center;
+}
+
+#erp-import-modal .erp-import-result-icon {
+    display: grid;
+    place-items: center;
+    width: 66px;
+    height: 66px;
+    margin: 4px auto 14px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 1.8rem;
+}
+
+#erp-import-modal .erp-import-result-icon.success {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+#erp-import-modal .erp-import-result-icon.warning {
+    background: #fef3c7;
+    color: #b45309;
+}
+
+#erp-import-modal .erp-import-result-icon.danger {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+#erp-import-modal #import-result-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.12rem;
+    text-align: center;
+}
+
+#erp-import-modal #import-result-msg {
+    max-width: 520px;
+    margin: 8px auto 0;
+    color: #64748b;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    text-align: center;
+}
+
+#erp-import-modal .result-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 20px;
+}
+
+#erp-import-modal #import-download-errors {
+    margin: 18px auto 0;
+}
+
+#erp-import-modal .erp-import-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 17px 26px 22px;
+    border-top: 1px solid #e2e8f0;
+}
+
+#erp-import-modal .erp-import-primary-btn,
+#erp-import-modal .erp-import-secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    min-height: 40px;
+    padding: 0 17px;
+    border-radius: 9px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+#erp-import-modal .erp-import-primary-btn {
+    border: 1px solid #991b1b;
+    background: #b91c1c;
+    color: #ffffff;
+}
+
+#erp-import-modal .erp-import-primary-btn:hover:not(:disabled) {
+    background: #991b1b;
+}
+
+#erp-import-modal .erp-import-primary-btn:disabled {
+    border-color: #cbd5e1;
+    background: #cbd5e1;
+    cursor: not-allowed;
+}
+
+#erp-import-modal .erp-import-secondary-btn {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #334155;
+}
+
+#erp-import-modal .erp-import-secondary-btn:hover:not(:disabled) {
+    background: #f8fafc;
+}
+
+#erp-import-modal .erp-import-secondary-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+@media (max-width: 640px) {
+    #erp-import-modal {
+        align-items: end;
+        padding: 0;
+    }
+
+    #erp-import-modal-box {
+        width: 100%;
+        max-height: 94vh;
+        border-radius: 18px 18px 0 0;
+    }
+
+    #erp-import-modal .erp-import-header,
+    #erp-import-modal .erp-import-step,
+    #erp-import-modal .erp-import-actions {
+        padding-right: 18px;
+        padding-left: 18px;
+    }
+
+    #erp-import-modal .erp-import-options {
+        grid-template-columns: 1fr;
+    }
+
+    #erp-import-modal .erp-import-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #erp-import-modal .result-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    #erp-import-modal .erp-import-stage span {
+        font-size: 0.64rem;
+    }
+}

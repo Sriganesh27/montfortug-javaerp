@@ -2,6 +2,7 @@ package com.erp.montfortuganda.notification.service;
 
 import com.erp.montfortuganda.admission.entity.ErpApplication;
 import com.erp.montfortuganda.employee.entity.ErpEmployee;
+import com.erp.montfortuganda.notification.config.BranchMailSenderFactory;
 import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.service.FileStorageService;
 import com.erp.montfortuganda.school.service.model.BranchAdminCredentials;
@@ -24,161 +25,81 @@ import java.time.format.DateTimeFormatter;
 @Service
 public class EmailService {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(EmailService.class);
-
-    private static final String SCHOOL_LOGO_CONTENT_ID =
-            "schoolLogoImage";
-
-    private static final String DEFAULT_LOGO_PATH =
-            "static/assets/Images/logo_MBSG_UG_8.webp";
-
-    private static final String DEFAULT_LOGO_CONTENT_TYPE =
-            "image/webp";
-
+    private static final Logger LOGGER = LoggerFactory.getLogger(EmailService.class);
+    private static final String SCHOOL_LOGO_CONTENT_ID = "schoolLogoImage";
+    private static final String DEFAULT_LOGO_PATH = "static/assets/Images/logo_MBSG_UG_8.webp";
+    private static final String DEFAULT_LOGO_CONTENT_TYPE = "image/webp";
     private static final DateTimeFormatter EXPIRY_FORMATTER =
-            DateTimeFormatter.ofPattern(
-                    "dd MMM yyyy, hh:mm a 'UTC'"
-            );
+            DateTimeFormatter.ofPattern("dd MMM yyyy, hh:mm a 'UTC'");
 
-    private final JavaMailSender mailSender;
+    private final JavaMailSender centralMailSender;
+    private final BranchMailSenderFactory branchMailSenderFactory;
     private final TemplateEngine templateEngine;
     private final FileStorageService fileStorageService;
 
     @Value("${spring.mail.username}")
-    private String mailUsername;
+    private String centralMailUsername;
 
     @Value("${erp.mail.from-name:Montfort ERP}")
-    private String mailFromName;
+    private String centralMailFromName;
 
-    @Value("${app.frontend.url:http://localhost:8080}")
+    @Value("${app.frontend.url:http://localhost:8081}")
     private String frontendUrl;
 
     public EmailService(
-            JavaMailSender mailSender,
+            JavaMailSender centralMailSender,
+            BranchMailSenderFactory branchMailSenderFactory,
             TemplateEngine templateEngine,
             FileStorageService fileStorageService
     ) {
-        this.mailSender = mailSender;
-        this.templateEngine =
-                templateEngine;
-        this.fileStorageService =
-                fileStorageService;
+        this.centralMailSender = centralMailSender;
+        this.branchMailSenderFactory = branchMailSenderFactory;
+        this.templateEngine = templateEngine;
+        this.fileStorageService = fileStorageService;
     }
 
-    /**
-     * Sends the admission receipt from the SMTP account configured for the
-     * application branch. The uploaded branch logo is embedded in the email.
-     */
     @Async
-    public void sendApplicationReceipt(
-            ErpApplication application
-    ) {
-        if (
-                application == null
-                        || !hasText(
-                        application.getPrimaryEmail()
-                )
-        ) {
+    public void sendApplicationReceipt(ErpApplication application) {
+        if (application == null || !hasText(application.getPrimaryEmail())) {
             return;
         }
 
-        String applicationNumber =
-                application.getApplicationNo();
+        String applicationNumber = application.getApplicationNo();
 
         try {
-            Branch branch =
-                    requireBranch(
-                            application.getBranch(),
-                            "Application"
-                    );
+            Branch branch = requireBranch(application.getBranch(), "Application");
+            String schoolName = resolveSchoolName(branch);
+            EmailLogo emailLogo = resolveBranchLogo(branch);
 
-            String schoolName =
-                    resolveSchoolName(branch);
+            Context context = new Context();
+            context.setVariable("schoolName", schoolName);
+            context.setVariable("schoolLogo", "cid:" + SCHOOL_LOGO_CONTENT_ID);
+            context.setVariable("studentName", buildFullName(application.getFirstName(), application.getLastName()));
+            context.setVariable("applicationNo", applicationNumber);
+            context.setVariable("trackingUrl", buildTrackingUrl(applicationNumber));
+            context.setVariable("frontendUrl", normalizeBaseUrl(frontendUrl));
+            context.setVariable("currentYear", Year.now().getValue());
 
-            EmailLogo emailLogo =
-                    resolveBranchLogo(branch);
+            String htmlContent = templateEngine.process("email/application-confirmation", context);
 
-            Context context =
-                    new Context();
+            JavaMailSender branchMailSender = branchMailSenderFactory.getMailSender(branch);
+            MimeMessage message = branchMailSender.createMimeMessage();
+            MimeMessageHelper helper = createMessageHelper(message);
 
-            context.setVariable(
-                    "schoolName",
-                    schoolName
-            );
-            context.setVariable(
-                    "schoolLogo",
-                    "cid:" + SCHOOL_LOGO_CONTENT_ID
-            );
-            context.setVariable(
-                    "studentName",
-                    buildFullName(
-                            application.getFirstName(),
-                            application.getLastName()
-                    )
-            );
-            context.setVariable(
-                    "applicationNo",
-                    applicationNumber
-            );
-            context.setVariable(
-                    "trackingUrl",
-                    buildTrackingUrl(
-                            applicationNumber
-                    )
-            );
-            context.setVariable(
-                    "frontendUrl",
-                    normalizeBaseUrl(frontendUrl)
-            );
-            context.setVariable(
-                    "currentYear",
-                    Year.now().getValue()
-            );
+            configureBranchSender(helper, branch, " Admissions");
+            helper.setTo(application.getPrimaryEmail().trim());
+            helper.setSubject("Application Received - " + applicationNumber);
+            helper.setText(htmlContent, true);
+            addInlineLogo(helper, emailLogo);
 
-            String htmlContent =
-                    templateEngine.process(
-                            "email/application-confirmation",
-                            context
-                    );
-
-            MimeMessage message =
-                    mailSender.createMimeMessage();
-
-            MimeMessageHelper helper =
-                    createMessageHelper(message);
-
-            configureBranchSender(
-                    helper,
-                    branch,
-                    " Admissions"
-            );
-
-            helper.setTo(
-                    application.getPrimaryEmail()
-                            .trim()
-            );
-            helper.setSubject(
-                    "Application Received - "
-                            + applicationNumber
-            );
-            helper.setText(
-                    htmlContent,
-                    true
-            );
-
-            addInlineLogo(
-                    helper,
-                    emailLogo
-            );
-
-            mailSender.send(message);
+            branchMailSender.send(message);
 
             LOGGER.info(
-                    "Application receipt email sent for application: {}",
+                    "Application receipt email sent from branch {} <{}> for application: {}",
+                    branch.getSchoolCode(),
+                    branch.getBranchEmail(),
                     applicationNumber
             );
-
         } catch (Exception exception) {
             LOGGER.error(
                     "Application receipt email failed for application: {}",
@@ -188,133 +109,56 @@ public class EmailService {
         }
     }
 
-    /**
-     * Sends Employee credentials from the SMTP account configured for the
-     * Employee branch. The uploaded branch logo is embedded in the email.
-     *
-     * <p>This method is intentionally synchronous. The after-commit Employee
-     * email listener runs asynchronously and must know whether delivery
-     * succeeded or failed so it can update credential-delivery status
-     * accurately.</p>
-     */
     public void sendEmployeeWelcomeEmail(
             ErpEmployee employee,
             String username,
             String plainTextPassword
     ) {
         if (employee == null) {
-            throw new IllegalArgumentException(
-                    "Employee is required for credential delivery."
-            );
+            throw new IllegalArgumentException("Employee is required for credential delivery.");
         }
 
-        requireText(
-                employee.getOfficialEmail(),
-                "Employee official email"
-        );
-        requireText(
-                username,
-                "Employee username"
-        );
-        requireText(
-                plainTextPassword,
-                "Employee temporary password"
-        );
+        requireText(employee.getOfficialEmail(), "Employee official email");
+        requireText(username, "Employee username");
+        requireText(plainTextPassword, "Employee temporary password");
 
-        String employeeEmail =
-                employee.getOfficialEmail()
-                        .trim();
+        String employeeEmail = employee.getOfficialEmail().trim();
 
         try {
-            Branch branch =
-                    requireBranch(
-                            employee.getBranch(),
-                            "Employee"
-                    );
+            Branch branch = requireBranch(employee.getBranch(), "Employee");
+            String schoolName = resolveSchoolName(branch);
+            EmailLogo emailLogo = resolveBranchLogo(branch);
 
-            String schoolName =
-                    resolveSchoolName(branch);
+            Context context = new Context();
+            context.setVariable("schoolName", schoolName);
+            context.setVariable("schoolLogo", "cid:" + SCHOOL_LOGO_CONTENT_ID);
+            context.setVariable("employeeName", resolveEmployeeName(employee));
+            context.setVariable("username", username.trim());
+            context.setVariable("tempPassword", plainTextPassword);
+            context.setVariable("loginUrl", buildLoginUrl());
+            context.setVariable("frontendUrl", normalizeBaseUrl(frontendUrl));
+            context.setVariable("currentYear", Year.now().getValue());
 
-            EmailLogo emailLogo =
-                    resolveBranchLogo(branch);
+            String htmlContent = templateEngine.process("email/employee-welcome", context);
 
-            Context context =
-                    new Context();
+            JavaMailSender branchMailSender = branchMailSenderFactory.getMailSender(branch);
+            MimeMessage message = branchMailSender.createMimeMessage();
+            MimeMessageHelper helper = createMessageHelper(message);
 
-            context.setVariable(
-                    "schoolName",
-                    schoolName
-            );
-            context.setVariable(
-                    "schoolLogo",
-                    "cid:" + SCHOOL_LOGO_CONTENT_ID
-            );
-            context.setVariable(
-                    "employeeName",
-                    resolveEmployeeName(employee)
-            );
-            context.setVariable(
-                    "username",
-                    username.trim()
-            );
-            context.setVariable(
-                    "tempPassword",
-                    plainTextPassword
-            );
-            context.setVariable(
-                    "loginUrl",
-                    buildLoginUrl()
-            );
-            context.setVariable(
-                    "frontendUrl",
-                    normalizeBaseUrl(frontendUrl)
-            );
-            context.setVariable(
-                    "currentYear",
-                    Year.now().getValue()
-            );
-
-            String htmlContent =
-                    templateEngine.process(
-                            "email/employee-welcome",
-                            context
-                    );
-
-            MimeMessage message =
-                    mailSender.createMimeMessage();
-
-            MimeMessageHelper helper =
-                    createMessageHelper(message);
-
-            configureBranchSender(
-                    helper,
-                    branch,
-                    " HR"
-            );
-
+            configureBranchSender(helper, branch, " HR");
             helper.setTo(employeeEmail);
-            helper.setSubject(
-                    "Welcome to "
-                            + schoolName
-                            + " - Your Account Details"
-            );
-            helper.setText(
-                    htmlContent,
-                    true
-            );
+            helper.setSubject("Welcome to " + schoolName + " - Your Account Details");
+            helper.setText(htmlContent, true);
+            addInlineLogo(helper, emailLogo);
 
-            addInlineLogo(
-                    helper,
-                    emailLogo
-            );
-
-            mailSender.send(message);
+            branchMailSender.send(message);
 
             LOGGER.info(
-                    "Employee welcome email sent to: {}",
+                    "Employee welcome email sent from branch {} <{}> to: {}",
+                    branch.getSchoolCode(),
+                    branch.getBranchEmail(),
                     employeeEmail
             );
-
         } catch (Exception exception) {
             throw new IllegalStateException(
                     "Employee credentials email could not be sent.",
@@ -323,123 +167,47 @@ public class EmailService {
         }
     }
 
-    /**
-     * Sends Branch Admin credentials from the central ERP SMTP account to the
-     * official email address stored for the branch. This email intentionally
-     * uses the central Montfort Brothers logo instead of the uploaded school
-     * logo.
-
-     * The method remains synchronous so the after-commit branch workflow can
-     * mark credential delivery as SENT or FAILED accurately.
-     */
     public void sendBranchAdminWelcomeEmail(
             Branch branch,
             BranchAdminCredentials credentials
     ) {
-        validateBranchAdminRequest(
-                branch,
-                credentials
-        );
+        validateBranchAdminRequest(branch, credentials);
 
         try {
-            String schoolName =
-                    resolveSchoolName(branch);
+            String schoolName = resolveSchoolName(branch);
+            EmailLogo centralLogo = loadCentralMontfortLogo();
 
-            EmailLogo centralLogo =
-                    loadCentralMontfortLogo();
+            Context context = new Context();
+            context.setVariable("schoolName", schoolName);
+            context.setVariable("schoolLogo", "cid:" + SCHOOL_LOGO_CONTENT_ID);
+            context.setVariable("branchName", branch.getBranchName());
+            context.setVariable("branchLocation", branch.getBranchLocation());
+            context.setVariable("schoolEmail", branch.getBranchEmail());
+            context.setVariable("username", credentials.getUsername());
+            context.setVariable("tempPassword", credentials.getTemporaryPassword());
+            context.setVariable("expiresAt", credentials.getExpiresAt().format(EXPIRY_FORMATTER));
+            context.setVariable("loginUrl", buildLoginUrl());
+            context.setVariable("frontendUrl", normalizeBaseUrl(frontendUrl));
+            context.setVariable("currentYear", Year.now().getValue());
 
-            Context context =
-                    new Context();
+            String htmlContent = templateEngine.process("email/branch-admin-welcome", context);
 
-            context.setVariable(
-                    "schoolName",
-                    schoolName
-            );
-            context.setVariable(
-                    "schoolLogo",
-                    "cid:" + SCHOOL_LOGO_CONTENT_ID
-            );
-            context.setVariable(
-                    "branchName",
-                    branch.getBranchName()
-            );
-            context.setVariable(
-                    "branchLocation",
-                    branch.getBranchLocation()
-            );
-            context.setVariable(
-                    "schoolEmail",
-                    branch.getBranchEmail()
-            );
-            context.setVariable(
-                    "username",
-                    credentials.getUsername()
-            );
-            context.setVariable(
-                    "tempPassword",
-                    credentials.getTemporaryPassword()
-            );
-            context.setVariable(
-                    "expiresAt",
-                    credentials.getExpiresAt()
-                            .format(EXPIRY_FORMATTER)
-            );
-            context.setVariable(
-                    "loginUrl",
-                    buildLoginUrl()
-            );
-            context.setVariable(
-                    "frontendUrl",
-                    normalizeBaseUrl(frontendUrl)
-            );
-            context.setVariable(
-                    "currentYear",
-                    Year.now().getValue()
-            );
+            MimeMessage message = centralMailSender.createMimeMessage();
+            MimeMessageHelper helper = createMessageHelper(message);
 
-            String htmlContent =
-                    templateEngine.process(
-                            "email/branch-admin-welcome",
-                            context
-                    );
+            configureCentralSender(helper);
+            helper.setTo(branch.getBranchEmail().trim());
+            helper.setSubject("Branch Administrator Account - " + schoolName);
+            helper.setText(htmlContent, true);
+            addInlineLogo(helper, centralLogo);
 
-            MimeMessage message =
-                    mailSender.createMimeMessage();
-
-            MimeMessageHelper helper =
-                    createMessageHelper(message);
-
-            configureBranchSender(
-                    helper,
-                    branch,
-                    ""
-            );
-
-            helper.setTo(
-                    branch.getBranchEmail()
-                            .trim()
-            );
-            helper.setSubject(
-                    "Branch Administrator Account - "
-                            + schoolName
-            );
-            helper.setText(
-                    htmlContent,
-                    true
-            );
-
-            addInlineLogo(
-                    helper,
-                    centralLogo
-            );
-
-            mailSender.send(message);
+            centralMailSender.send(message);
 
             LOGGER.info(
-                    "Branch Admin credentials email sent for branch ID: {}",
+                    "Branch Admin credentials email sent from central account <{}> for branch ID: {}",
+                    centralMailUsername,
                     branch.getBranchId()
             );
-
         } catch (Exception exception) {
             throw new IllegalStateException(
                     "Branch Admin credentials email could not be sent.",
@@ -448,14 +216,8 @@ public class EmailService {
         }
     }
 
-    private MimeMessageHelper createMessageHelper(
-            MimeMessage message
-    ) throws Exception {
-        return new MimeMessageHelper(
-                message,
-                true,
-                "UTF-8"
-        );
+    private MimeMessageHelper createMessageHelper(MimeMessage message) throws Exception {
+        return new MimeMessageHelper(message, true, "UTF-8");
     }
 
     private void configureBranchSender(
@@ -465,87 +227,56 @@ public class EmailService {
     ) throws Exception {
         validateBranchEmailConfiguration(branch);
 
-        String senderName =
-                resolveSenderName(
-                        branch,
-                        defaultSuffix
-                );
+        String branchEmail = branch.getBranchEmail().trim();
+        String senderName = resolveSenderName(branch, defaultSuffix);
 
-        requireText(
-                mailUsername,
-                "Central ERP sender email"
-        );
-
-        helper.setFrom(
-                mailUsername.trim(),
-                hasText(mailFromName)
-                        ? mailFromName.trim()
-                        : "Montfort ERP"
-        );
-
-        helper.setReplyTo(
-                resolveReplyTo(branch),
-                senderName
-        );
+        helper.setFrom(branchEmail, senderName);
+        helper.setReplyTo(resolveReplyTo(branch), senderName);
     }
 
-    private EmailLogo resolveBranchLogo(
-            Branch branch
-    ) {
+    private void configureCentralSender(MimeMessageHelper helper) throws Exception {
+        requireText(centralMailUsername, "Central ERP sender email");
+
+        String senderEmail = centralMailUsername.trim();
+        String senderName = hasText(centralMailFromName)
+                ? centralMailFromName.trim()
+                : "Montfort ERP";
+
+        helper.setFrom(senderEmail, senderName);
+        helper.setReplyTo(senderEmail, senderName);
+    }
+
+    private EmailLogo resolveBranchLogo(Branch branch) {
         if (!hasText(branch.getBranchLogoUrl())) {
             return loadCentralMontfortLogo();
         }
 
         try {
-            Resource logoResource =
-                    fileStorageService.loadPrivateFile(
-                            branch.getBranchLogoUrl()
-                    );
-
-            String contentType =
-                    fileStorageService.detectContentType(
-                            branch.getBranchLogoUrl()
-                    );
-
-            return new EmailLogo(
-                    logoResource,
-                    contentType
-            );
-
+            Resource logoResource = fileStorageService.loadPrivateFile(branch.getBranchLogoUrl());
+            String contentType = fileStorageService.detectContentType(branch.getBranchLogoUrl());
+            return new EmailLogo(logoResource, contentType);
         } catch (RuntimeException exception) {
             LOGGER.warn(
-                    "Branch logo could not be loaded for branch ID: {}. "
-                            + "The central Montfort logo will be used.",
+                    "Branch logo could not be loaded for branch ID: {}. The central Montfort logo will be used.",
                     branch.getBranchId()
             );
-
             return loadCentralMontfortLogo();
         }
     }
 
     private EmailLogo loadCentralMontfortLogo() {
-        Resource logoResource =
-                new ClassPathResource(
-                        DEFAULT_LOGO_PATH
-                );
+        Resource logoResource = new ClassPathResource(DEFAULT_LOGO_PATH);
 
         if (!logoResource.exists()) {
             throw new IllegalStateException(
-                    "The central Montfort email logo was not found: "
-                            + DEFAULT_LOGO_PATH
+                    "The central Montfort email logo was not found: " + DEFAULT_LOGO_PATH
             );
         }
 
-        return new EmailLogo(
-                logoResource,
-                DEFAULT_LOGO_CONTENT_TYPE
-        );
+        return new EmailLogo(logoResource, DEFAULT_LOGO_CONTENT_TYPE);
     }
 
-    private void addInlineLogo(
-            MimeMessageHelper helper,
-            EmailLogo emailLogo
-    ) throws Exception {
+    private void addInlineLogo(MimeMessageHelper helper, EmailLogo emailLogo) throws Exception {
         helper.addInline(
                 SCHOOL_LOGO_CONTENT_ID,
                 emailLogo.resource(),
@@ -557,192 +288,107 @@ public class EmailService {
             Branch branch,
             BranchAdminCredentials credentials
     ) {
-        validateBranchEmailConfiguration(branch);
+        if (branch == null) {
+            throw new IllegalArgumentException("Branch is required.");
+        }
+
+        requireText(branch.getBranchEmail(), "Branch email");
 
         if (credentials == null) {
-            throw new IllegalArgumentException(
-                    "Branch Admin credentials are required."
-            );
+            throw new IllegalArgumentException("Branch Admin credentials are required.");
         }
 
-        requireText(
-                credentials.getUsername(),
-                "Branch Admin username"
-        );
+        requireText(credentials.getUsername(), "Branch Admin username");
+        requireText(credentials.getTemporaryPassword(), "Branch Admin temporary password");
 
-        requireText(
-                credentials.getTemporaryPassword(),
-                "Branch Admin temporary password"
-        );
-    }
-
-    private void validateBranchEmailConfiguration(
-            Branch branch
-    ) {
-        requireBranch(
-                branch,
-                "Email"
-        );
-
-        requireText(
-                branch.getSchoolCode(),
-                "Branch school code"
-        );
-
-        requireText(
-                branch.getBranchEmail(),
-                "Branch email"
-        );
-
-        if (
-                Boolean.FALSE.equals(
-                        branch.getEmailEnabled()
-                )
-        ) {
-            throw new IllegalStateException(
-                    "Email is disabled for branch: "
-                            + branch.getSchoolCode()
-            );
+        if (credentials.getExpiresAt() == null) {
+            throw new IllegalArgumentException("Branch Admin credential expiry time is required.");
         }
     }
 
-    private Branch requireBranch(
-            Branch branch,
-            String operationName
-    ) {
+    private void validateBranchEmailConfiguration(Branch branch) {
+        requireBranch(branch, "Email");
+        requireText(branch.getSchoolCode(), "Branch school code");
+        requireText(branch.getBranchEmail(), "Branch email");
+
+        if (Boolean.FALSE.equals(branch.getEmailEnabled())) {
+            throw new IllegalStateException("Email is disabled for branch: " + branch.getSchoolCode());
+        }
+    }
+
+    private Branch requireBranch(Branch branch, String operationName) {
         if (branch == null) {
             throw new IllegalArgumentException(
-                    operationName
-                            + " branch is required for email delivery."
+                    operationName + " branch is required for email delivery."
             );
         }
-
         return branch;
     }
 
-    private String resolveSchoolName(
-            Branch branch
-    ) {
+    private String resolveSchoolName(Branch branch) {
         if (hasText(branch.getBranchName())) {
-            return branch.getBranchName()
-                    .trim();
+            return branch.getBranchName().trim();
         }
-
         return "Montfort School";
     }
 
-    private String resolveSenderName(
-            Branch branch,
-            String defaultSuffix
-    ) {
+    private String resolveSenderName(Branch branch, String defaultSuffix) {
         if (hasText(branch.getEmailFromName())) {
-            return branch.getEmailFromName()
-                    .trim();
+            return branch.getEmailFromName().trim();
         }
-
-        return resolveSchoolName(branch)
-                + defaultSuffix;
+        return resolveSchoolName(branch) + defaultSuffix;
     }
 
-    private String resolveReplyTo(
-            Branch branch
-    ) {
+    private String resolveReplyTo(Branch branch) {
         if (hasText(branch.getEmailReplyTo())) {
-            return branch.getEmailReplyTo()
-                    .trim();
+            return branch.getEmailReplyTo().trim();
         }
-
-        return branch.getBranchEmail()
-                .trim();
+        return branch.getBranchEmail().trim();
     }
 
-    private String resolveEmployeeName(
-            ErpEmployee employee
-    ) {
+    private String resolveEmployeeName(ErpEmployee employee) {
         if (hasText(employee.getFullName())) {
-            return employee.getFullName()
-                    .trim();
+            return employee.getFullName().trim();
         }
-
-        return buildFullName(
-                employee.getFirstName(),
-                employee.getLastName()
-        );
+        return buildFullName(employee.getFirstName(), employee.getLastName());
     }
 
-    private String buildTrackingUrl(
-            String applicationNumber
-    ) {
-        return normalizeBaseUrl(frontendUrl)
-                + "/apply/status?ref="
-                + applicationNumber;
+    private String buildTrackingUrl(String applicationNumber) {
+        return normalizeBaseUrl(frontendUrl) + "/apply/status?ref=" + applicationNumber;
     }
 
     private String buildLoginUrl() {
-        return normalizeBaseUrl(frontendUrl)
-                + "/mbsg-auth";
+        return normalizeBaseUrl(frontendUrl) + "/mbsg-auth";
     }
 
-    private String buildFullName(
-            String firstName,
-            String lastName
-    ) {
-        String first =
-                firstName == null
-                        ? ""
-                        : firstName.trim();
-
-        String last =
-                lastName == null
-                        ? ""
-                        : lastName.trim();
-
-        return (first + " " + last)
-                .trim();
+    private String buildFullName(String firstName, String lastName) {
+        String first = firstName == null ? "" : firstName.trim();
+        String last = lastName == null ? "" : lastName.trim();
+        return (first + " " + last).trim();
     }
 
-    private String normalizeBaseUrl(
-            String url
-    ) {
+    private String normalizeBaseUrl(String url) {
         if (url == null || url.isBlank()) {
-            return "http://localhost:8080";
+            return "http://localhost:8081";
         }
 
-        String normalizedUrl =
-                url.trim();
-
+        String normalizedUrl = url.trim();
         while (normalizedUrl.endsWith("/")) {
-            normalizedUrl =
-                    normalizedUrl.substring(
-                            0,
-                            normalizedUrl.length() - 1
-                    );
+            normalizedUrl = normalizedUrl.substring(0, normalizedUrl.length() - 1);
         }
-
         return normalizedUrl;
     }
 
-    private boolean hasText(
-            String value
-    ) {
-        return value != null
-                && !value.isBlank();
+    private boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
-    private void requireText(
-            String value,
-            String fieldName
-    ) {
+    private void requireText(String value, String fieldName) {
         if (!hasText(value)) {
-            throw new IllegalArgumentException(
-                    fieldName + " is required."
-            );
+            throw new IllegalArgumentException(fieldName + " is required.");
         }
     }
 
-    private record EmailLogo(
-            Resource resource,
-            String contentType
-    ) {
+    private record EmailLogo(Resource resource, String contentType) {
     }
 }

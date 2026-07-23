@@ -110,36 +110,237 @@
     </tr>
 </template>
 
-<!-- IMPORT MODAL -->
-<div id="erp-import-modal" class="hidden">
-      <div id="erp-import-modal-box">
-          <h3 id="import-title">Import Data</h3>
-          <p id="import-desc" class="text-muted">Upload an Excel file to bulk import records.</p>
-          
-          <div id="import-file-group">
-              <input type="file" id="import-file-input" accept=".xlsx">
-          </div>
-          
-          <div id="import-progress-container" class="hidden">
-              <p id="import-status-text">Processing...</p>
-              <progress id="import-progress-bar" max="100" value="0"></progress>
-          </div>
-          
-          <div id="import-result-container" class="hidden">
-              <p id="import-result-msg"></p>
-              <button type="button" id="import-download-errors" class="hidden">
-                  <i class="bi bi-download"></i> Download Error Report
-              </button>
-          </div>
-          
-          <div id="import-actions">
-              <button type="button" id="import-btn-cancel">Close</button>
-              <button type="button" id="import-btn-upload">
-                  <i class="bi bi-upload"></i> Upload
-              </button>
-          </div>
-      </div>
-  </div>
+<!-- EMPLOYEE / GLOBAL BULK IMPORT MODAL -->
+<div
+        id="erp-import-modal"
+        class="erp-import-modal hidden"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="import-title"
+        aria-describedby="import-desc"
+>
+    <div id="erp-import-modal-box" class="erp-import-dialog">
+        <div class="erp-import-header">
+            <div>
+                <span class="erp-import-eyebrow">Bulk Import</span>
+                <h3 id="import-title">Import Data</h3>
+                <p id="import-desc">
+                    Upload an Excel workbook containing records to import.
+                </p>
+            </div>
+
+            <button
+                    type="button"
+                    id="import-btn-close"
+                    class="erp-import-icon-btn"
+                    aria-label="Close import window"
+            >
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div id="import-step-file" class="erp-import-step">
+            <div
+                    id="import-drop-zone"
+                    class="erp-import-drop-zone"
+                    tabindex="0"
+                    role="button"
+                    aria-label="Choose or drop an Excel import file"
+            >
+                <input
+                        type="file"
+                        id="import-file-input"
+                        accept=".xlsx,.xls,.csv"
+                        hidden
+                >
+
+                <div class="erp-import-drop-icon">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                </div>
+
+                <strong>Drop the employee file here</strong>
+                <span>or click to browse from your computer</span>
+                <small>Accepted: XLSX, XLS or CSV • Maximum 10 MB</small>
+            </div>
+
+            <div id="import-selected-file" class="erp-import-file-card hidden">
+                <div class="erp-import-file-icon">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                </div>
+
+                <div class="erp-import-file-details">
+                    <strong id="import-file-name">No file selected</strong>
+                    <span id="import-file-size"></span>
+                </div>
+
+                <button
+                        type="button"
+                        id="import-remove-file"
+                        class="erp-import-icon-btn"
+                        aria-label="Remove selected file"
+                >
+                    <i class="bi bi-trash3"></i>
+                </button>
+            </div>
+
+            <div class="erp-import-options">
+                <label class="erp-import-option">
+                    <input
+                            type="checkbox"
+                            id="import-create-credentials"
+                    >
+                    <span>
+                        <strong>Create login credentials</strong>
+                        <small>
+                            Create an ERP account for eligible imported employees.
+                        </small>
+                    </span>
+                </label>
+
+                <label class="erp-import-option">
+                    <input
+                            type="checkbox"
+                            id="import-send-email"
+                            disabled
+                    >
+                    <span>
+                        <strong>Send welcome email</strong>
+                        <small>
+                            Send credentials using the selected branch email account.
+                        </small>
+                    </span>
+                </label>
+            </div>
+
+            <div class="erp-import-information">
+                <i class="bi bi-info-circle"></i>
+                <p>
+                    Rows missing required backend fields will be rejected and
+                    included in the downloadable error report. Correct those rows
+                    and import the report again.
+                </p>
+            </div>
+
+            <div id="import-validation-message" class="erp-import-alert hidden" role="alert"></div>
+        </div>
+
+        <div id="import-progress-container" class="erp-import-step hidden" aria-live="polite">
+            <div class="erp-import-progress-heading">
+                <div>
+                    <span id="import-stage-label">Uploading file</span>
+                    <strong id="import-progress-percent">0%</strong>
+                </div>
+                <p id="import-status-text">Preparing the secure upload…</p>
+            </div>
+
+            <div
+                    class="erp-import-progress-track"
+                    role="progressbar"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="0"
+                    id="import-progress-track"
+            >
+                <div id="import-progress-bar" class="erp-import-progress-fill"></div>
+            </div>
+
+            <div class="erp-import-stage-list">
+                <div class="erp-import-stage active" data-stage="UPLOAD">
+                    <i class="bi bi-cloud-arrow-up"></i>
+                    <span>Upload</span>
+                </div>
+                <div class="erp-import-stage" data-stage="VALIDATE">
+                    <i class="bi bi-shield-check"></i>
+                    <span>Validate</span>
+                </div>
+                <div class="erp-import-stage" data-stage="PROCESS">
+                    <i class="bi bi-gear"></i>
+                    <span>Process</span>
+                </div>
+                <div class="erp-import-stage" data-stage="COMPLETE">
+                    <i class="bi bi-check2-circle"></i>
+                    <span>Complete</span>
+                </div>
+            </div>
+
+            <div class="erp-import-stat-grid">
+                <div class="erp-import-stat">
+                    <span>Total rows</span>
+                    <strong id="import-total-count">—</strong>
+                </div>
+                <div class="erp-import-stat success">
+                    <span>Successful</span>
+                    <strong id="import-success-count">—</strong>
+                </div>
+                <div class="erp-import-stat danger">
+                    <span>Failed</span>
+                    <strong id="import-failed-count">—</strong>
+                </div>
+                <div class="erp-import-stat">
+                    <span>Processed</span>
+                    <strong id="import-processed-count">—</strong>
+                </div>
+            </div>
+
+            <p class="erp-import-running-note">
+                Keep this page open while the import is processing.
+            </p>
+        </div>
+
+        <div id="import-result-container" class="erp-import-step hidden" aria-live="polite">
+            <div id="import-result-icon" class="erp-import-result-icon">
+                <i class="bi bi-check-lg"></i>
+            </div>
+
+            <h4 id="import-result-title">Import completed</h4>
+            <p id="import-result-msg"></p>
+
+            <div class="erp-import-stat-grid result-stats">
+                <div class="erp-import-stat">
+                    <span>Total rows</span>
+                    <strong id="import-result-total">0</strong>
+                </div>
+                <div class="erp-import-stat success">
+                    <span>Successful</span>
+                    <strong id="import-result-success">0</strong>
+                </div>
+                <div class="erp-import-stat danger">
+                    <span>Failed</span>
+                    <strong id="import-result-failed">0</strong>
+                </div>
+            </div>
+
+            <button
+                    type="button"
+                    id="import-download-errors"
+                    class="erp-import-secondary-btn hidden"
+            >
+                <i class="bi bi-download"></i>
+                Download Error Report
+            </button>
+        </div>
+
+        <div id="import-actions" class="erp-import-actions">
+            <button
+                    type="button"
+                    id="import-btn-cancel"
+                    class="erp-import-secondary-btn"
+            >
+                Cancel
+            </button>
+
+            <button
+                    type="button"
+                    id="import-btn-upload"
+                    class="erp-import-primary-btn"
+                    disabled
+            >
+                <i class="bi bi-upload"></i>
+                Start Import
+            </button>
+        </div>
+    </div>
+</div>
 
 <!-- Core Layout & Admin Logic -->
 <script defer src="/js/api.js"></script>

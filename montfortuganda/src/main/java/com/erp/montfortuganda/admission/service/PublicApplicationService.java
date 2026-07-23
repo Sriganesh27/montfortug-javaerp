@@ -292,136 +292,477 @@ public class PublicApplicationService {
         return dto;
     }
 
-    public Map<String, Object> verifyAndGetStatus(String refNumber, String dobString) {
+    @Transactional(readOnly = true)
+    public Map<String, Object> verifyAndGetStatus(
+            String refNumber,
+            String dobString
+    ) {
         Map<String, Object> response = new HashMap<>();
-        Optional<ErpApplication> appOpt = applicationRepository.findByApplicationNo(refNumber);
+
+        Optional<ErpApplication> appOpt =
+                applicationRepository.findByApplicationNo(refNumber);
 
         if (appOpt.isEmpty()) {
             response.put("success", false);
-            response.put("message", "Invalid Reference Number or Date of Birth.");
+            response.put(
+                    "message",
+                    "Invalid Reference Number or Date of Birth."
+            );
             return response;
         }
 
         ErpApplication app = appOpt.get();
 
-        if (app.getDateOfBirth() == null || !app.getDateOfBirth().toString().equals(dobString)) {
+        if (
+                app.getDateOfBirth() == null ||
+                        !app.getDateOfBirth()
+                                .toString()
+                                .equals(dobString)
+        ) {
             response.put("success", false);
-            response.put("message", "Invalid Reference Number or Date of Birth.");
+            response.put(
+                    "message",
+                    "Invalid Reference Number or Date of Birth."
+            );
             return response;
         }
 
         Map<String, Object> data = new HashMap<>();
-        String fullName = app.getFirstName();
-        if (app.getMiddleName() != null && !app.getMiddleName().trim().isEmpty()) fullName += " " + app.getMiddleName();
-        if (app.getLastName() != null) fullName += " " + app.getLastName();
-        data.put("student_name", fullName.trim());
 
-        String appliedClass = String.valueOf(app.getBranchClassId());
+        StringBuilder fullName = new StringBuilder();
+
+        if (
+                app.getFirstName() != null &&
+                        !app.getFirstName().isBlank()
+        ) {
+            fullName.append(app.getFirstName().trim());
+        }
+
+        if (
+                app.getMiddleName() != null &&
+                        !app.getMiddleName().isBlank()
+        ) {
+            if (!fullName.isEmpty()) {
+                fullName.append(' ');
+            }
+
+            fullName.append(app.getMiddleName().trim());
+        }
+
+        if (
+                app.getLastName() != null &&
+                        !app.getLastName().isBlank()
+        ) {
+            if (!fullName.isEmpty()) {
+                fullName.append(' ');
+            }
+
+            fullName.append(app.getLastName().trim());
+        }
+
+        data.put(
+                "student_name",
+                fullName.toString()
+        );
+
+        String appliedClass =
+                app.getBranchClassId() != null
+                        ? String.valueOf(app.getBranchClassId())
+                        : "";
+
         if (app.getBranchClassId() != null) {
-            // FIXED: Removed .longValue() so it matches the Integer parameter exactly
-            Optional<SchoolClass> sc = classRepository.findById(app.getBranchClassId().intValue());            if (sc.isPresent()) {
-                appliedClass = sc.get().getClassName();
+            Optional<SchoolClass> schoolClassOpt =
+                    classRepository.findById(
+                            app.getBranchClassId().intValue()
+                    );
+
+            if (schoolClassOpt.isPresent()) {
+                appliedClass =
+                        schoolClassOpt
+                                .get()
+                                .getClassName();
             }
         }
-        data.put("applied_class", appliedClass);
-        data.put("status", app.getApplicationStatus().name());
-        data.put("ref_number", app.getApplicationNo());
+
+        data.put(
+                "applied_class",
+                appliedClass
+        );
+
+        data.put(
+                "status",
+                app.getApplicationStatus() != null
+                        ? app.getApplicationStatus().name()
+                        : ""
+        );
+
+        data.put(
+                "ref_number",
+                app.getApplicationNo()
+        );
 
         response.put("success", true);
         response.put("data", data);
-        response.put("internal_id", app.getApplicationId()); // Used by controller for session
+
+        // Used by the controller to store the verified application
+        // in the secure HTTP session.
+        response.put(
+                "internal_id",
+                app.getApplicationId()
+        );
+
         return response;
     }
 
-    public Map<String, Object> getApplicationDetails(Long applicationId) {
+    @Transactional(readOnly = true)
+    public Map<String, Object> getApplicationDetails(
+            Long applicationId
+    ) {
         Map<String, Object> response = new HashMap<>();
-        Optional<ErpApplication> appOpt = applicationRepository.findById(applicationId);
+
+        if (applicationId == null || applicationId <= 0) {
+            response.put("success", false);
+            response.put(
+                    "message",
+                    "Invalid application reference."
+            );
+            return response;
+        }
+
+        Optional<ErpApplication> appOpt =
+                applicationRepository.findById(applicationId);
 
         if (appOpt.isEmpty()) {
             response.put("success", false);
-            response.put("message", "Application not found.");
+            response.put(
+                    "message",
+                    "Application not found."
+            );
             return response;
         }
 
         ErpApplication app = appOpt.get();
         Map<String, Object> data = new HashMap<>();
 
-        data.put("ref_number", app.getApplicationNo());
-        data.put("status", app.getApplicationStatus().name());
-        data.put("branch_name", app.getBranch() != null ? app.getBranch().getBranchName() : "");
-        data.put("branch_location", app.getBranch() != null ? app.getBranch().getBranchLocation() : "");
-        data.put("date_of_registration", app.getDateOfRegistration());
-        data.put("scholarship_status", app.getScholarshipStatus());
-        data.put("student_name", app.getFirstName());
-        data.put("middle_name", app.getMiddleName());
-        data.put("student_surname", app.getLastName());
-        data.put("gender", app.getGender() != null ? app.getGender().name() : "");
-        data.put("dob", app.getDateOfBirth() != null ? app.getDateOfBirth().toString() : "");
-        data.put("nationality", app.getNationality());
-        data.put("academic_year", app.getAcademicYearId() != null ? String.valueOf(app.getAcademicYearId()) : "");
-        data.put("term", app.getTerm());
+        data.put(
+                "ref_number",
+                app.getApplicationNo()
+        );
+
+        data.put(
+                "status",
+                app.getApplicationStatus() != null
+                        ? app.getApplicationStatus().name()
+                        : ""
+        );
+
+        Branch branch = app.getBranch();
+
+        data.put(
+                "branch_name",
+                branch != null &&
+                        branch.getBranchName() != null
+                        ? branch.getBranchName()
+                        : ""
+        );
+
+        data.put(
+                "branch_location",
+                branch != null &&
+                        branch.getBranchLocation() != null
+                        ? branch.getBranchLocation()
+                        : ""
+        );
+
+        data.put(
+                "date_of_registration",
+                app.getDateOfRegistration()
+        );
+
+        data.put(
+                "scholarship_status",
+                app.getScholarshipStatus()
+        );
+
+        data.put(
+                "student_name",
+                app.getFirstName()
+        );
+
+        data.put(
+                "middle_name",
+                app.getMiddleName()
+        );
+
+        data.put(
+                "student_surname",
+                app.getLastName()
+        );
+
+        data.put(
+                "gender",
+                app.getGender() != null
+                        ? app.getGender().name()
+                        : ""
+        );
+
+        data.put(
+                "dob",
+                app.getDateOfBirth() != null
+                        ? app.getDateOfBirth().toString()
+                        : ""
+        );
+
+        data.put(
+                "nationality",
+                app.getNationality()
+        );
+
+        data.put(
+                "academic_year",
+                app.getAcademicYearId() != null
+                        ? String.valueOf(app.getAcademicYearId())
+                        : ""
+        );
+
+        data.put(
+                "term",
+                app.getTerm()
+        );
+
+        data.put("applied_class", "");
+        data.put("class_code", "");
+        data.put("level", "");
 
         if (app.getBranchClassId() != null) {
-            // FIXED: Removed .longValue() so it matches the Integer parameter exactly
-            classRepository.findById(app.getBranchClassId().intValue()).ifPresent(sc -> {
-                data.put("applied_class", sc.getClassName());
-                data.put("class_code", sc.getClassCode());
-                if (sc.getLevel() != null) {
-                    data.put("level", sc.getLevel().getLevelName());
-                }
-            });
-        } else {
-            data.put("applied_class", "");
-            data.put("class_code", "");
-            data.put("level", "");
+            Optional<SchoolClass> schoolClassOpt =
+                    classRepository.findById(
+                            app.getBranchClassId().intValue()
+                    );
+
+            if (schoolClassOpt.isPresent()) {
+                SchoolClass schoolClass =
+                        schoolClassOpt.get();
+
+                data.put(
+                        "applied_class",
+                        schoolClass.getClassName() != null
+                                ? schoolClass.getClassName()
+                                : ""
+                );
+
+                data.put(
+                        "class_code",
+                        schoolClass.getClassCode() != null
+                                ? schoolClass.getClassCode()
+                                : ""
+                );
+
+                Level level = schoolClass.getLevel();
+
+                data.put(
+                        "level",
+                        level != null &&
+                                level.getLevelName() != null
+                                ? level.getLevelName()
+                                : ""
+                );
+            }
         }
 
-        data.put("photo_path", app.getPhotoPath());
-        data.put("primary_email", app.getPrimaryEmail());
-        data.put("primary_mobile", app.getPrimaryMobile());
+        data.put(
+                "photo_path",
+                app.getPhotoPath()
+        );
 
-        data.put("father_name", app.getFatherName());
-        data.put("father_contact", app.getFatherContact());
-        data.put("father_email", app.getFatherEmail());
-        data.put("father_occupation", app.getFatherOccupation());
-        data.put("father_education", app.getFatherEducation());
-        data.put("father_age", app.getFatherAge());
+        data.put(
+                "primary_email",
+                app.getPrimaryEmail()
+        );
 
-        data.put("mother_name", app.getMotherName());
-        data.put("mother_contact", app.getMotherContact());
-        data.put("mother_email", app.getMotherEmail());
-        data.put("mother_occupation", app.getMotherOccupation());
-        data.put("mother_education", app.getMotherEducation());
-        data.put("mother_age", app.getMotherAge());
+        data.put(
+                "primary_mobile",
+                app.getPrimaryMobile()
+        );
 
-        data.put("guardian_name", app.getGuardianName());
-        data.put("guardian_relation", app.getGuardianRelation());
-        data.put("guardian_contact", app.getGuardianContact());
-        data.put("guardian_email", app.getGuardianEmail());
-        data.put("guardian_occupation", app.getGuardianOccupation());
-        data.put("guardian_education", app.getGuardianEducation());
-        data.put("guardian_age", app.getGuardianAge());
-        data.put("guardian_location", app.getGuardianLocation());
+        data.put(
+                "father_name",
+                app.getFatherName()
+        );
 
-        data.put("address_house", app.getAddressHouse());
-        data.put("address_street", app.getAddressStreet());
-        data.put("address_village", app.getAddressVillage());
-        data.put("address_district", app.getAddressDistrict());
-        data.put("address_state", app.getAddressState());
-        data.put("address_postal", app.getAddressPostal());
+        data.put(
+                "father_contact",
+                app.getFatherContact()
+        );
 
-        data.put("former_school", app.getFormerSchool());
-        data.put("former_school_code", app.getFormerSchoolCode());
-        data.put("former_school_lin", app.getFormerSchoolLin());
-        data.put("ple_ref", app.getPleRef());
-        data.put("ple_score", app.getPleScore());
-        data.put("uce_ref", app.getUceRef());
-        data.put("uce_score", app.getUceScore());
-        data.put("subject_marks", app.getSubjectMarks());
-        data.put("more_info", app.getMoreInfo());
+        data.put(
+                "father_email",
+                app.getFatherEmail()
+        );
+
+        data.put(
+                "father_occupation",
+                app.getFatherOccupation()
+        );
+
+        data.put(
+                "father_education",
+                app.getFatherEducation()
+        );
+
+        data.put(
+                "father_age",
+                app.getFatherAge()
+        );
+
+        data.put(
+                "mother_name",
+                app.getMotherName()
+        );
+
+        data.put(
+                "mother_contact",
+                app.getMotherContact()
+        );
+
+        data.put(
+                "mother_email",
+                app.getMotherEmail()
+        );
+
+        data.put(
+                "mother_occupation",
+                app.getMotherOccupation()
+        );
+
+        data.put(
+                "mother_education",
+                app.getMotherEducation()
+        );
+
+        data.put(
+                "mother_age",
+                app.getMotherAge()
+        );
+
+        data.put(
+                "guardian_name",
+                app.getGuardianName()
+        );
+
+        data.put(
+                "guardian_relation",
+                app.getGuardianRelation()
+        );
+
+        data.put(
+                "guardian_contact",
+                app.getGuardianContact()
+        );
+
+        data.put(
+                "guardian_email",
+                app.getGuardianEmail()
+        );
+
+        data.put(
+                "guardian_occupation",
+                app.getGuardianOccupation()
+        );
+
+        data.put(
+                "guardian_education",
+                app.getGuardianEducation()
+        );
+
+        data.put(
+                "guardian_age",
+                app.getGuardianAge()
+        );
+
+        data.put(
+                "guardian_location",
+                app.getGuardianLocation()
+        );
+
+        data.put(
+                "address_house",
+                app.getAddressHouse()
+        );
+
+        data.put(
+                "address_street",
+                app.getAddressStreet()
+        );
+
+        data.put(
+                "address_village",
+                app.getAddressVillage()
+        );
+
+        data.put(
+                "address_district",
+                app.getAddressDistrict()
+        );
+
+        data.put(
+                "address_state",
+                app.getAddressState()
+        );
+
+        data.put(
+                "address_postal",
+                app.getAddressPostal()
+        );
+
+        data.put(
+                "former_school",
+                app.getFormerSchool()
+        );
+
+        data.put(
+                "former_school_code",
+                app.getFormerSchoolCode()
+        );
+
+        data.put(
+                "former_school_lin",
+                app.getFormerSchoolLin()
+        );
+
+        data.put(
+                "ple_ref",
+                app.getPleRef()
+        );
+
+        data.put(
+                "ple_score",
+                app.getPleScore()
+        );
+
+        data.put(
+                "uce_ref",
+                app.getUceRef()
+        );
+
+        data.put(
+                "uce_score",
+                app.getUceScore()
+        );
+
+        data.put(
+                "subject_marks",
+                app.getSubjectMarks()
+        );
+
+        data.put(
+                "more_info",
+                app.getMoreInfo()
+        );
 
         response.put("success", true);
         response.put("data", data);
+
         return response;
     }
 
