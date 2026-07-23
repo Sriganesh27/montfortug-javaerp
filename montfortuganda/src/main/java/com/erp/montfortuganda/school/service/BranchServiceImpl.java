@@ -1,9 +1,5 @@
 package com.erp.montfortuganda.school.service;
 
-import com.erp.montfortuganda.auth.entity.CredentialDeliveryStatus;
-import com.erp.montfortuganda.auth.entity.User;
-import com.erp.montfortuganda.auth.repository.UserRepository;
-import com.erp.montfortuganda.notification.service.EmailService;
 import com.erp.montfortuganda.school.dto.BranchDTO;
 import com.erp.montfortuganda.school.dto.LevelDTO;
 import com.erp.montfortuganda.school.entity.Branch;
@@ -11,53 +7,42 @@ import com.erp.montfortuganda.school.entity.Level;
 import com.erp.montfortuganda.school.repository.BranchRepository;
 import com.erp.montfortuganda.school.repository.LevelRepository;
 import com.erp.montfortuganda.school.service.model.BranchAdminCredentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class BranchServiceImpl implements BranchService {
 
-    private static final Logger LOGGER =
-            LoggerFactory.getLogger(BranchServiceImpl.class);
-
     private final BranchRepository branchRepository;
     private final LevelRepository levelRepository;
     private final FileStorageService fileStorageService;
     private final BranchAdminAccountService branchAdminAccountService;
-    private final EmailService emailService;
-    private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public BranchServiceImpl(
             BranchRepository branchRepository,
             LevelRepository levelRepository,
             FileStorageService fileStorageService,
             BranchAdminAccountService branchAdminAccountService,
-            EmailService emailService,
-            UserRepository userRepository
+            ApplicationEventPublisher eventPublisher
     ) {
         this.branchRepository = branchRepository;
         this.levelRepository = levelRepository;
         this.fileStorageService = fileStorageService;
         this.branchAdminAccountService = branchAdminAccountService;
-        this.emailService = emailService;
-        this.userRepository = userRepository;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<BranchDTO> getAllBranches() {
         return branchRepository
-                .findAll()
+                .findAllWithLevels()
                 .stream()
                 .map(this::mapToDTO)
                 .toList();
@@ -124,9 +109,9 @@ public class BranchServiceImpl implements BranchService {
                                 savedBranch
                         );
 
-        scheduleBranchAdminCredentialEmail(
-                savedBranch,
-                credentials
+        publishBranchAdminCredentialEmail(
+                credentials,
+                false
         );
 
         return mapToDTO(savedBranch);
@@ -185,105 +170,37 @@ public class BranchServiceImpl implements BranchService {
         branchRepository.save(branch);
     }
 
-    private void scheduleBranchAdminCredentialEmail(
-            Branch branch,
-            BranchAdminCredentials credentials
+    @Override
+    @Transactional
+    public void resetBranchAdminPassword(
+            Integer branchId
     ) {
-        if (
-                !TransactionSynchronizationManager
-                        .isSynchronizationActive()
-        ) {
-            deliverBranchAdminCredentials(
-                    branch,
-                    credentials
-            );
-            return;
-        }
+        Branch branch =
+                findBranch(branchId);
 
-        TransactionSynchronizationManager
-                .registerSynchronization(
-                        new TransactionSynchronization() {
-                            @Override
-                            public void afterCommit() {
-                                deliverBranchAdminCredentials(
-                                        branch,
-                                        credentials
-                                );
-                            }
-                        }
-                );
-    }
+        BranchAdminCredentials credentials =
+                branchAdminAccountService
+                        .resetTemporaryCredentials(
+                                branch
+                        );
 
-    private void deliverBranchAdminCredentials(
-            Branch branch,
-            BranchAdminCredentials credentials
-    ) {
-        try {
-            emailService.sendBranchAdminWelcomeEmail(
-                    branch,
-                    credentials
-            );
-
-            updateCredentialDeliveryStatus(
-                    credentials.getUserId(),
-                    CredentialDeliveryStatus.SENT,
-                    true
-            );
-
-        } catch (RuntimeException exception) {
-            updateCredentialDeliveryStatus(
-                    credentials.getUserId(),
-                    CredentialDeliveryStatus.FAILED,
-                    false
-            );
-
-            LOGGER.error(
-                    "Branch Admin credentials email failed for branch ID: {}",
-                    branch.getBranchId(),
-                    exception
-            );
-        }
-    }
-
-    private void updateCredentialDeliveryStatus(
-            Integer userId,
-            CredentialDeliveryStatus status,
-            boolean sentSuccessfully
-    ) {
-        User user =
-                userRepository
-                        .findById(userId)
-                        .orElse(null);
-
-        if (user == null) {
-            LOGGER.error(
-                    "Credential delivery status could not be updated because "
-                            + "ERP user ID {} was not found.",
-                    userId
-            );
-            return;
-        }
-
-        Integer currentAttempts =
-                user.getCredentialDeliveryAttempts();
-
-        user.setCredentialDeliveryAttempts(
-                currentAttempts == null
-                        ? 1
-                        : currentAttempts + 1
+        publishBranchAdminCredentialEmail(
+                credentials,
+                true
         );
+    }
 
-        user.setCredentialDeliveryStatus(status);
-
-        if (sentSuccessfully) {
-            user.setCredentialsSentAt(
-                    LocalDateTime.now(
-                            ZoneOffset.UTC
-                    )
-            );
-        }
-
-        userRepository.save(user);
+    private void publishBranchAdminCredentialEmail(
+            BranchAdminCredentials credentials,
+            boolean resent
+    ) {
+        eventPublisher.publishEvent(
+                new BranchAdminCredentialEmailRequestedEvent(
+                        credentials.getBranchId(),
+                        credentials,
+                        resent
+                )
+        );
     }
 
     private Branch findBranch(
@@ -296,7 +213,7 @@ public class BranchServiceImpl implements BranchService {
         }
 
         return branchRepository
-                .findById(branchId)
+                .findByIdWithLevels(branchId)
                 .orElseThrow(
                         () -> new IllegalArgumentException(
                                 "Branch not found with ID: "

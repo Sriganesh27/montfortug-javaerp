@@ -1,0 +1,346 @@
+%PDF-1.3
+%ºß¬à
+3 0 obj
+<</Type /Page
+/Parent 1 0 R
+/Resources 2 0 R
+/MediaBox [0 0 595.2799999999999727 841.8899999999999864]
+/Contents 4 0 R
+>>
+endobj
+4 0 obj
+<<
+/Length 3025
+>>
+stream
+0.5670000000000001 w
+0 G
+BT
+/F1 14 Tf
+16.0999999999999979 TL
+0 g
+28.3464566929133888 813.5435433070865656 Td
+(This transcript is machine generated and may contain text conversion errors.) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0 g
+28.3464566929133888 771.1970866141732586 Td
+(You at 04:39 PM, June 10) Tj
+ET
+BT
+/F1 14 Tf
+16.0999999999999979 TL
+0 g
+28.3464566929133888 747.0238582677164914 Td
+(will my web hosting deluxe support java spring boot application?) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0 g
+28.3464566929133888 704.6774015748030706 Td
+(Agent at 04:39 PM, June 10) Tj
+ET
+BT
+/F1 14 Tf
+16.0999999999999979 TL
+0 g
+28.3464566929133888 680.5041732283464171 Td
+(No, Web Hosting Deluxe usually is not a fit for a Java Spring Boot app.) Tj
+T* () Tj
+T* (Spring Boot typically needs a persistent Java process, custom server configuration,) Tj
+T* (and more control than shared web hosting provides. For that kind of app, you’d usually) Tj
+T* (want a VPS or dedicated server environment instead.) Tj
+T* () Tj
+T* (Are you trying to deploy a new Spring Boot app, or checking whether an existing) Tj
+T* (hosting plan can run one?) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0 g
+28.3464566929133888 525.4577165354330646 Td
+(You at 04:40 PM, June 10) Tj
+ET
+BT
+/F1 14 Tf
+16.0999999999999979 TL
+0 g
+28.3464566929133888 501.284488188976411 Td
+(then how python applications are running in my web hosting deluxe) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0 g
+28.3464566929133888 458.9380314960629903 Td
+(Agent at 04:40 PM, June 10) Tj
+ET
+BT
+/F1 14 Tf
+16.0999999999999979 TL
+0 g
+28.3464566929133888 434.7648031496062799 Td
+(That’s because Python on Web Hosting Deluxe is usually limited to the hosting features) Tj
+T* (the plan supports, like CGI/WSGI-style web apps or specific shared-hosting) Tj
+T* (configurations, not full server control.) Tj
+T* () Tj
+T* (Spring Boot is different because it commonly runs as a long-lived Java service and) Tj
+T* (needs process management that shared hosting typically doesn’t allow.) Tj
+T* () Tj
+T* (Are you running a simple Python site through cPanel, or a custom app that starts its) Tj
+T* (own background process?) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0 g
+28.3464566929133888 263.6183464566928478 Td
+(You at 04:41 PM, June 10) Tj
+ET
+BT
+/F1 14 Tf
+16.0999999999999979 TL
+0 g
+28.3464566929133888 239.4451181102361943 Td
+(i am trying to check wheather my exiting plan will deploy my springboot application) Tj
+ET
+BT
+/F1 10 Tf
+11.5 TL
+0 g
+28.3464566929133888 197.0986614173227736 Td
+(Agent at 04:41 PM, June 10) Tj
+ET
+BT
+/F1 14 Tf
+16.0999999999999979 TL
+0 g
+28.3464566929133888 172.92543307086612 Td
+(Your existing Web Hosting Deluxe plan is generally not meant to deploy a Spring Boot) Tj
+T* (app.) Tj
+T* () Tj
+T* (It can handle some shared-hosting workloads, including certain Python setups, but) Tj
+T* (Spring Boot usually needs a continuously running Java process and server-level) Tj
+T* (control. That’s why it typically needs a VPS or dedicated environment instead.) Tj
+T* () Tj
+T* (Does that answer whether your current plan can run the Spring Boot app?) Tj
+ET
+endstream
+endobj
+1 0 obj
+<</Type /Pages
+/Kids [3 0 R ]
+/Count 1
+>>
+endobj
+5 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+6 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+7 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+8 0 obj
+<<
+/Type /Font
+/BaseFont /Helvetica-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+9 0 obj
+<<
+/Type /Font
+/BaseFont /Courier
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+10 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+11 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-Oblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+12 0 obj
+<<
+/Type /Font
+/BaseFont /Courier-BoldOblique
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+13 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Roman
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+14 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Bold
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+15 0 obj
+<<
+/Type /Font
+/BaseFont /Times-Italic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+16 0 obj
+<<
+/Type /Font
+/BaseFont /Times-BoldItalic
+/Subtype /Type1
+/Encoding /WinAnsiEncoding
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+17 0 obj
+<<
+/Type /Font
+/BaseFont /ZapfDingbats
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+18 0 obj
+<<
+/Type /Font
+/BaseFont /Symbol
+/Subtype /Type1
+/FirstChar 32
+/LastChar 255
+>>
+endobj
+2 0 obj
+<<
+/ProcSet [/PDF /Text /ImageB /ImageC /ImageI]
+/Font <<
+/F1 5 0 R
+/F2 6 0 R
+/F3 7 0 R
+/F4 8 0 R
+/F5 9 0 R
+/F6 10 0 R
+/F7 11 0 R
+/F8 12 0 R
+/F9 13 0 R
+/F10 14 0 R
+/F11 15 0 R
+/F12 16 0 R
+/F13 17 0 R
+/F14 18 0 R
+>>
+/XObject <<
+>>
+>>
+endobj
+19 0 obj
+<<
+/Producer (jsPDF 4.1.0)
+/CreationDate (D:20260610164146+05'30')
+>>
+endobj
+20 0 obj
+<<
+/Type /Catalog
+/Pages 1 0 R
+/OpenAction [3 0 R /FitH null]
+/PageLayout /OneColumn
+>>
+endobj
+xref
+0 21
+0000000000 65535 f 
+0000003229 00000 n 
+0000005046 00000 n 
+0000000015 00000 n 
+0000000152 00000 n 
+0000003286 00000 n 
+0000003411 00000 n 
+0000003541 00000 n 
+0000003674 00000 n 
+0000003811 00000 n 
+0000003934 00000 n 
+0000004063 00000 n 
+0000004195 00000 n 
+0000004331 00000 n 
+0000004459 00000 n 
+0000004586 00000 n 
+0000004715 00000 n 
+0000004848 00000 n 
+0000004950 00000 n 
+0000005294 00000 n 
+0000005380 00000 n 
+trailer
+<<
+/Size 21
+/Root 20 0 R
+/Info 19 0 R
+/ID [ <47DFD9574ADE470C3165593D05C8793A> <47DFD9574ADE470C3165593D05C8793A> ]
+>>
+startxref
+5484
+%%EOF

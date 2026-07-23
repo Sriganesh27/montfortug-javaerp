@@ -8,7 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-@Configuration("authWebConfig")
+@Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     @Override
@@ -21,27 +21,35 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("file:" + uploadPath + "/");
     }
 
-    // --- NEW FIX: Map clean URLs to your HTML files ---
-    // --- NEW FIX: Map clean URLs to your HTML files ---
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        // Base Dashboards
         registry.addViewController("/login").setViewName("forward:/login.html");
         registry.addViewController("/mbsg-auth").setViewName("forward:/mbsg-auth.html");
         registry.addViewController("/dashboard").setViewName("forward:/dashboard.html");
         registry.addViewController("/").setViewName("forward:/login.html");
 
-        // Forward all Superadmin SPA routes to the dashboard shell
-        registry.addViewController("/superadmin").setViewName("forward:/dashboard.html");
-        registry.addViewController("/superadmin/**").setViewName("forward:/dashboard.html");
+        String[] spaRoutes = {
+                "/superadmin",
+                "/superadmin/**",
+                "/admin",
+                "/admin/**",
+                "/parent/**",
+                "/schooladmin/**",
+                "/academiccoordinator/**",
+                "/admissionstaff/**",
+                "/feeofficer/**",
+                "/teacher/**",
+                "/auditor/**"
+        };
 
-        // Forward all Branch Admin SPA routes to the dashboard shell
-        registry.addViewController("/admin").setViewName("forward:/dashboard.html");
-        registry.addViewController("/admin/**").setViewName("forward:/dashboard.html");
+        for (String route : spaRoutes) {
+            registry.addViewController(route)
+                    .setViewName("forward:/dashboard.html");
+        }
 
-        // Public Application Pages (Nested under /apply)
         registry.addViewController("/apply").setViewName("forward:/apply.html");
         registry.addViewController("/apply/status").setViewName("forward:/status.html");
+        registry.addViewController("/apply/print").setViewName("forward:/print_application.html");
         registry.addViewController("/apply/print_application").setViewName("forward:/print_application.html");
     }
 }

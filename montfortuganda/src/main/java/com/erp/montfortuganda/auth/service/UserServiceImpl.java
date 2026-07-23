@@ -39,7 +39,8 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public List<UserDTO> getAllUsers() {
-        return userRepository.findAll()
+        return userRepository
+                .findAllWithAssignedBranch()
                 .stream()
                 .map(this::mapToDTO)
                 .toList();

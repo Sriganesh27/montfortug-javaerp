@@ -3,6 +3,7 @@
 // ==========================================
 
 const API_BASE_URL = '/api';
+const inFlightGetRequests = new Map();
 
 /**
  * Helper to get authorization headers
@@ -100,12 +101,35 @@ async function handleResponse(response) {
  * Standard GET Request
  */
 async function apiGet(endpoint) {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'GET',
-        headers: getAuthHeaders(),
-        credentials: 'include' // <--- FORCES COOKIE TO BE SENT
-    });
-    return handleResponse(response);
+    const normalizedEndpoint = String(endpoint || '').trim();
+
+    if (inFlightGetRequests.has(normalizedEndpoint)) {
+        return inFlightGetRequests.get(normalizedEndpoint);
+    }
+
+    const request = (async () => {
+        const response = await fetch(
+            `${API_BASE_URL}${normalizedEndpoint}`,
+            {
+                method: 'GET',
+                headers: getAuthHeaders(),
+                credentials: 'include',
+                cache: 'no-store'
+            }
+        );
+
+        return handleResponse(response);
+    })();
+
+    inFlightGetRequests.set(normalizedEndpoint, request);
+
+    try {
+        return await request;
+    } finally {
+        if (inFlightGetRequests.get(normalizedEndpoint) === request) {
+            inFlightGetRequests.delete(normalizedEndpoint);
+        }
+    }
 }
 
 /**

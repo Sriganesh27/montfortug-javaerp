@@ -17,9 +17,8 @@ public class ErpBranchFundAllocation {
     @Column(name = "branch_id", nullable = false)
     private Long branchId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "donation_id", nullable = true)
-    private WebDonation donation;
+    @Column(name = "donation_id")
+    private Long donationId;
 
     @Column(name = "allocated_amount_ugx", precision = 38, scale = 2, nullable = false)
     private BigDecimal allocatedAmountUgx;

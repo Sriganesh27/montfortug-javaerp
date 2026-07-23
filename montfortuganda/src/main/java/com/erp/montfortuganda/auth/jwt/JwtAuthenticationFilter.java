@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -58,9 +59,11 @@ public class JwtAuthenticationFilter
     protected boolean shouldNotFilter(
             @NonNull HttpServletRequest request
     ) {
-        return FILTER_EXCLUDED_PATHS.contains(
-                request.getServletPath()
-        );
+        String servletPath = request.getServletPath();
+
+        return !servletPath.startsWith("/api/")
+                || servletPath.startsWith("/api/public/")
+                || FILTER_EXCLUDED_PATHS.contains(servletPath);
     }
 
     @Override
@@ -227,6 +230,7 @@ public class JwtAuthenticationFilter
 
         } catch (
                 JwtException
+                | UsernameNotFoundException
                 | IllegalArgumentException exception
         ) {
             LOGGER.debug(

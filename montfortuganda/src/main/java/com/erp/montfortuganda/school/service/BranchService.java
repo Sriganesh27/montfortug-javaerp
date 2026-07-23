@@ -31,4 +31,8 @@ public interface BranchService {
     void toggleBranchActive(
             Integer branchId
     );
+
+    void resetBranchAdminPassword(
+            Integer branchId
+    );
 }

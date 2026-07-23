@@ -169,6 +169,21 @@ public class SuperAdminApiController {
         );
     }
 
+    @PutMapping("/branches/{id}/reset-admin-password")
+    public ResponseEntity<ApiResponse<String>>
+    resetBranchAdminPassword(
+            @PathVariable Integer id
+    ) {
+        branchService.resetBranchAdminPassword(id);
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "New Branch Admin credentials are being sent to the branch email.",
+                        null
+                )
+        );
+    }
+
     // ==========================================
     // TEMPORARY BRANCH STATS AND LOGS
     // ==========================================

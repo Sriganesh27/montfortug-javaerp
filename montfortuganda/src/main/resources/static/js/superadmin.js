@@ -123,8 +123,8 @@ function confirmAllocation(title, contentText, endpoint, payload, successMsg, er
         confirmText: 'Allocate',
         cancelText: 'Cancel',
         onConfirm: async (modal) => {
-            modal.close();
-            showLoader();
+            await modal.close();
+            const loaderToken = showLoader('Allocating funds...');
             try {
                 await apiPost(endpoint, payload);
                 showSuccessMessage(successMsg);
@@ -132,7 +132,7 @@ function confirmAllocation(title, contentText, endpoint, payload, successMsg, er
             } catch (err) {
                 showErrorMessage(errorMsg);
             } finally {
-                hideLoader();
+                hideLoader(loaderToken);
             }
         }
     });
@@ -146,8 +146,8 @@ function confirmAction(title, type, contentText, confirmText, endpoint, isPost, 
         confirmText: confirmText,
         cancelText: 'Cancel',
         onConfirm: async (modal) => {
-            modal.close();
-            showLoader();
+            await modal.close();
+            const loaderToken = showLoader('Processing request...');
             try {
                 let res;
                 if (isPost) res = await apiPost(endpoint);
@@ -160,7 +160,7 @@ function confirmAction(title, type, contentText, confirmText, endpoint, isPost, 
                 console.error(e);
                 showErrorMessage(errorMsg);
             } finally {
-                hideLoader();
+                hideLoader(loaderToken);
             }
         }
     });
@@ -230,8 +230,6 @@ function initBranchesView() {
     const viewContainer = document.querySelector('#superadmin-branches-view');
     if (!viewContainer) return;
 
-    void populateDynamicLevels('edit-branchLevels');
-
     let tableBody = viewContainer.querySelector('#sa-branchesTableBody');
     if (tableBody) {
         const newTableBody = tableBody.cloneNode(true);
@@ -246,6 +244,8 @@ function initBranchesView() {
 
     let currentDetailBranchId = null;
     let currentBranch = null;
+    let loadedBranches = [];
+    let openingBranchId = null;
 
     const whatsappLabels = {
         NONE: 'No WhatsApp number',
@@ -487,6 +487,7 @@ function initBranchesView() {
         try {
             const response = await apiGet('/superadmin/branches');
             const branches = Array.isArray(response?.data) ? response.data : [];
+            loadedBranches = branches;
             const template = viewContainer.querySelector('#branch-row-template');
 
             if (!tableBody || !template) return;
@@ -518,8 +519,6 @@ function initBranchesView() {
         } catch (error) {
             console.error(error);
             if (tableBody) renderEmptyTableMessage(tableBody, 6, 'Failed to load branches.');
-        } finally {
-            hideLoader();
         }
     }
 
@@ -546,8 +545,10 @@ function initBranchesView() {
             confirmText: 'Yes, Change Status',
             cancelText: 'Cancel',
             onConfirm: async modal => {
-                modal.close();
-                showLoader();
+                await modal.close();
+                const loaderToken = showLoader(
+                    'Updating branch status...'
+                );
 
                 try {
                     await apiPut(`/superadmin/branches/${id}/toggle`, {});
@@ -557,7 +558,7 @@ function initBranchesView() {
                     console.error(error);
                     showErrorMessage('Failed to update branch status.');
                 } finally {
-                    hideLoader();
+                    hideLoader(loaderToken);
                 }
             }
         });
@@ -577,13 +578,39 @@ function initBranchesView() {
         });
     }
 
-    async function openViewMore(id) {
+    async function openViewMore(
+        id,
+        {
+            forceReload = false,
+            showBusy = true
+        } = {}
+    ) {
+        if (openingBranchId === id) return;
+
+        openingBranchId = id;
         currentDetailBranchId = id;
-        showLoader();
+        const loaderToken = showBusy
+            ? showLoader('Loading branch details...')
+            : null;
 
         try {
-            const response = await apiGet('/superadmin/branches');
-            const branches = Array.isArray(response?.data) ? response.data : [];
+            const branchesRequest =
+                forceReload || loadedBranches.length === 0
+                    ? apiGet('/superadmin/branches')
+                    : Promise.resolve({ data: loadedBranches });
+            const statsRequest = apiGet(
+                `/superadmin/branches/${id}/stats`
+            ).catch(() => null);
+            const logsRequest = apiGet(
+                `/superadmin/branches/${id}/logs`
+            ).catch(() => null);
+
+            const response = await branchesRequest;
+            const branches =
+                Array.isArray(response?.data)
+                    ? response.data
+                    : [];
+            loadedBranches = branches;
             const branch = branches.find(item => Number(item.branchId) === Number(id));
 
             if (!branch) {
@@ -721,8 +748,16 @@ function initBranchesView() {
                 }
             }
 
+            tableView?.classList.add('hidden');
+            detailView?.classList.remove('hidden');
+            resetEditMode();
+
             try {
-                const statsResponse = await apiGet(`/superadmin/branches/${id}/stats`).catch(() => null);
+                const [statsResponse, logResponse] =
+                    await Promise.all([
+                        statsRequest,
+                        logsRequest
+                    ]);
                 const stats = statsResponse?.data || null;
 
                 setText('#view-statStudents', stats ? stats.students || 0 : 'N/A');
@@ -734,7 +769,6 @@ function initBranchesView() {
 
                 if (logBody && logTemplate) {
                     logBody.textContent = '';
-                    const logResponse = await apiGet(`/superadmin/branches/${id}/logs`).catch(() => null);
                     const logs = Array.isArray(logResponse?.data) ? logResponse.data : [];
 
                     if (logs.length === 0) {
@@ -758,15 +792,15 @@ function initBranchesView() {
             } catch (error) {
                 console.error('Branch stats or logs failed:', error);
             }
-
-            tableView?.classList.add('hidden');
-            detailView?.classList.remove('hidden');
-            resetEditMode();
         } catch (error) {
             console.error(error);
             showErrorMessage(error.message || 'Failed to fetch branch details.');
         } finally {
-            hideLoader();
+            if (openingBranchId === id) {
+                openingBranchId = null;
+            }
+
+            if (loaderToken) hideLoader(loaderToken);
         }
     }
 
@@ -866,17 +900,21 @@ function initBranchesView() {
                 confirmText: 'Yes, Reset',
                 cancelText: 'Cancel',
                 onConfirm: async modal => {
-                    modal.close();
-                    showLoader();
+                    await modal.close();
+                    const loaderToken = showLoader(
+                        'Resetting administrator password...'
+                    );
 
                     try {
                         await apiPut(`/superadmin/branches/${currentDetailBranchId}/reset-admin-password`, {});
-                        showSuccessMessage('The administrator password was reset successfully.');
+                        hideLoader(loaderToken);
+                        showSuccessMessage(
+                            'New administrator credentials are being sent to the branch email.'
+                        );
                     } catch (error) {
                         console.error(error);
+                        hideLoader(loaderToken);
                         showErrorMessage('Failed to reset the branch administrator password.');
-                    } finally {
-                        hideLoader();
                     }
                 }
             });
@@ -918,7 +956,7 @@ function initBranchesView() {
             confirmText: 'Save Changes',
             cancelText: 'Cancel',
             onConfirm: async modal => {
-                modal.close();
+                await modal.close();
 
                 const branchName = getInputValue('#edit-branchName');
                 const branchEmail = getInputValue('#edit-branchEmail');
@@ -974,20 +1012,41 @@ function initBranchesView() {
                 if (photoFile) formData.append('photo', photoFile);
                 if (documentFile) formData.append('documents', documentFile);
 
-                showLoader();
+                const loaderToken = showLoader(
+                    'Saving branch changes...'
+                );
                 saveButton.disabled = true;
+                let saveError = null;
+                let savedSuccessfully = false;
 
                 try {
                     await apiMultipart(`/superadmin/branches/${currentDetailBranchId}`, 'PUT', formData);
                     clearEditValidation();
-                    showSuccessMessage('Branch details updated successfully.');
-                    await openViewMore(currentDetailBranchId);
+                    await openViewMore(
+                        currentDetailBranchId,
+                        {
+                            forceReload: true,
+                            showBusy: false
+                        }
+                    );
+                    savedSuccessfully = true;
                 } catch (error) {
                     console.error(error);
-                    showErrorMessage(error.message || 'Failed to save branch changes.');
+                    saveError = error;
                 } finally {
                     saveButton.disabled = false;
-                    hideLoader();
+                    hideLoader(loaderToken);
+                }
+
+                if (savedSuccessfully) {
+                    showSuccessMessage(
+                        'Branch details updated successfully.'
+                    );
+                } else {
+                    showErrorMessage(
+                        saveError?.message ||
+                        'Failed to save branch changes.'
+                    );
                 }
             }
         });
@@ -1466,25 +1525,13 @@ function initAddBranchView() {
         }
     });
 
-    const navigateToBranches = () => {
-        const mainContent = document.getElementById('main-content-area');
-
-        window.history.pushState(
-            {
-                view: 'branches',
-                title: 'Manage Branches'
-            },
-            '',
-            '/superadmin/branches'
-        );
-
-        const pageTitleElement = document.getElementById('pageTitle');
-        if (pageTitleElement) {
-            pageTitleElement.textContent = 'Manage Branches';
-        }
-
-        void loadView('superadmin', 'branches', mainContent);
-    };
+    const navigateToBranches = () =>
+        window.erpNavigate({
+            role: 'superadmin',
+            view: 'branches',
+            title: 'Manage Branches',
+            historyMode: 'push'
+        });
 
     const oldBackButton = viewContainer.querySelector('#backToBranchesBtn');
     if (oldBackButton) {
@@ -1589,7 +1636,7 @@ function initAddBranchView() {
             }
         });
 
-        showLoader();
+        const loaderToken = showLoader('Creating branch...');
 
         try {
             await apiMultipart(
@@ -1638,17 +1685,23 @@ function initAddBranchView() {
                     type: 'success',
                     contentNode: successClone,
                     confirmText: 'Go to Manage Branches',
-                    onConfirm: modal => {
-                        modal.close();
-                        navigateToBranches();
+                    onConfirm: async modal => {
+                        await modal.close();
+                        await navigateToBranches();
                     }
                 });
             } else {
-                showSuccessMessage(
-                    'Branch created successfully.'
-                );
-
-                navigateToBranches();
+                showPremiumModal({
+                    title: 'Branch Created!',
+                    type: 'success',
+                    contentText:
+                        'Branch created successfully.',
+                    confirmText: 'Go to Manage Branches',
+                    onConfirm: async modal => {
+                        await modal.close();
+                        await navigateToBranches();
+                    }
+                });
             }
         } catch (error) {
             console.error('Branch save error:', error);
@@ -1657,7 +1710,7 @@ function initAddBranchView() {
                 'Failed to create the branch. Confirm that the backend supports the new address and communication fields.'
             );
         } finally {
-            hideLoader();
+            hideLoader(loaderToken);
 
             if (submitButton) {
                 submitButton.disabled = false;
@@ -1717,9 +1770,11 @@ async function initSystemStatsView() {
                 breakdownList.appendChild(clone);
             });
         }
-
-    } finally {
-        hideLoader();
+    } catch (error) {
+        console.error(
+            'System statistics failed to load.',
+            error
+        );
     }
 }
 
@@ -1751,8 +1806,13 @@ async function initAuditLogsView() {
             clone.querySelector('.log-action').textContent = log.action;
             tbody.appendChild(clone);
         });
-    } finally {
-        hideLoader();
+    } catch (error) {
+        console.error('Audit logs failed to load.', error);
+        renderEmptyTableMessage(
+            tbody,
+            10,
+            'Failed to load audit logs.'
+        );
     }
 }
 
@@ -1810,7 +1870,10 @@ async function initScholarshipsFundsGotView() {
     if (tbody) renderFetchingMessage(tbody, 10, 'Fetching treasury data...');
 
     try {
-        const summaryRes = await apiGet('/superadmin/scholarships/funds-summary');
+        const [summaryRes, donorsRes] = await Promise.all([
+            apiGet('/superadmin/scholarships/funds-summary'),
+            apiGet('/superadmin/scholarships/donors')
+        ]);
 
         /** @type {{totalRaisedUgx: number, totalSpentUgx: number, availableBalanceUgx: number, studentsSponsored: number}} */
         const summary = summaryRes.data || summaryRes;
@@ -1820,7 +1883,6 @@ async function initScholarshipsFundsGotView() {
         animateValue(document.querySelector('#treasury-available'), 0, summary.availableBalanceUgx || 0, 2000, true);
         animateValue(document.querySelector('#treasury-sponsored'), 0, summary.studentsSponsored || 0, 1200, false);
 
-        const donorsRes = await apiGet('/superadmin/scholarships/donors');
         const donorsArray = Array.isArray(donorsRes) ? donorsRes : (donorsRes.data || []);
 
         const tbody = viewContainer.querySelector('tbody');
@@ -1883,8 +1945,6 @@ async function initScholarshipsFundsGotView() {
     } catch (error) {
         console.error("Treasury load failed:", error);
         showErrorMessage("Failed to load global treasury data.");
-    } finally {
-        hideLoader();
     }
 }
 // ==========================================
@@ -2061,8 +2121,6 @@ async function initScholarshipsApplicationsView() {
 
     } catch (error) {
         console.error("Global search view load failed:", error);
-    } finally {
-        hideLoader();
     }
 }
 
@@ -2128,7 +2186,9 @@ function initBulkDistributionView() {
             });
         }
     }).catch(e => console.error("Failed to load demands:", e));
-    } catch(err) { hideLoader(); }
+    } catch(err) {
+        console.error("Failed to start branch demands request:", err);
+    }
 
     function renderHistoryTable(dataArray) {
         const tbody = document.getElementById('ajax-history-tbody');
@@ -2523,22 +2583,40 @@ async function initPartialStudentFundView() {
         if (tbody) window.renderFetchingMessage(tbody, 10, 'Fetching sponsorships...');
 
         try {
-            // 1. Fetch Global Treasury Summary Independently
-            let summary = { availableBalanceUgx: 0, totalSpentUgx: 0 };
-            try {
-                const summaryRes = await apiGet('/superadmin/scholarships/funds-summary');
-                summary = summaryRes.data || summaryRes;
-            } catch (summaryErr) {
-                console.warn("Could not load funds summary. Your web_donations table might have an issue.", summaryErr);
+            const [summaryResult, studentsResult] =
+                await Promise.allSettled([
+                    apiGet('/superadmin/scholarships/funds-summary'),
+                    apiGet('/superadmin/scholarships/pending-students')
+                ]);
+
+            let summary = {
+                availableBalanceUgx: 0,
+                totalSpentUgx: 0
+            };
+
+            if (summaryResult.status === 'fulfilled') {
+                summary =
+                    summaryResult.value?.data ||
+                    summaryResult.value ||
+                    summary;
+            } else {
+                console.warn(
+                    'Could not load funds summary.',
+                    summaryResult.reason
+                );
             }
 
-            // 2. Fetch Pending Students Independently
-            try {
-                const studentsRes = await apiGet('/superadmin/scholarships/pending-students');
-                allStudents = Array.isArray(studentsRes) ? studentsRes : (studentsRes.data || []);
-            } catch (studentsErr) {
-                console.warn("Could not load pending students. Does the erp_scholarship_applications table exist?", studentsErr);
-                allStudents = []; // Default to empty array so the UI doesn't crash
+            if (studentsResult.status === 'fulfilled') {
+                const studentsResponse = studentsResult.value;
+                allStudents = Array.isArray(studentsResponse)
+                    ? studentsResponse
+                    : (studentsResponse?.data || []);
+            } else {
+                console.warn(
+                    'Could not load pending students.',
+                    studentsResult.reason
+                );
+                allStudents = [];
             }
 
             // 3. Update the UI Stat Cards Safely with Smooth Animation!
@@ -2561,9 +2639,13 @@ async function initPartialStudentFundView() {
 
             // 4. Render the Table
             renderTable();
-
-        } finally {
-            hideLoader();
+        } catch (error) {
+            console.error(
+                'Partial student funding data failed to load.',
+                error
+            );
+            allStudents = [];
+            renderTable();
         }
     }
 

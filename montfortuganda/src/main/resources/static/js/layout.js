@@ -507,9 +507,11 @@ function showPremiumModal({ title, type = 'info', contentNode = null, contentTex
 
     // Pure DOM clear
     while (modalWrapper.firstChild) modalWrapper.removeChild(modalWrapper.firstChild);
+    document.body.classList.add('erp-modal-open');
 
     const template = document.getElementById('premium-modal-template');
     if (!template) {
+        document.body.classList.remove('erp-modal-open');
         // Ultimate fallback just in case the template hasn't loaded yet
         if (type === 'error') alert("ERROR: " + (contentText || "An error occurred"));
         else if (type === 'success') alert("SUCCESS: " + (contentText || "Action completed"));
@@ -546,19 +548,52 @@ function showPremiumModal({ title, type = 'info', contentNode = null, contentTex
     if (contentNode) bodyElement.appendChild(contentNode);
     else if (contentText) bodyElement.textContent = contentText;
 
+    let isClosing = false;
     const closeObj = {
-        close: () => {
+        close: () => new Promise(resolve => {
+            if (isClosing) {
+                resolve();
+                return;
+            }
+
+            isClosing = true;
             overlay.classList.add('pm-fade-out');
             setTimeout(() => {
-                while (modalWrapper.firstChild) modalWrapper.removeChild(modalWrapper.firstChild);
-            }, 300);
+                if (modalWrapper.contains(overlay)) {
+                    overlay.remove();
+                }
+
+                if (!modalWrapper.firstChild) {
+                    document.body.classList.remove('erp-modal-open');
+                }
+
+                resolve();
+            }, 200);
+        })
+    };
+
+    const runModalAction = async action => {
+        if (confirmBtn.disabled) return;
+
+        confirmBtn.disabled = true;
+        cancelBtn.disabled = true;
+
+        try {
+            await action();
+        } catch (error) {
+            console.error('Premium modal action failed.', error);
+            confirmBtn.disabled = false;
+            cancelBtn.disabled = false;
         }
     };
 
     if (cancelText) {
         cancelBtn.textContent = cancelText;
         cancelBtn.classList.remove('hidden');
-        cancelBtn.addEventListener('click', () => closeObj.close());
+        cancelBtn.addEventListener(
+            'click',
+            () => void runModalAction(() => closeObj.close())
+        );
     }
 
     confirmBtn.textContent = confirmText;
@@ -567,12 +602,20 @@ function showPremiumModal({ title, type = 'info', contentNode = null, contentTex
         confirmBtn.classList.add('premium-modal-btn-danger'); // Makes button red!
     }
 
-    confirmBtn.addEventListener('click', () => {
-        if (onConfirm) onConfirm(closeObj);
-        else closeObj.close();
-    });
+    confirmBtn.addEventListener(
+        'click',
+        () => void runModalAction(async () => {
+            if (onConfirm) {
+                await onConfirm(closeObj);
+                return;
+            }
+
+            await closeObj.close();
+        })
+    );
 
     modalWrapper.appendChild(clone);
+    window.requestAnimationFrame(() => confirmBtn.focus());
 }
 
 // 2. Overwrite the generic alerts so ANY system error or success automatically uses the premium modal!

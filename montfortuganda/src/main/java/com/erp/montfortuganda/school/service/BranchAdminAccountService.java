@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Locale;
+import java.util.Objects;
 
 @Service
 public class BranchAdminAccountService {
@@ -125,7 +126,8 @@ public class BranchAdminAccountService {
                 branch.getBranchId(),
                 username,
                 temporaryPassword,
-                expiresAt
+                expiresAt,
+                savedUser.getCredentialVersion()
         );
     }
 
@@ -145,6 +147,115 @@ public class BranchAdminAccountService {
                 .trim()
                 .toLowerCase(Locale.ROOT)
                 + USERNAME_DOMAIN;
+    }
+
+    /**
+     * Replaces the Branch Admin password with a new 72-hour temporary
+     * credential. The plain-text value exists only in the returned
+     * in-memory object so it can be delivered after the transaction commits.
+     */
+    @Transactional
+    public BranchAdminCredentials resetTemporaryCredentials(
+            Branch branch
+    ) {
+        validateBranch(branch);
+
+        String username =
+                buildBranchAdminUsername(
+                        branch.getSchoolCode()
+                );
+
+        User user =
+                userRepository
+                        .findByUsernameWithAssignedBranch(
+                                username
+                        )
+                        .orElseThrow(() ->
+                                new IllegalStateException(
+                                        "The Branch Admin account was not found for "
+                                                + username
+                                                + "."
+                                )
+                        );
+
+        if (
+                user.getAssignedBranch() == null
+                        || !Objects.equals(
+                        user.getAssignedBranch()
+                                .getBranchId(),
+                        branch.getBranchId()
+                )
+        ) {
+            throw new IllegalStateException(
+                    "The Branch Admin account is not assigned to this branch."
+            );
+        }
+
+        if (!Integer.valueOf(1).equals(user.getIsActive())) {
+            throw new IllegalStateException(
+                    "The Branch Admin account is inactive."
+            );
+        }
+
+        String temporaryPassword =
+                passwordService
+                        .generateSecureTemporaryPassword();
+
+        LocalDateTime createdAt =
+                LocalDateTime.now(ZoneOffset.UTC);
+
+        LocalDateTime expiresAt =
+                createdAt.plusHours(
+                        TEMPORARY_PASSWORD_VALIDITY_HOURS
+                );
+
+        user.setPassword(
+                passwordService.hashPassword(
+                        temporaryPassword
+                )
+        );
+        user.setMustChangePassword(true);
+        user.setTemporaryPasswordCreatedAt(createdAt);
+        user.setTemporaryPasswordExpiresAt(expiresAt);
+        user.setPasswordChangedAt(null);
+        user.setCredentialDeliveryStatus(
+                CredentialDeliveryStatus.PENDING
+        );
+        user.setCredentialsSentAt(null);
+        user.setCredentialDeliveryAttempts(0);
+        user.setCredentialVersion(
+                nextCredentialVersion(
+                        user.getCredentialVersion()
+                )
+        );
+
+        User savedUser =
+                userRepository.saveAndFlush(user);
+
+        return new BranchAdminCredentials(
+                savedUser.getId(),
+                branch.getBranchId(),
+                username,
+                temporaryPassword,
+                expiresAt,
+                savedUser.getCredentialVersion()
+        );
+    }
+
+    private int nextCredentialVersion(
+            Integer currentVersion
+    ) {
+        if (currentVersion == null || currentVersion < 1) {
+            return 1;
+        }
+
+        if (currentVersion == Integer.MAX_VALUE) {
+            throw new IllegalStateException(
+                    "The credential version cannot be increased."
+            );
+        }
+
+        return currentVersion + 1;
     }
 
     private void validateBranch(

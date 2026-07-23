@@ -31,3 +31,17 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Runtime secrets and local configuration ###
+.env
+.env.*
+!.env.example
+
+### Runtime data ###
+*.log
+logs/
+uploads/
+erp-storage/
+
+### Local build caches ###
+.maven-cache/

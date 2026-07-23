@@ -41,7 +41,6 @@ public class BranchMailSenderFactory {
         this.environment = environment;
     }
 
-    @SuppressWarnings("unused")
     public JavaMailSender getMailSender(
             Branch branch
     ) {
@@ -61,6 +60,28 @@ public class BranchMailSenderFactory {
                 cacheKey,
                 this::createMailSender
         );
+    }
+
+    public void evict(
+            Branch branch
+    ) {
+        if (
+                branch == null
+                        || branch.getSchoolCode() == null
+        ) {
+            return;
+        }
+
+        String schoolCode =
+                normalizeSchoolCode(
+                        branch.getSchoolCode()
+                );
+
+        senderCache.keySet()
+                .removeIf(key ->
+                        key.schoolCode()
+                                .equals(schoolCode)
+                );
     }
 
     private JavaMailSender createMailSender(

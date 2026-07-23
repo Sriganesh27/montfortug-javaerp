@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 public class AllocationRequestDTO {
     private Long branchId;
     private Long studentId;
+    private Long donationId;
     private BigDecimal amountUgx;
     private String term;
     private String academicYear;

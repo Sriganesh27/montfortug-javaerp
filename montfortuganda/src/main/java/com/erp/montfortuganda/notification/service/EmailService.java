@@ -2,7 +2,6 @@ package com.erp.montfortuganda.notification.service;
 
 import com.erp.montfortuganda.admission.entity.ErpApplication;
 import com.erp.montfortuganda.employee.entity.ErpEmployee;
-import com.erp.montfortuganda.notification.config.BranchMailSenderFactory;
 import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.service.FileStorageService;
 import com.erp.montfortuganda.school.service.model.BranchAdminCredentials;
@@ -42,20 +41,25 @@ public class EmailService {
                     "dd MMM yyyy, hh:mm a 'UTC'"
             );
 
-    private final BranchMailSenderFactory branchMailSenderFactory;
+    private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
     private final FileStorageService fileStorageService;
+
+    @Value("${spring.mail.username}")
+    private String mailUsername;
+
+    @Value("${erp.mail.from-name:Montfort ERP}")
+    private String mailFromName;
 
     @Value("${app.frontend.url:http://localhost:8080}")
     private String frontendUrl;
 
     public EmailService(
-            BranchMailSenderFactory branchMailSenderFactory,
+            JavaMailSender mailSender,
             TemplateEngine templateEngine,
             FileStorageService fileStorageService
     ) {
-        this.branchMailSenderFactory =
-                branchMailSenderFactory;
+        this.mailSender = mailSender;
         this.templateEngine =
                 templateEngine;
         this.fileStorageService =
@@ -137,10 +141,6 @@ public class EmailService {
                             "email/application-confirmation",
                             context
                     );
-
-            JavaMailSender mailSender =
-                    branchMailSenderFactory
-                            .getMailSender(branch);
 
             MimeMessage message =
                     mailSender.createMimeMessage();
@@ -280,10 +280,6 @@ public class EmailService {
                             context
                     );
 
-            JavaMailSender mailSender =
-                    branchMailSenderFactory
-                            .getMailSender(branch);
-
             MimeMessage message =
                     mailSender.createMimeMessage();
 
@@ -328,9 +324,10 @@ public class EmailService {
     }
 
     /**
-     * Sends Branch Admin credentials from the newly created branch SMTP
-     * account. This email intentionally uses the central Montfort Brothers
-     * logo instead of the uploaded school logo.
+     * Sends Branch Admin credentials from the central ERP SMTP account to the
+     * official email address stored for the branch. This email intentionally
+     * uses the central Montfort Brothers logo instead of the uploaded school
+     * logo.
 
      * The method remains synchronous so the after-commit branch workflow can
      * mark credential delivery as SENT or FAILED accurately.
@@ -406,10 +403,6 @@ public class EmailService {
                             context
                     );
 
-            JavaMailSender mailSender =
-                    branchMailSenderFactory
-                            .getMailSender(branch);
-
             MimeMessage message =
                     mailSender.createMimeMessage();
 
@@ -472,19 +465,22 @@ public class EmailService {
     ) throws Exception {
         validateBranchEmailConfiguration(branch);
 
-        String branchEmail =
-                branch.getBranchEmail()
-                        .trim();
-
         String senderName =
                 resolveSenderName(
                         branch,
                         defaultSuffix
                 );
 
+        requireText(
+                mailUsername,
+                "Central ERP sender email"
+        );
+
         helper.setFrom(
-                branchEmail,
-                senderName
+                mailUsername.trim(),
+                hasText(mailFromName)
+                        ? mailFromName.trim()
+                        : "Montfort ERP"
         );
 
         helper.setReplyTo(

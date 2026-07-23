@@ -248,6 +248,29 @@ public class GlobalExceptionHandler {
     }
 
     /*
+     * Keeps GoDaddy donation outages isolated from the primary ERP database.
+     */
+    @ExceptionHandler(
+            ExternalDonationUnavailableException.class
+    )
+    public ResponseEntity<Map<String, Object>>
+    handleExternalDonationUnavailable(
+            ExternalDonationUnavailableException exception
+    ) {
+        logger.warn(
+                "External donation database is unavailable: {}",
+                exception.getCause() == null
+                        ? exception.getMessage()
+                        : exception.getCause().getMessage()
+        );
+
+        return buildErrorResponse(
+                HttpStatus.SERVICE_UNAVAILABLE,
+                "Donation information is temporarily unavailable."
+        );
+    }
+
+    /*
      * Handles stale version updates.
      */
     @ExceptionHandler(

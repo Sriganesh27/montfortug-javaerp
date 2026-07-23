@@ -16,13 +16,15 @@ public final class BranchAdminCredentials {
     private final String username;
     private final String temporaryPassword;
     private final LocalDateTime expiresAt;
+    private final Integer credentialVersion;
 
     public BranchAdminCredentials(
             Integer userId,
             Integer branchId,
             String username,
             String temporaryPassword,
-            LocalDateTime expiresAt
+            LocalDateTime expiresAt,
+            Integer credentialVersion
     ) {
         this.userId =
                 Objects.requireNonNull(
@@ -53,6 +55,18 @@ public final class BranchAdminCredentials {
                         expiresAt,
                         "Temporary password expiry is required."
                 );
+
+        this.credentialVersion =
+                Objects.requireNonNull(
+                        credentialVersion,
+                        "Credential version is required."
+                );
+
+        if (credentialVersion < 1) {
+            throw new IllegalArgumentException(
+                    "Credential version must be positive."
+            );
+        }
     }
 
     public Integer getUserId() {
@@ -75,6 +89,10 @@ public final class BranchAdminCredentials {
         return expiresAt;
     }
 
+    public Integer getCredentialVersion() {
+        return credentialVersion;
+    }
+
     @Override
     public String toString() {
         return "BranchAdminCredentials{"
@@ -88,6 +106,8 @@ public final class BranchAdminCredentials {
                 + ", temporaryPassword='[PROTECTED]'"
                 + ", expiresAt="
                 + expiresAt
+                + ", credentialVersion="
+                + credentialVersion
                 + '}';
     }
 

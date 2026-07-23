@@ -8,11 +8,18 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface UserRepository
         extends JpaRepository<User, Integer> {
 
+    @EntityGraph(
+            attributePaths = {
+                    "userRoles",
+                    "userRoles.role"
+            }
+    )
     @Query("""
             SELECT user
             FROM User user
@@ -43,4 +50,12 @@ public interface UserRepository
     Optional<User> findByUsernameWithAssignedBranch(
             @Param("username") String username
     );
+
+    @EntityGraph(attributePaths = "assignedBranch")
+    @Query("""
+            SELECT user
+            FROM User user
+            ORDER BY user.id DESC
+            """)
+    List<User> findAllWithAssignedBranch();
 }
