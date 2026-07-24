@@ -222,8 +222,8 @@ public class EmployeeExcelValueParser {
 
         return normalized
                 .trim()
-                .replaceAll("\\s+", " ")
-                .toLowerCase(Locale.ROOT);
+                .toUpperCase(Locale.ROOT)
+                .replaceAll("[\\s_-]+", "");
     }
 
     public boolean isCorrectionMarker(String value) {

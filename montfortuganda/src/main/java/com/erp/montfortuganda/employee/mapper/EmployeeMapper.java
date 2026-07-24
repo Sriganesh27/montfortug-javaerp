@@ -89,9 +89,9 @@ public class EmployeeMapper {
 
         mapRegistrationFields(
                 request,
-                employee
+                employee,
+                true
         );
-
         employee.setLoginEnabled(false);
         employee.setActive(true);
         employee.setEmploymentEndDate(null);
@@ -280,10 +280,61 @@ public class EmployeeMapper {
                 )
         );
     }
+    /**
+     * Creates an Employee from the trusted bulk-import flow.
+     *
+     * <p>The normal Add Employee flow remains strict. Bulk import permits an
+     * optional mobile number because the Excel template may contain a blank
+     * mobile cell.</p>
+     */
+    public ErpEmployee toNewBulkEmployee(
+            EmployeeRegistrationRequest request,
+            Branch branch,
+            Department department,
+            Designation designation,
+            ErpEmployee reportingManager,
+            String employeeNo
+    ) {
+        Objects.requireNonNull(
+                request,
+                "Employee registration request is required."
+        );
+        Objects.requireNonNull(
+                branch,
+                "Employee branch is required."
+        );
+        Objects.requireNonNull(
+                employeeNo,
+                "Generated Employee number is required."
+        );
 
+        ErpEmployee employee =
+                new ErpEmployee();
+
+        employee.setEmployeeNo(
+                trimRequired(employeeNo)
+        );
+        employee.setBranch(branch);
+        employee.setDepartment(department);
+        employee.setDesignation(designation);
+        employee.setReportingManager(reportingManager);
+
+        mapRegistrationFields(
+                request,
+                employee,
+                false
+        );
+
+        employee.setLoginEnabled(false);
+        employee.setActive(true);
+        employee.setEmploymentEndDate(null);
+
+        return employee;
+    }
     private void mapRegistrationFields(
             EmployeeRegistrationRequest request,
-            ErpEmployee employee
+            ErpEmployee employee,
+            boolean requireMobileNumber
     ) {
         employee.setTitle(
                 trimToNull(request.title())
@@ -327,7 +378,9 @@ public class EmployeeMapper {
                 normalizeEmail(request.personalEmail())
         );
         employee.setMobileNo(
-                trimRequired(request.mobileNo())
+                requireMobileNumber
+                        ? trimRequired(request.mobileNo())
+                        : trimToNull(request.mobileNo())
         );
         employee.setAlternateMobile(
                 trimToNull(request.alternateMobile())

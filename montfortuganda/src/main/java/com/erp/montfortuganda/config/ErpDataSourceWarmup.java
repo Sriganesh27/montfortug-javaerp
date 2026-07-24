@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -13,13 +14,12 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-/**
- * Initializes and verifies the ERP datasource during application startup.
- *
- * <p>This prevents the first browser API request from paying the complete
- * SSH-tunnel and Hikari pool startup cost.</p>
- */
 @Component
+@ConditionalOnProperty(
+        name = "erp.datasource.warmup.enabled",
+        havingValue = "true",
+        matchIfMissing = true
+)
 public class ErpDataSourceWarmup implements ApplicationRunner {
 
     private static final Logger LOGGER =

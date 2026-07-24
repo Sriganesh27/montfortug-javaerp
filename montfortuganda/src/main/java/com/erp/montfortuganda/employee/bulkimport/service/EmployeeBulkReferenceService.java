@@ -18,8 +18,10 @@ import java.util.Map;
 
 /**
  * Loads branch/reference data once for the complete Employee import job.
-
- * This avoids querying the database separately for every Excel row.
+ *
+ * <p>Both master-data names and codes are indexed. Therefore values such as
+ * {@code Head Teacher}, {@code HEAD_TEACHER} and {@code HEADTEACHER} resolve to
+ * the same active designation when that designation exists.</p>
  */
 @Service
 @RequiredArgsConstructor
@@ -32,13 +34,11 @@ public class EmployeeBulkReferenceService {
 
     /**
      * Expected complexity:
-
-     * Time: O(d + g + e)
-     * Space: O(d + g + e)
-
-     * d = departments
-     * g = designations
-     * e = active branch employees
+     *
+     * <p>Time: O(d + g + e)</p>
+     * <p>Space: O(d + g + e)</p>
+     *
+     * <p>d = departments, g = designations, e = active branch employees</p>
      */
     @Transactional(readOnly = true)
     public EmployeeBulkReferenceData loadReferences(
@@ -66,100 +66,104 @@ public class EmployeeBulkReferenceService {
                                 branchId
                         );
 
-        Map<String, Department> departmentsByName =
+        Map<String, Department> departmentsByKey =
                 new HashMap<>();
 
         for (Department department : departments) {
-            String key = valueParser.normalizeLookupKey(
-                    department.getDepartmentName()
+            putReference(
+                    departmentsByKey,
+                    department.getDepartmentName(),
+                    department
             );
-
-            if (key != null) {
-                departmentsByName.put(key, department);
-            }
+            putReference(
+                    departmentsByKey,
+                    department.getDepartmentCode(),
+                    department
+            );
         }
 
-        Map<String, Designation> designationsByName =
+        Map<String, Designation> designationsByKey =
                 new HashMap<>();
 
         for (Designation designation : designations) {
-            String key = valueParser.normalizeLookupKey(
-                    designation.getDesignationName()
+            putReference(
+                    designationsByKey,
+                    designation.getDesignationName(),
+                    designation
             );
-
-            if (key != null) {
-                designationsByName.put(key, designation);
-            }
+            putReference(
+                    designationsByKey,
+                    designation.getDesignationCode(),
+                    designation
+            );
         }
 
         Map<String, ErpEmployee> employeesByEmployeeNo =
                 new HashMap<>();
 
         for (ErpEmployee employee : employees) {
-            String key = valueParser.normalizeLookupKey(
-                    employee.getEmployeeNo()
+            putReference(
+                    employeesByEmployeeNo,
+                    employee.getEmployeeNo(),
+                    employee
             );
-
-            if (key != null) {
-                employeesByEmployeeNo.put(key, employee);
-            }
         }
 
         return new EmployeeBulkReferenceData(
                 branchId,
-                departmentsByName,
-                designationsByName,
+                departmentsByKey,
+                designationsByKey,
                 employeesByEmployeeNo
         );
+    }
+
+    private <T> void putReference(
+            Map<String, T> target,
+            String rawKey,
+            T value
+    ) {
+        String normalizedKey =
+                valueParser.normalizeLookupKey(rawKey);
+
+        if (normalizedKey != null) {
+            target.putIfAbsent(normalizedKey, value);
+        }
     }
 
     @Getter
     public static final class EmployeeBulkReferenceData {
 
         private final Integer branchId;
-
-        private final Map<String, Department> departmentsByName;
-
-        private final Map<String, Designation> designationsByName;
-
+        private final Map<String, Department> departmentsByKey;
+        private final Map<String, Designation> designationsByKey;
         private final Map<String, ErpEmployee> employeesByEmployeeNo;
 
         private EmployeeBulkReferenceData(
                 Integer branchId,
-                Map<String, Department> departmentsByName,
-                Map<String, Designation> designationsByName,
+                Map<String, Department> departmentsByKey,
+                Map<String, Designation> designationsByKey,
                 Map<String, ErpEmployee> employeesByEmployeeNo
         ) {
             this.branchId = branchId;
-
-            this.departmentsByName =
-                    Map.copyOf(departmentsByName);
-
-            this.designationsByName =
-                    Map.copyOf(designationsByName);
-
-            this.employeesByEmployeeNo =
-                    Map.copyOf(employeesByEmployeeNo);
+            this.departmentsByKey = Map.copyOf(departmentsByKey);
+            this.designationsByKey = Map.copyOf(designationsByKey);
+            this.employeesByEmployeeNo = Map.copyOf(employeesByEmployeeNo);
         }
 
-        public Department findDepartment(
-                String normalizedName
-        ) {
-            if (normalizedName == null) {
+        public Department findDepartment(String normalizedKey) {
+            if (normalizedKey == null) {
                 return null;
             }
 
-            return departmentsByName.get(normalizedName);
+            return departmentsByKey.get(normalizedKey);
         }
 
-        public Designation findDesignation(
-                String normalizedName
-        ) {
-            if (normalizedName == null) {
+        public Designation findDesignation(String normalizedKey) {
+            if (normalizedKey == null) {
                 return null;
             }
 
-            return designationsByName.get(normalizedName);
+            return designationsByKey.get(normalizedKey);
         }
 
         public ErpEmployee findReportingManager(
@@ -169,9 +173,7 @@ public class EmployeeBulkReferenceService {
                 return null;
             }
 
-            return employeesByEmployeeNo.get(
-                    normalizedEmployeeNo
-            );
+            return employeesByEmployeeNo.get(normalizedEmployeeNo);
         }
     }
 }

@@ -6,8 +6,11 @@ import com.erp.montfortuganda.common.importframework.plugin.ValidationResult;
 import com.erp.montfortuganda.employee.bulkimport.dto.EmployeeBulkImportRow;
 import com.erp.montfortuganda.employee.bulkimport.excel.EmployeeExcelHeaders;
 import com.erp.montfortuganda.employee.bulkimport.excel.EmployeeExcelValueParser;
+import com.erp.montfortuganda.employee.bulkimport.service.EmployeeBulkCategoryResolver;
 import com.erp.montfortuganda.employee.bulkimport.service.EmployeeBulkReferenceService;
 import com.erp.montfortuganda.employee.bulkimport.service.EmployeeBulkReferenceService.EmployeeBulkReferenceData;
+import com.erp.montfortuganda.employee.enums.EmployeeCategory;
+import com.erp.montfortuganda.school.entity.Designation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -55,6 +58,7 @@ public class EmployeeBulkImportValidator
 
     private final EmployeeExcelValueParser valueParser;
     private final EmployeeBulkReferenceService referenceService;
+    private final EmployeeBulkCategoryResolver categoryResolver;
 
     @Override
     public ValidationResult validate(
@@ -135,6 +139,7 @@ public class EmployeeBulkImportValidator
 
         validateEmployeeCategory(
                 row,
+                references,
                 errors
         );
 
@@ -165,7 +170,7 @@ public class EmployeeBulkImportValidator
                 errors
         );
 
-        validateRequiredMobile(
+        validateOptionalMobile(
                 row.getMobileNumber(),
                 errors
         );
@@ -367,25 +372,9 @@ public class EmployeeBulkImportValidator
             EmployeeBulkImportRow row,
             List<ValidationResult.ValidationError> errors
     ) {
-        String value =
-                valueParser.nullableText(
-                        row.getGender()
-                );
-
-        if (value == null) {
-            addError(
-                    errors,
-                    EmployeeExcelHeaders.GENDER,
-                    row.getGender(),
-                    "EMPLOYEE_GENDER_REQUIRED",
-                    "Gender is required"
-            );
-            return;
-        }
-
         try {
             valueParser.nullableGender(
-                    value
+                    row.getGender()
             );
         } catch (IllegalArgumentException exception) {
             addError(
@@ -422,13 +411,6 @@ public class EmployeeBulkImportValidator
         }
 
         if (dateOfBirth == null) {
-            addError(
-                    errors,
-                    EmployeeExcelHeaders.DATE_OF_BIRTH,
-                    row.getDateOfBirth(),
-                    "EMPLOYEE_DATE_OF_BIRTH_REQUIRED",
-                    "Date of Birth is required"
-            );
             return;
         }
 
@@ -536,28 +518,32 @@ public class EmployeeBulkImportValidator
 
     private void validateEmployeeCategory(
             EmployeeBulkImportRow row,
+            EmployeeBulkReferenceData references,
             List<ValidationResult.ValidationError> errors
     ) {
-        String value =
-                valueParser.nullableText(
-                        row.getEmployeeCategory()
+        Designation designation =
+                references.findDesignation(
+                        valueParser.normalizeLookupKey(
+                                row.getDesignationName()
+                        )
                 );
 
-        if (value == null) {
-            addError(
-                    errors,
-                    EmployeeExcelHeaders.EMPLOYEE_CATEGORY,
-                    row.getEmployeeCategory(),
-                    "EMPLOYEE_CATEGORY_REQUIRED",
-                    "Employee Category is required"
-            );
-            return;
-        }
-
         try {
-            valueParser.nullableEmployeeCategory(
-                    value
-            );
+            EmployeeCategory category =
+                    categoryResolver.resolve(
+                            row.getEmployeeCategory(),
+                            designation
+                    );
+
+            if (category == null) {
+                addError(
+                        errors,
+                        EmployeeExcelHeaders.EMPLOYEE_CATEGORY,
+                        row.getEmployeeCategory(),
+                        "EMPLOYEE_CATEGORY_REQUIRED",
+                        "Employee Category is required when it cannot be inferred from Designation"
+                );
+            }
         } catch (IllegalArgumentException exception) {
             addError(
                     errors,
@@ -612,10 +598,16 @@ public class EmployeeBulkImportValidator
             List<ValidationResult.ValidationError> errors
     ) {
         try {
-            valueParser.requiredYesNo(
-                    row.getLoginEnabled(),
-                    EmployeeExcelHeaders.LOGIN_ENABLED
-            );
+            Boolean loginEnabled =
+                    valueParser.nullableYesNo(
+                            row.getLoginEnabled(),
+                            EmployeeExcelHeaders.LOGIN_ENABLED
+                    );
+
+            // Blank Login Enabled is allowed and defaults to false in the mapper.
+            if (loginEnabled == null) {
+                return;
+            }
         } catch (IllegalArgumentException exception) {
             addError(
                     errors,
@@ -658,7 +650,7 @@ public class EmployeeBulkImportValidator
         }
     }
 
-    private void validateRequiredMobile(
+    private void validateOptionalMobile(
             String value,
             List<ValidationResult.ValidationError> errors
     ) {
@@ -666,13 +658,6 @@ public class EmployeeBulkImportValidator
                 valueParser.nullableText(value);
 
         if (mobile == null) {
-            addError(
-                    errors,
-                    EmployeeExcelHeaders.MOBILE_NUMBER,
-                    value,
-                    "EMPLOYEE_MOBILE_REQUIRED",
-                    "Mobile Number is required"
-            );
             return;
         }
 

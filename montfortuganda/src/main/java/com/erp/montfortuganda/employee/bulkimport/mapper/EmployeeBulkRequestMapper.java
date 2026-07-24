@@ -3,6 +3,7 @@ package com.erp.montfortuganda.employee.bulkimport.mapper;
 import com.erp.montfortuganda.employee.bulkimport.dto.EmployeeBulkImportOptions;
 import com.erp.montfortuganda.employee.bulkimport.dto.EmployeeBulkImportRow;
 import com.erp.montfortuganda.employee.bulkimport.excel.EmployeeExcelValueParser;
+import com.erp.montfortuganda.employee.bulkimport.service.EmployeeBulkCategoryResolver;
 import com.erp.montfortuganda.employee.bulkimport.service.EmployeeBulkReferenceService.EmployeeBulkReferenceData;
 import com.erp.montfortuganda.employee.dto.request.EmployeeAccountRequest;
 import com.erp.montfortuganda.employee.dto.request.EmployeeRegistrationRequest;
@@ -32,6 +33,7 @@ import java.util.Objects;
 public class EmployeeBulkRequestMapper {
 
     private final EmployeeExcelValueParser valueParser;
+    private final EmployeeBulkCategoryResolver categoryResolver;
 
     public EmployeeRegistrationRequest toRegistrationRequest(
             EmployeeBulkImportRow row,
@@ -74,16 +76,27 @@ public class EmployeeBulkRequestMapper {
                 );
 
         Gender gender =
-                requireGender(row);
+                valueParser.nullableGender(
+                        row.getGender()
+                );
 
         LocalDate dateOfBirth =
-                valueParser.requiredDate(
+                valueParser.nullableDate(
                         row.getDateOfBirth(),
                         "Date of Birth"
                 );
 
         EmployeeCategory employeeCategory =
-                requireEmployeeCategory(row);
+                categoryResolver.resolve(
+                        row.getEmployeeCategory(),
+                        designation
+                );
+
+        if (employeeCategory == null) {
+            throw new IllegalArgumentException(
+                    "Employee Category is required when it cannot be inferred from Designation."
+            );
+        }
 
         EmployeeType employeeType =
                 valueParser.requiredEmployeeType(
@@ -101,11 +114,14 @@ public class EmployeeBulkRequestMapper {
                         "Joining Date"
                 );
 
-        boolean excelLoginEnabled =
-                valueParser.requiredYesNo(
+        Boolean parsedLoginEnabled =
+                valueParser.nullableYesNo(
                         row.getLoginEnabled(),
                         "Login Enabled"
                 );
+
+        boolean excelLoginEnabled =
+                Boolean.TRUE.equals(parsedLoginEnabled);
 
         EmployeeAccountRequest accountRequest =
                 buildAccountRequest(
@@ -151,9 +167,8 @@ public class EmployeeBulkRequestMapper {
                 valueParser.nullableText(
                         row.getPersonalEmail()
                 ),
-                valueParser.requiredText(
-                        row.getMobileNumber(),
-                        "Mobile Number"
+                valueParser.nullableText(
+                        row.getMobileNumber()
                 ),
                 valueParser.nullableText(
                         row.getAlternateMobile()
@@ -299,40 +314,6 @@ public class EmployeeBulkRequestMapper {
         }
 
         return reportingManager;
-    }
-
-    private Gender requireGender(
-            EmployeeBulkImportRow row
-    ) {
-        Gender gender =
-                valueParser.nullableGender(
-                        row.getGender()
-                );
-
-        if (gender == null) {
-            throw new IllegalArgumentException(
-                    "Gender is required."
-            );
-        }
-
-        return gender;
-    }
-
-    private EmployeeCategory requireEmployeeCategory(
-            EmployeeBulkImportRow row
-    ) {
-        EmployeeCategory category =
-                valueParser.nullableEmployeeCategory(
-                        row.getEmployeeCategory()
-                );
-
-        if (category == null) {
-            throw new IllegalArgumentException(
-                    "Employee Category is required."
-            );
-        }
-
-        return category;
     }
 
     private EmployeeAccountRequest buildAccountRequest(

@@ -92,7 +92,7 @@ public class EmployeeBulkImportTransactionService {
                 );
 
         ErpEmployee employee =
-                employeeMapper.toNewEmployee(
+                employeeMapper.toNewBulkEmployee(
                         request,
                         branch,
                         references.department(),
