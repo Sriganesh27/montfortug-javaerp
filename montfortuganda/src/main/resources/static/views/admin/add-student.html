@@ -1,0 +1,1850 @@
+<!--suppress SpellCheckingInspection -->
+<div id="ba-add-student-view">
+    <form id="add-student-form" novalidate>
+
+        <!-- Validation Summary -->
+        <div
+                id="add-student-validation-summary"
+                class="emp-validation-summary hidden"
+                role="alert"
+                aria-live="assertive"
+        >
+            <strong>Please correct the highlighted fields.</strong>
+            <p id="add-student-validation-summary-text"></p>
+        </div>
+
+        <!-- Header -->
+        <div class="view-header mb-4 d-flex justify-content-between align-items-center">
+            <div>
+                <h2>Add New Student</h2>
+            </div>
+
+            <div class="action-btn-group">
+                <button
+                        type="button"
+                        id="backToStudentsBtn"
+                        class="btn btn-secondary"
+                >
+                    <i class="bi bi-arrow-left"></i>
+                    Back
+                </button>
+            </div>
+        </div>
+
+        <div class="form-container p-4 bg-white shadow-sm rounded">
+
+            <!-- ===================================================== -->
+            <!-- SECTION 1: PERSONAL DETAILS WITH PHOTO                -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Personal Details</legend>
+
+                <div class="emp-personal-photo-layout">
+                    <div class="emp-personal-fields">
+                        <div class="emp-grid emp-grid-4 mb-3">
+                            <div class="form-group emp-required-field">
+                                <label for="add-studentFirstName">First Name</label>
+                                <input
+                                        type="text"
+                                        id="add-studentFirstName"
+                                        class="detail-input w-100"
+                                        placeholder="Enter first name"
+                                        required
+                                        aria-required="true"
+                                        data-validation-label="First Name"
+                                        maxlength="100"
+                                        autocomplete="given-name"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="add-studentMiddleName">Middle Name</label>
+                                <input
+                                        type="text"
+                                        id="add-studentMiddleName"
+                                        class="detail-input w-100"
+                                        placeholder="Enter middle name"
+                                        maxlength="100"
+                                        autocomplete="additional-name"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="add-studentLastName">Last Name</label>
+                                <input
+                                        type="text"
+                                        id="add-studentLastName"
+                                        class="detail-input w-100"
+                                        placeholder="Enter last name"
+                                        maxlength="100"
+                                        autocomplete="family-name"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="add-studentLearnerLin">Learner LIN</label>
+                                <input
+                                        type="text"
+                                        id="add-studentLearnerLin"
+                                        class="detail-input w-100"
+                                        placeholder="Enter learner LIN"
+                                        maxlength="50"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="emp-grid emp-grid-4 mb-3">
+                            <div class="form-group emp-required-field">
+                                <label for="add-studentGender">Gender</label>
+                                <select
+                                        id="add-studentGender"
+                                        class="detail-input w-100"
+                                        required
+                                        aria-required="true"
+                                        data-validation-label="Gender"
+                                >
+                                    <option value="">-- Select --</option>
+                                    <option value="MALE">Male</option>
+                                    <option value="FEMALE">Female</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group emp-required-field">
+                                <label for="add-studentDob">Date of Birth</label>
+                                <input
+                                        type="date"
+                                        id="add-studentDob"
+                                        class="detail-input w-100"
+                                        required
+                                        aria-required="true"
+                                        data-validation-label="Date of Birth"
+                                >
+                            </div>
+
+                            <div class="form-group emp-required-field">
+                                <label for="add-studentAdmissionYear">Admission Year</label>
+                                <input
+                                        type="number"
+                                        id="add-studentAdmissionYear"
+                                        class="detail-input w-100"
+                                        min="1900"
+                                        max="2100"
+                                        required
+                                        aria-required="true"
+                                        data-validation-label="Admission Year"
+                                        placeholder="Example: 2026"
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="add-studentNationality">Nationality</label>
+                                <input
+                                        type="text"
+                                        id="add-studentNationality"
+                                        class="detail-input w-100"
+                                        maxlength="100"
+                                        value="Ugandan"
+                                        placeholder="Enter nationality"
+                                >
+                            </div>
+                        </div>
+                    </div>
+
+                    <aside class="emp-photo-panel" aria-label="Student photo">
+                        <div class="form-group">
+                            <label for="add-studentProfilePhoto">
+                                Passport-Size Photo
+                            </label>
+
+                            <div class="emp-photo-preview-box">
+                                <img
+                                        id="add-studentProfilePhotoPreview"
+                                        class="emp-photo-preview hidden"
+                                        alt="Student passport-size photo preview"
+                                >
+
+                                <div
+                                        id="add-studentProfilePhotoPlaceholder"
+                                        class="emp-photo-placeholder"
+                                >
+                                    <i class="bi bi-person-bounding-box" aria-hidden="true"></i>
+                                    <span>No photo selected</span>
+                                </div>
+                            </div>
+
+                            <input
+                                    type="file"
+                                    id="add-studentProfilePhoto"
+                                    class="emp-photo-file-input"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    data-validation-label="Passport-Size Photo"
+                            >
+
+                            <label
+                                    for="add-studentProfilePhoto"
+                                    class="btn btn-secondary emp-photo-upload-btn"
+                            >
+                                <i class="bi bi-camera-fill" aria-hidden="true"></i>
+                                Choose Photo
+                            </label>
+
+                            <span
+                                    id="add-studentProfilePhotoName"
+                                    class="emp-photo-file-name"
+                            >
+                                No file chosen
+                            </span>
+
+                            <small class="emp-photo-help">
+                                Optional. JPG, PNG or WEBP, maximum 2 MB.
+                            </small>
+                        </div>
+                    </aside>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 2: ADMISSION AND ENROLLMENT                  -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Admission and Enrollment</legend>
+
+                <div class="emp-grid emp-grid-4 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentApplicationId">Application ID</label>
+                        <input
+                                type="number"
+                                id="add-studentApplicationId"
+                                class="detail-input w-100"
+                                min="1"
+                                placeholder="Optional application ID"
+                        >
+                    </div>
+
+                    <div class="form-group emp-required-field">
+                        <label for="add-studentAcademicYear">Academic Year</label>
+                        <select
+                                id="add-studentAcademicYear"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Academic Year"
+                        >
+                            <option value="">-- Select Academic Year --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group emp-required-field">
+                        <label for="add-studentClass">Class</label>
+                        <select
+                                id="add-studentClass"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Class"
+                        >
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentSection">Section</label>
+                        <select
+                                id="add-studentSection"
+                                class="detail-input w-100"
+                                disabled
+                        >
+                            <option value="">-- Select Section --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-4 mb-3">
+                    <div class="form-group emp-required-field">
+                        <label for="add-studentAdmissionType">Admission Type</label>
+                        <select
+                                id="add-studentAdmissionType"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Admission Type"
+                        >
+                            <option value="NEW">New</option>
+                            <option value="READMISSION">Readmission</option>
+                            <option value="TRANSFER">Transfer</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group emp-required-field">
+                        <label for="add-studentJoiningDate">Joining Date</label>
+                        <input
+                                type="date"
+                                id="add-studentJoiningDate"
+                                class="detail-input w-100"
+                                required
+                                aria-required="true"
+                                data-validation-label="Joining Date"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentRollNo">Roll Number</label>
+                        <input
+                                type="text"
+                                id="add-studentRollNo"
+                                class="detail-input w-100"
+                                maxlength="20"
+                                placeholder="Enter roll number"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentEnrollmentRemarks">Enrollment Remarks</label>
+                        <textarea
+                                id="add-studentEnrollmentRemarks"
+                                class="detail-input w-100"
+                                rows="3"
+                                maxlength="5000"
+                                placeholder="Enter enrollment remarks"
+                        ></textarea>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 3: RESIDENTIAL ADDRESS                       -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Residential Address</legend>
+
+                <div class="emp-grid emp-grid-4 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentHouseNo">House Number</label>
+                        <input
+                                type="text"
+                                id="add-studentHouseNo"
+                                class="detail-input w-100"
+                                maxlength="50"
+                                placeholder="Enter house number"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentStreet">Street</label>
+                        <input
+                                type="text"
+                                id="add-studentStreet"
+                                class="detail-input w-100"
+                                maxlength="150"
+                                placeholder="Enter street"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentVillage">Village</label>
+                        <input
+                                type="text"
+                                id="add-studentVillage"
+                                class="detail-input w-100"
+                                maxlength="100"
+                                placeholder="Enter village"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentTownCity">Town / City</label>
+                        <input
+                                type="text"
+                                id="add-studentTownCity"
+                                class="detail-input w-100"
+                                maxlength="100"
+                                placeholder="Enter town or city"
+                        >
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-4 mb-2">
+                    <div class="form-group">
+                        <label for="add-studentDistrict">District</label>
+                        <input
+                                type="text"
+                                id="add-studentDistrict"
+                                class="detail-input w-100"
+                                maxlength="100"
+                                placeholder="Enter district"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentState">State / Region</label>
+                        <input
+                                type="text"
+                                id="add-studentState"
+                                class="detail-input w-100"
+                                maxlength="100"
+                                placeholder="Enter state or region"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentCountry">Country</label>
+                        <input
+                                type="text"
+                                id="add-studentCountry"
+                                class="detail-input w-100"
+                                maxlength="100"
+                                value="Uganda"
+                                placeholder="Enter country"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentPostalCode">Postal Code</label>
+                        <input
+                                type="text"
+                                id="add-studentPostalCode"
+                                class="detail-input w-100"
+                                maxlength="20"
+                                placeholder="Enter postal code"
+                        >
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 4: FATHER DETAILS                            -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Father Details</legend>
+
+                <div class="emp-grid emp-grid-3 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentFatherName">Father Name</label>
+                        <input type="text" id="add-studentFatherName" class="detail-input w-100" maxlength="150" placeholder="Enter father name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentFatherUin">Father UIN</label>
+                        <input type="text" id="add-studentFatherUin" class="detail-input w-100" maxlength="20" placeholder="Enter father UIN">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentFatherPhone">Father Phone</label>
+                        <input type="tel" id="add-studentFatherPhone" class="detail-input w-100" maxlength="30" placeholder="Enter father phone">
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-3 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentFatherAltPhone">Alternate Phone</label>
+                        <input type="tel" id="add-studentFatherAltPhone" class="detail-input w-100" maxlength="30" placeholder="Enter alternate phone">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentFatherEmail">Father Email</label>
+                        <input type="email" id="add-studentFatherEmail" class="detail-input w-100" maxlength="150" placeholder="Enter father email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentFatherOccupation">Occupation</label>
+                        <input type="text" id="add-studentFatherOccupation" class="detail-input w-100" maxlength="150" placeholder="Enter occupation">
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-3 mb-2">
+                    <div class="form-group">
+                        <label for="add-studentFatherEmployer">Employer</label>
+                        <input type="text" id="add-studentFatherEmployer" class="detail-input w-100" maxlength="200" placeholder="Enter employer">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentFatherDesignation">Designation</label>
+                        <input type="text" id="add-studentFatherDesignation" class="detail-input w-100" maxlength="150" placeholder="Enter designation">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentFatherIncome">Annual Income</label>
+                        <input type="number" id="add-studentFatherIncome" class="detail-input w-100" min="0" step="0.01" placeholder="Enter annual income">
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 5: MOTHER DETAILS                            -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Mother Details</legend>
+
+                <div class="emp-grid emp-grid-3 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentMotherName">Mother Name</label>
+                        <input type="text" id="add-studentMotherName" class="detail-input w-100" maxlength="150" placeholder="Enter mother name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentMotherUin">Mother UIN</label>
+                        <input type="text" id="add-studentMotherUin" class="detail-input w-100" maxlength="20" placeholder="Enter mother UIN">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentMotherPhone">Mother Phone</label>
+                        <input type="tel" id="add-studentMotherPhone" class="detail-input w-100" maxlength="30" placeholder="Enter mother phone">
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-3 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentMotherAltPhone">Alternate Phone</label>
+                        <input type="tel" id="add-studentMotherAltPhone" class="detail-input w-100" maxlength="30" placeholder="Enter alternate phone">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentMotherEmail">Mother Email</label>
+                        <input type="email" id="add-studentMotherEmail" class="detail-input w-100" maxlength="150" placeholder="Enter mother email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentMotherOccupation">Occupation</label>
+                        <input type="text" id="add-studentMotherOccupation" class="detail-input w-100" maxlength="150" placeholder="Enter occupation">
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-3 mb-2">
+                    <div class="form-group">
+                        <label for="add-studentMotherEmployer">Employer</label>
+                        <input type="text" id="add-studentMotherEmployer" class="detail-input w-100" maxlength="200" placeholder="Enter employer">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentMotherDesignation">Designation</label>
+                        <input type="text" id="add-studentMotherDesignation" class="detail-input w-100" maxlength="150" placeholder="Enter designation">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentMotherIncome">Annual Income</label>
+                        <input type="number" id="add-studentMotherIncome" class="detail-input w-100" min="0" step="0.01" placeholder="Enter annual income">
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 6: OPTIONAL GUARDIAN DETAILS                  -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">
+                    Guardian Details (Optional)
+                </legend>
+
+                <div class="emp-grid emp-grid-4 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentGuardianName">
+                            Guardian Name
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-studentGuardianName"
+                                class="detail-input w-100"
+                                maxlength="150"
+                                placeholder="Enter guardian name"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentGuardianUin">
+                            Guardian UIN
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-studentGuardianUin"
+                                class="detail-input w-100"
+                                maxlength="20"
+                                placeholder="Enter guardian UIN"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentGuardianRelationship">
+                            Relationship
+                        </label>
+
+                        <select
+                                id="add-studentGuardianRelationship"
+                                class="detail-input w-100"
+                                data-validation-label="Guardian Relationship"
+                        >
+                            <option value="">
+                                -- Select Relationship --
+                            </option>
+
+                            <option value="GRANDFATHER">
+                                Grandfather
+                            </option>
+
+                            <option value="GRANDMOTHER">
+                                Grandmother
+                            </option>
+
+                            <option value="UNCLE">
+                                Uncle
+                            </option>
+
+                            <option value="AUNT">
+                                Aunt
+                            </option>
+
+                            <option value="BROTHER">
+                                Brother
+                            </option>
+
+                            <option value="SISTER">
+                                Sister
+                            </option>
+
+                            <option value="STEPFATHER">
+                                Stepfather
+                            </option>
+
+                            <option value="STEPMOTHER">
+                                Stepmother
+                            </option>
+
+                            <option value="FOSTER_PARENT">
+                                Foster Parent
+                            </option>
+
+                            <option value="FAMILY_RELATIVE">
+                                Other Family Relative
+                            </option>
+
+                            <option value="FAMILY_FRIEND">
+                                Family Friend
+                            </option>
+
+                            <option value="OTHER">
+                                Other
+                            </option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentGuardianPhone">
+                            Guardian Phone
+                        </label>
+
+                        <input
+                                type="tel"
+                                id="add-studentGuardianPhone"
+                                class="detail-input w-100"
+                                maxlength="30"
+                                placeholder="Enter guardian phone"
+                        >
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-3 mb-2">
+                    <div class="form-group">
+                        <label for="add-studentGuardianAltPhone">
+                            Alternate Phone
+                        </label>
+
+                        <input
+                                type="tel"
+                                id="add-studentGuardianAltPhone"
+                                class="detail-input w-100"
+                                maxlength="30"
+                                placeholder="Enter alternate phone"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentGuardianEmail">
+                            Guardian Email
+                        </label>
+
+                        <input
+                                type="email"
+                                id="add-studentGuardianEmail"
+                                class="detail-input w-100"
+                                maxlength="150"
+                                placeholder="Enter guardian email"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentGuardianOccupation">
+                            Occupation
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-studentGuardianOccupation"
+                                class="detail-input w-100"
+                                maxlength="150"
+                                placeholder="Enter guardian occupation"
+                        >
+                    </div>
+                </div>
+
+                <small class="text-muted">
+                    Guardian information is optional. When Guardian is used as the
+                    preferred contact, enter the Guardian name, phone and relationship.
+                </small>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 7: FAMILY COMMUNICATION                      -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Family Communication</legend>
+
+                <div class="emp-grid emp-grid-3 mb-3">
+                    <div class="form-group emp-required-field" data-validation-group="preferredContact">
+                        <label>Preferred Contact</label>
+
+                        <div class="emp-checkbox-row">
+                            <input type="radio" id="add-studentPreferredFather" name="add-studentPreferredContact" value="FATHER" required>
+                            <label for="add-studentPreferredFather">Father</label>
+                        </div>
+
+                        <div class="emp-checkbox-row">
+                            <input type="radio" id="add-studentPreferredMother" name="add-studentPreferredContact" value="MOTHER">
+                            <label for="add-studentPreferredMother">Mother</label>
+                        </div>
+
+                        <div class="emp-checkbox-row">
+                            <input type="radio" id="add-studentPreferredGuardian" name="add-studentPreferredContact" value="GUARDIAN">
+                            <label for="add-studentPreferredGuardian">Guardian</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group emp-required-field" data-validation-group="feeResponsibility">
+                        <label>Fee Responsibility</label>
+
+                        <div class="emp-checkbox-row">
+                            <input type="radio" id="add-studentFeeFather" name="add-studentFeeResponsibility" value="FATHER" required>
+                            <label for="add-studentFeeFather">Father</label>
+                        </div>
+
+                        <div class="emp-checkbox-row">
+                            <input type="radio" id="add-studentFeeMother" name="add-studentFeeResponsibility" value="MOTHER">
+                            <label for="add-studentFeeMother">Mother</label>
+                        </div>
+
+                        <div class="emp-checkbox-row">
+                            <input type="radio" id="add-studentFeeGuardian" name="add-studentFeeResponsibility" value="GUARDIAN">
+                            <label for="add-studentFeeGuardian">Guardian</label>
+                        </div>
+
+                        <div class="emp-checkbox-row">
+                            <input type="radio" id="add-studentFeeSponsor" name="add-studentFeeResponsibility" value="SPONSOR">
+                            <label for="add-studentFeeSponsor">Sponsor</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group emp-required-field" data-validation-group="parentsLivingTogether">
+                        <label>Parents Living Together</label>
+
+                        <div class="emp-checkbox-row">
+                            <input type="radio" id="add-studentParentsTogetherYes" name="add-studentParentsTogether" value="true" required>
+                            <label for="add-studentParentsTogetherYes">Yes</label>
+                        </div>
+
+                        <div class="emp-checkbox-row">
+                            <input type="radio" id="add-studentParentsTogetherNo" name="add-studentParentsTogether" value="false">
+                            <label for="add-studentParentsTogetherNo">No</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-3 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentEmergencyName">Emergency Contact Name</label>
+                        <input type="text" id="add-studentEmergencyName" class="detail-input w-100" maxlength="150" placeholder="Optional contact name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentEmergencyPhone">Emergency Contact Phone</label>
+                        <input type="tel" id="add-studentEmergencyPhone" class="detail-input w-100" maxlength="30" placeholder="Optional contact phone">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentEmergencyRelationship">Relationship</label>
+                        <input type="text" id="add-studentEmergencyRelationship" class="detail-input w-100" maxlength="100" placeholder="Optional relationship">
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-2 mb-2">
+                    <div class="form-group">
+                        <label for="add-studentParentRemarks">Parent / Guardian Remarks</label>
+                        <textarea id="add-studentParentRemarks" class="detail-input w-100" rows="3" maxlength="5000" placeholder="Enter remarks"></textarea>
+                    </div>
+                </div>
+
+                <small class="text-muted">
+                    Enter a name and phone number for at least one Father, Mother or Guardian.
+                    Emergency-contact details are optional, but when used all three fields must be completed.
+                </small>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 8: HOSTEL ACCOMMODATION                      -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Hostel Accommodation (Optional)</legend>
+
+                <div class="emp-grid emp-grid-2 mb-3">
+                    <div class="form-group">
+                        <div class="emp-checkbox-row">
+                            <input
+                                    type="checkbox"
+                                    id="add-studentRequiresHostel"
+                                    data-validation-label="Hostel Accommodation"
+                            >
+                            <label for="add-studentRequiresHostel">
+                                Student requires hostel accommodation
+                            </label>
+                        </div>
+
+                        <small class="text-muted">
+                            Select this option only when a hostel allocation must be created during registration.
+                        </small>
+                    </div>
+                </div>
+
+                <div id="add-studentHostelFields" class="hidden">
+                    <div class="emp-grid emp-grid-3 mb-3">
+                        <div class="form-group emp-required-field">
+                            <label for="add-studentHostelId">Hostel</label>
+                            <select
+                                    id="add-studentHostelId"
+                                    class="detail-input w-100"
+                                    data-validation-label="Hostel"
+                                    data-conditional-required="hostel"
+                            >
+                                <option value="">-- Select Hostel --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentHostelRoomId">Room</label>
+                            <select
+                                    id="add-studentHostelRoomId"
+                                    class="detail-input w-100"
+                                    data-validation-label="Hostel Room"
+                            >
+                                <option value="">-- Select Room --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentHostelBedId">Bed</label>
+                            <select
+                                    id="add-studentHostelBedId"
+                                    class="detail-input w-100"
+                                    data-validation-label="Hostel Bed"
+                            >
+                                <option value="">-- Select Bed --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="emp-grid emp-grid-2 mb-3">
+                        <div class="form-group emp-required-field">
+                            <label for="add-studentHostelStartDate">Allocation Start Date</label>
+                            <input
+                                    type="date"
+                                    id="add-studentHostelStartDate"
+                                    class="detail-input w-100"
+                                    data-validation-label="Hostel Allocation Start Date"
+                                    data-conditional-required="hostel"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentHostelEndDate">Allocation End Date</label>
+                            <input
+                                    type="date"
+                                    id="add-studentHostelEndDate"
+                                    class="detail-input w-100"
+                                    data-validation-label="Hostel Allocation End Date"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="emp-grid emp-grid-3 mb-3">
+                        <div class="form-group">
+                            <label for="add-studentHostelGuardianName">Local Guardian Name</label>
+                            <input
+                                    type="text"
+                                    id="add-studentHostelGuardianName"
+                                    class="detail-input w-100"
+                                    maxlength="150"
+                                    placeholder="Enter local guardian name"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentHostelGuardianMobile">Local Guardian Mobile</label>
+                            <input
+                                    type="tel"
+                                    id="add-studentHostelGuardianMobile"
+                                    class="detail-input w-100"
+                                    maxlength="20"
+                                    placeholder="Enter local guardian mobile"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentHostelGuardianRelation">Relationship</label>
+                            <input
+                                    type="text"
+                                    id="add-studentHostelGuardianRelation"
+                                    class="detail-input w-100"
+                                    maxlength="50"
+                                    placeholder="Enter relationship"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="emp-grid emp-grid-2 mb-2">
+                        <div class="form-group">
+                            <label for="add-studentHostelRemarks">Hostel Remarks</label>
+                            <textarea
+                                    id="add-studentHostelRemarks"
+                                    class="detail-input w-100"
+                                    rows="3"
+                                    maxlength="500"
+                                    placeholder="Enter hostel allocation remarks"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <small class="text-muted">
+                        Room and bed are optional. When a bed is selected, its room must also be selected.
+                        Local guardian name, mobile and relationship must be entered together.
+                    </small>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 9: SCHOOL TRANSPORT                          -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">School Transport (Optional)</legend>
+
+                <div class="emp-grid emp-grid-2 mb-3">
+                    <div class="form-group">
+                        <div class="emp-checkbox-row">
+                            <input
+                                    type="checkbox"
+                                    id="add-studentRequiresTransport"
+                                    data-validation-label="School Transport"
+                            >
+                            <label for="add-studentRequiresTransport">
+                                Student requires school transport
+                            </label>
+                        </div>
+
+                        <small class="text-muted">
+                            Select this option only when a transport allocation must be created during registration.
+                        </small>
+                    </div>
+                </div>
+
+                <div id="add-studentTransportFields" class="hidden">
+                    <div class="emp-grid emp-grid-3 mb-3">
+                        <div class="form-group emp-required-field">
+                            <label for="add-studentTransportRouteId">Transport Route</label>
+                            <select
+                                    id="add-studentTransportRouteId"
+                                    class="detail-input w-100"
+                                    data-validation-label="Transport Route"
+                                    data-conditional-required="transport"
+                            >
+                                <option value="">-- Select Route --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentTransportPickupPointId">Pickup Point</label>
+                            <select
+                                    id="add-studentTransportPickupPointId"
+                                    class="detail-input w-100"
+                                    data-validation-label="Transport Pickup Point"
+                            >
+                                <option value="">-- Select Pickup Point --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentTransportVehicleId">Vehicle</label>
+                            <select
+                                    id="add-studentTransportVehicleId"
+                                    class="detail-input w-100"
+                                    data-validation-label="Transport Vehicle"
+                            >
+                                <option value="">-- Select Vehicle --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="emp-grid emp-grid-3 mb-3">
+                        <div class="form-group emp-required-field">
+                            <label for="add-studentTransportStartDate">Transport Start Date</label>
+                            <input
+                                    type="date"
+                                    id="add-studentTransportStartDate"
+                                    class="detail-input w-100"
+                                    data-validation-label="Transport Start Date"
+                                    data-conditional-required="transport"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentTransportEndDate">Transport End Date</label>
+                            <input
+                                    type="date"
+                                    id="add-studentTransportEndDate"
+                                    class="detail-input w-100"
+                                    data-validation-label="Transport End Date"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentTransportSeatNumber">Seat Number</label>
+                            <input
+                                    type="text"
+                                    id="add-studentTransportSeatNumber"
+                                    class="detail-input w-100"
+                                    maxlength="20"
+                                    placeholder="Enter seat number"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="emp-grid emp-grid-2 mb-3">
+                        <div class="form-group">
+                            <label for="add-studentTransportEmergencyContact">Emergency Contact</label>
+                            <input
+                                    type="text"
+                                    id="add-studentTransportEmergencyContact"
+                                    class="detail-input w-100"
+                                    maxlength="100"
+                                    placeholder="Enter emergency contact name"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentTransportEmergencyMobile">Emergency Mobile</label>
+                            <input
+                                    type="tel"
+                                    id="add-studentTransportEmergencyMobile"
+                                    class="detail-input w-100"
+                                    maxlength="20"
+                                    placeholder="Enter emergency mobile"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="emp-grid emp-grid-2 mb-2">
+                        <div class="form-group">
+                            <label for="add-studentTransportRemarks">Transport Remarks</label>
+                            <textarea
+                                    id="add-studentTransportRemarks"
+                                    class="detail-input w-100"
+                                    rows="3"
+                                    maxlength="500"
+                                    placeholder="Enter transport allocation remarks"
+                            ></textarea>
+                        </div>
+                    </div>
+
+                    <small class="text-muted">
+                        Pickup point and vehicle are optional. Emergency contact name and mobile must be entered together.
+                    </small>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 10: MEDICAL INFORMATION                      -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Medical Information (Optional)</legend>
+
+                <div class="emp-grid emp-grid-4 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentBloodGroup">Blood Group</label>
+                        <select id="add-studentBloodGroup" class="detail-input w-100">
+                            <option value="">-- Not Provided --</option>
+                            <option value="A_PLUS">A+</option>
+                            <option value="A_MINUS">A-</option>
+                            <option value="B_PLUS">B+</option>
+                            <option value="B_MINUS">B-</option>
+                            <option value="AB_PLUS">AB+</option>
+                            <option value="AB_MINUS">AB-</option>
+                            <option value="O_PLUS">O+</option>
+                            <option value="O_MINUS">O-</option>
+                            <option value="UNKNOWN">Unknown</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentHeightCm">Height (cm)</label>
+                        <input type="number" id="add-studentHeightCm" class="detail-input w-100" min="0.01" step="0.01" placeholder="Enter height">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentWeightKg">Weight (kg)</label>
+                        <input type="number" id="add-studentWeightKg" class="detail-input w-100" min="0.01" step="0.01" placeholder="Enter weight">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentFitForSports">Fit for Sports</label>
+                        <select id="add-studentFitForSports" class="detail-input w-100">
+                            <option value="">-- Not Provided --</option>
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-2 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentAllergies">Allergies</label>
+                        <textarea id="add-studentAllergies" class="detail-input w-100" rows="3" maxlength="500" placeholder="Enter allergies"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentChronicConditions">Chronic Conditions</label>
+                        <textarea id="add-studentChronicConditions" class="detail-input w-100" rows="3" maxlength="500" placeholder="Enter chronic conditions"></textarea>
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-2 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentOngoingMedication">Ongoing Medication</label>
+                        <textarea id="add-studentOngoingMedication" class="detail-input w-100" rows="3" maxlength="500" placeholder="Enter ongoing medication"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentSpecialNeeds">Special Needs</label>
+                        <textarea id="add-studentSpecialNeeds" class="detail-input w-100" rows="3" maxlength="500" placeholder="Enter special needs"></textarea>
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-3 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentDoctorName">Emergency Doctor Name</label>
+                        <input type="text" id="add-studentDoctorName" class="detail-input w-100" maxlength="150" placeholder="Enter doctor name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentDoctorMobile">Emergency Doctor Mobile</label>
+                        <input type="tel" id="add-studentDoctorMobile" class="detail-input w-100" maxlength="20" placeholder="Enter doctor mobile">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentPreferredHospital">Preferred Hospital</label>
+                        <input type="text" id="add-studentPreferredHospital" class="detail-input w-100" maxlength="150" placeholder="Enter preferred hospital">
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-2 mb-2">
+                    <div class="form-group">
+                        <label for="add-studentMedicalRemarks">Medical Remarks</label>
+                        <textarea id="add-studentMedicalRemarks" class="detail-input w-100" rows="3" maxlength="500" placeholder="Enter medical remarks"></textarea>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ===================================================== -->
+            <!-- SECTION 11: PREVIOUS ACADEMIC HISTORY                -->
+            <!-- ===================================================== -->
+
+            <fieldset class="emp-fieldset">
+                <legend class="emp-legend">Previous Academic History (Optional)</legend>
+
+                <div class="emp-grid emp-grid-4 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentFormerSchoolName">Former School Name</label>
+                        <input type="text" id="add-studentFormerSchoolName" class="detail-input w-100" maxlength="255" placeholder="Enter former school name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentFormerSchoolCode">Former School Code</label>
+                        <input type="text" id="add-studentFormerSchoolCode" class="detail-input w-100" maxlength="50" placeholder="Enter school code">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentFormerSchoolLin">Former School LIN</label>
+                        <input type="text" id="add-studentFormerSchoolLin" class="detail-input w-100" maxlength="50" placeholder="Enter school LIN">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentSchoolType">School Type</label>
+                        <select id="add-studentSchoolType" class="detail-input w-100">
+                            <option value="">-- Not Provided --</option>
+                            <option value="GOVERNMENT">Government</option>
+                            <option value="PRIVATE">Private</option>
+                            <option value="INTERNATIONAL">International</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-2 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentFormerSchoolAddress">Former School Address</label>
+                        <input type="text" id="add-studentFormerSchoolAddress" class="detail-input w-100" maxlength="255" placeholder="Enter former school address">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentTransferReason">Transfer Reason</label>
+                        <input type="text" id="add-studentTransferReason" class="detail-input w-100" maxlength="255" placeholder="Enter transfer reason">
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-4 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentPreviousAcademicYear">Previous Academic Year</label>
+                        <input
+                                type="text"
+                                id="add-studentPreviousAcademicYear"
+                                class="detail-input w-100"
+                                maxlength="20"
+                                placeholder="Example: 2025"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentPreviousLevel">Previous Education Level</label>
+                        <select
+                                id="add-studentPreviousLevel"
+                                class="detail-input w-100"
+                                data-validation-label="Previous Education Level"
+                        >
+                            <option value="">-- Select Previous Level --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentPreviousClass">Previous Class</label>
+                        <select
+                                id="add-studentPreviousClass"
+                                class="detail-input w-100"
+                                data-validation-label="Previous Class"
+                                disabled
+                        >
+                            <option value="">-- Select Previous Level First --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentPreviousSection">Previous Section</label>
+                        <input
+                                type="text"
+                                id="add-studentPreviousSection"
+                                class="detail-input w-100"
+                                maxlength="50"
+                                placeholder="Enter previous section"
+                        >
+                    </div>
+                </div>
+
+                <div class="emp-grid emp-grid-2 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentPreviousStream">Previous Stream</label>
+                        <input
+                                type="text"
+                                id="add-studentPreviousStream"
+                                class="detail-input w-100"
+                                maxlength="50"
+                                placeholder="Enter previous stream"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-studentAcademicRemarks">Academic-History Remarks</label>
+                        <textarea
+                                id="add-studentAcademicRemarks"
+                                class="detail-input w-100"
+                                rows="3"
+                                maxlength="5000"
+                                placeholder="Enter academic-history remarks"
+                        ></textarea>
+                    </div>
+                </div>
+
+                <div id="add-studentPleResultFields" class="hidden">
+                    <div class="emp-grid emp-grid-2 mb-3">
+                        <div class="form-group">
+                            <label for="add-studentPleIndexNumber">PLE Index Number</label>
+                            <input
+                                    type="text"
+                                    id="add-studentPleIndexNumber"
+                                    class="detail-input w-100"
+                                    maxlength="50"
+                                    placeholder="Enter PLE index number"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentPleAggregate">PLE Aggregate</label>
+                            <input
+                                    type="text"
+                                    id="add-studentPleAggregate"
+                                    class="detail-input w-100"
+                                    maxlength="20"
+                                    placeholder="Enter PLE aggregate"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <div id="add-studentUceResultFields" class="hidden">
+                    <div class="emp-grid emp-grid-2 mb-3">
+                        <div class="form-group">
+                            <label for="add-studentUceIndexNumber">UCE Index Number</label>
+                            <input
+                                    type="text"
+                                    id="add-studentUceIndexNumber"
+                                    class="detail-input w-100"
+                                    maxlength="50"
+                                    placeholder="Enter UCE index number"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentUceResult">UCE Result</label>
+                            <input
+                                    type="text"
+                                    id="add-studentUceResult"
+                                    class="detail-input w-100"
+                                    maxlength="50"
+                                    placeholder="Enter UCE result"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <div id="add-studentUaceResultFields" class="hidden">
+                    <div class="emp-grid emp-grid-2 mb-3">
+                        <div class="form-group">
+                            <label for="add-studentUaceIndexNumber">UACE Index Number</label>
+                            <input
+                                    type="text"
+                                    id="add-studentUaceIndexNumber"
+                                    class="detail-input w-100"
+                                    maxlength="50"
+                                    placeholder="Enter UACE index number"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="add-studentUaceResult">UACE Result</label>
+                            <input
+                                    type="text"
+                                    id="add-studentUaceResult"
+                                    class="detail-input w-100"
+                                    maxlength="50"
+                                    placeholder="Enter UACE result"
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <div id="add-studentSubjectResultsSection" class="hidden">
+                    <div class="form-group mb-3">
+                        <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+                            <div>
+                                <span class="form-label d-block">Previous Subject Results</span>
+                                <small id="add-studentSubjectResultsHelp" class="text-muted d-block">
+                                    Enter each subject name, marks and grade manually. Marks must be between 0 and 100.
+                                </small>
+                            </div>
+
+                            <button
+                                    type="button"
+                                    id="add-studentAddSubjectBtn"
+                                    class="btn btn-secondary"
+                            >
+                                <i class="bi bi-plus-circle"></i>
+                                Add Subject
+                            </button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table
+                                    id="add-studentSubjectResultsTable"
+                                    class="table table-bordered align-middle mb-0"
+                                    aria-describedby="add-studentSubjectResultsHelp"
+                            >
+                                <thead>
+                                <tr>
+                                    <th scope="col">Subject Name</th>
+                                    <th scope="col">Marks (100)</th>
+                                    <th scope="col">Grade</th>
+                                    <th scope="col" class="text-center">Action</th>
+                                </tr>
+                                </thead>
+
+                                <tbody id="add-studentSubjectResultsBody">
+                                <tr class="student-subject-result-row">
+                                    <td>
+                                        <input
+                                                type="text"
+                                                class="detail-input w-100 student-subject-name"
+                                                aria-label="Subject name"
+                                                maxlength="100"
+                                                placeholder="Example: Mathematics"
+                                                data-validation-label="Subject Name"
+                                        >
+                                    </td>
+                                    <td>
+                                        <input
+                                                type="number"
+                                                class="detail-input w-100 student-subject-mark"
+                                                aria-label="Subject marks"
+                                                min="0"
+                                                max="100"
+                                                step="0.01"
+                                                placeholder="0-100"
+                                                data-validation-label="Subject Marks"
+                                        >
+                                    </td>
+                                    <td>
+                                        <input
+                                                type="text"
+                                                class="detail-input w-100 student-subject-grade"
+                                                aria-label="Subject grade"
+                                                maxlength="20"
+                                                placeholder="Example: D1"
+                                                data-validation-label="Subject Grade"
+                                        >
+                                    </td>
+                                    <td class="text-center">
+                                        <button
+                                                type="button"
+                                                class="btn btn-danger btn-sm student-subject-remove-btn"
+                                                aria-label="Remove subject row"
+                                        >
+                                            <i class="bi bi-trash3"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                </tbody>
+
+                                <tfoot>
+                                <tr>
+                                    <td colspan="4">
+                                        <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap">
+                                            <span>
+                                                Subjects:
+                                                <strong id="add-studentSubjectCount">1</strong>
+                                            </span>
+
+                                            <span>
+                                                Total Marks:
+                                                <strong id="add-studentSubjectTotal">0</strong>
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <textarea
+                        id="add-studentSubjectMarks"
+                        class="hidden"
+                        aria-label="Serialized previous subject results"
+                        maxlength="50000"
+                        aria-hidden="true"
+                        tabindex="-1"
+                ></textarea>
+
+                <template id="add-studentSubjectRowTemplate">
+                    <tr class="student-subject-result-row">
+                        <td>
+                            <input
+                                    type="text"
+                                    class="detail-input w-100 student-subject-name"
+                                    aria-label="Subject name"
+                                    maxlength="100"
+                                    placeholder="Example: Mathematics"
+                                    data-validation-label="Subject Name"
+                            >
+                        </td>
+                        <td>
+                            <input
+                                    type="number"
+                                    class="detail-input w-100 student-subject-mark"
+                                    aria-label="Subject marks"
+                                    min="0"
+                                    max="100"
+                                    step="0.01"
+                                    placeholder="0-100"
+                                    data-validation-label="Subject Marks"
+                            >
+                        </td>
+                        <td>
+                            <input
+                                    type="text"
+                                    class="detail-input w-100 student-subject-grade"
+                                    aria-label="Subject grade"
+                                    maxlength="20"
+                                    placeholder="Example: D1"
+                                    data-validation-label="Subject Grade"
+                            >
+                        </td>
+                        <td class="text-center">
+                            <button
+                                    type="button"
+                                    class="btn btn-danger btn-sm student-subject-remove-btn"
+                                    aria-label="Remove subject row"
+                            >
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </td>
+                    </tr>
+                </template>
+            </fieldset>
+
+            <!-- Submit Actions -->
+            <div class="action-btn-group emp-form-actions">
+                <button
+                        type="reset"
+                        id="resetStudentFormBtn"
+                        class="btn btn-secondary"
+                >
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    Reset Form
+                </button>
+
+                <button
+                        type="submit"
+                        id="registerStudentBtn"
+                        class="btn btn-primary"
+                >
+                    <i class="bi bi-check-lg"></i>
+                    Register Student
+                </button>
+            </div>
+        </div>
+    </form>
+
+    <!-- ===================================================== -->
+    <!-- STUDENT REGISTRATION PROGRESS DIALOG                  -->
+    <!-- Employee-style progress, success and failure UI      -->
+    <!-- ===================================================== -->
+
+    <div
+            id="student-registration-modal"
+            class="emp-registration-modal hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="student-registration-title"
+            aria-describedby="student-registration-message"
+    >
+        <div class="emp-registration-backdrop"></div>
+
+        <div class="emp-registration-dialog">
+
+            <!-- Dialog Header -->
+            <div class="emp-registration-header">
+                <div class="emp-registration-header-content">
+                    <div
+                            id="student-registration-status-icon"
+                            class="emp-registration-main-icon is-processing"
+                            aria-hidden="true"
+                    >
+                        <i class="bi bi-mortarboard-fill"></i>
+                    </div>
+
+                    <div>
+                        <h3 id="student-registration-title">
+                            Registering Student
+                        </h3>
+
+                        <p
+                                id="student-registration-student-name"
+                                class="emp-registration-employee-name"
+                        >
+                            Preparing student information
+                        </p>
+                    </div>
+                </div>
+
+                <button
+                        type="button"
+                        id="student-registration-close-btn"
+                        class="emp-registration-close-btn hidden"
+                        aria-label="Close registration dialog"
+                >
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <!-- Processing View -->
+            <div
+                    id="student-registration-processing-view"
+                    class="emp-registration-view"
+            >
+                <div class="emp-registration-progress-heading">
+                    <span>Registration in progress</span>
+                    <strong id="student-registration-percentage">0%</strong>
+                </div>
+
+                <div
+                        id="student-registration-progress"
+                        class="emp-registration-progress"
+                        role="progressbar"
+                        aria-label="Student registration progress"
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        aria-valuenow="0"
+                        aria-valuetext="Preparing registration"
+                >
+                    <div
+                            id="student-registration-progress-fill"
+                            class="emp-registration-progress-fill"
+                    ></div>
+                </div>
+
+                <div class="emp-registration-steps" aria-label="Registration stages">
+                    <div
+                            class="emp-registration-step is-processing"
+                            data-stage="PREPARING"
+                    >
+                    <span class="emp-registration-step-icon">
+                        <i class="bi bi-file-earmark-check"></i>
+                    </span>
+                        <span class="emp-registration-step-label">Preparing</span>
+                    </div>
+
+                    <div
+                            class="emp-registration-step"
+                            data-stage="SAVING_RECORDS"
+                    >
+                    <span class="emp-registration-step-icon">
+                        <i class="bi bi-person-plus"></i>
+                    </span>
+                        <span class="emp-registration-step-label">Saving Details</span>
+                    </div>
+
+                    <div
+                            class="emp-registration-step"
+                            data-stage="PHOTO_UPLOAD"
+                    >
+                    <span class="emp-registration-step-icon">
+                        <i class="bi bi-camera"></i>
+                    </span>
+                        <span class="emp-registration-step-label">Photo</span>
+                    </div>
+
+                    <div
+                            class="emp-registration-step"
+                            data-stage="FINALIZATION"
+                    >
+                    <span class="emp-registration-step-icon">
+                        <i class="bi bi-check2-circle"></i>
+                    </span>
+                        <span class="emp-registration-step-label">Complete</span>
+                    </div>
+                </div>
+
+                <div class="emp-registration-current-process">
+                    <div
+                            class="emp-registration-spinner"
+                            aria-hidden="true"
+                    >
+                        <i class="bi bi-arrow-repeat"></i>
+                    </div>
+
+                    <div>
+                        <strong id="student-registration-stage-title">
+                            Preparing registration
+                        </strong>
+
+                        <p
+                                id="student-registration-message"
+                                aria-live="polite"
+                        >
+                            Checking the Student information before registration.
+                        </p>
+                    </div>
+                </div>
+
+                <div
+                        id="student-registration-operation-wrapper"
+                        class="emp-registration-operation"
+                >
+                    <span>Operation ID</span>
+                    <code id="student-registration-operation-id">-</code>
+                </div>
+
+                <p class="emp-registration-lock-message">
+                    Do not refresh, close, or navigate away while registration is in progress.
+                </p>
+            </div>
+
+            <!-- Success View -->
+            <div
+                    id="student-registration-success-view"
+                    class="emp-registration-view hidden"
+                    aria-live="polite"
+            >
+                <div class="emp-registration-result-icon is-success">
+                    <i class="bi bi-check-circle-fill"></i>
+                </div>
+
+                <h3>Student Registered Successfully</h3>
+
+                <p id="student-registration-success-message">
+                    Student registration has been completed.
+                </p>
+
+                <div class="emp-registration-result-details">
+                    <div>
+                        <span>Student</span>
+                        <strong id="student-registration-result-name">-</strong>
+                    </div>
+
+                    <div>
+                        <span>Student Code</span>
+                        <strong id="student-registration-result-code">-</strong>
+                    </div>
+
+                    <div>
+                        <span>Admission Number</span>
+                        <strong id="student-registration-result-admission">-</strong>
+                    </div>
+
+                    <div>
+                        <span>Academic Year</span>
+                        <strong id="student-registration-result-year">-</strong>
+                    </div>
+
+                    <div>
+                        <span>Class</span>
+                        <strong id="student-registration-result-class">-</strong>
+                    </div>
+
+                    <div>
+                        <span>Section</span>
+                        <strong id="student-registration-result-section">Not assigned</strong>
+                    </div>
+                </div>
+
+                <div class="emp-registration-actions">
+                    <button
+                            type="button"
+                            id="student-registration-view-btn"
+                            class="btn btn-primary"
+                    >
+                        <i class="bi bi-person-vcard"></i>
+                        View Student
+                    </button>
+
+                    <button
+                            type="button"
+                            id="student-registration-add-another-btn"
+                            class="btn btn-secondary"
+                    >
+                        <i class="bi bi-person-plus"></i>
+                        Add Another
+                    </button>
+
+                    <button
+                            type="button"
+                            id="student-registration-list-btn"
+                            class="btn btn-secondary"
+                    >
+                        <i class="bi bi-people"></i>
+                        Student List
+                    </button>
+                </div>
+            </div>
+
+            <!-- Failure View -->
+            <div
+                    id="student-registration-failure-view"
+                    class="emp-registration-view hidden"
+                    aria-live="assertive"
+            >
+                <div class="emp-registration-result-icon is-failed">
+                    <i class="bi bi-x-circle-fill"></i>
+                </div>
+
+                <h3>Student Registration Failed</h3>
+
+                <p id="student-registration-failure-message">
+                    Student registration could not be completed.
+                </p>
+
+                <div class="emp-registration-failure-details">
+                    <div>
+                        <span>Failed Stage</span>
+                        <strong id="student-registration-failed-stage">-</strong>
+                    </div>
+
+                    <div>
+                        <span>Progress</span>
+                        <strong id="student-registration-failed-percentage">0%</strong>
+                    </div>
+                </div>
+
+                <div
+                        id="student-registration-error-container"
+                        class="emp-registration-error-container"
+                >
+                    <strong>Reason</strong>
+
+                    <ul id="student-registration-error-list">
+                        <li>An unexpected registration error occurred.</li>
+                    </ul>
+                </div>
+
+                <p class="emp-registration-rollback-message">
+                    The form values have been preserved. Correct the issue and try again.
+                </p>
+
+                <div class="emp-registration-actions">
+                    <button
+                            type="button"
+                            id="student-registration-return-btn"
+                            class="btn btn-secondary"
+                    >
+                        <i class="bi bi-arrow-left"></i>
+                        Return to Form
+                    </button>
+
+                    <button
+                            type="button"
+                            id="student-registration-retry-btn"
+                            class="btn btn-primary"
+                    >
+                        <i class="bi bi-arrow-clockwise"></i>
+                        Try Again
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

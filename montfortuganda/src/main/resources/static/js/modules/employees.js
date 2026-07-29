@@ -293,19 +293,58 @@ function removeDomElement(element) {
 }
 
 
-document.addEventListener('viewLoaded', function(event) {
-    if (event.detail.role !== 'admin') return;
+document.addEventListener('viewLoaded', function (event) {
+    const detail = event.detail;
 
-    if (event.detail.view === 'employees') {
-        event.detail.waitUntil(
-            initEmployeesView(event.detail)
-        );
-    } else if (event.detail.view === 'add-employee') {
-        event.detail.waitUntil(
-            Promise.resolve().then(() => {
-                initAddEmployeeView();
-            })
-        );
+    if (
+        !detail ||
+        detail.role !== 'admin'
+    ) {
+        return;
+    }
+
+    if (detail.view === 'employees') {
+        /*
+         * Render the Employee page immediately.
+         * Employee records load in the page/table background instead of
+         * holding the global navigation overlay open.
+         */
+        void Promise.resolve(
+            initEmployeesView(detail)
+        ).catch(error => {
+            console.error(
+                'Employee view initialization failed.',
+                error
+            );
+
+            if (typeof showErrorMessage === 'function') {
+                showErrorMessage(
+                    'Employee data could not be loaded. Please try again.'
+                );
+            }
+        });
+
+        return;
+    }
+
+    if (detail.view === 'add-employee') {
+        /*
+         * Form bindings are local and should not block global navigation.
+         */
+        try {
+            initAddEmployeeView();
+        } catch (error) {
+            console.error(
+                'Add Employee view initialization failed.',
+                error
+            );
+
+            if (typeof showErrorMessage === 'function') {
+                showErrorMessage(
+                    'The Add Employee form could not be prepared.'
+                );
+            }
+        }
     }
 });
 function getRequiredBranchId() {
@@ -1179,6 +1218,21 @@ function initEmployeesView(routeInfo = {}) {
     const cancelEditBtn =
         viewContainer.querySelector('#emp-cancelEditBtn');
 
+    const stickyEditActions =
+        viewContainer.querySelector(
+            '#emp-edit-sticky-actions'
+        );
+
+    const bottomSaveBtn =
+        viewContainer.querySelector(
+            '#emp-bottom-saveBtn'
+        );
+
+    const bottomCancelEditBtn =
+        viewContainer.querySelector(
+            '#emp-bottom-cancelEditBtn'
+        );
+
     const backBtn =
         viewContainer.querySelector('#emp-backToTableBtn');
 
@@ -1202,6 +1256,344 @@ function initEmployeesView(routeInfo = {}) {
     let table = null;
     /** @type {(EmployeeData|null)} */
     let currentEmployee = null;
+
+
+    const editForm =
+        viewContainer.querySelector('#emp-edit-form');
+
+    const editValidationSummary =
+        viewContainer.querySelector(
+            '#edit-emp-validation-summary'
+        );
+
+    const editValidationSummaryText =
+        viewContainer.querySelector(
+            '#edit-emp-validation-summary-text'
+        );
+
+    let selectOptionsLoadedForEmployeeId = null;
+    let selectOptionsPromise = null;
+
+    const getEmployeeEditControls = () => {
+        if (!editForm) return [];
+
+        return Array.from(
+            editForm.querySelectorAll(
+                '[id^="edit-"].detail-input, ' +
+                '#edit-empProfilePhotoContainer, ' +
+                '#contacts-container .detail-input, ' +
+                '#qualifications-container .detail-input, ' +
+                '#experiences-container .detail-input'
+            )
+        );
+    };
+
+    const getEditableEmployeeViewValues = () => {
+        if (!editForm) return [];
+
+        return Array.from(
+            editForm.querySelectorAll(
+                '[id^="view-"].detail-text'
+            )
+        ).filter(viewElement => {
+            const viewId = String(viewElement.id || '');
+
+            if (!viewId.startsWith('view-')) {
+                return false;
+            }
+
+            const editElement = editForm.querySelector(
+                `#edit-${viewId.slice(5)}`
+            );
+
+            if (!(editElement instanceof Element)) {
+                return false;
+            }
+
+            return !editElement.matches(
+                ':disabled, .emp-system-managed-control'
+            );
+        });
+    };
+
+    const clearEmployeeEditFieldError = field => {
+        if (!(field instanceof Element)) return;
+
+        const container = field.closest(
+            '.form-group, .emp-child-field'
+        );
+
+        removeCssClasses(field, 'emp-input-invalid');
+        field.removeAttribute('aria-invalid');
+
+        if (container) {
+            removeCssClasses(container, 'emp-field-invalid');
+            delete container.dataset.error;
+        }
+    };
+
+    const setEmployeeEditFieldError = (
+        field,
+        message
+    ) => {
+        if (!(field instanceof Element)) return;
+
+        const container = field.closest(
+            '.form-group, .emp-child-field'
+        );
+
+        addCssClasses(field, 'emp-input-invalid');
+        field.setAttribute('aria-invalid', 'true');
+
+        if (container) {
+            addCssClasses(container, 'emp-field-invalid');
+            container.dataset.error = message;
+        }
+    };
+
+    const clearEmployeeEditValidation = () => {
+        editForm
+            ?.querySelectorAll('.emp-input-invalid')
+            .forEach(clearEmployeeEditFieldError);
+
+        editForm
+            ?.querySelectorAll('.emp-field-invalid')
+            .forEach(container => {
+                removeCssClasses(container, 'emp-field-invalid');
+                delete container.dataset.error;
+            });
+
+        addCssClasses(editValidationSummary, 'hidden');
+
+        if (editValidationSummaryText) {
+            editValidationSummaryText.textContent = '';
+        }
+    };
+
+    const showEmployeeEditValidation = errors => {
+        const uniqueMessages = Array.from(
+            new Set(
+                errors
+                    .map(error => error.message)
+                    .filter(Boolean)
+            )
+        );
+
+        if (editValidationSummaryText) {
+            editValidationSummaryText.textContent =
+                uniqueMessages.join(' ');
+        }
+
+        removeCssClasses(editValidationSummary, 'hidden');
+
+        const firstField = errors[0]?.field;
+
+        if (firstField instanceof HTMLElement) {
+            firstField.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+
+            window.setTimeout(
+                () => firstField.focus({ preventScroll: true }),
+                220
+            );
+        }
+    };
+
+    const validateEmployeeEditForm = () => {
+        clearEmployeeEditValidation();
+
+        const errors = [];
+        const requiredRules = [
+            ['#edit-empFirstName', 'First Name is required.'],
+            ['#edit-empLastName', 'Last Name is required.'],
+            ['#edit-empGender', 'Gender is required.'],
+            ['#edit-empDob', 'Date of Birth is required.'],
+            ['#edit-empCategory', 'Employee Category is required.'],
+            ['#edit-empType', 'Employee Type is required.'],
+            ['#edit-empMode', 'Employment Mode is required.'],
+            ['#edit-empDepartment', 'Department is required.'],
+            ['#edit-empDesignation', 'Designation is required.'],
+            ['#edit-empStatus', 'Employment Status is required.'],
+            ['#edit-empJoiningDate', 'Joining Date is required.'],
+            ['#edit-empNationality', 'Nationality is required.'],
+            ['#edit-empPhone', 'Mobile Number is required.']
+        ];
+
+        requiredRules.forEach(([selector, message]) => {
+            const field = editForm?.querySelector(selector);
+            const value = String(field?.value || '').trim();
+
+            if (!value) {
+                setEmployeeEditFieldError(field, message);
+                errors.push({ field, message });
+            }
+        });
+
+        if (editCategory?.value === 'MANAGEMENT') {
+            const value = String(
+                editManagementType?.value || ''
+            ).trim();
+
+            if (!value) {
+                const message =
+                    'Management Category is required.';
+
+                setEmployeeEditFieldError(
+                    editManagementType,
+                    message
+                );
+
+                errors.push({
+                    field: editManagementType,
+                    message
+                });
+            }
+        }
+
+        const officialEmail = editForm?.querySelector(
+            '#edit-empEmail'
+        );
+        const personalEmail = editForm?.querySelector(
+            '#edit-empPersonalEmail'
+        );
+
+        [officialEmail, personalEmail].forEach(field => {
+            if (
+                field instanceof HTMLInputElement &&
+                field.value.trim() &&
+                !field.validity.valid
+            ) {
+                const label =
+                    field.id === 'edit-empEmail'
+                        ? 'Official Email'
+                        : 'Personal Email';
+                const message =
+                    `${label} must be a valid email address.`;
+
+                setEmployeeEditFieldError(field, message);
+                errors.push({ field, message });
+            }
+        });
+
+        const statusField = editForm?.querySelector(
+            '#edit-empStatus'
+        );
+        const selectedStatus = String(
+            statusField?.value || ''
+        ).trim();
+
+        if (
+            ['RESIGNED', 'RETIRED', 'TERMINATED']
+                .includes(selectedStatus) &&
+            currentEmployee?.active !== false
+        ) {
+            const message =
+                'Use Deactivate Employee to apply a final employment status.';
+
+            setEmployeeEditFieldError(statusField, message);
+            errors.push({ field: statusField, message });
+        }
+
+        const profilePhotoField = editForm?.querySelector(
+            '#edit-empProfilePhoto'
+        );
+        const profilePhoto =
+            profilePhotoField instanceof HTMLInputElement
+                ? profilePhotoField.files?.[0] || null
+                : null;
+
+        if (profilePhoto) {
+            const allowedTypes = new Set([
+                'image/jpeg',
+                'image/png',
+                'image/webp'
+            ]);
+
+            if (!allowedTypes.has(profilePhoto.type)) {
+                const message =
+                    'Profile photo must be JPG, PNG or WEBP.';
+                setEmployeeEditFieldError(
+                    profilePhotoField,
+                    message
+                );
+                errors.push({
+                    field: profilePhotoField,
+                    message
+                });
+            } else if (profilePhoto.size > 2 * 1024 * 1024) {
+                const message =
+                    'Profile photo must not exceed 2 MB.';
+                setEmployeeEditFieldError(
+                    profilePhotoField,
+                    message
+                );
+                errors.push({
+                    field: profilePhotoField,
+                    message
+                });
+            }
+        }
+
+        const joiningField = editForm?.querySelector(
+            '#edit-empJoiningDate'
+        );
+        const probationField = editForm?.querySelector(
+            '#edit-empProbationEndDate'
+        );
+        const confirmationField = editForm?.querySelector(
+            '#edit-empConfirmationDate'
+        );
+
+        const joiningDate = joiningField?.value || '';
+        const probationDate = probationField?.value || '';
+        const confirmationDate = confirmationField?.value || '';
+
+        if (
+            joiningDate &&
+            probationDate &&
+            probationDate < joiningDate
+        ) {
+            const message =
+                'Probation End Date cannot be earlier than Joining Date.';
+            setEmployeeEditFieldError(probationField, message);
+            errors.push({ field: probationField, message });
+        }
+
+        if (
+            joiningDate &&
+            confirmationDate &&
+            confirmationDate < joiningDate
+        ) {
+            const message =
+                'Confirmation Date cannot be earlier than Joining Date.';
+            setEmployeeEditFieldError(
+                confirmationField,
+                message
+            );
+            errors.push({ field: confirmationField, message });
+        }
+
+        if (errors.length) {
+            showEmployeeEditValidation(errors);
+            return false;
+        }
+
+        return true;
+    };
+
+    editForm?.addEventListener('input', event => {
+        if (event.target instanceof Element) {
+            clearEmployeeEditFieldError(event.target);
+        }
+    });
+
+    editForm?.addEventListener('change', event => {
+        if (event.target instanceof Element) {
+            clearEmployeeEditFieldError(event.target);
+        }
+    });
 
     /**
      * @param {Object<string, *>} object
@@ -1846,114 +2238,161 @@ function initEmployeesView(routeInfo = {}) {
             await loadEmployees();
         });
 
-    async function loadSelectOptions(excludeEmployeeId = null) {
-        const branchId = getRequiredBranchId();
-        const reportingManagerEndpoint =
-            excludeEmployeeId
-                ? `/branchadmin/employees/reporting-managers?excludeEmployeeId=${encodeURIComponent(excludeEmployeeId)}`
-                : '/branchadmin/employees/reporting-managers';
+    async function loadSelectOptions(
+        excludeEmployeeId = null,
+        force = false
+    ) {
+        const normalizedEmployeeId = Number.parseInt(
+            String(excludeEmployeeId || ''),
+            10
+        );
 
-        const [
-            departmentResponse,
-            designationResponse,
-            reportingManagerResponse
-        ] = await Promise.all([
-            apiGet(
-                `/departments?branchId=${branchId}&size=100`
-            ),
-            apiGet(
-                `/designations?branchId=${branchId}&size=100`
-            ),
-            apiGet(reportingManagerEndpoint)
-        ]);
+        const cacheKey =
+            Number.isInteger(normalizedEmployeeId) &&
+            normalizedEmployeeId > 0
+                ? normalizedEmployeeId
+                : 0;
 
-        const departments =
-            departmentResponse?.data?.content ??
-            departmentResponse?.data ??
-            [];
-
-        const designations =
-            designationResponse?.data?.content ??
-            designationResponse?.data ??
-            [];
-
-        const reportingManagers =
-            reportingManagerResponse?.data ??
-            reportingManagerResponse ??
-            [];
-
-        const departmentSelect =
-            viewContainer.querySelector(
-                '#edit-empDepartment'
-            );
-
-        const designationSelect =
-            viewContainer.querySelector(
-                '#edit-empDesignation'
-            );
-
-        const reportingManagerSelect =
-            viewContainer.querySelector(
-                '#edit-empReportingManager'
-            );
-
-        if (departmentSelect) {
-            departmentSelect.innerHTML =
-                '<option value="">-- Select Department --</option>';
-
-            departments.forEach(department => {
-                const option = document.createElement('option');
-                option.value =
-                    String(
-                        department.departmentId ??
-                        department.id ??
-                        ''
-                    );
-                option.textContent =
-                    department.departmentName ??
-                    department.name ??
-                    'Unnamed Department';
-                departmentSelect.appendChild(option);
-            });
+        if (
+            !force &&
+            selectOptionsLoadedForEmployeeId === cacheKey
+        ) {
+            return true;
         }
 
-        if (designationSelect) {
-            designationSelect.innerHTML =
-                '<option value="">-- Select Designation --</option>';
-
-            designations.forEach(designation => {
-                const option = document.createElement('option');
-                option.value =
-                    String(
-                        designation.designationId ??
-                        designation.id ??
-                        ''
-                    );
-                option.textContent =
-                    designation.designationName ??
-                    designation.name ??
-                    'Unnamed Designation';
-                designationSelect.appendChild(option);
-            });
+        if (selectOptionsPromise) {
+            return selectOptionsPromise;
         }
 
-        if (reportingManagerSelect) {
-            reportingManagerSelect.innerHTML =
-                '<option value="">-- No Reporting Manager --</option>';
+        selectOptionsPromise = (async () => {
+            const branchId = getRequiredBranchId();
+            const reportingManagerEndpoint =
+                cacheKey > 0
+                    ? `/branchadmin/employees/reporting-managers?excludeEmployeeId=${encodeURIComponent(cacheKey)}`
+                    : '/branchadmin/employees/reporting-managers';
 
-            reportingManagers.forEach(manager => {
-                const option = document.createElement('option');
-                option.value =
-                    String(
-                        manager.employeeId ?? ''
+            const [
+                departmentResponse,
+                designationResponse,
+                reportingManagerResponse
+            ] = await Promise.all([
+                apiGet(
+                    `/departments?branchId=${branchId}&size=100`
+                ),
+                apiGet(
+                    `/designations?branchId=${branchId}&size=100`
+                ),
+                apiGet(reportingManagerEndpoint)
+            ]);
+
+            const departments =
+                departmentResponse?.data?.content ??
+                departmentResponse?.data ??
+                [];
+
+            const designations =
+                designationResponse?.data?.content ??
+                designationResponse?.data ??
+                [];
+
+            const reportingManagers =
+                reportingManagerResponse?.data ??
+                reportingManagerResponse ??
+                [];
+
+            const departmentSelect =
+                viewContainer.querySelector(
+                    '#edit-empDepartment'
+                );
+
+            const designationSelect =
+                viewContainer.querySelector(
+                    '#edit-empDesignation'
+                );
+
+            const reportingManagerSelect =
+                viewContainer.querySelector(
+                    '#edit-empReportingManager'
+                );
+
+            if (departmentSelect) {
+                departmentSelect.replaceChildren(
+                    new Option(
+                        '-- Select Department --',
+                        ''
+                    )
+                );
+
+                departments.forEach(department => {
+                    departmentSelect.appendChild(
+                        new Option(
+                            department.departmentName ??
+                            department.name ??
+                            'Unnamed Department',
+                            String(
+                                department.departmentId ??
+                                department.id ??
+                                ''
+                            )
+                        )
                     );
-                option.textContent = [
-                    manager.employeeNo,
-                    manager.fullName,
-                    manager.designationName
-                ].filter(Boolean).join(' - ');
-                reportingManagerSelect.appendChild(option);
-            });
+                });
+            }
+
+            if (designationSelect) {
+                designationSelect.replaceChildren(
+                    new Option(
+                        '-- Select Designation --',
+                        ''
+                    )
+                );
+
+                designations.forEach(designation => {
+                    designationSelect.appendChild(
+                        new Option(
+                            designation.designationName ??
+                            designation.name ??
+                            'Unnamed Designation',
+                            String(
+                                designation.designationId ??
+                                designation.id ??
+                                ''
+                            )
+                        )
+                    );
+                });
+            }
+
+            if (reportingManagerSelect) {
+                reportingManagerSelect.replaceChildren(
+                    new Option(
+                        '-- No Reporting Manager --',
+                        ''
+                    )
+                );
+
+                reportingManagers.forEach(manager => {
+                    reportingManagerSelect.appendChild(
+                        new Option(
+                            [
+                                manager.employeeNo,
+                                manager.fullName,
+                                manager.designationName
+                            ].filter(Boolean).join(' - '),
+                            String(manager.employeeId ?? '')
+                        )
+                    );
+                });
+            }
+
+            selectOptionsLoadedForEmployeeId = cacheKey;
+            return true;
+        })();
+
+        try {
+            return await selectOptionsPromise;
+        } finally {
+            selectOptionsPromise = null;
         }
     }
 
@@ -2214,13 +2653,34 @@ function initEmployeesView(routeInfo = {}) {
 
         currentDetailEmpId = id;
 
+        let detailLoaderToken = null;
+        let detailLoadingStopped = false;
+
+        const stopDetailLoading = () => {
+            if (detailLoadingStopped) return;
+            detailLoadingStopped = true;
+
+            detailView?.removeAttribute('aria-busy');
+            removeCssClasses(
+                detailView,
+                'emp-detail-loading'
+            );
+
+            if (detailLoaderToken) {
+                hideLoader(detailLoaderToken);
+                detailLoaderToken = null;
+            }
+        };
+
         if (showLoading) {
-            showLoader('Opening Employee details...');
+            detailView?.setAttribute('aria-busy', 'true');
+            addCssClasses(detailView, 'emp-detail-loading');
+            detailLoaderToken = showLoader(
+                'Opening Employee details...'
+            );
         }
 
         try {
-            await loadSelectOptions(id);
-
             const response = await apiGet(
                 `/branchadmin/employees/${id}`
             );
@@ -2487,23 +2947,6 @@ function initEmployeesView(routeInfo = {}) {
                 !employeeIsActive
             );
 
-            setText('#view-empActive', employee.active, formatBoolean);
-            setText('#view-empVersion', employee.version);
-            setText('#view-empCreatedBy', employee.createdBy);
-            setText(
-                '#view-empCreatedAt',
-                employee.createdAt
-                    ? String(employee.createdAt).replace('T', ' ')
-                    : null
-            );
-            setText('#view-empUpdatedBy', employee.updatedBy);
-            setText(
-                '#view-empUpdatedAt',
-                employee.updatedAt
-                    ? String(employee.updatedAt).replace('T', ' ')
-                    : null
-            );
-
             const profilePhoto = normalizeImageSource(
                 employee.profilePhotoUrl ??
                 employee.profilePhoto
@@ -2764,15 +3207,17 @@ function initEmployeesView(routeInfo = {}) {
             return true;
         } catch (error) {
             console.error(error);
+
+            /* Close the loader before opening the error window. */
+            stopDetailLoading();
+
             showErrorMessage(
                 error.message ||
                 'Failed to load employee details.'
             );
             return false;
         } finally {
-            if (showLoading) {
-                hideLoader();
-            }
+            stopDetailLoading();
         }
     }
 
@@ -2928,84 +3373,157 @@ function initEmployeesView(routeInfo = {}) {
         }
     );
 
-    function enterEmpEditMode() {
-        viewContainer
-            .querySelectorAll('.detail-text')
-            .forEach(element => {
-                addCssClasses(element, 'hidden');
-            });
+    async function enterEmpEditMode() {
+        if (
+            !currentEmployee ||
+            !editForm ||
+            !detailView
+        ) {
+            return false;
+        }
 
-        viewContainer
-            .querySelectorAll(
-                '.detail-input:not([disabled])'
-            )
-            .forEach(element => {
+        if (
+            String(
+                detailView.getAttribute('data-edit-state') || ''
+            ) === 'editing'
+        ) {
+            return true;
+        }
+
+        clearEmployeeEditValidation();
+        detailView.setAttribute('aria-busy', 'true');
+        detailView.setAttribute(
+            'data-edit-state',
+            'preparing'
+        );
+        addCssClasses(detailView, 'emp-edit-preparing');
+
+        try {
+            await loadSelectOptions(currentDetailEmpId);
+
+            const departmentId =
+                currentEmployee.departmentId ??
+                currentEmployee.department?.departmentId ??
+                currentEmployee.department?.id ??
+                null;
+
+            const designationId =
+                currentEmployee.designationId ??
+                currentEmployee.designation?.designationId ??
+                currentEmployee.designation?.id ??
+                null;
+
+            setInput('#edit-empDepartment', departmentId);
+            setInput('#edit-empDesignation', designationId);
+            setInput(
+                '#edit-empReportingManager',
+                currentEmployee.reportingManagerId
+            );
+
+            getEditableEmployeeViewValues()
+                .forEach(element => {
+                    addCssClasses(element, 'hidden');
+                });
+
+            editForm
+                .querySelectorAll(
+                    '.emp-child-row .detail-text'
+                )
+                .forEach(element => {
+                    addCssClasses(element, 'hidden');
+                });
+
+            getEmployeeEditControls().forEach(element => {
+                if (
+                    element.matches(
+                        ':disabled, .emp-system-managed-control'
+                    )
+                ) {
+                    return;
+                }
+
                 removeCssClasses(element, 'hidden');
             });
 
-        [
-            '#contacts-view-container',
-            '#qualifications-view-container',
-            '#experiences-view-container'
-        ].forEach(selector => {
-            addCssClasses(
-                viewContainer.querySelector(selector),
-                'hidden'
-            );
-        });
+            [
+                '#contacts-view-container',
+                '#qualifications-view-container',
+                '#experiences-view-container'
+            ].forEach(selector => {
+                addCssClasses(
+                    viewContainer.querySelector(selector),
+                    'hidden'
+                );
+            });
 
-        [
-            '#contacts-container',
-            '#qualifications-container',
-            '#experiences-container'
-        ].forEach(selector => {
+            [
+                '#contacts-container',
+                '#qualifications-container',
+                '#experiences-container'
+            ].forEach(selector => {
+                removeCssClasses(
+                    viewContainer.querySelector(selector),
+                    'hidden'
+                );
+            });
+
+            viewContainer
+                .querySelectorAll('.add-row-btn')
+                .forEach(button => {
+                    removeCssClasses(button, 'hidden');
+                });
+
+            synchronizeEditManagementCategory();
+
+            addCssClasses(editBtn, 'hidden');
+            removeCssClasses(saveBtn, 'hidden');
+            removeCssClasses(cancelEditBtn, 'hidden');
+            removeCssClasses(stickyEditActions, 'hidden');
+            addCssClasses(detailView, 'is-editing');
+            removeCssClasses(detailView, 'emp-edit-preparing');
+            detailView.setAttribute(
+                'data-edit-state',
+                'editing'
+            );
+
+            return true;
+        } catch (error) {
+            console.error(error);
+
+            detailView.setAttribute(
+                'data-edit-state',
+                'view'
+            );
+
+            showErrorMessage(
+                error?.message ||
+                'The Employee edit form could not be prepared.'
+            );
+
+            return false;
+        } finally {
+            detailView.removeAttribute('aria-busy');
             removeCssClasses(
-                viewContainer.querySelector(selector),
-                'hidden'
+                detailView,
+                'emp-edit-preparing'
             );
-        });
-
-        viewContainer
-            .querySelectorAll('.add-row-btn')
-            .forEach(button => {
-                removeCssClasses(button, 'hidden');
-            });
-
-        viewContainer
-            .querySelectorAll(
-                '.emp-child-row .detail-text'
-            )
-            .forEach(element => {
-                addCssClasses(element, 'hidden');
-            });
-
-        viewContainer
-            .querySelectorAll(
-                '.emp-child-row .detail-input'
-            )
-            .forEach(element => {
-                removeCssClasses(element, 'hidden');
-            });
-
-        synchronizeEditManagementCategory();
-
-        addCssClasses(editBtn, 'hidden');
-        removeCssClasses(saveBtn, 'hidden');
-        removeCssClasses(cancelEditBtn, 'hidden');
+        }
     }
 
     function resetEmpEditMode() {
-        viewContainer
+        if (!editForm) return;
+
+        clearEmployeeEditValidation();
+
+        editForm
             .querySelectorAll('.detail-text')
             .forEach(element => {
                 removeCssClasses(element, 'hidden');
             });
 
-        viewContainer
-            .querySelectorAll('.detail-input')
-            .forEach(element => {
-                addCssClasses(element, 'hidden');
-            });
+        getEmployeeEditControls().forEach(element => {
+            addCssClasses(element, 'hidden');
+        });
 
         [
             '#contacts-view-container',
@@ -3036,10 +3554,21 @@ function initEmployeesView(routeInfo = {}) {
             });
 
         addCssClasses(editManagementTypeGroup, 'hidden');
+        removeCssClasses(detailView, 'is-editing');
+        detailView?.setAttribute(
+            'data-edit-state',
+            'view'
+        );
 
-        removeCssClasses(editBtn, 'hidden');
+        toggleCssClass(
+            editBtn,
+            'hidden',
+            currentEmployee?.active === false
+        );
+
         addCssClasses(saveBtn, 'hidden');
         addCssClasses(cancelEditBtn, 'hidden');
+        addCssClasses(stickyEditActions, 'hidden');
     }
 
     editBtn?.addEventListener(
@@ -3052,7 +3581,8 @@ function initEmployeesView(routeInfo = {}) {
                     await new Promise(resolve =>
                         requestAnimationFrame(resolve)
                     );
-                    enterEmpEditMode();
+
+                    return enterEmpEditMode();
                 }
             );
         }
@@ -3491,7 +4021,9 @@ function initEmployeesView(routeInfo = {}) {
         }
 
         employeeLoginModalOpening = true;
-        showLoader('Loading Employee account options...');
+        const loginLoaderToken = showLoader(
+            'Loading Employee account options...'
+        );
 
         try {
             await loadLoginRoleOptions(
@@ -3545,7 +4077,7 @@ function initEmployeesView(routeInfo = {}) {
             );
         } finally {
             employeeLoginModalOpening = false;
-            hideLoader();
+            hideLoader(loginLoaderToken);
         }
     };
 
@@ -3733,10 +4265,9 @@ function initEmployeesView(routeInfo = {}) {
             valueOrNull('#edit-empLastName');
 
         if (!firstName || !lastName) {
-            showErrorMessage(
+            throw new Error(
                 'First Name and Last Name are required.'
             );
-            return false;
         }
 
         const employeeCategory =
@@ -3746,18 +4277,16 @@ function initEmployeesView(routeInfo = {}) {
             );
 
         if (!employeeCategory) {
-            showErrorMessage(
+            throw new Error(
                 'Select a valid Employee Category.'
             );
-            return false;
         }
 
         const version = Number(currentEmployee.version);
         if (!Number.isInteger(version) || version < 0) {
-            showErrorMessage(
+            throw new Error(
                 'Employee version is missing. Reload the Employee details.'
             );
-            return false;
         }
 
         const employmentStatus =
@@ -3768,10 +4297,9 @@ function initEmployeesView(routeInfo = {}) {
                 .includes(employmentStatus) &&
             currentEmployee.active !== false
         ) {
-            showErrorMessage(
+            throw new Error(
                 'Use Deactivate Employee to set a final employment status.'
             );
-            return false;
         }
 
         const profilePhoto =
@@ -3787,17 +4315,15 @@ function initEmployeesView(routeInfo = {}) {
             ]);
 
             if (!allowedTypes.has(profilePhoto.type)) {
-                showErrorMessage(
+                throw new Error(
                     'Profile photo must be JPG, PNG or WEBP.'
                 );
-                return false;
             }
 
             if (profilePhoto.size > 2 * 1024 * 1024) {
-                showErrorMessage(
+                throw new Error(
                     'Profile photo must not exceed 2 MB.'
                 );
-                return false;
             }
         }
 
@@ -3928,19 +4454,31 @@ function initEmployeesView(routeInfo = {}) {
         } catch (error) {
             console.error(error);
 
-            showErrorMessage(
-                error.message ||
+            if (error instanceof Error) {
+                throw error;
+            }
+
+            throw new Error(
                 'Failed to update Employee.'
             );
-
-            return false;
         }
     };
+
+    const waitForEmployeeOverlayPaint = () =>
+        new Promise(resolve => {
+            window.requestAnimationFrame(() => {
+                window.requestAnimationFrame(resolve);
+            });
+        });
 
     saveBtn?.addEventListener(
         'click',
         async () => {
             if (employeeDialogState.operationRunning) {
+                return;
+            }
+
+            if (!validateEmployeeEditForm()) {
                 return;
             }
 
@@ -3966,21 +4504,48 @@ function initEmployeesView(routeInfo = {}) {
             });
 
             let saved = false;
+            let saveError = null;
 
             try {
+                /*
+                 * Give the browser two animation frames to draw the operation
+                 * overlay and spinner before file conversion and the API call.
+                 */
+                await waitForEmployeeOverlayPaint();
                 saved = await saveEmployeeChanges();
+            } catch (error) {
+                saveError = error;
             } finally {
                 employeeDialogState.operationRunning = false;
                 hideEmployeeOperation();
             }
 
+            await waitForEmployeeFeedbackExit();
+
+            if (saveError) {
+                showErrorMessage(
+                    saveError?.message ||
+                    'Failed to update Employee.'
+                );
+                return;
+            }
+
             if (saved) {
-                await waitForEmployeeFeedbackExit();
                 showSuccessMessage(
                     'Employee updated successfully.'
                 );
             }
         }
+    );
+
+    bottomSaveBtn?.addEventListener(
+        'click',
+        () => saveBtn?.click()
+    );
+
+    bottomCancelEditBtn?.addEventListener(
+        'click',
+        () => cancelEditBtn?.click()
     );
 
     const routeEmployeeId = Number.parseInt(
@@ -3999,7 +4564,7 @@ function initEmployeesView(routeInfo = {}) {
             const opened = await openEmpDetail(routeEmployeeId);
 
             if (opened && routeMode === 'edit') {
-                enterEmpEditMode();
+                await enterEmpEditMode();
             }
             return;
         }

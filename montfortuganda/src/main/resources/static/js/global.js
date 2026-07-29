@@ -6,6 +6,7 @@
     const activeOperations = new Map();
     const legacyTokens = [];
     const buttonStates = new WeakMap();
+    const MAX_OPERATION_AGE_MS = 5 * 60 * 1000;
     let nextTokenId = 0;
 
     function getFeedbackElement() {
@@ -32,6 +33,15 @@
         feedback.append(spinner, message);
         document.body.appendChild(feedback);
         return feedback;
+    }
+
+    function removeLegacyToken(token) {
+        let index = legacyTokens.lastIndexOf(token);
+
+        while (index >= 0) {
+            legacyTokens.splice(index, 1);
+            index = legacyTokens.lastIndexOf(token);
+        }
     }
 
     function renderActiveOperation() {
@@ -63,10 +73,20 @@
         );
     }
 
+    function clearOperationTimers(operation) {
+        if (!operation) return;
+
+        window.clearTimeout(operation.longWaitTimer);
+        window.clearTimeout(operation.safetyTimer);
+    }
+
     function start(message = 'Processing...') {
         const token = `erp-operation-${++nextTokenId}`;
         const operation = {
-            message: String(message || 'Processing...').trim()
+            message: String(message || 'Processing...').trim(),
+            startedAt: Date.now(),
+            longWaitTimer: null,
+            safetyTimer: null
         };
 
         operation.longWaitTimer = window.setTimeout(() => {
@@ -77,26 +97,67 @@
             renderActiveOperation();
         }, 8000);
 
+        /*
+         * Emergency protection only. A forgotten token must never leave an
+         * invisible full-screen pointer blocker over the ERP forever.
+         */
+        operation.safetyTimer = window.setTimeout(() => {
+            if (!activeOperations.has(token)) return;
+
+            console.error(
+                'ERP loader operation exceeded the safety limit and was released.',
+                token
+            );
+
+            activeOperations.delete(token);
+            removeLegacyToken(token);
+            renderActiveOperation();
+        }, MAX_OPERATION_AGE_MS);
+
         activeOperations.set(token, operation);
         renderActiveOperation();
         return token;
     }
 
     function end(token) {
+        if (!token) return;
+
         const operation = activeOperations.get(token);
+        removeLegacyToken(token);
 
-        if (!operation) return;
+        if (!operation) {
+            renderActiveOperation();
+            return;
+        }
 
-        window.clearTimeout(operation.longWaitTimer);
+        clearOperationTimers(operation);
         activeOperations.delete(token);
         renderActiveOperation();
+    }
+
+    function clearAll(reason = '') {
+        activeOperations.forEach(clearOperationTimers);
+        activeOperations.clear();
+        legacyTokens.length = 0;
+        renderActiveOperation();
+
+        if (reason) {
+            console.warn(
+                'ERP loading state was cleared:',
+                reason
+            );
+        }
     }
 
     window.erpActionFeedback = {
         start,
         end,
+        clearAll,
         isBusy() {
             return activeOperations.size > 0;
+        },
+        activeCount() {
+            return activeOperations.size;
         }
     };
 
@@ -111,15 +172,35 @@
 
     window.hideLoader = function hideLoader(token = null) {
         if (token) {
-            const index = legacyTokens.lastIndexOf(token);
-            if (index >= 0) legacyTokens.splice(index, 1);
             end(token);
             return;
         }
 
-        const latestToken = legacyTokens.pop();
-        if (latestToken) end(latestToken);
+        const latestToken = legacyTokens.at(-1);
+        if (latestToken) {
+            end(latestToken);
+        }
     };
+
+    window.erpWithLoader =
+        async function erpWithLoader(
+            message,
+            operation
+        ) {
+            if (typeof operation !== 'function') {
+                throw new TypeError(
+                    'A loader operation function is required.'
+                );
+            }
+
+            const token = start(message);
+
+            try {
+                return await operation();
+            } finally {
+                end(token);
+            }
+        };
 
     window.erpWithButtonFeedback =
         async function erpWithButtonFeedback(
@@ -175,6 +256,16 @@
                 buttonStates.delete(button);
             }
         };
+
+    window.addEventListener('pagehide', () => {
+        clearAll();
+    });
+
+    window.addEventListener('pageshow', event => {
+        if (event.persisted) {
+            clearAll('page restored from browser cache');
+        }
+    });
 })();
 
 // ========================================================
@@ -587,13 +678,18 @@
             routeParams: normalizedRouteParams,
             title: normalizedTitle
         };
+        /*
+         * Keep record IDs and edit-state markers in history.state instead of
+         * exposing them in the address bar. The visible URL identifies only
+         * the portal and module, for example: /admin/employees.
+         *
+         * This is a privacy/UI improvement, not an authorization boundary.
+         * Backend branch and permission checks remain mandatory.
+         */
         const newUrl = [
             '',
             encodeURIComponent(normalizedRole),
-            encodeURIComponent(normalizedView),
-            ...normalizedRouteParams.map(value =>
-                encodeURIComponent(value)
-            )
+            encodeURIComponent(normalizedView)
         ].join('/');
 
         if (historyMode === 'replace') {
@@ -602,15 +698,33 @@
                 '',
                 newUrl
             );
-        } else if (
-            historyMode === 'push' &&
-            window.location.pathname !== newUrl
-        ) {
-            window.history.pushState(
-                navigationState,
-                '',
-                newUrl
-            );
+        } else if (historyMode === 'push') {
+            const currentState = window.history.state || {};
+            const currentRouteParams = Array.isArray(
+                currentState.routeParams
+            )
+                ? currentState.routeParams.map(String)
+                : [];
+            const sameHistoryState =
+                currentState.role === navigationState.role &&
+                currentState.view === navigationState.view &&
+                currentRouteParams.length ===
+                    navigationState.routeParams.length &&
+                currentRouteParams.every(
+                    (value, index) =>
+                        value === navigationState.routeParams[index]
+                );
+
+            if (
+                window.location.pathname !== newUrl ||
+                !sameHistoryState
+            ) {
+                window.history.pushState(
+                    navigationState,
+                    '',
+                    newUrl
+                );
+            }
         }
 
         updatePageTitle(normalizedTitle);

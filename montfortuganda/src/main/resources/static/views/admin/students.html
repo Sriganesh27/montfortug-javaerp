@@ -1,0 +1,1620 @@
+<!--suppress SpellCheckingInspection -->
+<div id="ba-students-view" class="fade-in erp-record-module">
+
+    <!-- ===================================================== -->
+    <!-- HEADER                                                -->
+    <!-- ===================================================== -->
+    <div class="view-header">
+        <div>
+            <h2>Manage Students</h2>
+            <p class="text-muted">View and manage branch Students.</p>
+        </div>
+
+        <button type="button" id="btn-add-student" class="btn-primary">
+            <i class="bi bi-person-plus-fill"></i>
+            Add Student
+        </button>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- STUDENT TABLE VIEW                                    -->
+    <!-- ===================================================== -->
+    <div id="student-tableView" class="erp-record-list-view">
+
+        <!-- Filters -->
+        <div class="card mb-3 p-3">
+            <div class="ba-flex-panel student-filter-panel">
+
+                <div class="form-group ba-flex-1">
+                    <label for="student-searchInput">Search Students</label>
+                    <input
+                            type="search"
+                            id="student-searchInput"
+                            class="detail-input w-100"
+                            maxlength="150"
+                            autocomplete="off"
+                            placeholder="Search by name, Student code, admission number or LIN"
+                    >
+                </div>
+
+                <div class="form-group ba-flex-1">
+                    <label for="student-academicYearFilter">Academic Year</label>
+                    <select id="student-academicYearFilter" class="detail-input w-100">
+                        <option value="">All Academic Years</option>
+                    </select>
+                </div>
+
+                <div class="form-group ba-flex-1">
+                    <label for="student-classFilter">Class</label>
+                    <select id="student-classFilter" class="detail-input w-100">
+                        <option value="">All Classes</option>
+                    </select>
+                </div>
+
+                <div class="form-group ba-flex-1">
+                    <label for="student-statusFilter">Student Status</label>
+                    <select id="student-statusFilter" class="detail-input w-100">
+                        <option value="">All Statuses</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                        <option value="SUSPENDED">Suspended</option>
+                        <option value="TRANSFERRED">Transferred</option>
+                        <option value="WITHDRAWN">Withdrawn</option>
+                        <option value="EXPELLED">Expelled</option>
+                        <option value="DROPPED_OUT">Dropped Out</option>
+                        <option value="GRADUATED">Graduated</option>
+                        <option value="ALUMNI">Alumni</option>
+                        <option value="DECEASED">Deceased</option>
+                    </select>
+                </div>
+
+                <div class="form-group ba-pagination-controls">
+                    <button type="button" id="student-searchBtn" class="btn-primary">
+                        <i class="bi bi-search"></i>
+                        Search
+                    </button>
+
+                    <button type="button" id="student-resetBtn" class="btn-secondary">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Table -->
+        <div class="card">
+            <div class="table-responsive">
+                <table id="student-tableComponent" class="data-table">
+                    <thead>
+                    <tr>
+                        <th class="col-photo">Photo</th>
+                        <th data-sort="studentCode">
+                            Code
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+                        <th data-sort="fullName">
+                            Student
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+                        <th>Admission / LIN</th>
+                        <th>Class / Section</th>
+                        <th>Preferred Contact</th>
+                        <th data-sort="studentStatus">
+                            Status
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+                        <th class="col-action align-center">Actions</th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="student-tableBody">
+                    <!-- Rows rendered through JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="ba-pagination-footer">
+                <div class="ba-pagination-controls">
+                    <label for="student-pageSize">Rows</label>
+
+                    <select id="student-pageSize" class="detail-input w-auto">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+
+                    <span id="student-pageInfo" class="text-muted">
+                        Showing page 1 of 1
+                    </span>
+                </div>
+
+                <div class="ba-pagination-controls">
+                    <button type="button" id="btn-student-prev" class="btn-secondary btn-sm" disabled>
+                        <i class="bi bi-chevron-left"></i>
+                        Previous
+                    </button>
+
+                    <button type="button" id="btn-student-next" class="btn-secondary btn-sm" disabled>
+                        Next
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- STUDENT DETAIL AND EDIT VIEW                          -->
+    <!-- ===================================================== -->
+    <div id="student-detailView" class="hidden erp-record-detail-view" data-mode="view">
+
+        <!-- Detail Header -->
+        <div class="view-header emp-detail-toolbar student-detail-toolbar">
+            <div>
+                <h2>Student Profile</h2>
+                <p class="text-muted">
+                    <span id="detail-studentNameHeader"></span>
+                    <span id="detail-studentCodeHeader"></span>
+                </p>
+            </div>
+
+            <div class="action-btn-group emp-detail-actions student-detail-actions">
+                <button type="button" id="student-backToTableBtn" class="btn-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Back
+                </button>
+
+                <button type="button" id="student-enrollmentBtn" class="btn-secondary student-view-control">
+                    <i class="bi bi-mortarboard"></i>
+                    Enrollment
+                </button>
+
+                <button type="button" id="student-statusBtn" class="btn-secondary student-view-control">
+                    <i class="bi bi-arrow-repeat"></i>
+                    Change Status
+                </button>
+
+                <button type="button" id="student-editBtn" class="btn-primary student-view-control">
+                    <i class="bi bi-pencil"></i>
+                    Edit Details
+                </button>
+
+                <button type="button" id="student-cancelEditBtn" class="btn-secondary hidden student-edit-control">
+                    <i class="bi bi-x-lg"></i>
+                    Cancel
+                </button>
+
+                <button type="button" id="student-saveBtn" class="btn-success hidden student-edit-control">
+                    <i class="bi bi-save"></i>
+                    Save Changes
+                </button>
+            </div>
+        </div>
+
+        <form id="student-edit-form" class="emp-record-edit-form student-record-edit-form" novalidate>
+
+            <!-- Validation Summary -->
+            <div
+                    id="edit-student-validation-summary"
+                    class="emp-validation-summary hidden student-edit-control"
+                    role="alert"
+                    aria-live="assertive"
+            >
+                <strong>Please correct the highlighted fields.</strong>
+                <p id="edit-student-validation-summary-text"></p>
+            </div>
+
+            <!-- ================================================= -->
+            <!-- PROFILE SUMMARY                                   -->
+            <!-- ================================================= -->
+            <div class="card emp-profile-summary-card emp-profile-card">
+                <div class="emp-profile-header emp-profile-layout">
+
+                    <!-- Profile Photo -->
+                    <div class="emp-profile-photo-panel">
+                        <div class="emp-profile-photo-box">
+                            <img
+                                    id="view-studentProfilePhoto"
+                                    class="emp-profile-photo hidden"
+                                    alt="Student profile photo"
+                            >
+
+                            <div id="view-studentProfilePhotoPlaceholder" class="emp-profile-photo-placeholder">
+                                <i class="bi bi-person-bounding-box"></i>
+                                <span>No photo available</span>
+                            </div>
+                        </div>
+
+                        <div
+                                id="edit-studentProfilePhotoContainer"
+                                class="hidden emp-profile-photo-editor student-edit-control"
+                        >
+                            <input
+                                    type="file"
+                                    id="edit-studentProfilePhoto"
+                                    class="hidden emp-profile-photo-file-input"
+                                    accept="image/jpeg,image/png,image/webp"
+                            >
+
+                            <label for="edit-studentProfilePhoto" class="btn-secondary btn-sm emp-photo-upload-btn">
+                                <i class="bi bi-camera-fill"></i>
+                                Change Photo
+                            </label>
+
+                            <span id="edit-studentProfilePhotoName" class="emp-photo-file-name">
+                                No new photo selected
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Main Summary -->
+                    <div class="emp-profile-summary">
+                        <h3 id="view-studentName"></h3>
+
+                        <div class="emp-profile-summary-grid emp-profile-facts">
+                            <div>
+                                <span class="text-muted">Student Code</span>
+                                <strong id="view-studentCode" class="font-monospace"></strong>
+                            </div>
+
+                            <div>
+                                <span class="text-muted">Admission Number</span>
+                                <strong id="summary-studentAdmissionNo"></strong>
+                            </div>
+
+                            <div>
+                                <span class="text-muted">Class / Section</span>
+                                <strong id="summary-studentPlacement"></strong>
+                            </div>
+
+                            <div>
+                                <span class="text-muted">Student Status</span>
+                                <span id="summary-studentStatus" class="status-badge badge"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================================================= -->
+            <!-- PERSONAL DETAILS                                  -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">Personal Details</legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group emp-required-field">
+                            <label for="edit-studentFirstName">First Name</label>
+                            <span id="view-studentFirstName" class="detail-text student-view-control"></span>
+                            <input
+                                    type="text"
+                                    id="edit-studentFirstName"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="100"
+                                    required
+                                    aria-required="true"
+                                    data-validation-label="First Name"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentMiddleName">Middle Name</label>
+                            <span id="view-studentMiddleName" class="detail-text student-view-control"></span>
+                            <input
+                                    type="text"
+                                    id="edit-studentMiddleName"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentLastName">Last Name</label>
+                            <span id="view-studentLastName" class="detail-text student-view-control"></span>
+                            <input
+                                    type="text"
+                                    id="edit-studentLastName"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentLearnerLin">Learner LIN</label>
+                            <span id="view-studentLearnerLin" class="detail-text student-view-control"></span>
+                            <input
+                                    type="text"
+                                    id="edit-studentLearnerLin"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="50"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group emp-required-field">
+                            <label for="edit-studentGender">Gender</label>
+                            <span id="view-studentGender" class="detail-text student-view-control"></span>
+                            <select
+                                    id="edit-studentGender"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    required
+                                    aria-required="true"
+                                    data-validation-label="Gender"
+                            >
+                                <option value="">-- Select --</option>
+                                <option value="MALE">Male</option>
+                                <option value="FEMALE">Female</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group emp-required-field">
+                            <label for="edit-studentDob">Date of Birth</label>
+                            <span id="view-studentDob" class="detail-text student-view-control"></span>
+                            <input
+                                    type="date"
+                                    id="edit-studentDob"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    required
+                                    aria-required="true"
+                                    data-validation-label="Date of Birth"
+                            >
+                        </div>
+
+                        <div class="form-group emp-required-field">
+                            <label for="edit-studentAdmissionYear">Admission Year</label>
+                            <span id="view-studentAdmissionYear" class="detail-text student-view-control"></span>
+                            <input
+                                    type="number"
+                                    id="edit-studentAdmissionYear"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    min="1900"
+                                    max="2100"
+                                    required
+                                    aria-required="true"
+                                    data-validation-label="Admission Year"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentNationality">Nationality</label>
+                            <span id="view-studentNationality" class="detail-text student-view-control"></span>
+                            <input
+                                    type="text"
+                                    id="edit-studentNationality"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="100"
+                            >
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- ADMISSION AND ENROLLMENT                          -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">Admission and Enrollment</legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Application ID</label>
+                            <span id="view-studentApplicationId" class="detail-text student-view-control"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Admission Number</label>
+                            <span id="view-studentAdmissionNo" class="detail-text student-view-control"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Academic Year</label>
+                            <span id="view-studentAcademicYear" class="detail-text student-view-control"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Class</label>
+                            <span id="view-studentClass" class="detail-text student-view-control"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Section</label>
+                            <span id="view-studentSection" class="detail-text student-view-control"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Admission Type</label>
+                            <span id="view-studentAdmissionType" class="detail-text student-view-control"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Joining Date</label>
+                            <span id="view-studentJoiningDate" class="detail-text student-view-control"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Roll Number</label>
+                            <span id="view-studentRollNo" class="detail-text student-view-control"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label>Enrollment Status</label>
+                            <span id="view-studentEnrollmentStatus" class="detail-text student-view-control"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Enrollment Remarks</label>
+                            <span id="view-studentEnrollmentRemarks" class="detail-text student-view-control"></span>
+                        </div>
+                    </div>
+
+                    <p class="text-muted emp-system-managed-note">
+                        Academic Year, Class, Section and enrollment status are managed through the Enrollment action.
+                    </p>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- RESIDENTIAL ADDRESS                               -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">Residential Address</legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-studentHouseNo">House Number</label>
+                            <span id="view-studentHouseNo" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentHouseNo" class="detail-input hidden w-100 student-edit-control" maxlength="50">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentStreet">Street</label>
+                            <span id="view-studentStreet" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentStreet" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentVillage">Village</label>
+                            <span id="view-studentVillage" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentVillage" class="detail-input hidden w-100 student-edit-control" maxlength="100">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentTownCity">Town / City</label>
+                            <span id="view-studentTownCity" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentTownCity" class="detail-input hidden w-100 student-edit-control" maxlength="100">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-studentDistrict">District</label>
+                            <span id="view-studentDistrict" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentDistrict" class="detail-input hidden w-100 student-edit-control" maxlength="100">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentState">State / Region</label>
+                            <span id="view-studentState" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentState" class="detail-input hidden w-100 student-edit-control" maxlength="100">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentCountry">Country</label>
+                            <span id="view-studentCountry" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentCountry" class="detail-input hidden w-100 student-edit-control" maxlength="100">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentPostalCode">Postal Code</label>
+                            <span id="view-studentPostalCode" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentPostalCode" class="detail-input hidden w-100 student-edit-control" maxlength="20">
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- FATHER DETAILS                                    -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">Father Details</legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-studentFatherName">Father Name</label>
+                            <span id="view-studentFatherName" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentFatherName" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentFatherUin">Father UIN</label>
+                            <span id="view-studentFatherUin" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentFatherUin" class="detail-input hidden w-100 student-edit-control" maxlength="20">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentFatherPhone">Father Phone</label>
+                            <span id="view-studentFatherPhone" class="detail-text student-view-control"></span>
+                            <input type="tel" id="edit-studentFatherPhone" class="detail-input hidden w-100 student-edit-control" maxlength="30">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-studentFatherAltPhone">Alternate Phone</label>
+                            <span id="view-studentFatherAltPhone" class="detail-text student-view-control"></span>
+                            <input type="tel" id="edit-studentFatherAltPhone" class="detail-input hidden w-100 student-edit-control" maxlength="30">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentFatherEmail">Father Email</label>
+                            <span id="view-studentFatherEmail" class="detail-text student-view-control"></span>
+                            <input type="email" id="edit-studentFatherEmail" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentFatherOccupation">Occupation</label>
+                            <span id="view-studentFatherOccupation" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentFatherOccupation" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-studentFatherEmployer">Employer</label>
+                            <span id="view-studentFatherEmployer" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentFatherEmployer" class="detail-input hidden w-100 student-edit-control" maxlength="200">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentFatherDesignation">Designation</label>
+                            <span id="view-studentFatherDesignation" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentFatherDesignation" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentFatherIncome">Annual Income</label>
+                            <span id="view-studentFatherIncome" class="detail-text student-view-control"></span>
+                            <input type="number" id="edit-studentFatherIncome" class="detail-input hidden w-100 student-edit-control" min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- MOTHER DETAILS                                    -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">Mother Details</legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-studentMotherName">Mother Name</label>
+                            <span id="view-studentMotherName" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentMotherName" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentMotherUin">Mother UIN</label>
+                            <span id="view-studentMotherUin" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentMotherUin" class="detail-input hidden w-100 student-edit-control" maxlength="20">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentMotherPhone">Mother Phone</label>
+                            <span id="view-studentMotherPhone" class="detail-text student-view-control"></span>
+                            <input type="tel" id="edit-studentMotherPhone" class="detail-input hidden w-100 student-edit-control" maxlength="30">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-studentMotherAltPhone">Alternate Phone</label>
+                            <span id="view-studentMotherAltPhone" class="detail-text student-view-control"></span>
+                            <input type="tel" id="edit-studentMotherAltPhone" class="detail-input hidden w-100 student-edit-control" maxlength="30">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentMotherEmail">Mother Email</label>
+                            <span id="view-studentMotherEmail" class="detail-text student-view-control"></span>
+                            <input type="email" id="edit-studentMotherEmail" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentMotherOccupation">Occupation</label>
+                            <span id="view-studentMotherOccupation" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentMotherOccupation" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-studentMotherEmployer">Employer</label>
+                            <span id="view-studentMotherEmployer" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentMotherEmployer" class="detail-input hidden w-100 student-edit-control" maxlength="200">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentMotherDesignation">Designation</label>
+                            <span id="view-studentMotherDesignation" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentMotherDesignation" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentMotherIncome">Annual Income</label>
+                            <span id="view-studentMotherIncome" class="detail-text student-view-control"></span>
+                            <input type="number" id="edit-studentMotherIncome" class="detail-input hidden w-100 student-edit-control" min="0" step="0.01">
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- GUARDIAN DETAILS                                  -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">Guardian Details (Optional)</legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-studentGuardianName">Guardian Name</label>
+                            <span id="view-studentGuardianName" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentGuardianName" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentGuardianUin">Guardian UIN</label>
+                            <span id="view-studentGuardianUin" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentGuardianUin" class="detail-input hidden w-100 student-edit-control" maxlength="20">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentGuardianRelationship">Relationship</label>
+                            <span id="view-studentGuardianRelationship" class="detail-text student-view-control"></span>
+                            <select id="edit-studentGuardianRelationship" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Select Relationship --</option>
+                                <option value="GRANDFATHER">Grandfather</option>
+                                <option value="GRANDMOTHER">Grandmother</option>
+                                <option value="UNCLE">Uncle</option>
+                                <option value="AUNT">Aunt</option>
+                                <option value="BROTHER">Brother</option>
+                                <option value="SISTER">Sister</option>
+                                <option value="STEPFATHER">Stepfather</option>
+                                <option value="STEPMOTHER">Stepmother</option>
+                                <option value="FOSTER_PARENT">Foster Parent</option>
+                                <option value="FAMILY_RELATIVE">Other Family Relative</option>
+                                <option value="FAMILY_FRIEND">Family Friend</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentGuardianPhone">Guardian Phone</label>
+                            <span id="view-studentGuardianPhone" class="detail-text student-view-control"></span>
+                            <input type="tel" id="edit-studentGuardianPhone" class="detail-input hidden w-100 student-edit-control" maxlength="30">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-studentGuardianAltPhone">Alternate Phone</label>
+                            <span id="view-studentGuardianAltPhone" class="detail-text student-view-control"></span>
+                            <input type="tel" id="edit-studentGuardianAltPhone" class="detail-input hidden w-100 student-edit-control" maxlength="30">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentGuardianEmail">Guardian Email</label>
+                            <span id="view-studentGuardianEmail" class="detail-text student-view-control"></span>
+                            <input type="email" id="edit-studentGuardianEmail" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentGuardianOccupation">Occupation</label>
+                            <span id="view-studentGuardianOccupation" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentGuardianOccupation" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+                    </div>
+
+                    <small class="text-muted">
+                        Guardian information is optional. When Guardian is used as the preferred contact, enter the Guardian name, phone and relationship.
+                    </small>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- FAMILY COMMUNICATION                              -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">Family Communication</legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group emp-required-field">
+                            <label for="edit-studentPreferredContact">Preferred Contact</label>
+                            <span id="view-studentPreferredContact" class="detail-text student-view-control"></span>
+                            <select
+                                    id="edit-studentPreferredContact"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    required
+                                    aria-required="true"
+                                    data-validation-label="Preferred Contact"
+                            >
+                                <option value="">-- Select --</option>
+                                <option value="FATHER">Father</option>
+                                <option value="MOTHER">Mother</option>
+                                <option value="GUARDIAN">Guardian</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group emp-required-field">
+                            <label for="edit-studentFeeResponsibility">Fee Responsibility</label>
+                            <span id="view-studentFeeResponsibility" class="detail-text student-view-control"></span>
+                            <select
+                                    id="edit-studentFeeResponsibility"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    required
+                                    aria-required="true"
+                                    data-validation-label="Fee Responsibility"
+                            >
+                                <option value="">-- Select --</option>
+                                <option value="FATHER">Father</option>
+                                <option value="MOTHER">Mother</option>
+                                <option value="GUARDIAN">Guardian</option>
+                                <option value="SPONSOR">Sponsor</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group emp-required-field">
+                            <label for="edit-studentParentsLivingTogether">Parents Living Together</label>
+                            <span id="view-studentParentsLivingTogether" class="detail-text student-view-control"></span>
+                            <select
+                                    id="edit-studentParentsLivingTogether"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    required
+                                    aria-required="true"
+                                    data-validation-label="Parents Living Together"
+                            >
+                                <option value="">-- Select --</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-studentEmergencyName">Emergency Contact Name</label>
+                            <span id="view-studentEmergencyName" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentEmergencyName" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentEmergencyPhone">Emergency Contact Phone</label>
+                            <span id="view-studentEmergencyPhone" class="detail-text student-view-control"></span>
+                            <input type="tel" id="edit-studentEmergencyPhone" class="detail-input hidden w-100 student-edit-control" maxlength="30">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentEmergencyRelationship">Relationship</label>
+                            <span id="view-studentEmergencyRelationship" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentEmergencyRelationship" class="detail-input hidden w-100 student-edit-control" maxlength="100">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-studentParentRemarks">Parent / Guardian Remarks</label>
+                        <span id="view-studentParentRemarks" class="detail-text student-view-control"></span>
+                        <textarea id="edit-studentParentRemarks" class="detail-input hidden w-100 student-edit-control" rows="3" maxlength="5000"></textarea>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- HOSTEL ACCOMMODATION                              -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">Hostel Accommodation</legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-studentRequiresHostel">Requires Hostel</label>
+                            <span id="view-studentRequiresHostel" class="detail-text student-view-control"></span>
+                            <select id="edit-studentRequiresHostel" class="detail-input hidden w-100 student-edit-control">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentHostelId">Hostel</label>
+                            <span id="view-studentHostel" class="detail-text student-view-control"></span>
+                            <select id="edit-studentHostelId" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Select Hostel --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentHostelRoomId">Room</label>
+                            <span id="view-studentHostelRoom" class="detail-text student-view-control"></span>
+                            <select id="edit-studentHostelRoomId" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Select Room --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentHostelBedId">Bed</label>
+                            <span id="view-studentHostelBed" class="detail-text student-view-control"></span>
+                            <select id="edit-studentHostelBedId" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Select Bed --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-studentHostelStartDate">Allocation Start Date</label>
+                            <span id="view-studentHostelStartDate" class="detail-text student-view-control"></span>
+                            <input type="date" id="edit-studentHostelStartDate" class="detail-input hidden w-100 student-edit-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentHostelEndDate">Allocation End Date</label>
+                            <span id="view-studentHostelEndDate" class="detail-text student-view-control"></span>
+                            <input type="date" id="edit-studentHostelEndDate" class="detail-input hidden w-100 student-edit-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentHostelGuardianName">Local Guardian</label>
+                            <span id="view-studentHostelGuardianName" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentHostelGuardianName" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentHostelGuardianMobile">Guardian Mobile</label>
+                            <span id="view-studentHostelGuardianMobile" class="detail-text student-view-control"></span>
+                            <input type="tel" id="edit-studentHostelGuardianMobile" class="detail-input hidden w-100 student-edit-control" maxlength="20">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label for="edit-studentHostelGuardianRelation">Guardian Relationship</label>
+                            <span id="view-studentHostelGuardianRelation" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentHostelGuardianRelation" class="detail-input hidden w-100 student-edit-control" maxlength="50">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentHostelRemarks">Hostel Remarks</label>
+                            <span id="view-studentHostelRemarks" class="detail-text student-view-control"></span>
+                            <textarea id="edit-studentHostelRemarks" class="detail-input hidden w-100 student-edit-control" rows="3" maxlength="500"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- SCHOOL TRANSPORT                                  -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">School Transport</legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-studentRequiresTransport">Requires Transport</label>
+                            <span id="view-studentRequiresTransport" class="detail-text student-view-control"></span>
+                            <select id="edit-studentRequiresTransport" class="detail-input hidden w-100 student-edit-control">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentTransportRouteId">Transport Route</label>
+                            <span id="view-studentTransportRoute" class="detail-text student-view-control"></span>
+                            <select id="edit-studentTransportRouteId" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Select Route --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentTransportPickupPointId">Pickup Point</label>
+                            <span id="view-studentTransportPickupPoint" class="detail-text student-view-control"></span>
+                            <select id="edit-studentTransportPickupPointId" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Select Pickup Point --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentTransportVehicleId">Vehicle</label>
+                            <span id="view-studentTransportVehicle" class="detail-text student-view-control"></span>
+                            <select id="edit-studentTransportVehicleId" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Select Vehicle --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-studentTransportStartDate">Transport Start Date</label>
+                            <span id="view-studentTransportStartDate" class="detail-text student-view-control"></span>
+                            <input type="date" id="edit-studentTransportStartDate" class="detail-input hidden w-100 student-edit-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentTransportEndDate">Transport End Date</label>
+                            <span id="view-studentTransportEndDate" class="detail-text student-view-control"></span>
+                            <input type="date" id="edit-studentTransportEndDate" class="detail-input hidden w-100 student-edit-control">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentTransportSeatNumber">Seat Number</label>
+                            <span id="view-studentTransportSeatNumber" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentTransportSeatNumber" class="detail-input hidden w-100 student-edit-control" maxlength="20">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentTransportEmergencyContact">Emergency Contact</label>
+                            <span id="view-studentTransportEmergencyContact" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentTransportEmergencyContact" class="detail-input hidden w-100 student-edit-control" maxlength="100">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label for="edit-studentTransportEmergencyMobile">Emergency Mobile</label>
+                            <span id="view-studentTransportEmergencyMobile" class="detail-text student-view-control"></span>
+                            <input type="tel" id="edit-studentTransportEmergencyMobile" class="detail-input hidden w-100 student-edit-control" maxlength="20">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentTransportRemarks">Transport Remarks</label>
+                            <span id="view-studentTransportRemarks" class="detail-text student-view-control"></span>
+                            <textarea id="edit-studentTransportRemarks" class="detail-input hidden w-100 student-edit-control" rows="3" maxlength="500"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- MEDICAL INFORMATION                               -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">Medical Information</legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-studentBloodGroup">Blood Group</label>
+                            <span id="view-studentBloodGroup" class="detail-text student-view-control"></span>
+                            <select id="edit-studentBloodGroup" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Not Provided --</option>
+                                <option value="A_PLUS">A+</option>
+                                <option value="A_MINUS">A-</option>
+                                <option value="B_PLUS">B+</option>
+                                <option value="B_MINUS">B-</option>
+                                <option value="AB_PLUS">AB+</option>
+                                <option value="AB_MINUS">AB-</option>
+                                <option value="O_PLUS">O+</option>
+                                <option value="O_MINUS">O-</option>
+                                <option value="UNKNOWN">Unknown</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentHeightCm">Height (cm)</label>
+                            <span id="view-studentHeightCm" class="detail-text student-view-control"></span>
+                            <input type="number" id="edit-studentHeightCm" class="detail-input hidden w-100 student-edit-control" min="0.01" step="0.01">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentWeightKg">Weight (kg)</label>
+                            <span id="view-studentWeightKg" class="detail-text student-view-control"></span>
+                            <input type="number" id="edit-studentWeightKg" class="detail-input hidden w-100 student-edit-control" min="0.01" step="0.01">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentFitForSports">Fit for Sports</label>
+                            <span id="view-studentFitForSports" class="detail-text student-view-control"></span>
+                            <select id="edit-studentFitForSports" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Not Provided --</option>
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label for="edit-studentAllergies">Allergies</label>
+                            <span id="view-studentAllergies" class="detail-text student-view-control"></span>
+                            <textarea id="edit-studentAllergies" class="detail-input hidden w-100 student-edit-control" rows="3" maxlength="500"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentChronicConditions">Chronic Conditions</label>
+                            <span id="view-studentChronicConditions" class="detail-text student-view-control"></span>
+                            <textarea id="edit-studentChronicConditions" class="detail-input hidden w-100 student-edit-control" rows="3" maxlength="500"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label for="edit-studentOngoingMedication">Ongoing Medication</label>
+                            <span id="view-studentOngoingMedication" class="detail-text student-view-control"></span>
+                            <textarea id="edit-studentOngoingMedication" class="detail-input hidden w-100 student-edit-control" rows="3" maxlength="500"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentSpecialNeeds">Special Needs</label>
+                            <span id="view-studentSpecialNeeds" class="detail-text student-view-control"></span>
+                            <textarea id="edit-studentSpecialNeeds" class="detail-input hidden w-100 student-edit-control" rows="3" maxlength="500"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-studentDoctorName">Emergency Doctor Name</label>
+                            <span id="view-studentDoctorName" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentDoctorName" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentDoctorMobile">Emergency Doctor Mobile</label>
+                            <span id="view-studentDoctorMobile" class="detail-text student-view-control"></span>
+                            <input type="tel" id="edit-studentDoctorMobile" class="detail-input hidden w-100 student-edit-control" maxlength="20">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentPreferredHospital">Preferred Hospital</label>
+                            <span id="view-studentPreferredHospital" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentPreferredHospital" class="detail-input hidden w-100 student-edit-control" maxlength="150">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="edit-studentMedicalRemarks">Medical Remarks</label>
+                        <span id="view-studentMedicalRemarks" class="detail-text student-view-control"></span>
+                        <textarea id="edit-studentMedicalRemarks" class="detail-input hidden w-100 student-edit-control" rows="3" maxlength="500"></textarea>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- PREVIOUS ACADEMIC HISTORY                        -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">Previous Academic History</legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-studentFormerSchoolName">Former School Name</label>
+                            <span id="view-studentFormerSchoolName" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentFormerSchoolName" class="detail-input hidden w-100 student-edit-control" maxlength="255">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentFormerSchoolCode">Former School Code</label>
+                            <span id="view-studentFormerSchoolCode" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentFormerSchoolCode" class="detail-input hidden w-100 student-edit-control" maxlength="50">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentFormerSchoolLin">Former School LIN</label>
+                            <span id="view-studentFormerSchoolLin" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentFormerSchoolLin" class="detail-input hidden w-100 student-edit-control" maxlength="50">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentSchoolType">School Type</label>
+                            <span id="view-studentSchoolType" class="detail-text student-view-control"></span>
+                            <select id="edit-studentSchoolType" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Not Provided --</option>
+                                <option value="GOVERNMENT">Government</option>
+                                <option value="PRIVATE">Private</option>
+                                <option value="INTERNATIONAL">International</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label for="edit-studentFormerSchoolAddress">Former School Address</label>
+                            <span id="view-studentFormerSchoolAddress" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentFormerSchoolAddress" class="detail-input hidden w-100 student-edit-control" maxlength="255">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentTransferReason">Transfer Reason</label>
+                            <span id="view-studentTransferReason" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentTransferReason" class="detail-input hidden w-100 student-edit-control" maxlength="255">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-studentPreviousAcademicYear">Previous Academic Year</label>
+                            <span id="view-studentPreviousAcademicYear" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentPreviousAcademicYear" class="detail-input hidden w-100 student-edit-control" maxlength="20">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentPreviousLevel">Previous Education Level</label>
+                            <span id="view-studentPreviousLevel" class="detail-text student-view-control"></span>
+                            <select id="edit-studentPreviousLevel" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Select Previous Level --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentPreviousClass">Previous Class</label>
+                            <span id="view-studentPreviousClass" class="detail-text student-view-control"></span>
+                            <select id="edit-studentPreviousClass" class="detail-input hidden w-100 student-edit-control">
+                                <option value="">-- Select Previous Class --</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentPreviousSection">Previous Section</label>
+                            <span id="view-studentPreviousSection" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentPreviousSection" class="detail-input hidden w-100 student-edit-control" maxlength="50">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label for="edit-studentPreviousStream">Previous Stream</label>
+                            <span id="view-studentPreviousStream" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentPreviousStream" class="detail-input hidden w-100 student-edit-control" maxlength="50">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentPleIndexNumber">PLE Index Number</label>
+                            <span id="view-studentPleIndexNumber" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentPleIndexNumber" class="detail-input hidden w-100 student-edit-control" maxlength="50">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentPleAggregate">PLE Aggregate</label>
+                            <span id="view-studentPleAggregate" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentPleAggregate" class="detail-input hidden w-100 student-edit-control" maxlength="20">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentUceIndexNumber">UCE Index Number</label>
+                            <span id="view-studentUceIndexNumber" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentUceIndexNumber" class="detail-input hidden w-100 student-edit-control" maxlength="50">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label for="edit-studentUceResult">UCE Result</label>
+                            <span id="view-studentUceResult" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentUceResult" class="detail-input hidden w-100 student-edit-control" maxlength="50">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentUaceIndexNumber">UACE Index Number</label>
+                            <span id="view-studentUaceIndexNumber" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentUaceIndexNumber" class="detail-input hidden w-100 student-edit-control" maxlength="50">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentUaceResult">UACE Result</label>
+                            <span id="view-studentUaceResult" class="detail-text student-view-control"></span>
+                            <input type="text" id="edit-studentUaceResult" class="detail-input hidden w-100 student-edit-control" maxlength="50">
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label for="edit-studentSubjectMarks">Subject Results</label>
+                            <span id="view-studentSubjectMarks" class="detail-text student-view-control"></span>
+                            <textarea id="edit-studentSubjectMarks" class="detail-input hidden w-100 student-edit-control" rows="5" maxlength="50000"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentAcademicRemarks">Academic-History Remarks</label>
+                            <span id="view-studentAcademicRemarks" class="detail-text student-view-control"></span>
+                            <textarea id="edit-studentAcademicRemarks" class="detail-input hidden w-100 student-edit-control" rows="5" maxlength="5000"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+            <!-- ================================================= -->
+            <!-- STUDENT DOCUMENTS                                 -->
+            <!-- ================================================= -->
+            <fieldset id="student-documents-section" class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Student Documents
+                    <span id="student-document-count"></span>
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="ba-flex-panel student-view-control">
+                        <button type="button" id="btn-upload-student-document" class="btn-primary btn-sm">
+                            <i class="bi bi-cloud-arrow-up"></i>
+                            Upload Document
+                        </button>
+                    </div>
+
+                    <div id="student-documents-view-container" class="emp-document-grid student-view-control"></div>
+                </div>
+            </fieldset>
+
+            <!-- Sticky Edit Actions -->
+            <div
+                    id="student-edit-sticky-actions"
+                    class="emp-edit-sticky-actions student-edit-control hidden"
+                    role="group"
+                    aria-label="Student edit actions"
+            >
+                <p class="emp-edit-sticky-message">
+                    Review the highlighted fields before saving changes.
+                </p>
+
+                <div class="emp-edit-sticky-buttons">
+                    <button type="button" id="student-bottom-cancelEditBtn" class="btn-secondary">
+                        <i class="bi bi-x-lg"></i>
+                        Cancel
+                    </button>
+
+                    <button type="button" id="student-bottom-saveBtn" class="btn-success">
+                        <i class="bi bi-save"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- STUDENT SAVE CONFIRMATION                             -->
+    <!-- ===================================================== -->
+    <div id="student-confirm-overlay" class="employee-confirm-overlay" aria-hidden="true">
+        <section
+                id="student-confirm-dialog"
+                class="employee-confirm-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="student-confirm-title"
+                aria-describedby="student-confirm-message"
+                tabindex="-1"
+        >
+            <header class="employee-confirm-header">
+                <span class="employee-confirm-icon" aria-hidden="true">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </span>
+
+                <h3 id="student-confirm-title" class="employee-confirm-title">
+                    Confirm Action
+                </h3>
+            </header>
+
+            <div class="employee-confirm-body">
+                <p id="student-confirm-message" class="employee-confirm-message">
+                    Please confirm this action.
+                </p>
+            </div>
+
+            <footer class="employee-confirm-actions">
+                <button type="button" id="student-confirm-cancel" class="btn-secondary">
+                    Review Again
+                </button>
+
+                <button type="button" id="student-confirm-submit" class="btn-primary">
+                    Save Changes
+                </button>
+            </footer>
+        </section>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- STUDENT OPERATION OVERLAY                             -->
+    <!-- ===================================================== -->
+    <div
+            id="student-operation-overlay"
+            class="employee-operation-overlay"
+            role="status"
+            aria-live="polite"
+            aria-hidden="true"
+    >
+        <section class="employee-operation-card">
+            <span class="employee-operation-spinner" aria-hidden="true"></span>
+
+            <div class="employee-operation-content">
+                <strong id="student-operation-title" class="employee-operation-title">
+                    Saving Changes
+                </strong>
+
+                <span id="student-operation-message" class="employee-operation-message">
+                    Please wait while the Student record is updated.
+                </span>
+            </div>
+        </section>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- UPDATE ENROLLMENT MODAL                              -->
+    <!-- ===================================================== -->
+    <div
+            id="student-enrollment-modal"
+            class="ba-modal-backdrop hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-hidden="true"
+            aria-labelledby="student-enrollment-title"
+    >
+        <div class="ba-modal-box student-modal-box-lg">
+            <form id="student-enrollment-form" novalidate>
+                <h3 id="student-enrollment-title">Update Enrollment</h3>
+                <p id="student-enrollment-name" class="text-muted mb-3"></p>
+
+                <div class="emp-detail-grid emp-detail-grid-3">
+                    <div class="form-group emp-required-field">
+                        <label for="student-enrollment-academicYear">Academic Year</label>
+                        <select id="student-enrollment-academicYear" class="detail-input w-100" required>
+                            <option value="">-- Select Academic Year --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group emp-required-field">
+                        <label for="student-enrollment-class">Class</label>
+                        <select id="student-enrollment-class" class="detail-input w-100" required>
+                            <option value="">-- Select Class --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="student-enrollment-section">Section</label>
+                        <select id="student-enrollment-section" class="detail-input w-100">
+                            <option value="">-- Select Section --</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="emp-detail-grid emp-detail-grid-3">
+                    <div class="form-group">
+                        <label for="student-enrollment-rollNo">Roll Number</label>
+                        <input type="text" id="student-enrollment-rollNo" class="detail-input w-100" maxlength="20">
+                    </div>
+
+                    <div class="form-group emp-required-field">
+                        <label for="student-enrollment-status">Enrollment Status</label>
+                        <select id="student-enrollment-status" class="detail-input w-100" required>
+                            <option value="ACTIVE">Active</option>
+                            <option value="PROMOTED">Promoted</option>
+                            <option value="TRANSFERRED">Transferred</option>
+                            <option value="WITHDRAWN">Withdrawn</option>
+                            <option value="GRADUATED">Graduated</option>
+                            <option value="SUSPENDED">Suspended</option>
+                            <option value="EXPELLED">Expelled</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group emp-required-field">
+                        <label for="student-enrollment-effectiveDate">Effective Date</label>
+                        <input type="date" id="student-enrollment-effectiveDate" class="detail-input w-100" required>
+                    </div>
+                </div>
+
+                <div class="form-group emp-required-field">
+                    <label for="student-enrollment-reason">Change Reason</label>
+                    <textarea id="student-enrollment-reason" class="detail-input w-100" rows="3" maxlength="500" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="student-enrollment-remarks">Remarks</label>
+                    <textarea id="student-enrollment-remarks" class="detail-input w-100" rows="3" maxlength="5000"></textarea>
+                </div>
+
+                <div class="ba-modal-actions">
+                    <button type="button" id="student-enrollment-cancel" class="btn-secondary">Cancel</button>
+                    <button type="submit" id="student-enrollment-submit" class="btn-primary">
+                        <i class="bi bi-save"></i>
+                        Update Enrollment
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- CHANGE STUDENT STATUS MODAL                          -->
+    <!-- ===================================================== -->
+    <div
+            id="student-status-modal"
+            class="ba-modal-backdrop hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-hidden="true"
+            aria-labelledby="student-status-title"
+    >
+        <div class="ba-modal-box">
+            <form id="student-status-form" novalidate>
+                <h3 id="student-status-title">Change Student Status</h3>
+                <p id="student-status-name" class="text-muted mb-3"></p>
+
+                <div class="form-group mb-3 emp-required-field">
+                    <label for="student-status-value">New Status</label>
+                    <select id="student-status-value" class="detail-input w-100" required>
+                        <option value="">-- Select Status --</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                        <option value="SUSPENDED">Suspended</option>
+                        <option value="TRANSFERRED">Transferred</option>
+                        <option value="WITHDRAWN">Withdrawn</option>
+                        <option value="EXPELLED">Expelled</option>
+                        <option value="DROPPED_OUT">Dropped Out</option>
+                        <option value="GRADUATED">Graduated</option>
+                        <option value="ALUMNI">Alumni</option>
+                        <option value="DECEASED">Deceased</option>
+                    </select>
+                </div>
+
+                <div class="form-group mb-3 emp-required-field">
+                    <label for="student-status-effectiveDate">Effective Date</label>
+                    <input type="date" id="student-status-effectiveDate" class="detail-input w-100" required>
+                </div>
+
+                <div class="form-group emp-required-field">
+                    <label for="student-status-reason">Reason</label>
+                    <textarea id="student-status-reason" class="detail-input w-100" rows="4" maxlength="500" required></textarea>
+                </div>
+
+                <div class="ba-modal-actions">
+                    <button type="button" id="student-status-cancel" class="btn-secondary">Cancel</button>
+                    <button type="submit" id="student-status-submit" class="btn-primary">
+                        <i class="bi bi-arrow-repeat"></i>
+                        Update Status
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- UPLOAD STUDENT DOCUMENT MODAL                        -->
+    <!-- ===================================================== -->
+    <div
+            id="student-document-modal"
+            class="ba-modal-backdrop hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-hidden="true"
+            aria-labelledby="student-document-title"
+    >
+        <div class="ba-modal-box">
+            <form id="student-document-form" novalidate>
+                <h3 id="student-document-title">Upload Student Document</h3>
+                <p id="student-document-name" class="text-muted mb-3"></p>
+
+                <div class="form-group mb-3 emp-required-field">
+                    <label for="student-document-type">Document Type</label>
+                    <select id="student-document-type" class="detail-input w-100" required>
+                        <option value="">-- Select Document Type --</option>
+                        <option value="BIRTH_CERTIFICATE">Birth Certificate</option>
+                        <option value="REPORT_CARD">Report Card</option>
+                        <option value="TRANSFER_LETTER">Transfer Letter</option>
+                        <option value="PASSPORT">Passport</option>
+                        <option value="NATIONAL_ID">National ID</option>
+                        <option value="IMMUNIZATION_CARD">Immunization Card</option>
+                        <option value="RECOMMENDATION_LETTER">Recommendation Letter</option>
+                        <option value="MEDICAL_CERTIFICATE">Medical Certificate</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group mb-3 emp-required-field">
+                    <label for="student-document-displayName">Document Name</label>
+                    <input type="text" id="student-document-displayName" class="detail-input w-100" maxlength="150" required>
+                </div>
+
+                <div class="form-group mb-3">
+                    <label for="student-document-number">Document Number</label>
+                    <input type="text" id="student-document-number" class="detail-input w-100" maxlength="100">
+                </div>
+
+                <div class="form-group mb-3 emp-required-field">
+                    <label for="student-document-file">File</label>
+                    <input
+                            type="file"
+                            id="student-document-file"
+                            class="detail-input w-100"
+                            accept="application/pdf,image/jpeg,image/png,image/webp"
+                            required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="student-document-remarks">Remarks</label>
+                    <textarea id="student-document-remarks" class="detail-input w-100" rows="3" maxlength="5000"></textarea>
+                </div>
+
+                <div class="ba-modal-actions">
+                    <button type="button" id="student-document-cancel" class="btn-secondary">Cancel</button>
+                    <button type="submit" id="student-document-submit" class="btn-primary">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                        Upload Document
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- STUDENT TABLE ROW TEMPLATE                           -->
+    <!-- ===================================================== -->
+    <template id="tpl-student-row">
+        <tr>
+            <td class="col-photo">
+                <div class="student-table-photo-box">
+                    <img class="student-table-photo hidden" alt="Student photo">
+                    <span class="student-table-photo-placeholder">
+                        <i class="bi bi-person"></i>
+                    </span>
+                </div>
+            </td>
+
+            <td class="col-code font-monospace text-muted"></td>
+
+            <td class="col-name text-primary cursor-pointer">
+                <strong></strong>
+                <small class="student-gender-label text-muted"></small>
+            </td>
+
+            <td class="col-admission">
+                <span class="admission-val"></span>
+                <small class="lin-val text-muted"></small>
+            </td>
+
+            <td class="col-placement">
+                <span class="class-val"></span>
+                <small class="section-val text-muted"></small>
+            </td>
+
+            <td class="col-contact">
+                <span class="contact-name-val"></span>
+                <small class="contact-phone-val text-muted"></small>
+            </td>
+
+            <td>
+                <span class="status-badge badge"></span>
+            </td>
+
+            <td class="col-action align-center">
+                <button type="button" class="btn-primary btn-sm view-more-btn" title="View Student details">
+                    <i class="bi bi-eye"></i>
+                </button>
+
+                <button type="button" class="btn-secondary btn-sm edit-row-btn" title="Edit Student">
+                    <i class="bi bi-pencil"></i>
+                </button>
+
+                <button type="button" class="btn-danger btn-sm status-row-btn" title="Change Student status">
+                    <i class="bi bi-arrow-repeat"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+</div>

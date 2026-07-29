@@ -466,7 +466,14 @@ function setupRouter(urlRole) {
         });
     });
 
-    const initialRoute = readCurrentRoute();
+    /*
+     * Route parameters are intentionally kept in history.state so record IDs
+     * do not appear in the address bar. Reading history.state here preserves
+     * the currently opened detail/edit screen after a normal browser refresh.
+     */
+    const initialRoute = readCurrentRoute(
+        window.history.state
+    );
     const matchedLink = findLinkForView(initialRoute.view);
     initialRoute.title = resolveRouteTitle(
         initialRoute,
@@ -505,8 +512,8 @@ function showPremiumModal({ title, type = 'info', contentNode = null, contentTex
         document.body.appendChild(modalWrapper);
     }
 
-    // Pure DOM clear
-    while (modalWrapper.firstChild) modalWrapper.removeChild(modalWrapper.firstChild);
+    // Remove every previous node, including whitespace text nodes.
+    modalWrapper.replaceChildren();
     document.body.classList.add('erp-modal-open');
 
     const template = document.getElementById('premium-modal-template');
@@ -559,12 +566,29 @@ function showPremiumModal({ title, type = 'info', contentNode = null, contentTex
             isClosing = true;
             overlay.classList.add('pm-fade-out');
             setTimeout(() => {
-                if (modalWrapper.contains(overlay)) {
+                if (overlay.isConnected) {
                     overlay.remove();
                 }
 
-                if (!modalWrapper.firstChild) {
-                    document.body.classList.remove('erp-modal-open');
+                /*
+                 * template.content may contain whitespace text nodes. Checking
+                 * firstChild therefore left erp-modal-open on <body> even after
+                 * the visible modal was removed, which locked page scrolling.
+                 * Release the lock when no real modal overlay remains.
+                 */
+                const remainingOverlay =
+                    modalWrapper.querySelector(
+                        '.premium-modal-overlay'
+                    );
+
+                if (!remainingOverlay) {
+                    modalWrapper.replaceChildren();
+                    document.body.classList.remove(
+                        'erp-modal-open'
+                    );
+                    document.body.style.removeProperty(
+                        'overflow'
+                    );
                 }
 
                 resolve();
@@ -617,6 +641,28 @@ function showPremiumModal({ title, type = 'info', contentNode = null, contentTex
     modalWrapper.appendChild(clone);
     window.requestAnimationFrame(() => confirmBtn.focus());
 }
+
+/*
+ * Browser back/forward cache can restore a page after the modal DOM has been
+ * discarded while the body scroll-lock class remains. Clear only stale locks.
+ */
+window.addEventListener('pageshow', () => {
+    const modalWrapper =
+        document.getElementById('premium-modal-wrapper');
+    const activeOverlay =
+        modalWrapper?.querySelector(
+            '.premium-modal-overlay'
+        );
+
+    if (!activeOverlay) {
+        document.body.classList.remove(
+            'erp-modal-open'
+        );
+        document.body.style.removeProperty(
+            'overflow'
+        );
+    }
+});
 
 // 2. Overwrite the generic alerts so ANY system error or success automatically uses the premium modal!
 function showErrorMessage(m) {

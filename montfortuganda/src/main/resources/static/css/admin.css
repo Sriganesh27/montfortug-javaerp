@@ -10,7 +10,7 @@
 
 /* ----------------------------------------- */
 
-#admin-branch-dashboard-view, #ba-applications-view, #ba-departments-view, #ba-designations-view, #ba-add-dept-view, #ba-add-desig-view, #ba-employees-view, #ba-add-employee-view {
+#admin-branch-dashboard-view, #ba-applications-view, #ba-departments-view, #ba-designations-view, #ba-add-dept-view, #ba-add-desig-view, #ba-employees-view, :is(#ba-add-employee-view, #ba-add-student-view) {
     max-width: 1600px;
     margin: 0 auto;
     padding: 0.75rem;
@@ -215,44 +215,44 @@
 
 /* --- ADD DEPARTMENT & DESIGNATION FORM STYLES --- */
 
-#ba-add-dept-view .form-card, #ba-add-employee-view .form-card, #ba-add-desig-view .form-card {
+#ba-add-dept-view .form-card, :is(#ba-add-employee-view, #ba-add-student-view) .form-card, #ba-add-desig-view .form-card {
     max-width: 600px;
     margin: 0 auto;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-#ba-add-dept-view .form-card .card-body, #ba-add-employee-view .form-card .card-body, #ba-add-desig-view .form-card .card-body {
+#ba-add-dept-view .form-card .card-body, :is(#ba-add-employee-view, #ba-add-student-view) .form-card .card-body, #ba-add-desig-view .form-card .card-body {
     padding: 1rem 1.25rem;
 }
 
 /* Shared 2-Column Detail Grid for both List Views and Add Forms */
 
-#ba-departments-view .ba-detail-grid, #ba-designations-view .ba-detail-grid, #ba-add-dept-view .ba-detail-grid, #ba-add-employee-view .ba-detail-grid, #ba-add-desig-view .ba-detail-grid {
+#ba-departments-view .ba-detail-grid, #ba-designations-view .ba-detail-grid, #ba-add-dept-view .ba-detail-grid, :is(#ba-add-employee-view, #ba-add-student-view) .ba-detail-grid, #ba-add-desig-view .ba-detail-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 0.75rem 1rem;
     margin-bottom: 1rem;
 }
 
-#ba-departments-view .ba-detail-full-width, #ba-add-employee-view .ba-detail-full-width, #ba-designations-view .ba-detail-full-width {
+#ba-departments-view .ba-detail-full-width, :is(#ba-add-employee-view, #ba-add-student-view) .ba-detail-full-width, #ba-designations-view .ba-detail-full-width {
     grid-column: span 2;
 }
 
 /* Remove compounding margins inside the grid */
 
-#ba-add-dept-view .ba-detail-grid .form-group, #ba-add-employee-view .ba-detail-grid .form-group, #ba-add-desig-view .ba-detail-grid .form-group {
+#ba-add-dept-view .ba-detail-grid .form-group, :is(#ba-add-employee-view, #ba-add-student-view) .ba-detail-grid .form-group, #ba-add-desig-view .ba-detail-grid .form-group {
     margin-bottom: 0;
 }
 
 /* Standard tight form group spacing */
 
-#ba-add-dept-view .form-group, #ba-add-employee-view .form-group, #ba-add-desig-view .form-group {
+#ba-add-dept-view .form-group, :is(#ba-add-employee-view, #ba-add-student-view) .form-group, #ba-add-desig-view .form-group {
     margin-bottom: 0.75rem;
 }
 
 /* Crisp, professional labels */
 
-#ba-add-dept-view .form-group label, #ba-add-employee-view .form-group label, #ba-add-desig-view .form-group label {
+#ba-add-dept-view .form-group label, :is(#ba-add-employee-view, #ba-add-student-view) .form-group label, #ba-add-desig-view .form-group label {
     display: block;
     margin-bottom: 0.25rem;
     font-size: 0.8rem;
@@ -262,7 +262,7 @@
 
 /* Sleek, dense enterprise inputs */
 
-#ba-add-dept-view .detail-input, #ba-add-employee-view .detail-input, #ba-add-desig-view .detail-input {
+#ba-add-dept-view .detail-input, :is(#ba-add-employee-view, #ba-add-student-view) .detail-input, #ba-add-desig-view .detail-input {
     background-color: #f8fafc;
     border: 1px solid #cbd5e1;
     color: #0f172a;
@@ -273,28 +273,28 @@
     transition: all 0.2s ease;
 }
 
-#ba-add-dept-view .detail-input::placeholder, #ba-add-employee-view .detail-input::placeholder, #ba-add-desig-view .detail-input::placeholder {
+#ba-add-dept-view .detail-input::placeholder, :is(#ba-add-employee-view, #ba-add-student-view) .detail-input::placeholder, #ba-add-desig-view .detail-input::placeholder {
     color: #94a3b8;
 }
 
-#ba-add-dept-view .detail-input:hover, #ba-add-employee-view .detail-input:hover, #ba-add-desig-view .detail-input:hover {
+#ba-add-dept-view .detail-input:hover, :is(#ba-add-employee-view, #ba-add-student-view) .detail-input:hover, #ba-add-desig-view .detail-input:hover {
     background-color: #f1f5f9;
     border-color: #94a3b8;
 }
 
-#ba-add-dept-view .detail-input:focus, #ba-add-employee-view .detail-input:focus, #ba-add-desig-view .detail-input:focus {
+#ba-add-dept-view .detail-input:focus, :is(#ba-add-employee-view, #ba-add-student-view) .detail-input:focus, #ba-add-desig-view .detail-input:focus {
     background-color: #ffffff;
     border-color: #d4af37;
     box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
     outline: none;
 }
 
-#ba-add-dept-view textarea.detail-input, #ba-add-employee-view textarea.detail-input, #ba-add-desig-view textarea.detail-input {
+#ba-add-dept-view textarea.detail-input, :is(#ba-add-employee-view, #ba-add-student-view) textarea.detail-input, #ba-add-desig-view textarea.detail-input {
     min-height: 60px;
     resize: vertical;
 }
 
-#ba-add-dept-view .form-actions, #ba-add-employee-view .form-actions, #ba-add-desig-view .form-actions {
+#ba-add-dept-view .form-actions, :is(#ba-add-employee-view, #ba-add-student-view) .form-actions, #ba-add-desig-view .form-actions {
     margin-top: 0.5rem;
     padding-top: 1rem;
     border-top: 1px solid #e2e8f0;
@@ -306,35 +306,35 @@
 
 /* ========================================================= */
 
-#ba-add-employee-view .emp-grid {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-grid {
     display: grid;
     gap: 0.75rem 1rem;
 }
 
-#ba-add-employee-view .emp-grid-2 {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-grid-2 {
     grid-template-columns: repeat(2, 1fr);
 }
 
-#ba-add-employee-view .emp-grid-3 {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-grid-3 {
     grid-template-columns: repeat(3, 1fr);
 }
 
-#ba-add-employee-view .emp-grid-4 {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-grid-4 {
     grid-template-columns: repeat(4, 1fr);
 }
 
-#ba-add-employee-view .span-2-cols {
+:is(#ba-add-employee-view, #ba-add-student-view) .span-2-cols {
     grid-column: span 2;
 }
 
-#ba-add-employee-view .emp-name-container {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-name-container {
     display: flex;
     gap: 0.5rem;
 }
 
 /* --- Tight Fieldset & Legend Styling --- */
 
-#ba-add-employee-view .emp-fieldset {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-fieldset {
     border: 1px solid #e2e8f0;
     border-radius: 4px;
     padding: 0.75rem 1rem 0.25rem 1rem;
@@ -342,7 +342,7 @@
     background-color: transparent;
 }
 
-#ba-add-employee-view .emp-legend {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-legend {
     width: auto;
     padding: 0 0.5rem;
     margin-bottom: 0.5rem;
@@ -356,7 +356,7 @@
 
 /* --- Dense Dynamic Sections Container --- */
 
-#ba-add-employee-view .emp-child-row {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-child-row {
     background: #f8fafc;
     border: 1px solid #e2e8f0;
     padding: 0.5rem;
@@ -367,27 +367,27 @@
     margin-bottom: 0.5rem;
 }
 
-#ba-add-employee-view .emp-child-row > * {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-child-row > * {
     min-width: 0;
 }
 
 /* Grid sizes for the dynamic rows - tightened */
 
-#ba-add-employee-view .emp-grid-3-cols, #ba-employees-view .emp-grid-3-cols {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-grid-3-cols, #ba-employees-view .emp-grid-3-cols {
     grid-template-columns: repeat(3, 1fr) 28px;
 }
 
-#ba-add-employee-view .emp-grid-4-cols, #ba-employees-view .emp-grid-4-cols {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-grid-4-cols, #ba-employees-view .emp-grid-4-cols {
     grid-template-columns: repeat(4, 1fr) 28px;
 }
 
-#ba-add-employee-view .emp-grid-5-cols, #ba-employees-view .emp-grid-5-cols {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-grid-5-cols, #ba-employees-view .emp-grid-5-cols {
     grid-template-columns: repeat(5, 1fr) 28px;
 }
 
 /* The Add "+ New" Buttons (Subtle, Slate color) */
 
-#ba-add-employee-view .add-row-btn {
+:is(#ba-add-employee-view, #ba-add-student-view) .add-row-btn {
     background-color: transparent;
     color: #475569;
     border: 1px dashed #cbd5e1;
@@ -402,7 +402,7 @@
     margin-top: 4px;
 }
 
-#ba-add-employee-view .add-row-btn:hover {
+:is(#ba-add-employee-view, #ba-add-student-view) .add-row-btn:hover {
     background-color: #f1f5f9;
     border-color: #94a3b8;
     color: #0f172a;
@@ -410,7 +410,7 @@
 
 /* Delete (X) Button inside dynamic rows */
 
-#ba-add-employee-view .emp-child-row .text-danger.btn-sm {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-child-row .text-danger.btn-sm {
     background-color: transparent;
     color: #ef4444;
     border: 1px solid #fca5a5;
@@ -426,14 +426,14 @@
     padding: 0;
 }
 
-#ba-add-employee-view .emp-child-row .text-danger.btn-sm:hover {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-child-row .text-danger.btn-sm:hover {
     background-color: #fef2f2;
     border-color: #ef4444;
 }
 
 /* --- Dense File Input Styling --- */
 
-#ba-add-employee-view input[type="file"].detail-input {
+:is(#ba-add-employee-view, #ba-add-student-view) input[type="file"].detail-input {
     padding: 0.2rem 0.5rem;
     background-color: #ffffff;
     border: 1px dashed #cbd5e1;
@@ -443,11 +443,11 @@
     cursor: pointer;
 }
 
-#ba-add-employee-view input[type="file"].detail-input:hover {
+:is(#ba-add-employee-view, #ba-add-student-view) input[type="file"].detail-input:hover {
     border-color: #94a3b8;
 }
 
-#ba-add-employee-view input[type="file"].detail-input::file-selector-button {
+:is(#ba-add-employee-view, #ba-add-student-view) input[type="file"].detail-input::file-selector-button {
     background-color: #f1f5f9;
     color: #475569;
     border: 1px solid #cbd5e1;
@@ -459,7 +459,7 @@
     transition: background-color 0.2s;
 }
 
-#ba-add-employee-view input[type="file"].detail-input::file-selector-button:hover {
+:is(#ba-add-employee-view, #ba-add-student-view) input[type="file"].detail-input::file-selector-button:hover {
     background-color: #e2e8f0;
 }
 
@@ -618,18 +618,18 @@
 
 /* ========================================================= */
 
-#ba-add-employee-view .view-header .action-btn-group {
+:is(#ba-add-employee-view, #ba-add-student-view) .view-header .action-btn-group {
     display: flex;
     gap: 10px;
 }
 
-#ba-add-employee-view .emp-required-field > label:not(.emp-photo-upload-btn)::after {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-required-field > label:not(.emp-photo-upload-btn)::after {
     content: " *";
     color: #ef4444;
     font-weight: 700;
 }
 
-#ba-add-employee-view .emp-validation-summary {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-validation-summary {
     margin-bottom: 1rem;
     padding: 0.75rem 1rem;
     border: 1px solid #fca5a5;
@@ -639,32 +639,32 @@
     color: #991b1b;
 }
 
-#ba-add-employee-view .emp-validation-summary.hidden {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-validation-summary.hidden {
     display: none !important;
 }
 
-#ba-add-employee-view .emp-validation-summary strong {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-validation-summary strong {
     display: block;
     margin-bottom: 0.25rem;
     font-size: 0.85rem;
 }
 
-#ba-add-employee-view .emp-validation-summary p {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-validation-summary p {
     margin: 0;
     font-size: 0.8rem;
     line-height: 1.5;
 }
 
-#ba-add-employee-view .form-group.emp-field-invalid > label {
+:is(#ba-add-employee-view, #ba-add-student-view) .form-group.emp-field-invalid > label {
     color: #dc2626 !important;
 }
 
-#ba-add-employee-view .emp-child-field.emp-field-invalid {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-child-field.emp-field-invalid {
     position: relative;
     padding-bottom: 1.45rem;
 }
 
-#ba-add-employee-view .form-group.emp-field-invalid::after, #ba-add-employee-view .emp-child-field.emp-field-invalid::after {
+:is(#ba-add-employee-view, #ba-add-student-view) .form-group.emp-field-invalid::after, :is(#ba-add-employee-view, #ba-add-student-view) .emp-child-field.emp-field-invalid::after {
     content: attr(data-error);
     display: block;
     margin-top: 0.25rem;
@@ -674,37 +674,37 @@
     line-height: 1.3;
 }
 
-#ba-add-employee-view .emp-child-field.emp-field-invalid::after {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-child-field.emp-field-invalid::after {
     position: absolute;
     left: 0;
     right: 0;
     bottom: 0;
 }
 
-#ba-add-employee-view .detail-input.emp-input-invalid, #ba-add-employee-view input.emp-input-invalid, #ba-add-employee-view select.emp-input-invalid, #ba-add-employee-view textarea.emp-input-invalid {
+:is(#ba-add-employee-view, #ba-add-student-view) .detail-input.emp-input-invalid, :is(#ba-add-employee-view, #ba-add-student-view) input.emp-input-invalid, :is(#ba-add-employee-view, #ba-add-student-view) select.emp-input-invalid, :is(#ba-add-employee-view, #ba-add-student-view) textarea.emp-input-invalid {
     border-color: #ef4444 !important;
     background-color: #fff7f7;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
 }
 
-#ba-add-employee-view .detail-input.emp-input-invalid:focus, #ba-add-employee-view input.emp-input-invalid:focus, #ba-add-employee-view select.emp-input-invalid:focus, #ba-add-employee-view textarea.emp-input-invalid:focus {
+:is(#ba-add-employee-view, #ba-add-student-view) .detail-input.emp-input-invalid:focus, :is(#ba-add-employee-view, #ba-add-student-view) input.emp-input-invalid:focus, :is(#ba-add-employee-view, #ba-add-student-view) select.emp-input-invalid:focus, :is(#ba-add-employee-view, #ba-add-student-view) textarea.emp-input-invalid:focus {
     border-color: #dc2626 !important;
     background-color: #ffffff;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
 }
 
-#ba-add-employee-view .emp-child-row:has(.emp-input-invalid) {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-child-row:has(.emp-input-invalid) {
     border-color: #fca5a5;
     background-color: #fffafa;
 }
 
 @media (max-width: 575.98px) {
-    #ba-add-employee-view .view-header .action-btn-group {
+    :is(#ba-add-employee-view, #ba-add-student-view) .view-header .action-btn-group {
         width: 100%;
         flex-direction: column;
     }
 
-    #ba-add-employee-view .view-header .action-btn-group .btn {
+    :is(#ba-add-employee-view, #ba-add-student-view) .view-header .action-btn-group .btn {
         width: 100%;
     }
 }
@@ -721,28 +721,28 @@
 
 /* --------------------------------------------------------- */
 
-#ba-add-employee-view .emp-personal-photo-layout {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-personal-photo-layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 165px;
     gap: 1.25rem;
     align-items: start;
 }
 
-#ba-add-employee-view .emp-personal-fields {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-personal-fields {
     min-width: 0;
 }
 
-#ba-add-employee-view .emp-photo-panel {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-panel {
     min-width: 0;
     padding-left: 1rem;
     border-left: 1px solid #e2e8f0;
 }
 
-#ba-add-employee-view .emp-photo-panel .form-group {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-panel .form-group {
     margin-bottom: 0;
 }
 
-#ba-add-employee-view .emp-photo-preview-box {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-preview-box {
     width: 140px;
     height: 170px;
     margin: 0 auto 0.65rem;
@@ -755,14 +755,14 @@
     justify-content: center;
 }
 
-#ba-add-employee-view .emp-photo-preview {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-preview {
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center;
 }
 
-#ba-add-employee-view .emp-photo-placeholder {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-placeholder {
     min-height: 100%;
     padding: 0.75rem;
     color: #64748b;
@@ -776,12 +776,12 @@
     gap: 0.45rem;
 }
 
-#ba-add-employee-view .emp-photo-placeholder i {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-placeholder i {
     font-size: 2rem;
     color: #94a3b8;
 }
 
-#ba-add-employee-view .emp-photo-file-input {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-file-input {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -793,7 +793,7 @@
     border: 0;
 }
 
-#ba-add-employee-view .emp-photo-upload-btn {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-upload-btn {
     max-width: 140px;
     min-height: 20px;
     margin: 0 auto;
@@ -804,12 +804,12 @@
     cursor: pointer;
 }
 
-#ba-add-employee-view .emp-photo-file-name {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-file-name {
     display: block;
     width: 100%;
     margin: 0.45rem auto 0;
     color: #64748b;
-    font-size: 0.72rem;
+    font-size: 0.4rem;
     line-height: 1.3;
     text-align: center;
     overflow: hidden;
@@ -817,7 +817,7 @@
     white-space: nowrap;
 }
 
-#ba-add-employee-view .emp-photo-help {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-help {
     display: block;
     width: 140px;
     margin: 0.35rem auto 0;
@@ -827,12 +827,12 @@
     text-align: center;
 }
 
-#ba-add-employee-view .emp-photo-file-input:focus-visible + .emp-photo-upload-btn {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-file-input:focus-visible + .emp-photo-upload-btn {
     outline: 2px solid #d4af37;
     outline-offset: 2px;
 }
 
-#ba-add-employee-view .emp-photo-panel .form-group.emp-field-invalid .emp-photo-preview-box {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-panel .form-group.emp-field-invalid .emp-photo-preview-box {
     border-color: #ef4444;
     background-color: #fff7f7;
 }
@@ -843,11 +843,11 @@
 
 /* --------------------------------------------------------- */
 
-#ba-add-employee-view .emp-management-type-group {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-management-type-group {
     min-width: 0;
 }
 
-#ba-add-employee-view .emp-management-type-group.hidden {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-management-type-group.hidden {
     display: none !important;
 }
 
@@ -857,125 +857,105 @@
 
 /* --------------------------------------------------------- */
 
-#ba-add-employee-view .emp-checkbox-row {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-checkbox-row {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
-#ba-add-employee-view .emp-checkbox-row input[type="checkbox"] {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-checkbox-row input[type="checkbox"] {
     width: 16px;
     height: 16px;
     margin: 0;
 }
 
-#ba-add-employee-view .emp-checkbox-row label {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-checkbox-row label {
     margin: 0;
 }
 
-#ba-add-employee-view .emp-login-email-option {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-login-email-option {
     padding-top: 1.45rem;
 }
 
 /* --------------------------------------------------------- */
 
-/* EMPLOYEE DETAIL / EDIT VIEW */
+/* EMPLOYEE LIST, PROFILE AND EDIT UI — CLEAN ERP LAYOUT */
 
-/* --------------------------------------------------------- */
-
-#ba-employees-view .emp-edit-name-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.625rem;
-}
-
-/* --------------------------------------------------------- */
-
-/* EMPLOYEE CHILD RECORDS */
-
-/* --------------------------------------------------------- */
-
-#ba-employees-view .emp-child-row {
-    display: grid;
-    gap: 0.5rem;
-    align-items: center;
-    margin-bottom: 0.5rem;
-    padding: 0.625rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 4px;
-    background-color: #f8fafc;
-}
-
-#ba-employees-view .emp-child-field {
-    min-width: 0;
-}
-
-/* --------------------------------------------------------- */
-
-/* EMPLOYEE DOCUMENT VIEW */
-
-/* --------------------------------------------------------- */
-
-/* --------------------------------------------------------- */
-
-/* RESPONSIVE EMPLOYEE LAYOUT */
-
-/* --------------------------------------------------------- */
-
+/* Add Employee responsive rules retained while replacing the old Employee UI block. */
 @media (max-width: 991.98px) {
-    #ba-add-employee-view .emp-grid-4 {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-grid-4 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-
-    #ba-employees-view .emp-detail-grid {
-        grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 767.98px) {
-    #ba-add-employee-view .emp-grid-2, #ba-add-employee-view .emp-grid-3, #ba-add-employee-view .emp-grid-4, #ba-add-employee-view .emp-grid-5 {
+    :is(#ba-add-employee-view, #ba-add-student-view) :is(
+        .emp-grid-2,
+        .emp-grid-3,
+        .emp-grid-4,
+        .emp-grid-5
+    ) {
         grid-template-columns: 1fr;
     }
 
-    #ba-add-employee-view .emp-personal-photo-layout {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-personal-photo-layout {
         grid-template-columns: 1fr;
     }
 
-    #ba-add-employee-view .emp-photo-panel {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-panel {
         padding-left: 0;
         padding-top: 1rem;
         border-left: 0;
         border-top: 1px solid #e2e8f0;
     }
-
-    #ba-employees-view .emp-edit-name-grid {
-        grid-template-columns: 1fr;
-    }
-
-    #ba-employees-view .emp-profile-header {
-        grid-template-columns: 1fr;
-    }
 }
 
-/* ========================================================= */
-
-/* FINAL EMPLOYEE TABLE + DETAIL/EDIT CSS */
-
-/* STRICTLY SCOPED */
-
-/* ========================================================= */
-
+/* --------------------------------------------------------- */
+/* MANAGE EMPLOYEES — LIST AND FILTERS                       */
 /* --------------------------------------------------------- */
 
-/* MANAGE EMPLOYEES — FILTERS */
+#ba-employees-view {
+    min-width: 0;
+}
 
-/* --------------------------------------------------------- */
+#ba-employees-view .view-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
 
-#ba-employees-view .ba-flex-panel {
-    align-items: flex-end;
+#ba-employees-view .view-header h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(1.2rem, 2vw, 1.55rem);
+    font-weight: 750;
+    line-height: 1.25;
+}
+
+#ba-employees-view .view-header p {
+    margin: 0.3rem 0 0;
+    line-height: 1.45;
+}
+
+#ba-employees-view #emp-tableView > .card:first-child {
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#ba-employees-view #emp-tableView .ba-flex-panel {
+    display: grid;
+    grid-template-columns: minmax(280px, 2fr) minmax(170px, 1fr) minmax(180px, 1fr) auto;
+    gap: 0.8rem;
+    align-items: end;
+    margin: 0;
 }
 
 #ba-employees-view .form-group {
+    min-width: 0;
     margin-bottom: 0;
 }
 
@@ -983,62 +963,86 @@
     display: block;
     margin-bottom: 0.3rem;
     color: #475569;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.78rem;
+    font-weight: 650;
+    line-height: 1.35;
 }
 
 #ba-employees-view .detail-input {
-    width: 100%;
-    min-height: 34px;
-    padding: 0.4rem 0.6rem;
-    border: 1px solid #cbd5e1;
-    border-radius: 4px;
-    background-color: #f8fafc;
-    color: #0f172a;
-    font-size: 0.85rem;
     box-sizing: border-box;
-    transition: border-color 0.2s ease,
-    background-color 0.2s ease,
-    box-shadow 0.2s ease;
+    width: 100%;
+    min-height: 36px;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.84rem;
+    line-height: 1.35;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
-#ba-employees-view .detail-input:hover {
+#ba-employees-view .detail-input::placeholder {
+    color: #94a3b8;
+}
+
+#ba-employees-view .detail-input:hover:not(:disabled) {
     border-color: #94a3b8;
-    background-color: #f1f5f9;
 }
 
 #ba-employees-view .detail-input:focus {
     border-color: #d4af37;
-    background-color: #ffffff;
+    background: #ffffff;
     box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
     outline: none;
 }
 
+#ba-employees-view .detail-input:disabled,
+#ba-employees-view .emp-system-managed-control {
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
 #ba-employees-view textarea.detail-input {
-    min-height: 70px;
+    min-height: 78px;
     resize: vertical;
 }
 
-#ba-employees-view .action-btn-group {
+#ba-employees-view #emp-tableView .ba-pagination-controls {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    flex-wrap: wrap;
+    margin: 0;
 }
 
-/* --------------------------------------------------------- */
+#ba-employees-view #emp-tableView .ba-flex-panel > .ba-pagination-controls {
+    justify-content: flex-end;
+    white-space: nowrap;
+}
 
-/* EMPLOYEE TABLE */
-
-/* --------------------------------------------------------- */
+#ba-employees-view #emp-tableView > .card:last-child {
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
 
 #ba-employees-view #emp-tableComponent {
     width: 100%;
     table-layout: auto;
 }
 
-#ba-employees-view #emp-tableComponent th, #ba-employees-view #emp-tableComponent td {
+#ba-employees-view #emp-tableComponent th,
+#ba-employees-view #emp-tableComponent td {
     vertical-align: middle;
+}
+
+#ba-employees-view #emp-tableComponent th {
+    white-space: nowrap;
 }
 
 #ba-employees-view #emp-tableComponent .col-photo {
@@ -1057,11 +1061,11 @@
 }
 
 #ba-employees-view #emp-tableComponent .col-work {
-    min-width: 190px;
+    min-width: 185px;
 }
 
 #ba-employees-view #emp-tableComponent .col-category {
-    min-width: 145px;
+    min-width: 140px;
 }
 
 #ba-employees-view #emp-tableComponent .col-contact {
@@ -1069,7 +1073,7 @@
 }
 
 #ba-employees-view #emp-tableComponent .col-action {
-    min-width: 130px;
+    min-width: 132px;
     white-space: nowrap;
 }
 
@@ -1077,10 +1081,10 @@
     width: 42px;
     height: 50px;
     margin: 0 auto;
+    overflow: hidden;
     border: 1px solid #cbd5e1;
     border-radius: 5px;
-    background-color: #f8fafc;
-    overflow: hidden;
+    background: #f8fafc;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1099,19 +1103,27 @@
     line-height: 1;
 }
 
-#ba-employees-view .col-name strong, #ba-employees-view .col-name small, #ba-employees-view .col-work span, #ba-employees-view .col-work small, #ba-employees-view .col-contact small {
+#ba-employees-view :is(
+    .col-name strong,
+    .col-name small,
+    .col-work span,
+    .col-work small,
+    .col-contact small
+) {
     display: block;
 }
 
 #ba-employees-view .col-name strong {
     color: #1d4ed8;
     font-size: 0.86rem;
+    line-height: 1.35;
     overflow-wrap: anywhere;
 }
 
-#ba-employees-view .col-name small, #ba-employees-view .col-work small, #ba-employees-view .col-contact small {
+#ba-employees-view :is(.col-name small, .col-work small, .col-contact small) {
     margin-top: 0.18rem;
-    font-size: 0.75rem;
+    color: #64748b;
+    font-size: 0.74rem;
     line-height: 1.35;
     overflow-wrap: anywhere;
 }
@@ -1119,7 +1131,7 @@
 #ba-employees-view .col-work span {
     color: #334155;
     font-size: 0.82rem;
-    font-weight: 600;
+    font-weight: 650;
 }
 
 #ba-employees-view .col-name.cursor-pointer {
@@ -1131,39 +1143,159 @@
 }
 
 #ba-employees-view .col-action button {
-    margin: 0 0.12rem;
+    margin: 0 0.1rem;
+}
+
+#ba-employees-view .ba-pagination-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+#ba-employees-view .ba-pagination-footer label,
+#ba-employees-view .ba-pagination-footer .text-muted {
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 550;
+}
+
+#ba-employees-view #emp-pageSize {
+    width: auto;
+    min-width: 70px;
 }
 
 /* --------------------------------------------------------- */
+/* EMPLOYEE PROFILE — TOOLBAR AND STATE                      */
+/* --------------------------------------------------------- */
 
-/* PROFILE SUMMARY */
+#ba-employees-view #emp-detailView {
+    position: relative;
+    min-width: 0;
+}
 
+#ba-employees-view #emp-detailView.hidden {
+    display: none !important;
+}
+
+#ba-employees-view .emp-detail-toolbar {
+    margin-bottom: 0.9rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #d4af37;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#ba-employees-view .emp-detail-toolbar h2 {
+    font-size: 1.2rem;
+}
+
+#ba-employees-view .emp-detail-toolbar .text-muted {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+#ba-employees-view .emp-detail-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+#ba-employees-view #emp-detailView:not(.is-editing) .emp-edit-control {
+    display: none !important;
+}
+
+#ba-employees-view #emp-detailView.is-editing .emp-detail-toolbar {
+    border-left-color: #2563eb;
+    background: #f8fbff;
+}
+
+#ba-employees-view #emp-detailView.is-editing .emp-detail-section {
+    border-color: #cbd5e1;
+}
+
+#ba-employees-view #emp-detailView.is-editing .emp-detail-section-header {
+    background: #f1f5f9;
+}
+
+#ba-employees-view #emp-detailView.emp-edit-preparing {
+    min-height: 260px;
+    overflow: hidden;
+}
+
+#ba-employees-view #emp-detailView.emp-edit-preparing::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 40;
+    border-radius: 7px;
+    background: rgba(248, 250, 252, 0.78);
+}
+
+#ba-employees-view #emp-detailView.emp-edit-preparing::after {
+    content: "Preparing Employee edit form...";
+    position: absolute;
+    top: 7rem;
+    left: 50%;
+    z-index: 41;
+    min-width: 240px;
+    padding: 0.8rem 1rem 0.8rem 2.9rem;
+    transform: translateX(-50%);
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #334155;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+    font-size: 0.82rem;
+    font-weight: 650;
+}
+
+/* --------------------------------------------------------- */
+/* EMPLOYEE PROFILE SUMMARY                                  */
 /* --------------------------------------------------------- */
 
 #ba-employees-view .emp-profile-summary-card {
     margin-bottom: 1rem;
-    padding: 1.25rem;
+    padding: 1.1rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
 }
 
+#ba-employees-view .emp-profile-layout,
 #ba-employees-view .emp-profile-header {
     display: grid;
     grid-template-columns: 145px minmax(0, 1fr);
     gap: 1.25rem;
-    align-items: start;
+    align-items: center;
 }
 
 #ba-employees-view .emp-profile-photo-panel {
     min-width: 0;
+    padding-right: 1.1rem;
+    border-right: 1px solid #e2e8f0;
 }
 
 #ba-employees-view .emp-profile-photo-box {
-    width: 130px;
-    height: 155px;
+    width: 128px;
+    height: 154px;
     margin: 0 auto;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
     overflow: hidden;
-    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #f8fafc;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1180,7 +1312,7 @@
     min-height: 100%;
     padding: 0.75rem;
     color: #64748b;
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     line-height: 1.35;
     text-align: center;
     display: flex;
@@ -1195,12 +1327,28 @@
     font-size: 2rem;
 }
 
-#ba-employees-view #edit-empProfilePhotoContainer {
-    margin-top: 0.75rem;
+#ba-employees-view #edit-empProfilePhotoContainer,
+#ba-employees-view .emp-profile-photo-editor {
+    min-height: 0;
+    margin-top: 0.7rem;
     padding: 0;
     border: 0;
+    border-radius: 0;
     background: transparent;
+    box-shadow: none;
     text-align: center;
+}
+
+#ba-employees-view .emp-profile-photo-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
 }
 
 #ba-employees-view .emp-photo-upload-btn {
@@ -1216,7 +1364,7 @@
     max-width: 140px;
     margin: 0.4rem auto 0;
     color: #64748b;
-    font-size: 0.72rem;
+    font-size: 0.4rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1227,65 +1375,88 @@
 }
 
 #ba-employees-view .emp-profile-summary h3 {
-    margin: 0 0 1rem;
+    margin: 0 0 0.9rem;
     color: #0f172a;
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-size: clamp(1.15rem, 2vw, 1.45rem);
+    font-weight: 750;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
 }
 
+#ba-employees-view .emp-profile-facts,
 #ba-employees-view .emp-profile-summary-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem;
+    gap: 0.7rem;
 }
 
 #ba-employees-view .emp-profile-summary-grid > div {
     min-width: 0;
-    padding: 0.75rem;
+    min-height: 72px;
+    padding: 0.7rem 0.75rem;
     border: 1px solid #e2e8f0;
-    border-radius: 5px;
-    background-color: #f8fafc;
+    border-radius: 6px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 #ba-employees-view .emp-profile-summary-grid .text-muted {
     display: block;
     margin-bottom: 0.25rem;
-    font-size: 0.72rem;
+    color: #64748b;
+    font-size: 0.69rem;
+    font-weight: 600;
+    line-height: 1.3;
 }
 
 #ba-employees-view .emp-profile-summary-grid strong {
     display: block;
     color: #1e293b;
-    font-size: 0.83rem;
+    font-size: 0.82rem;
+    line-height: 1.4;
     overflow-wrap: anywhere;
 }
 
 /* --------------------------------------------------------- */
-
-/* DETAIL / EDIT SECTIONS */
-
+/* DETAIL AND EDIT SECTIONS                                  */
 /* --------------------------------------------------------- */
 
+#ba-employees-view .emp-record-edit-form {
+    min-width: 0;
+}
+
 #ba-employees-view .emp-detail-section {
-    margin-bottom: 1rem;
+    min-width: 0;
     margin: 0 0 1rem;
     padding: 0;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    background-color: #ffffff;
     overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
 }
 
 #ba-employees-view .emp-detail-section-header {
+    box-sizing: border-box;
     width: 100%;
     margin: 0;
-    padding: 0.7rem 1rem;
+    padding: 0.72rem 1rem;
     border: 0;
     border-bottom: 1px solid #e2e8f0;
-    background-color: #f8fafc;
+    background: #f8fafc;
     color: #334155;
-    font-size: 0.9rem;
-    font-weight: 700;
+    font-size: 0.88rem;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+#ba-employees-view .emp-detail-section-header span {
+    margin-left: 0.25rem;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 #ba-employees-view .emp-detail-section-body {
@@ -1293,11 +1464,11 @@
 }
 
 #ba-employees-view .emp-detail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     display: grid;
     gap: 0.9rem 1rem;
+    min-width: 0;
+    margin: 0 0 1rem;
     padding: 0;
-    margin-bottom: 1rem;
 }
 
 #ba-employees-view .emp-detail-grid:last-child {
@@ -1316,21 +1487,33 @@
     grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-#ba-employees-view .emp-detail-grid .form-group {
+#ba-employees-view .emp-detail-grid .form-group,
+#ba-employees-view .emp-detail-section-body > .form-group {
     min-width: 0;
+    margin: 0;
 }
 
-#ba-employees-view .emp-detail-section-body > .form-group {
-    margin-bottom: 0;
+#ba-employees-view .emp-detail-section .form-group > label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.3;
 }
 
 #ba-employees-view .detail-text {
+    box-sizing: border-box;
     display: block;
-    min-height: 34px;
-    padding: 0.45rem 0;
+    width: 100%;
+    min-height: 38px;
+    padding: 0.52rem 0.65rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    background: #f8fafc;
     color: #1e293b;
-    font-size: 0.84rem;
-    font-weight: 500;
+    font-size: 0.82rem;
+    font-weight: 550;
     line-height: 1.45;
     overflow-wrap: anywhere;
     white-space: pre-wrap;
@@ -1339,76 +1522,175 @@
 #ba-employees-view .emp-required-field > label::after {
     content: " *";
     color: #ef4444;
-    font-weight: 700;
+    font-weight: 750;
 }
 
-#ba-employees-view .emp-management-type-group.hidden {
+#ba-employees-view .emp-management-type-group.hidden,
+#ba-employees-view .hidden {
     display: none !important;
 }
 
+#ba-employees-view #emp-detailView.is-editing .detail-input:not(:disabled) {
+    background: #ffffff;
+}
+
+#ba-employees-view #emp-detailView.is-editing .form-group:focus-within > label {
+    color: #8a6d12;
+}
+
 /* --------------------------------------------------------- */
-
-/* EDIT VALIDATION */
-
+/* EDIT VALIDATION                                           */
 /* --------------------------------------------------------- */
 
 #ba-employees-view .emp-validation-summary {
     margin-bottom: 1rem;
-    padding: 0.75rem 1rem;
+    padding: 0.8rem 1rem;
     border: 1px solid #fca5a5;
     border-left: 4px solid #ef4444;
-    border-radius: 4px;
-    background-color: #fef2f2;
+    border-radius: 6px;
+    background: #fef2f2;
     color: #991b1b;
 }
 
 #ba-employees-view .emp-validation-summary strong {
     display: block;
     margin-bottom: 0.25rem;
-    font-size: 0.85rem;
+    font-size: 0.84rem;
 }
 
 #ba-employees-view .emp-validation-summary p {
     margin: 0;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+#ba-employees-view .form-group.emp-field-invalid > label,
+#ba-employees-view .emp-child-field.emp-field-invalid > label {
+    color: #dc2626 !important;
+}
+
+#ba-employees-view :is(.form-group, .emp-child-field).emp-field-invalid::after {
+    content: attr(data-error);
+    display: block;
+    margin-top: 0.25rem;
+    color: #dc2626;
+    font-size: 0.71rem;
+    font-weight: 650;
+    line-height: 1.35;
 }
 
 #ba-employees-view .emp-input-invalid {
     border-color: #ef4444 !important;
-    background-color: #fff7f7 !important;
+    background: #fff7f7 !important;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
 }
 
+#ba-employees-view .emp-input-invalid:focus {
+    border-color: #dc2626 !important;
+    background: #ffffff !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.18) !important;
+}
+
+/* --------------------------------------------------------- */
+/* CHILD RECORDS — VIEW AND EDIT                             */
 /* --------------------------------------------------------- */
 
-/* CHILD RECORDS */
+#ba-employees-view .emp-record-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.75rem;
+}
 
-/* CONTACTS / QUALIFICATIONS / EXPERIENCE / DOCUMENT EDIT */
+#ba-employees-view .emp-record-list:empty::before {
+    content: "No records available.";
+    grid-column: 1 / -1;
+    display: block;
+    padding: 0.9rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 5px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.78rem;
+    text-align: center;
+}
 
-/* --------------------------------------------------------- */
+#ba-employees-view .emp-record-card {
+    min-width: 0;
+    padding: 0.85rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
+}
 
-#ba-add-employee-view .emp-child-row, #ba-employees-view .emp-child-row {
+#ba-employees-view .emp-record-card h4 {
+    margin: 0 0 0.65rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 750;
+}
+
+#ba-employees-view .emp-record-item {
+    display: grid;
+    grid-template-columns: minmax(90px, 0.75fr) minmax(0, 1.25fr);
+    gap: 0.55rem;
+    padding: 0.34rem 0;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+#ba-employees-view .emp-record-item:last-of-type {
+    border-bottom: 0;
+}
+
+#ba-employees-view .emp-record-label {
+    color: #64748b;
+    font-size: 0.71rem;
+    font-weight: 650;
+    line-height: 1.4;
+}
+
+#ba-employees-view .emp-record-value {
+    min-width: 0;
+    color: #1e293b;
+    font-size: 0.76rem;
+    font-weight: 650;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-child-row,
+#ba-employees-view .emp-child-row {
     position: relative;
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 0.65rem;
-    align-items: center;
+    align-items: start;
+    min-width: 0;
     margin-bottom: 0.65rem;
-    padding: 0.7rem 2.9rem 0.7rem 0.7rem;
+    padding: 0.72rem 2.9rem 0.72rem 0.72rem;
     border: 1px solid #e2e8f0;
-    border-radius: 5px;
-    background-color: #f8fafc;
+    border-radius: 6px;
+    background: #f8fafc;
 }
 
-#ba-add-employee-view .emp-grid-3-cols, #ba-add-employee-view .emp-grid-4-cols, #ba-add-employee-view .emp-grid-5-cols, #ba-add-employee-view .emp-grid-6-cols, #ba-add-employee-view .emp-grid-8-cols, #ba-employees-view .emp-grid-3-cols, #ba-employees-view .emp-grid-4-cols, #ba-employees-view .emp-grid-5-cols, #ba-employees-view .emp-grid-6-cols, #ba-employees-view .emp-grid-8-cols {
+:is(#ba-add-employee-view, #ba-add-student-view, #ba-employees-view) :is(
+    .emp-grid-3-cols,
+    .emp-grid-4-cols,
+    .emp-grid-5-cols,
+    .emp-grid-6-cols,
+    .emp-grid-8-cols
+) {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 
-#ba-add-employee-view .emp-child-field, #ba-employees-view .emp-child-field {
+:is(#ba-add-employee-view, #ba-add-student-view, #ba-employees-view) .emp-child-field {
     min-width: 0;
 }
 
-#ba-add-employee-view .emp-child-row > button, #ba-employees-view .emp-child-row > button {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-child-row > button,
+#ba-employees-view .emp-child-row > button {
     position: absolute;
     top: 50%;
     right: 0.65rem;
@@ -1424,49 +1706,25 @@
 
 #ba-employees-view .add-row-btn {
     width: fit-content;
-    margin-top: 0.5rem;
-    padding: 0.35rem 0.75rem;
+    margin-top: 0.55rem;
+    padding: 0.38rem 0.75rem;
     border: 1px dashed #94a3b8;
-    border-radius: 4px;
-    background: transparent;
+    border-radius: 5px;
+    background: #ffffff;
     color: #475569;
-    font-size: 0.8rem;
-    font-weight: 600;
+    font-size: 0.77rem;
+    font-weight: 650;
     cursor: pointer;
 }
 
 #ba-employees-view .add-row-btn:hover {
     border-color: #64748b;
-    background-color: #f1f5f9;
+    background: #f1f5f9;
     color: #0f172a;
 }
 
 /* --------------------------------------------------------- */
-
-/* CHILD RECORD VIEW LIST */
-
-/* --------------------------------------------------------- */
-
-#ba-employees-view .emp-record-list {
-    display: grid;
-    gap: 0.65rem;
-}
-
-#ba-employees-view .emp-record-list:empty::before {
-    content: "No records available.";
-    display: block;
-    padding: 0.75rem;
-    border: 1px dashed #cbd5e1;
-    border-radius: 4px;
-    color: #64748b;
-    font-size: 0.8rem;
-    text-align: center;
-}
-
-/* --------------------------------------------------------- */
-
-/* EMPLOYEE DOCUMENT CARDS */
-
+/* DOCUMENT CARDS                                            */
 /* --------------------------------------------------------- */
 
 #ba-employees-view .emp-document-grid {
@@ -1476,25 +1734,26 @@
 }
 
 #ba-employees-view .emp-document-grid:empty::before {
-    content: "No employee documents available.";
+    content: "No Employee documents available.";
     grid-column: 1 / -1;
-    padding: 0.85rem;
+    padding: 0.9rem;
     border: 1px dashed #cbd5e1;
-    border-radius: 4px;
+    border-radius: 5px;
+    background: #f8fafc;
     color: #64748b;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     text-align: center;
 }
 
 #ba-employees-view .emp-document-card {
     min-width: 0;
-    padding: 0.875rem;
+    padding: 0.85rem;
     border: 1px solid #e2e8f0;
     border-radius: 6px;
-    background-color: #ffffff;
+    background: #ffffff;
     display: flex;
     flex-direction: column;
-    gap: 0.55rem;
+    gap: 0.5rem;
 }
 
 #ba-employees-view .emp-document-card-header {
@@ -1506,26 +1765,22 @@
 
 #ba-employees-view .emp-document-name {
     color: #0f172a;
-    font-size: 0.86rem;
-    font-weight: 700;
+    font-size: 0.84rem;
+    font-weight: 750;
     overflow-wrap: anywhere;
 }
 
-#ba-employees-view .emp-document-type {
-    color: #64748b;
-    font-size: 0.74rem;
-}
-
+#ba-employees-view .emp-document-type,
 #ba-employees-view .emp-document-meta {
     color: #64748b;
-    font-size: 0.75rem;
-    line-height: 1.5;
+    font-size: 0.72rem;
+    line-height: 1.45;
     overflow-wrap: anywhere;
 }
 
 #ba-employees-view .emp-document-actions {
-    align-items: center;
     display: flex;
+    align-items: center;
     gap: 0.5rem;
     margin-top: auto;
 }
@@ -1539,31 +1794,61 @@
 }
 
 /* --------------------------------------------------------- */
-
-/* FORM ACTIONS */
-
+/* STICKY EDIT ACTIONS                                       */
 /* --------------------------------------------------------- */
 
-#ba-add-employee-view .emp-form-actions, #ba-employees-view .emp-form-actions {
+#ba-employees-view .emp-edit-sticky-actions {
+    position: sticky;
+    bottom: 0.65rem;
+    z-index: 25;
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #cbd5e1;
+    border-left: 4px solid #2563eb;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+    backdrop-filter: blur(5px);
+}
+
+#ba-employees-view #emp-detailView:not(.is-editing) .emp-edit-sticky-actions {
+    display: none !important;
+}
+
+#ba-employees-view .emp-edit-sticky-message {
+    margin: 0;
+    color: #475569;
+    font-size: 0.77rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+#ba-employees-view .emp-edit-sticky-buttons {
+    display: flex;
+    align-items: center;
     justify-content: flex-end;
     gap: 0.5rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid #e2e8f0;
+    flex: 0 0 auto;
 }
 
 /* --------------------------------------------------------- */
-
-/* TABLET RESPONSIVE */
-
+/* RESPONSIVE                                                */
 /* --------------------------------------------------------- */
 
 @media (max-width: 1199.98px) {
-    #ba-employees-view .emp-profile-summary-grid {
+    #ba-employees-view #emp-tableView .ba-flex-panel {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
+    #ba-employees-view #emp-tableView .ba-flex-panel > .ba-pagination-controls {
+        justify-content: flex-start;
+    }
+
+    #ba-employees-view .emp-profile-summary-grid,
     #ba-employees-view .emp-detail-grid-4 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -1574,97 +1859,64 @@
 }
 
 @media (max-width: 991.98px) {
+    #ba-employees-view .emp-profile-layout,
+    #ba-employees-view .emp-profile-header {
+        grid-template-columns: 128px minmax(0, 1fr);
+        gap: 1rem;
+    }
+
+    #ba-employees-view .emp-profile-photo-panel {
+        padding-right: 0.8rem;
+    }
+
+    #ba-employees-view .emp-profile-photo-box {
+        width: 112px;
+        height: 136px;
+    }
+
     #ba-employees-view .emp-detail-grid-3 {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
-
-    #ba-employees-view .emp-profile-header {
-        grid-template-columns: 130px minmax(0, 1fr);
-    }
-
-    #ba-employees-view .emp-profile-photo-box {
-        width: 115px;
-        height: 140px;
-    }
-
-    #ba-employees-view .view-header {
-        align-items: flex-start;
-    }
 }
 
-/* --------------------------------------------------------- */
-
-/* MOBILE RESPONSIVE */
-
-/* --------------------------------------------------------- */
-
 @media (max-width: 767.98px) {
-    #ba-employees-view .view-header {
+    #ba-employees-view {
+        padding: 0.5rem;
+    }
+
+    #ba-employees-view .view-header,
+    #ba-employees-view .emp-detail-toolbar {
         flex-direction: column;
         align-items: stretch;
-        gap: 0.75rem;
     }
 
-    #ba-employees-view .view-header > button, #ba-employees-view .view-header .action-btn-group {
+    #ba-employees-view .view-header > button,
+    #ba-employees-view .view-header .action-btn-group,
+    #ba-employees-view .emp-detail-actions {
         width: 100%;
     }
 
-    #ba-employees-view .view-header .action-btn-group {
-        flex-direction: column;
+    #ba-employees-view .emp-detail-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    #ba-employees-view .view-header .action-btn-group button {
+    #ba-employees-view .emp-detail-actions button {
         width: 100%;
     }
 
-    #ba-employees-view .emp-profile-header {
+    #ba-employees-view #emp-tableView .ba-flex-panel {
         grid-template-columns: 1fr;
     }
 
-    #ba-employees-view .emp-profile-photo-box {
-        width: 125px;
-        height: 150px;
-    }
-
-    #ba-employees-view .emp-profile-summary {
-        text-align: center;
-    }
-
-    #ba-employees-view .emp-profile-summary-grid, #ba-employees-view .emp-detail-grid-2, #ba-employees-view .emp-detail-grid-3, #ba-employees-view .emp-detail-grid-4 {
-        grid-template-columns: 1fr;
-    }
-
-    #ba-employees-view .emp-profile-summary-grid > div {
-        text-align: left;
-    }
-
-    #ba-employees-view .emp-child-row, #ba-add-employee-view .emp-child-row {
-        grid-template-columns: 1fr;
-        padding-right: 0.7rem;
-        padding-bottom: 3rem;
-    }
-
-    #ba-employees-view .emp-child-row > button, #ba-add-employee-view .emp-child-row > button {
-        top: auto;
-        right: 0.7rem;
-        bottom: 0.7rem;
-        transform: none;
-    }
-
-    #ba-employees-view .ba-flex-panel {
-        align-items: stretch;
-    }
-
-    #ba-employees-view .ba-flex-panel .ba-flex-1 {
-        flex-basis: 100%;
-    }
-
-    #ba-employees-view .ba-flex-panel .ba-pagination-controls {
+    #ba-employees-view #emp-tableView .ba-flex-panel > .ba-pagination-controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         width: 100%;
     }
 
-    #ba-employees-view .ba-flex-panel .ba-pagination-controls button {
-        flex: 1;
+    #ba-employees-view #emp-tableView .ba-flex-panel > .ba-pagination-controls button {
+        width: 100%;
     }
 
     #ba-employees-view .ba-pagination-footer {
@@ -1675,37 +1927,118 @@
     #ba-employees-view .ba-pagination-footer .ba-pagination-controls {
         justify-content: center;
     }
-}
 
-/* --------------------------------------------------------- */
-
-/* SMALL MOBILE */
-
-/* --------------------------------------------------------- */
-
-@media (max-width: 575.98px) {
-    #ba-employees-view, #ba-add-employee-view {
-        padding: 0.4rem;
+    #ba-employees-view .emp-profile-layout,
+    #ba-employees-view .emp-profile-header {
+        grid-template-columns: 1fr;
     }
 
-    #ba-employees-view .emp-profile-summary-card, #ba-employees-view .emp-detail-section-body {
+    #ba-employees-view .emp-profile-photo-panel {
+        padding-right: 0;
+        padding-bottom: 1rem;
+        border-right: 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    #ba-employees-view .emp-profile-photo-box {
+        width: 124px;
+        height: 150px;
+    }
+
+    #ba-employees-view .emp-profile-summary {
+        text-align: center;
+    }
+
+    #ba-employees-view .emp-profile-summary-grid > div {
+        text-align: left;
+    }
+
+    #ba-employees-view :is(
+        .emp-profile-summary-grid,
+        .emp-detail-grid-2,
+        .emp-detail-grid-3,
+        .emp-detail-grid-4
+    ) {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-employees-view .emp-record-list,
+    #ba-employees-view .emp-document-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-employees-view .emp-record-item {
+        grid-template-columns: 1fr;
+        gap: 0.15rem;
+    }
+
+    #ba-employees-view .emp-child-row,
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-child-row {
+        grid-template-columns: 1fr;
+        padding-right: 0.72rem;
+        padding-bottom: 3rem;
+    }
+
+    #ba-employees-view .emp-child-row > button,
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-child-row > button {
+        top: auto;
+        right: 0.72rem;
+        bottom: 0.72rem;
+        transform: none;
+    }
+
+    #ba-employees-view .emp-edit-sticky-actions {
+        bottom: 0.35rem;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #ba-employees-view .emp-edit-sticky-message {
+        text-align: center;
+    }
+
+    #ba-employees-view .emp-edit-sticky-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ba-employees-view .emp-edit-sticky-buttons button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 575.98px) {
+    #ba-employees-view .emp-profile-summary-card,
+    #ba-employees-view .emp-detail-section-body {
         padding: 0.75rem;
     }
 
-    #ba-employees-view .emp-document-grid {
+    #ba-employees-view .emp-detail-actions,
+    #ba-employees-view .emp-edit-sticky-buttons {
         grid-template-columns: 1fr;
+    }
+
+    #ba-employees-view .emp-detail-toolbar {
+        padding: 0.75rem;
+    }
+
+    #ba-employees-view .emp-detail-section-header {
+        padding: 0.65rem 0.75rem;
     }
 
     #ba-employees-view .col-action button {
         margin-bottom: 0.2rem;
     }
 
-    #ba-add-employee-view .emp-photo-preview-box {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-photo-preview-box {
         width: 130px;
         height: 160px;
     }
 
-    #ba-add-employee-view .emp-photo-upload-btn, #ba-add-employee-view .emp-photo-help {
+    :is(#ba-add-employee-view, #ba-add-student-view) :is(
+        .emp-photo-upload-btn,
+        .emp-photo-help
+    ) {
         width: 130px;
         max-width: 130px;
     }
@@ -1719,7 +2052,7 @@
 
 /* ========================================================= */
 
-#ba-add-employee-view .emp-registration-modal {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-modal {
     position: fixed;
     inset: 0;
     z-index: 9999;
@@ -1729,18 +2062,18 @@
     padding: 1rem;
 }
 
-#ba-add-employee-view .emp-registration-modal.hidden {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-modal.hidden {
     display: none !important;
 }
 
-#ba-add-employee-view .emp-registration-backdrop {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-backdrop {
     position: absolute;
     inset: 0;
     background: rgba(15, 23, 42, 0.65);
     backdrop-filter: blur(2px);
 }
 
-#ba-add-employee-view .emp-registration-dialog {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-dialog {
     position: relative;
     z-index: 1;
     width: min(760px, 100%);
@@ -1752,7 +2085,7 @@
     box-shadow: 0 20px 45px rgba(15, 23, 42, 0.25);
 }
 
-#ba-add-employee-view .emp-registration-header {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1762,14 +2095,14 @@
     background: #f8fafc;
 }
 
-#ba-add-employee-view .emp-registration-header-content {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-header-content {
     display: flex;
     align-items: center;
     gap: 0.85rem;
     min-width: 0;
 }
 
-#ba-add-employee-view .emp-registration-main-icon {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-main-icon {
     flex: 0 0 auto;
     width: 44px;
     height: 44px;
@@ -1780,36 +2113,36 @@
     font-size: 1.25rem;
 }
 
-#ba-add-employee-view .emp-registration-main-icon.is-processing {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-main-icon.is-processing {
     color: #2563eb;
     background: #eff6ff;
 }
 
-#ba-add-employee-view .emp-registration-main-icon.is-success {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-main-icon.is-success {
     color: #15803d;
     background: #f0fdf4;
 }
 
-#ba-add-employee-view .emp-registration-main-icon.is-failed {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-main-icon.is-failed {
     color: #dc2626;
     background: #fef2f2;
 }
 
-#ba-add-employee-view .emp-registration-header h3 {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-header h3 {
     margin: 0;
     color: #0f172a;
     font-size: 1rem;
     font-weight: 700;
 }
 
-#ba-add-employee-view .emp-registration-employee-name {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-employee-name {
     margin: 0.2rem 0 0;
     color: #64748b;
     font-size: 0.8rem;
     overflow-wrap: anywhere;
 }
 
-#ba-add-employee-view .emp-registration-close-btn {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-close-btn {
     flex: 0 0 auto;
     width: 34px;
     height: 34px;
@@ -1824,23 +2157,23 @@
     cursor: pointer;
 }
 
-#ba-add-employee-view .emp-registration-close-btn:hover {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-close-btn:hover {
     color: #dc2626;
     border-color: #fca5a5;
     background: #fef2f2;
 }
 
-#ba-add-employee-view .emp-registration-view {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-view {
     padding: 1.25rem;
 }
 
-#ba-add-employee-view .emp-registration-view.hidden {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-view.hidden {
     display: none !important;
 }
 
 /* Progress heading */
 
-#ba-add-employee-view .emp-registration-progress-heading {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-progress-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -1851,14 +2184,14 @@
     font-weight: 600;
 }
 
-#ba-add-employee-view .emp-registration-progress-heading strong {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-progress-heading strong {
     color: #0f172a;
     font-size: 0.95rem;
 }
 
 /* Progress bar */
 
-#ba-add-employee-view .emp-registration-progress {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-progress {
     width: 100%;
     height: 10px;
     margin-bottom: 1.4rem;
@@ -1867,7 +2200,7 @@
     overflow: hidden;
 }
 
-#ba-add-employee-view .emp-registration-progress-fill {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-progress-fill {
     width: 0;
     height: 100%;
     border-radius: inherit;
@@ -1875,17 +2208,17 @@
     transition: width 0.35s ease;
 }
 
-#ba-add-employee-view .emp-registration-progress-fill.is-success {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-progress-fill.is-success {
     background: #16a34a;
 }
 
-#ba-add-employee-view .emp-registration-progress-fill.is-failed {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-progress-fill.is-failed {
     background: #dc2626;
 }
 
 /* Registration stages */
 
-#ba-add-employee-view .emp-registration-steps {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-steps {
     position: relative;
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -1895,7 +2228,7 @@
     list-style: none;
 }
 
-#ba-add-employee-view .emp-registration-steps::before {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-steps::before {
     content: "";
     position: absolute;
     top: 15px;
@@ -1905,14 +2238,14 @@
     background: #e2e8f0;
 }
 
-#ba-add-employee-view .emp-registration-step {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-step {
     position: relative;
     z-index: 1;
     min-width: 0;
     text-align: center;
 }
 
-#ba-add-employee-view .emp-registration-step-icon {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-step-icon {
     width: 31px;
     height: 31px;
     margin: 0 auto 0.4rem;
@@ -1927,7 +2260,7 @@
     transition: all 0.25s ease;
 }
 
-#ba-add-employee-view .emp-registration-step-label {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-step-label {
     display: block;
     color: #64748b;
     font-size: 0.68rem;
@@ -1936,40 +2269,40 @@
     overflow-wrap: anywhere;
 }
 
-#ba-add-employee-view .emp-registration-step.is-processing .emp-registration-step-icon {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-step.is-processing .emp-registration-step-icon {
     border-color: #2563eb;
     background: #eff6ff;
     color: #2563eb;
     animation: empRegistrationPulse 1.25s infinite;
 }
 
-#ba-add-employee-view .emp-registration-step.is-processing .emp-registration-step-label {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-step.is-processing .emp-registration-step-label {
     color: #1d4ed8;
 }
 
-#ba-add-employee-view .emp-registration-step.is-completed .emp-registration-step-icon {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-step.is-completed .emp-registration-step-icon {
     border-color: #16a34a;
     background: #16a34a;
     color: #ffffff;
 }
 
-#ba-add-employee-view .emp-registration-step.is-completed .emp-registration-step-label {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-step.is-completed .emp-registration-step-label {
     color: #15803d;
 }
 
-#ba-add-employee-view .emp-registration-step.is-failed .emp-registration-step-icon {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-step.is-failed .emp-registration-step-icon {
     border-color: #dc2626;
     background: #dc2626;
     color: #ffffff;
 }
 
-#ba-add-employee-view .emp-registration-step.is-failed .emp-registration-step-label {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-step.is-failed .emp-registration-step-label {
     color: #dc2626;
 }
 
 /* Current backend process */
 
-#ba-add-employee-view .emp-registration-current-process {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-current-process {
     display: flex;
     align-items: flex-start;
     gap: 0.85rem;
@@ -1979,7 +2312,7 @@
     background: #eff6ff;
 }
 
-#ba-add-employee-view .emp-registration-spinner {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-spinner {
     flex: 0 0 auto;
     width: 34px;
     height: 34px;
@@ -1991,18 +2324,18 @@
     justify-content: center;
 }
 
-#ba-add-employee-view .emp-registration-spinner i {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-spinner i {
     animation: empRegistrationSpin 1s linear infinite;
 }
 
-#ba-add-employee-view .emp-registration-current-process strong {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-current-process strong {
     display: block;
     margin-bottom: 0.2rem;
     color: #1e3a8a;
     font-size: 0.85rem;
 }
 
-#ba-add-employee-view .emp-registration-current-process p {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-current-process p {
     margin: 0;
     color: #475569;
     font-size: 0.8rem;
@@ -2011,7 +2344,7 @@
 
 /* Record count */
 
-#ba-add-employee-view .emp-registration-item-progress {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-item-progress {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2025,13 +2358,13 @@
     font-size: 0.78rem;
 }
 
-#ba-add-employee-view .emp-registration-item-progress.hidden {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-item-progress.hidden {
     display: none !important;
 }
 
 /* Operation ID */
 
-#ba-add-employee-view .emp-registration-operation {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-operation {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2044,17 +2377,17 @@
     font-size: 0.74rem;
 }
 
-#ba-add-employee-view .emp-registration-operation.hidden {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-operation.hidden {
     display: none !important;
 }
 
-#ba-add-employee-view .emp-registration-operation code {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-operation code {
     color: #334155;
     font-size: 0.72rem;
     overflow-wrap: anywhere;
 }
 
-#ba-add-employee-view .emp-registration-lock-message {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-lock-message {
     margin: 1rem 0 0;
     color: #64748b;
     font-size: 0.74rem;
@@ -2063,7 +2396,7 @@
 
 /* Success and failure result */
 
-#ba-add-employee-view .emp-registration-result-icon {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-result-icon {
     width: 64px;
     height: 64px;
     margin: 0 auto 0.8rem;
@@ -2074,24 +2407,24 @@
     font-size: 2rem;
 }
 
-#ba-add-employee-view .emp-registration-result-icon.is-success {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-result-icon.is-success {
     color: #16a34a;
     background: #f0fdf4;
 }
 
-#ba-add-employee-view .emp-registration-result-icon.is-failed {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-result-icon.is-failed {
     color: #dc2626;
     background: #fef2f2;
 }
 
-#ba-add-employee-view #employee-registration-success-view > h3, #ba-add-employee-view #employee-registration-failure-view > h3 {
+:is(#ba-add-employee-view, #ba-add-student-view) :is(#employee-registration-success-view, #employee-registration-failure-view, #student-registration-success-view, #student-registration-failure-view) > h3 {
     margin: 0;
     color: #0f172a;
     font-size: 1.05rem;
     text-align: center;
 }
 
-#ba-add-employee-view #employee-registration-success-view > p, #ba-add-employee-view #employee-registration-failure-view > p {
+:is(#ba-add-employee-view, #ba-add-student-view) :is(#employee-registration-success-view, #employee-registration-failure-view, #student-registration-success-view, #student-registration-failure-view) > p {
     margin: 0.45rem 0 1rem;
     color: #64748b;
     font-size: 0.8rem;
@@ -2099,13 +2432,13 @@
     text-align: center;
 }
 
-#ba-add-employee-view .emp-registration-result-details {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-result-details {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
 }
 
-#ba-add-employee-view .emp-registration-result-details > div, #ba-add-employee-view .emp-registration-failure-details > div {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-result-details > div, :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-failure-details > div {
     min-width: 0;
     padding: 0.75rem;
     border: 1px solid #e2e8f0;
@@ -2113,21 +2446,21 @@
     background: #f8fafc;
 }
 
-#ba-add-employee-view .emp-registration-result-details span, #ba-add-employee-view .emp-registration-failure-details span {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-result-details span, :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-failure-details span {
     display: block;
     margin-bottom: 0.25rem;
     color: #64748b;
     font-size: 0.7rem;
 }
 
-#ba-add-employee-view .emp-registration-result-details strong, #ba-add-employee-view .emp-registration-failure-details strong {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-result-details strong, :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-failure-details strong {
     display: block;
     color: #1e293b;
     font-size: 0.82rem;
     overflow-wrap: anywhere;
 }
 
-#ba-add-employee-view .emp-registration-failure-details {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-failure-details {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
@@ -2135,7 +2468,7 @@
 
 /* Failure messages */
 
-#ba-add-employee-view .emp-registration-error-container {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-error-container {
     margin-top: 0.85rem;
     padding: 0.85rem;
     border: 1px solid #fca5a5;
@@ -2145,20 +2478,20 @@
     color: #991b1b;
 }
 
-#ba-add-employee-view .emp-registration-error-container > strong {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-error-container > strong {
     display: block;
     margin-bottom: 0.35rem;
     font-size: 0.8rem;
 }
 
-#ba-add-employee-view .emp-registration-error-container ul {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-error-container ul {
     margin: 0;
     padding-left: 1.15rem;
     font-size: 0.78rem;
     line-height: 1.5;
 }
 
-#ba-add-employee-view .emp-registration-rollback-message {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-rollback-message {
     margin: 0.85rem 0 0;
     padding: 0.7rem;
     border-radius: 5px;
@@ -2170,7 +2503,7 @@
 
 /* Buttons */
 
-#ba-add-employee-view .emp-registration-actions {
+:is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-actions {
     display: flex;
     justify-content: center;
     gap: 0.6rem;
@@ -2203,20 +2536,20 @@
 /* Tablet */
 
 @media (max-width: 767.98px) {
-    #ba-add-employee-view .emp-registration-dialog {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-dialog {
         width: 100%;
     }
 
-    #ba-add-employee-view .emp-registration-steps {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-steps {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         row-gap: 1rem;
     }
 
-    #ba-add-employee-view .emp-registration-steps::before {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-steps::before {
         display: none;
     }
 
-    #ba-add-employee-view .emp-registration-result-details {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-result-details {
         grid-template-columns: 1fr;
     }
 }
@@ -2224,77 +2557,77 @@
 /* Mobile */
 
 @media (max-width: 575.98px) {
-    #ba-add-employee-view .emp-registration-modal {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-modal {
         padding: 0.5rem;
     }
 
-    #ba-add-employee-view .emp-registration-header {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-header {
         padding: 0.85rem;
     }
 
-    #ba-add-employee-view .emp-registration-view {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-view {
         padding: 0.85rem;
     }
 
-    #ba-add-employee-view .emp-registration-main-icon {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-main-icon {
         width: 38px;
         height: 38px;
     }
 
-    #ba-add-employee-view .emp-registration-steps {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-steps {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    #ba-add-employee-view .emp-registration-current-process {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-current-process {
         padding: 0.85rem;
     }
 
-    #ba-add-employee-view .emp-registration-item-progress, #ba-add-employee-view .emp-registration-operation {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-item-progress, :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-operation {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.35rem;
     }
 
-    #ba-add-employee-view .emp-registration-failure-details {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-failure-details {
         grid-template-columns: 1fr;
     }
 
-    #ba-add-employee-view .emp-registration-actions {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-actions {
         flex-direction: column;
     }
 
-    #ba-add-employee-view .emp-registration-actions .btn {
+    :is(#ba-add-employee-view, #ba-add-student-view) .emp-registration-actions .btn {
         width: 100%;
     }
 }
 
 /* ========================================================= */
 
-/* EMPLOYEE REGISTRATION MODAL — BODY PORTAL FIX */
+/* EMPLOYEE AND STUDENT REGISTRATION MODALS — BODY PORTAL FIX */
 
 /* Append this complete block at the end of Branch Admin CSS */
 
 /* ========================================================= */
 
-#employee-registration-modal.hidden {
+:is(#employee-registration-modal, #student-registration-modal).hidden {
     display: none !important;
 }
 
-#employee-registration-modal .hidden {
+:is(#employee-registration-modal, #student-registration-modal) .hidden {
     display: none !important;
 }
 
-#employee-registration-modal .emp-registration-main-icon.is-success {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-main-icon.is-success {
     color: #15803d;
     background: #f0fdf4;
 }
 
-#employee-registration-modal .emp-registration-main-icon.is-failed {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-main-icon.is-failed {
     color: #dc2626;
     background: #fef2f2;
 }
 
-#employee-registration-modal .emp-registration-close-btn {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-close-btn {
     flex: 0 0 auto;
     width: 34px;
     height: 34px;
@@ -2309,12 +2642,12 @@
     cursor: pointer;
 }
 
-#employee-registration-modal .emp-registration-progress-heading strong {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-progress-heading strong {
     color: #0f172a;
     font-size: 0.95rem;
 }
 
-#employee-registration-modal .emp-registration-progress-fill {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-progress-fill {
     width: 0;
     height: 100%;
     border-radius: inherit;
@@ -2332,15 +2665,15 @@
     }
 }
 
-#employee-registration-modal .emp-registration-progress-fill.is-success {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-progress-fill.is-success {
     background: #16a34a;
 }
 
-#employee-registration-modal .emp-registration-progress-fill.is-failed {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-progress-fill.is-failed {
     background: #dc2626;
 }
 
-#employee-registration-modal .emp-registration-steps {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-steps {
     position: relative;
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -2350,7 +2683,7 @@
     list-style: none;
 }
 
-#employee-registration-modal .emp-registration-steps::before {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-steps::before {
     content: "";
     position: absolute;
     top: 15px;
@@ -2360,14 +2693,14 @@
     background: #e2e8f0;
 }
 
-#employee-registration-modal .emp-registration-step {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-step {
     position: relative;
     z-index: 1;
     min-width: 0;
     text-align: center;
 }
 
-#employee-registration-modal .emp-registration-step-icon {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-step-icon {
     width: 31px;
     height: 31px;
     margin: 0 auto 0.4rem;
@@ -2381,7 +2714,7 @@
     font-size: 0.85rem;
 }
 
-#employee-registration-modal .emp-registration-step-label {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-step-label {
     display: block;
     color: #64748b;
     font-size: 0.68rem;
@@ -2390,42 +2723,42 @@
     overflow-wrap: anywhere;
 }
 
-#employee-registration-modal .emp-registration-step.is-processing .emp-registration-step-icon {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-step.is-processing .emp-registration-step-icon {
     border-color: #2563eb;
     background: #eff6ff;
     color: #2563eb;
     animation: employeeRegistrationPulse 1.25s infinite;
 }
 
-#employee-registration-modal .emp-registration-step.is-processing .emp-registration-step-label {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-step.is-processing .emp-registration-step-label {
     color: #1d4ed8;
 }
 
-#employee-registration-modal .emp-registration-step.is-completed .emp-registration-step-icon {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-step.is-completed .emp-registration-step-icon {
     border-color: #16a34a;
     background: #16a34a;
     color: #ffffff;
 }
 
-#employee-registration-modal .emp-registration-step.is-completed .emp-registration-step-label {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-step.is-completed .emp-registration-step-label {
     color: #15803d;
 }
 
-#employee-registration-modal .emp-registration-step.is-failed .emp-registration-step-icon {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-step.is-failed .emp-registration-step-icon {
     border-color: #dc2626;
     background: #dc2626;
     color: #ffffff;
 }
 
-#employee-registration-modal .emp-registration-step.is-failed .emp-registration-step-label {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-step.is-failed .emp-registration-step-label {
     color: #dc2626;
 }
 
-#employee-registration-modal .emp-registration-spinner i {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-spinner i {
     animation: employeeRegistrationSpin 1s linear infinite;
 }
 
-#employee-registration-modal .emp-registration-item-progress, #employee-registration-modal .emp-registration-operation {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-item-progress, :is(#employee-registration-modal, #student-registration-modal) .emp-registration-operation {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2439,17 +2772,17 @@
     font-size: 0.78rem;
 }
 
-#employee-registration-modal .emp-registration-operation {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-operation {
     border-style: dashed;
 }
 
-#employee-registration-modal .emp-registration-operation code {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-operation code {
     color: #334155;
     font-size: 0.72rem;
     overflow-wrap: anywhere;
 }
 
-#employee-registration-modal .emp-registration-result-icon {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-result-icon {
     width: 64px;
     height: 64px;
     margin: 0 auto 0.8rem;
@@ -2460,24 +2793,34 @@
     font-size: 2rem;
 }
 
-#employee-registration-modal .emp-registration-result-icon.is-success {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-result-icon.is-success {
     color: #16a34a;
     background: #f0fdf4;
 }
 
-#employee-registration-modal .emp-registration-result-icon.is-failed {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-result-icon.is-failed {
     color: #dc2626;
     background: #fef2f2;
 }
 
-#employee-registration-modal #employee-registration-success-view > h3, #employee-registration-modal #employee-registration-failure-view > h3 {
+:is(#employee-registration-modal, #student-registration-modal) :is(
+    #employee-registration-success-view,
+    #employee-registration-failure-view,
+    #student-registration-success-view,
+    #student-registration-failure-view
+) > h3 {
     margin: 0;
     color: #0f172a;
     font-size: 1.05rem;
     text-align: center;
 }
 
-#employee-registration-modal #employee-registration-success-view > p, #employee-registration-modal #employee-registration-failure-view > p {
+:is(#employee-registration-modal, #student-registration-modal) :is(
+    #employee-registration-success-view,
+    #employee-registration-failure-view,
+    #student-registration-success-view,
+    #student-registration-failure-view
+) > p {
     margin: 0.45rem 0 1rem;
     color: #64748b;
     font-size: 0.8rem;
@@ -2485,13 +2828,13 @@
     text-align: center;
 }
 
-#employee-registration-modal .emp-registration-result-details, #employee-registration-modal .emp-registration-failure-details {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-result-details, :is(#employee-registration-modal, #student-registration-modal) .emp-registration-failure-details {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
 }
 
-#employee-registration-modal .emp-registration-result-details > div, #employee-registration-modal .emp-registration-failure-details > div {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-result-details > div, :is(#employee-registration-modal, #student-registration-modal) .emp-registration-failure-details > div {
     min-width: 0;
     padding: 0.75rem;
     border: 1px solid #e2e8f0;
@@ -2499,21 +2842,21 @@
     background: #f8fafc;
 }
 
-#employee-registration-modal .emp-registration-result-details span, #employee-registration-modal .emp-registration-failure-details span {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-result-details span, :is(#employee-registration-modal, #student-registration-modal) .emp-registration-failure-details span {
     display: block;
     margin-bottom: 0.25rem;
     color: #64748b;
     font-size: 0.7rem;
 }
 
-#employee-registration-modal .emp-registration-result-details strong, #employee-registration-modal .emp-registration-failure-details strong {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-result-details strong, :is(#employee-registration-modal, #student-registration-modal) .emp-registration-failure-details strong {
     display: block;
     color: #1e293b;
     font-size: 0.82rem;
     overflow-wrap: anywhere;
 }
 
-#employee-registration-modal .emp-registration-error-container {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-error-container {
     margin-top: 0.85rem;
     padding: 0.85rem;
     border: 1px solid #fca5a5;
@@ -2523,20 +2866,20 @@
     color: #991b1b;
 }
 
-#employee-registration-modal .emp-registration-error-container > strong {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-error-container > strong {
     display: block;
     margin-bottom: 0.35rem;
     font-size: 0.8rem;
 }
 
-#employee-registration-modal .emp-registration-error-container ul {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-error-container ul {
     margin: 0;
     padding-left: 1.15rem;
     font-size: 0.78rem;
     line-height: 1.5;
 }
 
-#employee-registration-modal .emp-registration-rollback-message {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-rollback-message {
     margin: 0.85rem 0 0;
     padding: 0.7rem;
     border-radius: 5px;
@@ -2546,7 +2889,7 @@
     text-align: center;
 }
 
-#employee-registration-modal .emp-registration-actions {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-actions {
     display: flex;
     justify-content: center;
     gap: 0.6rem;
@@ -2575,55 +2918,55 @@
 }
 
 @media (max-width: 767.98px) {
-    #employee-registration-modal .emp-registration-steps {
+    :is(#employee-registration-modal, #student-registration-modal) .emp-registration-steps {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         row-gap: 1rem;
     }
 
-    #employee-registration-modal .emp-registration-steps::before {
+    :is(#employee-registration-modal, #student-registration-modal) .emp-registration-steps::before {
         display: none;
     }
 
-    #employee-registration-modal .emp-registration-result-details {
+    :is(#employee-registration-modal, #student-registration-modal) .emp-registration-result-details {
         grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 575.98px) {
-    #employee-registration-modal {
+    :is(#employee-registration-modal, #student-registration-modal) {
         padding: 0.5rem;
     }
 
-    #employee-registration-modal .emp-registration-header, #employee-registration-modal .emp-registration-view {
+    :is(#employee-registration-modal, #student-registration-modal) .emp-registration-header, :is(#employee-registration-modal, #student-registration-modal) .emp-registration-view {
         padding: 0.85rem;
     }
 
-    #employee-registration-modal .emp-registration-steps {
+    :is(#employee-registration-modal, #student-registration-modal) .emp-registration-steps {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    #employee-registration-modal .emp-registration-item-progress, #employee-registration-modal .emp-registration-operation {
+    :is(#employee-registration-modal, #student-registration-modal) .emp-registration-item-progress, :is(#employee-registration-modal, #student-registration-modal) .emp-registration-operation {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.35rem;
     }
 
-    #employee-registration-modal .emp-registration-failure-details {
+    :is(#employee-registration-modal, #student-registration-modal) .emp-registration-failure-details {
         grid-template-columns: 1fr;
     }
 
-    #employee-registration-modal .emp-registration-actions {
+    :is(#employee-registration-modal, #student-registration-modal) .emp-registration-actions {
         flex-direction: column;
     }
 
-    #employee-registration-modal .emp-registration-actions .btn {
+    :is(#employee-registration-modal, #student-registration-modal) .emp-registration-actions .btn {
         width: 100%;
     }
 }
 
-/* Compact Employee Registration Window — ERP Theme */
+/* Compact Employee and Student Registration Windows — ERP Theme */
 
-#employee-registration-modal {
+:is(#employee-registration-modal, #student-registration-modal) {
     position: fixed !important;
     inset: 0 !important;
     z-index: 99999 !important;
@@ -2634,7 +2977,7 @@
     padding: 0.75rem;
 }
 
-#employee-registration-modal .emp-registration-backdrop {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-backdrop {
     position: absolute;
     inset: 0;
     z-index: 0;
@@ -2642,7 +2985,7 @@
     backdrop-filter: none;
 }
 
-#employee-registration-modal .emp-registration-dialog {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-dialog {
     position: relative;
     z-index: 1;
     display: block;
@@ -2657,7 +3000,7 @@
     box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
 }
 
-#employee-registration-modal .emp-registration-header {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2667,14 +3010,14 @@
     border-bottom: none;
 }
 
-#employee-registration-modal .emp-registration-header-content {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-header-content {
     display: flex;
     align-items: center;
     min-width: 0;
     gap: 0.65rem;
 }
 
-#employee-registration-modal .emp-registration-main-icon {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-main-icon {
     flex: 0 0 auto;
     display: flex;
     align-items: center;
@@ -2685,19 +3028,19 @@
     font-size: 1rem;
 }
 
-#employee-registration-modal .emp-registration-main-icon.is-processing {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-main-icon.is-processing {
     color: #d4af37;
     background: rgba(212, 175, 55, 0.14);
 }
 
-#employee-registration-modal .emp-registration-header h3 {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-header h3 {
     margin: 0;
     color: #ffffff;
     font-size: 0.9rem;
     font-weight: 600;
 }
 
-#employee-registration-modal .emp-registration-employee-name {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-employee-name {
     margin: 0.2rem 0 0;
     overflow-wrap: anywhere;
     margin-top: 0.1rem;
@@ -2705,11 +3048,11 @@
     font-size: 0.72rem;
 }
 
-#employee-registration-modal .emp-registration-view {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-view {
     padding: 0.9rem;
 }
 
-#employee-registration-modal .emp-registration-progress-heading {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-progress-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2720,7 +3063,7 @@
     font-size: 0.76rem;
 }
 
-#employee-registration-modal .emp-registration-progress {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-progress {
     width: 100%;
     height: 5px;
     margin-bottom: 0.85rem;
@@ -2729,7 +3072,7 @@
     overflow: hidden;
 }
 
-#employee-registration-modal .emp-registration-progress-fill.is-indeterminate {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-progress-fill.is-indeterminate {
     width: 35% !important;
     border-radius: 2px;
     background: #d4af37;
@@ -2740,7 +3083,7 @@
     transition: none;
 }
 
-#employee-registration-modal .emp-registration-current-process {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-current-process {
     display: flex;
     align-items: flex-start;
     gap: 0.65rem;
@@ -2751,7 +3094,7 @@
     background: #f8fafc;
 }
 
-#employee-registration-modal .emp-registration-spinner {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-spinner {
     flex: 0 0 auto;
     display: flex;
     align-items: center;
@@ -2763,21 +3106,21 @@
     color: #d4af37;
 }
 
-#employee-registration-modal .emp-registration-current-process strong {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-current-process strong {
     display: block;
     margin-bottom: 0.1rem;
     color: #0f172a;
     font-size: 0.8rem;
 }
 
-#employee-registration-modal .emp-registration-current-process p {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-current-process p {
     margin: 0;
     color: #64748b;
     font-size: 0.74rem;
     line-height: 1.4;
 }
 
-#employee-registration-modal .emp-registration-lock-message {
+:is(#employee-registration-modal, #student-registration-modal) .emp-registration-lock-message {
     text-align: center;
     margin: 0.65rem 0 0;
     color: #64748b;
@@ -2795,11 +3138,11 @@
 }
 
 @media (max-width: 575.98px) {
-    #employee-registration-modal {
+    :is(#employee-registration-modal, #student-registration-modal) {
         padding: 0.5rem;
     }
 
-    #employee-registration-modal .emp-registration-dialog {
+    :is(#employee-registration-modal, #student-registration-modal) .emp-registration-dialog {
         width: 100%;
     }
 }
@@ -3540,4 +3883,2412 @@
     #erp-import-modal .erp-import-stage span {
         font-size: 0.64rem;
     }
+}
+/* =========================================================
+   ADD STUDENT – PREVIOUS SUBJECT RESULTS
+   ========================================================= */
+
+#ba-add-student-view #add-studentSubjectResultsSection,
+#ba-add-student-view #add-studentSubjectResultsSection > .form-group,
+#ba-add-student-view #add-studentSubjectResultsSection .table-responsive,
+#ba-add-student-view #add-studentSubjectResultsTable {
+    width: 100%;
+    max-width: 100%;
+}
+
+#ba-add-student-view #add-studentSubjectResultsTable {
+    table-layout: fixed;
+    border-collapse: collapse;
+}
+
+#ba-add-student-view #add-studentSubjectResultsTable th,
+#ba-add-student-view #add-studentSubjectResultsTable td {
+    padding: 0.65rem;
+    vertical-align: middle;
+}
+
+#ba-add-student-view #add-studentSubjectResultsTable th:nth-child(1),
+#ba-add-student-view #add-studentSubjectResultsTable td:nth-child(1) {
+    width: 45%;
+}
+
+#ba-add-student-view #add-studentSubjectResultsTable th:nth-child(2),
+#ba-add-student-view #add-studentSubjectResultsTable td:nth-child(2) {
+    width: 20%;
+}
+
+#ba-add-student-view #add-studentSubjectResultsTable th:nth-child(3),
+#ba-add-student-view #add-studentSubjectResultsTable td:nth-child(3) {
+    width: 25%;
+}
+
+#ba-add-student-view #add-studentSubjectResultsTable th:nth-child(4),
+#ba-add-student-view #add-studentSubjectResultsTable td:nth-child(4) {
+    width: 10%;
+    text-align: center;
+}
+
+#ba-add-student-view #add-studentSubjectResultsTable input {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+}
+
+#ba-add-student-view #add-studentSubjectResultsTable .student-subject-remove-btn {
+    justify-content: center;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    #ba-add-student-view #add-studentSubjectResultsTable {
+        min-width: 680px;
+    }
+}
+/* =========================================================
+   ADD STUDENT VALIDATION — EMPLOYEE UI MATCH
+   ========================================================= */
+
+#ba-add-student-view .emp-required-field
+> label:not(.emp-photo-upload-btn)::after {
+    content: " *";
+    color: #ef4444;
+    font-weight: 700;
+}
+
+#ba-add-student-view .emp-validation-summary {
+    margin-bottom: 1rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #fca5a5;
+    border-left: 4px solid #ef4444;
+    border-radius: 4px;
+    background-color: #fef2f2;
+    color: #991b1b;
+}
+
+#ba-add-student-view .emp-validation-summary.hidden {
+    display: none !important;
+}
+
+#ba-add-student-view .emp-validation-summary strong {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+}
+
+#ba-add-student-view .emp-validation-summary p {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+#ba-add-student-view
+.form-group.emp-field-invalid
+> label {
+    color: #dc2626 !important;
+}
+
+#ba-add-student-view
+.form-group.emp-field-invalid::after,
+#ba-add-student-view
+.emp-child-field.emp-field-invalid::after {
+    content: attr(data-error);
+    display: block;
+    margin-top: 0.25rem;
+    color: #dc2626;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+#ba-add-student-view
+.emp-child-field.emp-field-invalid {
+    position: relative;
+    padding-bottom: 1.45rem;
+}
+
+#ba-add-student-view
+.emp-child-field.emp-field-invalid::after {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+#ba-add-student-view
+.detail-input.emp-input-invalid,
+#ba-add-student-view
+input.emp-input-invalid,
+#ba-add-student-view
+select.emp-input-invalid,
+#ba-add-student-view
+textarea.emp-input-invalid {
+    border-color: #ef4444 !important;
+    background-color: #fff7f7 !important;
+    box-shadow:
+            0 0 0 3px
+            rgba(239, 68, 68, 0.12) !important;
+}
+
+#ba-add-student-view
+.detail-input.emp-input-invalid:focus,
+#ba-add-student-view
+input.emp-input-invalid:focus,
+#ba-add-student-view
+select.emp-input-invalid:focus,
+#ba-add-student-view
+textarea.emp-input-invalid:focus {
+    border-color: #dc2626 !important;
+    background-color: #ffffff !important;
+    box-shadow:
+            0 0 0 3px
+            rgba(239, 68, 68, 0.18) !important;
+}
+
+#ba-add-student-view
+.student-subject-result-row:has(.emp-input-invalid) {
+    background-color: #fffafa;
+}
+
+#ba-add-student-view
+.student-subject-result-row
+.form-group.emp-field-invalid::after {
+    white-space: normal;
+}
+
+/* ========================================================= */
+/* MANAGE STUDENTS — LIST, PROFILE, EDIT AND MODALS          */
+/* STRICTLY SCOPED TO #ba-students-view                      */
+/* ========================================================= */
+
+#ba-students-view {
+    --student-border: #dbe3ec;
+    --student-border-strong: #cbd5e1;
+    --student-soft: #f8fafc;
+    --student-soft-blue: #eff6ff;
+    --student-muted: #64748b;
+    --student-text: #1e293b;
+    --student-heading: #0f172a;
+    --student-primary: #0f172a;
+    --student-primary-hover: #1e293b;
+    --student-accent: #2563eb;
+    --student-success: #15803d;
+    --student-warning: #b45309;
+    --student-danger: #b91c1c;
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0.75rem;
+    color: var(--student-text);
+    animation: fadeIn 0.4s ease-out;
+}
+
+#ba-students-view,
+#ba-students-view *,
+#ba-students-view *::before,
+#ba-students-view *::after {
+    box-sizing: border-box;
+}
+
+#ba-students-view .hidden {
+    display: none !important;
+}
+
+/* --------------------------------------------------------- */
+/* PAGE HEADER                                               */
+/* --------------------------------------------------------- */
+
+#ba-students-view .student-view-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+#ba-students-view .student-view-header h2 {
+    margin: 0 0 0.25rem;
+    color: var(--student-heading);
+    font-size: clamp(1.25rem, 2vw, 1.55rem);
+    font-weight: 700;
+}
+
+#ba-students-view .student-view-header p {
+    margin: 0;
+    color: var(--student-muted);
+    font-size: 0.86rem;
+    line-height: 1.5;
+}
+
+#ba-students-view .student-action-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+#ba-students-view .student-detail-toolbar {
+    align-items: center;
+}
+
+/* --------------------------------------------------------- */
+/* CARD SYSTEM                                               */
+/* --------------------------------------------------------- */
+
+#ba-students-view .student-card {
+    margin: 0 0 1rem;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--student-border);
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+#ba-students-view .student-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-height: 50px;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--student-border);
+    background: var(--student-soft);
+}
+
+#ba-students-view .student-card-header h3 {
+    margin: 0;
+    color: #334155;
+    font-size: 0.94rem;
+    font-weight: 700;
+}
+
+#ba-students-view .student-card-header p {
+    margin: 0.2rem 0 0;
+    color: var(--student-muted);
+    font-size: 0.76rem;
+    line-height: 1.4;
+}
+
+#ba-students-view .student-card-body {
+    padding: 1rem;
+}
+
+/* --------------------------------------------------------- */
+/* FILTER PANEL                                              */
+/* --------------------------------------------------------- */
+
+#ba-students-view .student-filter-card {
+    overflow: visible;
+}
+
+#ba-students-view .student-filter-grid {
+    display: grid;
+    grid-template-columns: minmax(260px, 2fr) repeat(4, minmax(140px, 1fr));
+    gap: 0.75rem 0.85rem;
+    align-items: end;
+}
+
+#ba-students-view .student-filter-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    min-height: 36px;
+}
+
+#ba-students-view .student-filter-actions button {
+    min-height: 36px;
+}
+
+/* --------------------------------------------------------- */
+/* FIELDS AND VALIDATION                                     */
+/* --------------------------------------------------------- */
+
+#ba-students-view .student-field {
+    min-width: 0;
+    margin: 0;
+}
+
+#ba-students-view .student-field label,
+#ba-students-view .student-pagination label,
+#ba-students-view .student-file-control > label {
+    display: block;
+    margin: 0 0 0.3rem;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+#ba-students-view .student-field .detail-input,
+#ba-students-view .student-pagination .detail-input {
+    width: 100%;
+    min-height: 36px;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid var(--student-border-strong);
+    border-radius: 4px;
+    background: #ffffff;
+    color: var(--student-text);
+    font: inherit;
+    font-size: 0.84rem;
+    transition: border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+}
+
+#ba-students-view .student-field textarea.detail-input {
+    min-height: 76px;
+    resize: vertical;
+}
+
+#ba-students-view .student-field .detail-input:hover,
+#ba-students-view .student-pagination .detail-input:hover {
+    border-color: #94a3b8;
+}
+
+#ba-students-view .student-field .detail-input:focus,
+#ba-students-view .student-pagination .detail-input:focus {
+    border-color: #d4af37;
+    background: #ffffff;
+    outline: 0;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+
+#ba-students-view .student-field .detail-input:disabled,
+#ba-students-view .student-field .detail-input[readonly] {
+    cursor: not-allowed;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+#ba-students-view .student-required-field > label::after {
+    content: " *";
+    color: #dc2626;
+    font-weight: 700;
+}
+
+#ba-students-view .student-field.student-field-invalid > label {
+    color: #b91c1c;
+}
+
+#ba-students-view .student-field.student-field-invalid::after {
+    content: attr(data-error);
+    display: block;
+    margin-top: 0.3rem;
+    color: #b91c1c;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+#ba-students-view .student-field .student-input-invalid,
+#ba-students-view .student-field .emp-input-invalid {
+    border-color: #ef4444 !important;
+    background: #fff7f7 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12) !important;
+}
+
+#ba-students-view #student-edit-validation-summary {
+    margin-bottom: 1rem;
+}
+
+/* --------------------------------------------------------- */
+/* FORM GRIDS                                                */
+/* --------------------------------------------------------- */
+
+#ba-students-view .student-form-grid {
+    display: grid;
+    gap: 0.85rem 1rem;
+}
+
+#ba-students-view .student-form-grid-four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#ba-students-view .student-form-grid-three {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#ba-students-view .student-form-grid-two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#ba-students-view .student-form-span-two {
+    grid-column: span 2;
+}
+
+#ba-students-view .student-form-span-three {
+    grid-column: span 3;
+}
+
+#ba-students-view .student-form-span-full {
+    grid-column: 1 / -1;
+}
+
+#ba-students-view .student-section-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin: 1rem 0 0.75rem;
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+}
+
+#ba-students-view .student-section-divider:first-child {
+    margin-top: 0;
+}
+
+#ba-students-view .student-section-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--student-border);
+}
+
+#ba-students-view .student-edit-banner {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid #bfdbfe;
+    border-radius: 5px;
+    background: var(--student-soft-blue);
+    color: #1e40af;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+/* --------------------------------------------------------- */
+/* STUDENT TABLE                                             */
+/* --------------------------------------------------------- */
+
+#ba-students-view .student-list-card,
+#ba-students-view .student-documents-card {
+    overflow: hidden;
+}
+
+#ba-students-view .student-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+}
+
+#ba-students-view .student-table {
+    width: 100%;
+    min-width: 1080px;
+    margin: 0;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+#ba-students-view .student-table th,
+#ba-students-view .student-table td {
+    padding: 0.72rem 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: 0.79rem;
+    line-height: 1.4;
+    text-align: left;
+    vertical-align: middle;
+}
+
+#ba-students-view .student-table th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.015em;
+    white-space: nowrap;
+}
+
+#ba-students-view .student-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+#ba-students-view .student-table tbody tr:hover:not(:has(.student-empty-state)) {
+    background: #f8fafc;
+}
+
+#ba-students-view .student-photo-cell {
+    width: 62px;
+    min-width: 62px;
+    text-align: center;
+}
+
+#ba-students-view .student-actions-column {
+    min-width: 104px;
+    text-align: center;
+}
+
+#ba-students-view .student-list-photo,
+#ba-students-view .student-list-photo-placeholder {
+    width: 40px;
+    height: 46px;
+    border: 1px solid var(--student-border-strong);
+    border-radius: 5px;
+    background: #f1f5f9;
+}
+
+#ba-students-view .student-list-photo {
+    object-fit: cover;
+    object-position: center;
+}
+
+#ba-students-view .student-list-photo-placeholder {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 1.15rem;
+}
+
+#ba-students-view .student-primary-text {
+    display: block;
+    color: var(--student-heading);
+    font-size: 0.82rem;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+
+#ba-students-view .student-secondary-text {
+    display: block;
+    margin-top: 0.18rem;
+    color: var(--student-muted);
+    font-size: 0.72rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+#ba-students-view .student-row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    white-space: nowrap;
+}
+
+#ba-students-view .student-icon-button {
+    display: inline-flex;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid var(--student-border-strong);
+    border-radius: 4px;
+    background: #ffffff;
+    color: #334155;
+    cursor: pointer;
+    transition: border-color 0.18s ease,
+    background-color 0.18s ease,
+    color 0.18s ease;
+}
+
+#ba-students-view .student-icon-button:hover {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+    color: #0f172a;
+}
+
+#ba-students-view .student-icon-button:focus-visible {
+    outline: 2px solid #d4af37;
+    outline-offset: 2px;
+}
+
+#ba-students-view .student-icon-danger {
+    color: #b91c1c;
+    border-color: #fecaca;
+}
+
+#ba-students-view .student-icon-danger:hover {
+    color: #991b1b;
+    border-color: #fca5a5;
+    background: #fef2f2;
+}
+
+#ba-students-view .student-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 23px;
+    padding: 0.18rem 0.48rem;
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: #475569;
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+#ba-students-view .student-status.is-active,
+#ba-students-view .student-status.is-verified,
+#ba-students-view .student-status.status-active,
+#ba-students-view .student-status.status-promoted,
+#ba-students-view .student-status.status-graduated {
+    background: #dcfce7;
+    color: #166534;
+}
+
+#ba-students-view .student-status.is-warning,
+#ba-students-view .student-status.is-pending,
+#ba-students-view .student-status.status-inactive,
+#ba-students-view .student-status.status-suspended,
+#ba-students-view .student-status.status-transferred,
+#ba-students-view .student-status.status-withdrawn {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+#ba-students-view .student-status.is-danger,
+#ba-students-view .student-status.is-rejected,
+#ba-students-view .student-status.status-expelled,
+#ba-students-view .student-status.status-dropped_out,
+#ba-students-view .student-status.status-deceased {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+#ba-students-view .student-status.status-alumni {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+#ba-students-view .student-empty-state {
+    padding: 2rem 1rem !important;
+    color: var(--student-muted) !important;
+    font-size: 0.82rem !important;
+    text-align: center !important;
+}
+
+#ba-students-view .student-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.7rem 0.9rem;
+    border-top: 1px solid var(--student-border);
+    background: #ffffff;
+    flex-wrap: wrap;
+}
+
+#ba-students-view .student-pagination-info {
+    color: var(--student-muted);
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+#ba-students-view .student-pagination-controls {
+    flex-wrap: nowrap;
+}
+
+#ba-students-view .student-pagination-controls label {
+    margin: 0;
+}
+
+#ba-students-view .student-pagination-controls .detail-input {
+    width: 76px;
+    min-height: 32px;
+    padding: 0.3rem 0.45rem;
+}
+
+/* --------------------------------------------------------- */
+/* PROFILE SUMMARY                                           */
+/* --------------------------------------------------------- */
+
+#ba-students-view .student-profile-summary-card {
+    overflow: visible;
+}
+
+#ba-students-view .student-profile-header {
+    display: grid;
+    grid-template-columns: 110px minmax(0, 1fr) minmax(300px, auto);
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+}
+
+#ba-students-view .student-profile-photo-wrap {
+    position: relative;
+    width: 100px;
+    height: 118px;
+}
+
+#ba-students-view .student-profile-photo,
+#ba-students-view .student-profile-photo-placeholder {
+    width: 100px;
+    height: 118px;
+    border: 1px solid var(--student-border-strong);
+    border-radius: 6px;
+    background: #f1f5f9;
+}
+
+#ba-students-view .student-profile-photo {
+    object-fit: cover;
+    object-position: center;
+}
+
+#ba-students-view .student-profile-photo-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #94a3b8;
+    font-size: 2.25rem;
+}
+
+#ba-students-view .student-profile-title {
+    min-width: 0;
+}
+
+#ba-students-view .student-profile-title-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.55rem;
+}
+
+#ba-students-view .student-profile-title h3 {
+    margin: 0;
+    color: var(--student-heading);
+    font-size: 1.25rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+#ba-students-view .student-profile-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem 1rem;
+    flex-wrap: wrap;
+    color: var(--student-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+#ba-students-view .student-profile-meta strong {
+    color: #475569;
+}
+
+#ba-students-view .student-profile-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* --------------------------------------------------------- */
+/* PROFILE DETAILS                                           */
+/* --------------------------------------------------------- */
+
+#ba-students-view .student-profile-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(320px, 0.85fr);
+    gap: 1rem;
+    align-items: start;
+}
+
+#ba-students-view .student-profile-main-column,
+#ba-students-view .student-profile-side-column {
+    min-width: 0;
+}
+
+#ba-students-view .student-detail-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+#ba-students-view .student-detail-grid-four {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#ba-students-view .student-detail-grid-two {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#ba-students-view .student-detail-item {
+    min-width: 0;
+    min-height: 64px;
+    padding: 0.7rem 0.75rem;
+    border: 1px solid var(--student-border);
+    border-radius: 5px;
+    background: var(--student-soft);
+}
+
+#ba-students-view .student-detail-item.student-detail-wide {
+    grid-column: span 2;
+}
+
+#ba-students-view .student-detail-label {
+    display: block;
+    margin-bottom: 0.28rem;
+    color: var(--student-muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.3;
+    text-transform: uppercase;
+}
+
+#ba-students-view .student-detail-value {
+    display: block;
+    color: var(--student-text);
+    font-size: 0.82rem;
+    font-weight: 550;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+#ba-students-view .student-history-list {
+    display: grid;
+    gap: 0.6rem;
+}
+
+#ba-students-view .student-history-item {
+    display: grid;
+    grid-template-columns: minmax(105px, 0.65fr) minmax(0, 1.6fr) minmax(90px, 0.6fr);
+    gap: 0.65rem;
+    padding: 0.75rem;
+    border: 1px solid var(--student-border);
+    border-radius: 5px;
+    background: #ffffff;
+    font-size: 0.78rem;
+}
+
+#ba-students-view .student-history-item > div {
+    min-width: 0;
+}
+
+#ba-students-view .student-document-file {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+#ba-students-view .student-document-file > i {
+    color: #2563eb;
+    font-size: 1.15rem;
+}
+
+/* --------------------------------------------------------- */
+/* EDIT MODE AND STICKY ACTIONS                              */
+/* --------------------------------------------------------- */
+
+#ba-students-view .student-record-edit-form {
+    min-width: 0;
+}
+
+#ba-students-view .student-edit-sticky-actions {
+    position: sticky;
+    bottom: 0.75rem;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid var(--student-border-strong);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+    backdrop-filter: blur(8px);
+}
+
+#ba-students-view .student-edit-sticky-message {
+    margin: 0;
+    color: var(--student-muted);
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+#ba-students-view .student-edit-sticky-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+}
+
+/* --------------------------------------------------------- */
+/* LOCAL LOADERS AND OPERATION OVERLAY                       */
+/* --------------------------------------------------------- */
+
+#ba-students-view .student-loading-panel {
+    display: flex;
+    min-height: 190px;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    color: var(--student-muted);
+    font-size: 0.84rem;
+}
+
+#ba-students-view .student-spinner {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    flex: 0 0 24px;
+    border: 3px solid #cbd5e1;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: studentManageSpin 0.8s linear infinite;
+}
+
+#ba-students-view .student-operation-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.52);
+}
+
+#ba-students-view .student-operation-panel {
+    display: flex;
+    width: min(420px, 100%);
+    align-items: center;
+    gap: 0.85rem;
+    padding: 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.25);
+}
+
+#ba-students-view .student-operation-panel strong {
+    display: block;
+    margin-bottom: 0.2rem;
+    color: var(--student-heading);
+    font-size: 0.9rem;
+}
+
+#ba-students-view .student-operation-panel p {
+    margin: 0;
+    color: var(--student-muted);
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+@keyframes studentManageSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* --------------------------------------------------------- */
+/* STUDENT MODALS                                            */
+/* --------------------------------------------------------- */
+
+#ba-students-view .student-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9995;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.58);
+}
+
+#ba-students-view .student-modal-dialog {
+    width: min(720px, 100%);
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    border: 1px solid var(--student-border);
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 20px 48px rgba(15, 23, 42, 0.28);
+}
+
+#ba-students-view .student-modal-dialog.student-modal-small {
+    width: min(500px, 100%);
+}
+
+#ba-students-view .student-modal-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--student-border);
+    background: #0f172a;
+}
+
+#ba-students-view .student-modal-header h3 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+#ba-students-view .student-modal-header p {
+    margin: 0.25rem 0 0;
+    color: #cbd5e1;
+    font-size: 0.75rem;
+    line-height: 1.4;
+}
+
+#ba-students-view .student-modal-header .student-icon-button {
+    border-color: rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff;
+}
+
+#ba-students-view .student-modal-header .student-icon-button:hover {
+    border-color: rgba(255, 255, 255, 0.45);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#ba-students-view .student-modal-body {
+    padding: 1rem;
+}
+
+#ba-students-view .student-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--student-border);
+    background: var(--student-soft);
+}
+
+#ba-students-view .student-modal-footer-split {
+    justify-content: space-between;
+}
+
+#ba-students-view .student-modal-footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#ba-students-view .student-file-control {
+    padding: 0.9rem;
+    border: 1px dashed #94a3b8;
+    border-radius: 5px;
+    background: var(--student-soft);
+}
+
+#ba-students-view .student-file-control input[type="file"],
+#ba-students-view .student-field input[type="file"] {
+    display: block;
+    width: 100%;
+    padding: 0.35rem;
+    border: 1px solid var(--student-border-strong);
+    border-radius: 4px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 0.8rem;
+}
+
+/* --------------------------------------------------------- */
+/* RESPONSIVE — LARGE TABLET                                 */
+/* --------------------------------------------------------- */
+
+@media (max-width: 1199.98px) {
+    #ba-students-view .student-filter-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    #ba-students-view .student-filter-search-field {
+        grid-column: span 2;
+    }
+
+    #ba-students-view .student-form-grid-four,
+    #ba-students-view .student-detail-grid-four {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ba-students-view .student-profile-header {
+        grid-template-columns: 105px minmax(0, 1fr);
+    }
+
+    #ba-students-view .student-profile-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+}
+
+/* --------------------------------------------------------- */
+/* RESPONSIVE — TABLET                                       */
+/* --------------------------------------------------------- */
+
+@media (max-width: 991.98px) {
+    #ba-students-view .student-profile-layout {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-students-view .student-form-grid-three {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ba-students-view .student-history-item {
+        grid-template-columns: minmax(110px, 0.7fr) minmax(0, 1.5fr);
+    }
+
+    #ba-students-view .student-history-item > div:last-child {
+        grid-column: 1 / -1;
+    }
+}
+
+/* --------------------------------------------------------- */
+/* RESPONSIVE — MOBILE                                       */
+/* --------------------------------------------------------- */
+
+@media (max-width: 767.98px) {
+    #ba-students-view .student-view-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #ba-students-view .student-view-header .student-action-group,
+    #ba-students-view .student-view-header .student-action-group button {
+        width: 100%;
+    }
+
+    #ba-students-view .student-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ba-students-view .student-filter-search-field,
+    #ba-students-view .student-filter-actions {
+        grid-column: 1 / -1;
+    }
+
+    #ba-students-view .student-filter-actions button {
+        flex: 1;
+    }
+
+    #ba-students-view .student-profile-header {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+
+    #ba-students-view .student-profile-photo-wrap {
+        margin: 0 auto;
+    }
+
+    #ba-students-view .student-profile-title-row,
+    #ba-students-view .student-profile-meta,
+    #ba-students-view .student-profile-actions {
+        justify-content: center;
+    }
+
+    #ba-students-view .student-profile-actions button {
+        flex: 1 1 calc(50% - 0.5rem);
+    }
+
+    #ba-students-view .student-form-grid-four,
+    #ba-students-view .student-form-grid-three,
+    #ba-students-view .student-form-grid-two,
+    #ba-students-view .student-detail-grid-four,
+    #ba-students-view .student-detail-grid-two {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-students-view .student-form-span-two,
+    #ba-students-view .student-form-span-three,
+    #ba-students-view .student-detail-item.student-detail-wide {
+        grid-column: span 1;
+    }
+
+    #ba-students-view .student-pagination {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #ba-students-view .student-pagination-info {
+        text-align: center;
+    }
+
+    #ba-students-view .student-pagination-controls {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    #ba-students-view .student-edit-sticky-actions {
+        flex-direction: column;
+        align-items: stretch;
+        bottom: 0.4rem;
+    }
+
+    #ba-students-view .student-edit-sticky-message {
+        text-align: center;
+    }
+
+    #ba-students-view .student-edit-sticky-buttons button {
+        flex: 1;
+    }
+
+    #ba-students-view .student-modal-footer-split {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #ba-students-view .student-modal-footer-actions,
+    #ba-students-view .student-modal-footer-actions button,
+    #ba-students-view .student-modal-footer-split > button {
+        width: 100%;
+    }
+}
+
+/* --------------------------------------------------------- */
+/* RESPONSIVE — SMALL MOBILE                                 */
+/* --------------------------------------------------------- */
+
+@media (max-width: 575.98px) {
+    #ba-students-view {
+        padding: 0.4rem;
+    }
+
+    #ba-students-view .student-card-header,
+    #ba-students-view .student-card-body,
+    #ba-students-view .student-profile-header {
+        padding: 0.75rem;
+    }
+
+    #ba-students-view .student-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-students-view .student-filter-search-field,
+    #ba-students-view .student-filter-actions {
+        grid-column: span 1;
+    }
+
+    #ba-students-view .student-filter-actions {
+        flex-direction: column-reverse;
+    }
+
+    #ba-students-view .student-profile-actions {
+        flex-direction: column;
+    }
+
+    #ba-students-view .student-profile-actions button {
+        width: 100%;
+    }
+
+    #ba-students-view .student-history-item {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-students-view .student-history-item > div:last-child {
+        grid-column: auto;
+    }
+
+    #ba-students-view .student-modal {
+        padding: 0.5rem;
+    }
+
+    #ba-students-view .student-modal-dialog {
+        max-height: calc(100vh - 1rem);
+    }
+
+    #ba-students-view .student-modal-footer {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    #ba-students-view .student-modal-footer button {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   MANAGE STUDENTS LIST — MATCH MANAGE EMPLOYEES UI
+   ========================================================= */
+
+#ba-students-view #student-list-view .view-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+#ba-students-view #student-list-view .view-header h2 {
+    margin: 0 0 0.2rem;
+    color: #0f172a;
+    font-size: clamp(1.25rem, 2vw, 1.55rem);
+    font-weight: 700;
+}
+
+#ba-students-view #student-list-view .view-header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.86rem;
+    line-height: 1.45;
+}
+
+#ba-students-view #student-list-view .student-filter-panel {
+    margin-bottom: 1rem;
+    padding: 0.85rem;
+    overflow: visible;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#ba-students-view #student-list-view .student-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem 0.85rem;
+    align-items: end;
+}
+
+#ba-students-view #student-list-view .form-group {
+    min-width: 0;
+    margin: 0;
+}
+
+#ba-students-view #student-list-view .form-group label {
+    display: block;
+    margin: 0 0 0.3rem;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 650;
+    line-height: 1.35;
+}
+
+#ba-students-view #student-list-view .detail-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 36px;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.84rem;
+    line-height: 1.35;
+    transition: border-color 0.18s ease,
+                box-shadow 0.18s ease,
+                background-color 0.18s ease;
+}
+
+#ba-students-view #student-list-view .detail-input::placeholder {
+    color: #94a3b8;
+}
+
+#ba-students-view #student-list-view .detail-input:hover:not(:disabled) {
+    border-color: #94a3b8;
+}
+
+#ba-students-view #student-list-view .detail-input:focus {
+    border-color: #d4af37;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+    outline: none;
+}
+
+#ba-students-view #student-list-view .detail-input:disabled {
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+#ba-students-view #student-list-view .student-filter-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    min-height: 36px;
+}
+
+#ba-students-view #student-list-view .student-filter-actions button {
+    min-height: 36px;
+}
+
+#ba-students-view #student-list-view .student-list-card {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#ba-students-view #student-list-view .student-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border: 0;
+}
+
+#ba-students-view #student-list-view #student-table-component {
+    width: 100%;
+    min-width: 1050px;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+#ba-students-view #student-list-view #student-table-component th,
+#ba-students-view #student-list-view #student-table-component td {
+    padding: 0.72rem 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: 0.79rem;
+    line-height: 1.4;
+    text-align: left;
+    vertical-align: middle;
+}
+
+#ba-students-view #student-list-view #student-table-component th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.015em;
+    white-space: nowrap;
+}
+
+#ba-students-view #student-list-view #student-table-component tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+#ba-students-view #student-list-view #student-table-component tbody tr:hover:not(:has(.student-empty-state)) {
+    background: #f8fafc;
+}
+
+#ba-students-view #student-list-view #student-table-component .student-photo-cell {
+    width: 62px;
+    min-width: 62px;
+    text-align: center;
+}
+
+#ba-students-view #student-list-view #student-table-component th:nth-child(2) {
+    min-width: 185px;
+}
+
+#ba-students-view #student-list-view #student-table-component th:nth-child(3) {
+    min-width: 155px;
+}
+
+#ba-students-view #student-list-view #student-table-component th:nth-child(4) {
+    min-width: 205px;
+}
+
+#ba-students-view #student-list-view #student-table-component th:nth-child(5) {
+    min-width: 190px;
+}
+
+#ba-students-view #student-list-view #student-table-component th:nth-child(6) {
+    min-width: 145px;
+}
+
+#ba-students-view #student-list-view #student-table-component .student-actions-column {
+    min-width: 105px;
+    text-align: center;
+}
+
+#ba-students-view #student-list-view .student-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.7rem 0.9rem;
+    border-top: 1px solid #e2e8f0;
+    background: #ffffff;
+    flex-wrap: wrap;
+}
+
+#ba-students-view #student-list-view .student-pagination .ba-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+#ba-students-view #student-list-view .student-pagination label {
+    margin: 0;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 650;
+}
+
+#ba-students-view #student-list-view .student-pagination #student-list-page-size {
+    width: 76px;
+    min-height: 34px;
+    padding: 0.35rem 0.45rem;
+}
+
+#ba-students-view #student-list-view .student-pagination-info {
+    color: #64748b;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+@media (max-width: 1199.98px) {
+    #ba-students-view #student-list-view .student-filter-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ba-students-view #student-list-view .student-filter-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 767.98px) {
+    #ba-students-view #student-list-view .view-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #ba-students-view #student-list-view .view-header > button {
+        width: 100%;
+    }
+
+    #ba-students-view #student-list-view .student-filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-students-view #student-list-view .student-filter-actions {
+        grid-column: auto;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    #ba-students-view #student-list-view .student-filter-actions button {
+        width: 100%;
+    }
+
+    #ba-students-view #student-list-view .student-pagination {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #ba-students-view #student-list-view .student-pagination .ba-pagination-controls {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+@media (max-width: 575.98px) {
+    #ba-students-view #student-list-view .student-filter-panel {
+        padding: 0.75rem;
+    }
+
+    #ba-students-view #student-list-view .student-filter-actions {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-students-view #student-list-view .student-pagination-controls {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    #ba-students-view #student-list-view .student-pagination-controls button {
+        width: 100%;
+    }
+}
+
+
+/* =========================================================
+   MANAGE STUDENTS — CONFIRMATION AND OPERATION OVERLAYS
+   Reuses the Employee modal classes inside #ba-students-view.
+   ========================================================= */
+#ba-students-view .employee-confirm-overlay, #ba-students-view .employee-operation-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: rgba(15, 23, 42, 0.56);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 180ms ease,
+    visibility 180ms ease;
+}
+
+#ba-students-view .employee-confirm-overlay.is-visible, #ba-students-view .employee-operation-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+#ba-students-view .employee-confirm-dialog {
+    width: min(440px, calc(100vw - 32px));
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    border-radius: 14px;
+    box-shadow: 0 24px 65px rgba(15, 23, 42, 0.4);
+    opacity: 0;
+    transform: translateY(14px) scale(0.97);
+    transition: opacity 180ms ease,
+    transform 180ms ease;
+}
+
+#ba-students-view .employee-confirm-overlay.is-visible .employee-confirm-dialog {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+#ba-students-view .employee-confirm-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 22px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #172033, #253652);
+    border-bottom: 3px solid #d4af37;
+}
+
+#ba-students-view .employee-confirm-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    color: #d4af37;
+    background: rgba(212, 175, 55, 0.13);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    border-radius: 50%;
+    font-size: 1.1rem;
+}
+
+#ba-students-view .employee-confirm-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+#ba-students-view .employee-confirm-body {
+    padding: 24px 24px 12px;
+}
+
+#ba-students-view .employee-confirm-message {
+    margin: 0;
+    color: #475569;
+    font-size: 0.9rem;
+    line-height: 1.65;
+}
+
+#ba-students-view .employee-confirm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 16px 24px 22px;
+}
+
+#ba-students-view .employee-confirm-actions button {
+    min-width: 125px;
+}
+
+#ba-students-view .employee-confirm-dialog:focus-visible {
+    outline: 3px solid rgba(212, 175, 55, 0.45);
+    outline-offset: 4px;
+}
+
+/* =========================================================
+   EMPLOYEE OPERATION OVERLAY
+   ========================================================= */
+
+#ba-students-view .employee-operation-overlay {
+    z-index: 1000002;
+}
+
+#ba-students-view .employee-operation-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: min(430px, calc(100vw - 32px));
+    padding: 22px 24px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #172033, #24324a);
+    border: 1px solid rgba(212, 175, 55, 0.7);
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.44);
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+    transition: opacity 180ms ease,
+    transform 180ms ease;
+}
+
+#ba-students-view .employee-operation-overlay.is-visible .employee-operation-card {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+#ba-students-view .employee-operation-spinner {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border: 4px solid rgba(255, 255, 255, 0.22);
+    border-top-color: #d4af37;
+    border-radius: 50%;
+    animation: ba-employee-operation-spin 700ms linear infinite;
+}
+
+#ba-students-view .employee-operation-content {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+#ba-students-view .employee-operation-title {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+#ba-students-view .employee-operation-message {
+    color: #cbd5e1;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+@media (max-width: 576px) {
+    #ba-students-view .employee-confirm-actions {
+        flex-direction: column-reverse;
+    }
+
+    #ba-students-view .employee-confirm-actions button {
+        width: 100%;
+    }
+
+    #ba-students-view .employee-operation-card {
+        gap: 13px;
+        padding: 19px;
+    }
+
+    #ba-students-view .employee-operation-spinner {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+    }
+}
+/* =========================================================
+   MANAGE STUDENTS — EMPLOYEE ARCHITECTURE FINAL OVERRIDES
+   Scope: #ba-students-view
+   ========================================================= */
+
+#ba-students-view {
+    max-width: 1600px;
+    min-width: 0;
+    margin: 0 auto;
+    padding: 0.75rem;
+    animation: fadeIn 0.4s ease-out;
+}
+
+#ba-students-view .view-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+#ba-students-view .view-header h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(1.2rem, 2vw, 1.55rem);
+    font-weight: 750;
+    line-height: 1.25;
+}
+
+#ba-students-view .view-header p {
+    margin: 0.3rem 0 0;
+    line-height: 1.45;
+}
+
+#ba-students-view #student-tableView > .card:first-child {
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#ba-students-view #student-tableView .student-filter-panel {
+    display: grid;
+    grid-template-columns:
+        minmax(250px, 1.7fr)
+        minmax(165px, 1fr)
+        minmax(165px, 1fr)
+        minmax(170px, 1fr)
+        auto;
+    gap: 0.8rem;
+    align-items: end;
+    margin: 0;
+}
+
+#ba-students-view .form-group {
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+#ba-students-view .form-group label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 650;
+    line-height: 1.35;
+}
+
+#ba-students-view .detail-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 36px;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.84rem;
+    line-height: 1.35;
+    transition: border-color 0.18s ease,
+                box-shadow 0.18s ease,
+                background-color 0.18s ease;
+}
+
+#ba-students-view .detail-input::placeholder {
+    color: #94a3b8;
+}
+
+#ba-students-view .detail-input:hover:not(:disabled) {
+    border-color: #94a3b8;
+}
+
+#ba-students-view .detail-input:focus {
+    border-color: #d4af37;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+    outline: none;
+}
+
+#ba-students-view .detail-input:disabled,
+#ba-students-view .student-system-managed-control {
+    cursor: not-allowed;
+    border-color: #e2e8f0;
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+#ba-students-view textarea.detail-input {
+    min-height: 78px;
+    resize: vertical;
+}
+
+#ba-students-view #student-tableView .ba-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+#ba-students-view #student-tableView .student-filter-panel > .ba-pagination-controls {
+    justify-content: flex-end;
+    white-space: nowrap;
+}
+
+#ba-students-view #student-tableView > .card:last-child {
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#ba-students-view #student-tableView .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+}
+
+#ba-students-view #student-tableComponent {
+    width: 100%;
+    min-width: 1080px;
+    table-layout: auto;
+    border-collapse: collapse;
+}
+
+#ba-students-view #student-tableComponent th,
+#ba-students-view #student-tableComponent td {
+    padding: 0.7rem 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+}
+
+#ba-students-view #student-tableComponent th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.015em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+#ba-students-view #student-tableComponent td {
+    color: #334155;
+    font-size: 0.79rem;
+    line-height: 1.4;
+}
+
+#ba-students-view #student-tableComponent tbody tr:hover {
+    background: #f8fafc;
+}
+
+#ba-students-view #student-tableComponent .col-photo {
+    width: 62px;
+    min-width: 62px;
+    text-align: center;
+}
+
+#ba-students-view #student-tableComponent .col-code {
+    min-width: 105px;
+    white-space: nowrap;
+}
+
+#ba-students-view #student-tableComponent .col-name {
+    min-width: 180px;
+}
+
+#ba-students-view #student-tableComponent .col-admission {
+    min-width: 155px;
+}
+
+#ba-students-view #student-tableComponent .col-placement {
+    min-width: 150px;
+}
+
+#ba-students-view #student-tableComponent .col-contact {
+    min-width: 175px;
+}
+
+#ba-students-view #student-tableComponent .col-action {
+    min-width: 132px;
+    white-space: nowrap;
+}
+
+/* Critical correction: the new HTML uses student-table-photo*, not
+   the older student-list-photo* class names. */
+#ba-students-view .student-table-photo-box {
+    width: 42px;
+    height: 50px;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#ba-students-view .student-table-photo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 42px;
+    max-height: 50px;
+    object-fit: cover;
+    object-position: center;
+}
+
+#ba-students-view .student-table-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    color: #94a3b8;
+    font-size: 1.25rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#ba-students-view .student-table-photo.hidden,
+#ba-students-view .student-table-photo-placeholder.hidden {
+    display: none !important;
+}
+
+#ba-students-view :is(
+    .col-name strong,
+    .col-name small,
+    .col-admission span,
+    .col-admission small,
+    .col-placement span,
+    .col-placement small,
+    .col-contact span,
+    .col-contact small
+) {
+    display: block;
+}
+
+#ba-students-view .col-name strong {
+    color: #1d4ed8;
+    font-size: 0.86rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+#ba-students-view :is(
+    .col-name small,
+    .col-admission small,
+    .col-placement small,
+    .col-contact small
+) {
+    margin-top: 0.18rem;
+    color: #64748b;
+    font-size: 0.74rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+#ba-students-view :is(
+    .col-admission span,
+    .col-placement span,
+    .col-contact span
+) {
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+
+#ba-students-view .col-name.cursor-pointer {
+    cursor: pointer;
+}
+
+#ba-students-view .col-name.cursor-pointer:hover strong {
+    text-decoration: underline;
+}
+
+#ba-students-view .col-action button {
+    margin: 0 0.1rem;
+}
+
+#ba-students-view .ba-pagination-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+#ba-students-view .ba-pagination-footer label,
+#ba-students-view .ba-pagination-footer .text-muted {
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 550;
+}
+
+#ba-students-view #student-pageSize {
+    width: auto;
+    min-width: 70px;
+}
+
+/* Detail and edit state */
+#ba-students-view #student-detailView {
+    position: relative;
+    min-width: 0;
+}
+
+#ba-students-view #student-detailView.hidden,
+#ba-students-view .hidden {
+    display: none !important;
+}
+
+#ba-students-view .student-detail-toolbar {
+    margin-bottom: 0.9rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #d4af37;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#ba-students-view .student-detail-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+#ba-students-view #student-detailView:not(.is-editing) .student-edit-control {
+    display: none !important;
+}
+
+#ba-students-view #student-detailView.is-editing .student-view-control {
+    display: none !important;
+}
+
+#ba-students-view #student-detailView.is-editing .student-edit-control:not(.hidden) {
+    display: initial;
+}
+
+#ba-students-view #student-detailView.is-editing .student-detail-toolbar {
+    border-left-color: #2563eb;
+    background: #f8fbff;
+}
+
+#ba-students-view .emp-profile-summary-card {
+    margin-bottom: 1rem;
+    padding: 1.1rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+#ba-students-view .emp-profile-layout,
+#ba-students-view .emp-profile-header {
+    display: grid;
+    grid-template-columns: 145px minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: center;
+}
+
+#ba-students-view .emp-profile-photo-panel {
+    min-width: 0;
+    padding-right: 1.1rem;
+    border-right: 1px solid #e2e8f0;
+}
+
+#ba-students-view .emp-profile-photo-box {
+    width: 128px;
+    height: 154px;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#ba-students-view .emp-profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+#ba-students-view .emp-profile-photo-placeholder {
+    min-height: 100%;
+    padding: 0.75rem;
+    color: #64748b;
+    font-size: 0.74rem;
+    line-height: 1.35;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+}
+
+#ba-students-view .emp-profile-photo-placeholder i {
+    color: #94a3b8;
+    font-size: 2rem;
+}
+
+#ba-students-view .emp-profile-summary h3 {
+    margin: 0 0 0.9rem;
+    color: #0f172a;
+    font-size: clamp(1.15rem, 2vw, 1.45rem);
+    font-weight: 750;
+    line-height: 1.3;
+}
+
+#ba-students-view .emp-profile-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.7rem;
+}
+
+#ba-students-view .emp-profile-summary-grid > div {
+    min-width: 0;
+    min-height: 72px;
+    padding: 0.7rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#ba-students-view .emp-profile-summary-grid .text-muted {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #64748b;
+    font-size: 0.69rem;
+    font-weight: 600;
+}
+
+#ba-students-view .emp-detail-section {
+    min-width: 0;
+    margin: 0 0 1rem;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
+}
+
+#ba-students-view .emp-detail-section-header {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 0.72rem 1rem;
+    border: 0;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.88rem;
+    font-weight: 750;
+}
+
+#ba-students-view .emp-detail-section-body {
+    padding: 1rem;
+}
+
+#ba-students-view .emp-detail-grid {
+    display: grid;
+    gap: 0.9rem 1rem;
+    min-width: 0;
+    margin: 0 0 1rem;
+}
+
+#ba-students-view .emp-detail-grid:last-child {
+    margin-bottom: 0;
+}
+
+#ba-students-view .emp-detail-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#ba-students-view .emp-detail-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#ba-students-view .emp-detail-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#ba-students-view .detail-text {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-height: 38px;
+    padding: 0.52rem 0.65rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 0.82rem;
+    font-weight: 550;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+#ba-students-view .emp-required-field > label::after {
+    content: " *";
+    color: #ef4444;
+    font-weight: 750;
+}
+
+@media (max-width: 1200px) {
+    #ba-students-view #student-tableView .student-filter-panel {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ba-students-view #student-tableView .student-filter-panel > .ba-pagination-controls {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+    }
+
+    #ba-students-view .emp-profile-summary-grid,
+    #ba-students-view .emp-detail-grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    #ba-students-view {
+        padding: 0.5rem;
+    }
+
+    #ba-students-view .view-header,
+    #ba-students-view .ba-pagination-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #ba-students-view #student-tableView .student-filter-panel,
+    #ba-students-view .emp-profile-layout,
+    #ba-students-view .emp-profile-header,
+    #ba-students-view .emp-profile-summary-grid,
+    #ba-students-view .emp-detail-grid-2,
+    #ba-students-view .emp-detail-grid-3,
+    #ba-students-view .emp-detail-grid-4 {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-students-view #student-tableView .student-filter-panel > .ba-pagination-controls {
+        grid-column: auto;
+        justify-content: stretch;
+    }
+
+    #ba-students-view #student-tableView .student-filter-panel > .ba-pagination-controls button {
+        flex: 1;
+    }
+
+    #ba-students-view .emp-profile-photo-panel {
+        padding-right: 0;
+        padding-bottom: 1rem;
+        border-right: 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+}
+#ba-students-view label[for="edit-studentProfilePhoto"] {
+    font-size: 0.5rem;
+    line-height: 1.2;
+    font-weight: 500;
+}
+
+#ba-students-view #edit-studentProfilePhotoName {
+    font-size: 0.65rem;
+    line-height: 1.25;
 }

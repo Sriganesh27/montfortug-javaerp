@@ -86,7 +86,7 @@ public class ErpStudentEnrollment {
 
     @NotNull(message = "Class is required")
     @Column(name = "class_id", nullable = false)
-    private Long classId;
+    private Integer classId;
 
     @Column(name = "section_id")
     private Long sectionId;
