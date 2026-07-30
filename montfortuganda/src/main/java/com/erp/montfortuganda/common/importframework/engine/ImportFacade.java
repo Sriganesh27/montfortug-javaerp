@@ -9,6 +9,7 @@ import com.erp.montfortuganda.common.importframework.model.ErpImportJobRepositor
 import com.erp.montfortuganda.common.importframework.plugin.ImportPlugin;
 import com.erp.montfortuganda.common.importframework.registry.ImportTemplate;
 import com.erp.montfortuganda.common.importframework.registry.PluginRegistry;
+import com.erp.montfortuganda.common.importframework.report.CorrectedWorkbookService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -29,29 +31,29 @@ public class ImportFacade {
     private final PluginRegistry pluginRegistry;
     private final ErpImportJobRepository jobRepository;
     private final EngineCoordinator engineCoordinator;
+    private final CorrectedWorkbookService correctedWorkbookService;
     private final ExecutorService executorService;
 
     public ImportFacade(
             PluginRegistry pluginRegistry,
             ErpImportJobRepository jobRepository,
             EngineCoordinator engineCoordinator,
+            CorrectedWorkbookService correctedWorkbookService,
             @Qualifier("importVirtualThreadExecutor")
             ExecutorService executorService
     ) {
         this.pluginRegistry = pluginRegistry;
         this.jobRepository = jobRepository;
         this.engineCoordinator = engineCoordinator;
+        this.correctedWorkbookService = correctedWorkbookService;
         this.executorService = executorService;
     }
 
-
-
     /**
-     * Submits an import job with trusted module-specific options.
+     * Submits a normal import job.
      *
-     * <p>The options must be created by the backend controller after
-     * authentication. Identity and branch values must never be copied from
-     * browser-controlled request parameters.</p>
+     * Retry mode cannot be submitted through this method because retry row
+     * numbers must be obtained securely by the backend from the previous job.
      */
     public String submitImportJob(
             String module,
@@ -62,6 +64,60 @@ public class ImportFacade {
             String uploadedFileName,
             Map<String, Object> importOptions
     ) {
+        if (mode == ImportMode.RETRY_FAILED_ROWS) {
+            throw new IllegalArgumentException(
+                    "Retry Failed Rows must be submitted through "
+                            + "the retry import endpoint."
+            );
+        }
+
+        return submitImportJobInternal(
+                module,
+                branchId,
+                userId,
+                mode,
+                fileHash,
+                uploadedFileName,
+                importOptions,
+                null
+        );
+    }
+
+    /**
+     * Submits a retry job using failed physical Excel row numbers resolved by
+     * the backend. Row numbers must never be accepted directly from a browser.
+     */
+    public String submitRetryJob(
+            String module,
+            String branchId,
+            String userId,
+            String fileHash,
+            String uploadedFileName,
+            Map<String, Object> importOptions,
+            Set<Integer> targetRowNumbers
+    ) {
+        return submitImportJobInternal(
+                module,
+                branchId,
+                userId,
+                ImportMode.RETRY_FAILED_ROWS,
+                fileHash,
+                uploadedFileName,
+                importOptions,
+                targetRowNumbers
+        );
+    }
+
+    private String submitImportJobInternal(
+            String module,
+            String branchId,
+            String userId,
+            ImportMode mode,
+            String fileHash,
+            String uploadedFileName,
+            Map<String, Object> importOptions,
+            Set<Integer> targetRowNumbers
+    ) {
         validateSubmission(
                 module,
                 branchId,
@@ -71,27 +127,33 @@ public class ImportFacade {
                 uploadedFileName
         );
 
-        ImportPlugin<?> plugin =
-                pluginRegistry.getPlugin(module);
+        Set<Integer> safeTargetRows =
+                normalizeTargetRows(
+                        mode,
+                        targetRowNumbers
+                );
 
-        if (
-                !plugin.getManifest()
-                        .getSupportedImportModes()
-                        .contains(mode)
-        ) {
+        String normalizedModule =
+                module.trim()
+                        .toUpperCase();
+
+        ImportPlugin<?> plugin =
+                pluginRegistry.getPlugin(
+                        normalizedModule
+                );
+
+        if (!plugin.getManifest()
+                .getSupportedImportModes()
+                .contains(mode)) {
             throw new IllegalArgumentException(
                     "Import mode "
                             + mode
                             + " is not supported for module "
-                            + module
+                            + normalizedModule
                             + "."
             );
         }
 
-        /*
-         * Copy the options before starting asynchronous work.
-         * The worker receives its own map and cannot observe later mutations.
-         */
         Map<String, Object> safeImportOptions =
                 importOptions == null
                         ? Map.of()
@@ -100,7 +162,7 @@ public class ImportFacade {
         jobRepository
                 .findFirstByFileHashAndModuleAndBranchIdAndImportMode(
                         fileHash,
-                        module,
+                        normalizedModule,
                         branchId,
                         mode
                 )
@@ -116,16 +178,9 @@ public class ImportFacade {
                         );
                     }
 
-                    if (
+                    if (isRunningStatus(
                             existingJob.getStatus()
-                                    == ImportStatus.INITIALIZING
-                                    || existingJob.getStatus()
-                                    == ImportStatus.READING_ROWS
-                                    || existingJob.getStatus()
-                                    == ImportStatus.VALIDATING_ROWS
-                                    || existingJob.getStatus()
-                                    == ImportStatus.SAVING_BATCH
-                    ) {
+                    )) {
                         throw new IllegalStateException(
                                 "File is currently being processed. "
                                         + "Job ID: "
@@ -133,10 +188,6 @@ public class ImportFacade {
                         );
                     }
                 });
-
-        String normalizedModule =
-                module.trim()
-                        .toUpperCase();
 
         String jobId =
                 UUID.randomUUID()
@@ -157,34 +208,45 @@ public class ImportFacade {
         jobRepository.save(job);
 
         log.info(
-                "Submitted Import Job {} for module {}",
+                "Submitted Import Job {} for module {} using mode {}",
                 jobId,
-                normalizedModule
+                normalizedModule,
+                mode
         );
 
         startJobAsync(
                 jobId,
                 userId,
                 plugin,
-                safeImportOptions
+                safeImportOptions,
+                safeTargetRows
         );
 
         return jobId;
+    }
+
+    private boolean isRunningStatus(
+            ImportStatus status
+    ) {
+        return status == ImportStatus.INITIALIZING
+                || status == ImportStatus.READING_ROWS
+                || status == ImportStatus.VALIDATING_ROWS
+                || status == ImportStatus.SAVING_BATCH;
     }
 
     private <DTO> void startJobAsync(
             String jobId,
             String userId,
             ImportPlugin<DTO> plugin,
-            Map<String, Object> importOptions
+            Map<String, Object> importOptions,
+            Set<Integer> targetRowNumbers
     ) {
         executorService.submit(() -> {
             Path filePath = null;
 
             try {
                 ErpImportJob job =
-                        jobRepository
-                                .findById(jobId)
+                        jobRepository.findById(jobId)
                                 .orElseThrow(() ->
                                         new IllegalStateException(
                                                 "Import job was not found."
@@ -198,88 +260,36 @@ public class ImportFacade {
                 jobRepository.save(job);
 
                 filePath =
-                        Path.of(
-                                        System.getProperty(
-                                                "java.io.tmpdir"
-                                        ),
-                                        job.getUploadedFileName()
-                                )
-                                .toAbsolutePath()
-                                .normalize();
+                        resolveTemporaryFile(job);
 
-                if (!Files.exists(filePath)) {
-                    log.error(
-                            "Import file was not found for job {}",
-                            jobId
-                    );
-
-                    job.setStatus(
-                            ImportStatus.FAILED
-                    );
-                    job.setLastCheckpoint(
-                            "Import file was not found."
-                    );
-                    job.setCompletedAt(
-                            LocalDateTime.now()
-                    );
-
-                    jobRepository.save(job);
+                if (!Files.isRegularFile(filePath)) {
+                    markFileMissing(job);
                     return;
                 }
 
                 ImportContext context =
-                        ImportContext.builder()
-                                .jobId(jobId)
-                                .branchId(
-                                        job.getBranchId()
-                                )
-                                .userId(userId)
-                                .locale("en")
-                                .timeZone(
-                                        ZoneId.systemDefault()
-                                )
-                                .importMode(
-                                        job.getImportMode()
-                                )
-                                .chunkSize(
-                                        plugin.getManifest()
-                                                .getDefaultChunkSize()
-                                )
-                                .fileHash(
-                                        job.getFileHash()
-                                )
-                                .uploadedFileName(
-                                        job.getUploadedFileName()
-                                )
-                                .startTime(
-                                        System.currentTimeMillis()
-                                )
-                                .targetRowNumbers(null)
-                                .importOptions(
-                                        new ConcurrentHashMap<>(
-                                                importOptions
-                                        )
-                                )
-                                .build();
+                        buildContext(
+                                job,
+                                userId,
+                                plugin,
+                                importOptions,
+                                targetRowNumbers
+                        );
 
                 ImportSession session =
-                        ImportSession.builder()
-                                .jobId(jobId)
-                                .currentChunk(0)
-                                .processedRows(0)
-                                .successRows(0)
-                                .failedRows(0)
-                                .startTime(
-                                        System.currentTimeMillis()
-                                )
-                                .currentLifecycle(
-                                        ImportStatus.INITIALIZING
-                                )
-                                .build();
+                        buildSession(jobId);
 
                 ImportTemplate template =
-                        ImportTemplate.builder()
-                                .build();
+                        plugin.getTemplate();
+
+                if (template == null) {
+                    throw new IllegalStateException(
+                            "Import template configuration is missing "
+                                    + "for module "
+                                    + job.getModule()
+                                    + "."
+                    );
+                }
 
                 engineCoordinator.executeJob(
                         context,
@@ -289,33 +299,16 @@ public class ImportFacade {
                         template
                 );
 
-                ErpImportJob completedJob =
-                        jobRepository
-                                .findById(jobId)
-                                .orElseThrow(() ->
-                                        new IllegalStateException(
-                                                "Completed import job was not found."
-                                        )
-                                );
-
-                completedJob.setStatus(
-                        session.getCurrentLifecycle()
-                );
-                completedJob.setProcessedRows(
-                        session.getProcessedRows()
-                );
-                completedJob.setSuccessRows(
-                        session.getSuccessRows()
-                );
-                completedJob.setFailedRows(
-                        session.getFailedRows()
-                );
-                completedJob.setCompletedAt(
-                        LocalDateTime.now()
+                generateCorrectedWorkbookIfRequired(
+                        jobId,
+                        filePath,
+                        template,
+                        session
                 );
 
-                jobRepository.save(
-                        completedJob
+                updateCompletedJob(
+                        jobId,
+                        session
                 );
             } catch (Exception exception) {
                 log.error(
@@ -329,11 +322,246 @@ public class ImportFacade {
                         exception
                 );
             } finally {
-                deleteTemporaryFile(
-                        filePath
-                );
+                deleteTemporaryFile(filePath);
             }
         });
+    }
+
+    private Path resolveTemporaryFile(
+            ErpImportJob job
+    ) {
+        Path temporaryDirectory =
+                Path.of(
+                                System.getProperty(
+                                        "java.io.tmpdir"
+                                )
+                        )
+                        .toAbsolutePath()
+                        .normalize();
+
+        Path filePath =
+                temporaryDirectory
+                        .resolve(
+                                job.getUploadedFileName()
+                        )
+                        .normalize();
+
+        if (!filePath.startsWith(
+                temporaryDirectory
+        )) {
+            throw new SecurityException(
+                    "Uploaded import filename produced an invalid path."
+            );
+        }
+
+        return filePath;
+    }
+
+    private void markFileMissing(
+            ErpImportJob job
+    ) {
+        log.error(
+                "Import file was not found for job {}",
+                job.getJobId()
+        );
+
+        job.setStatus(
+                ImportStatus.FAILED
+        );
+
+        job.setLastCheckpoint(
+                "Import file was not found."
+        );
+
+        job.setCompletedAt(
+                LocalDateTime.now()
+        );
+
+        jobRepository.save(job);
+    }
+
+    private <DTO> ImportContext buildContext(
+            ErpImportJob job,
+            String userId,
+            ImportPlugin<DTO> plugin,
+            Map<String, Object> importOptions,
+            Set<Integer> targetRowNumbers
+    ) {
+        return ImportContext.builder()
+                .jobId(job.getJobId())
+                .branchId(job.getBranchId())
+                .userId(userId)
+                .locale("en")
+                .timeZone(
+                        ZoneId.systemDefault()
+                )
+                .importMode(
+                        job.getImportMode()
+                )
+                .chunkSize(
+                        plugin.getManifest()
+                                .getDefaultChunkSize()
+                )
+                .fileHash(
+                        job.getFileHash()
+                )
+                .uploadedFileName(
+                        job.getUploadedFileName()
+                )
+                .startTime(
+                        System.currentTimeMillis()
+                )
+                .targetRowNumbers(
+                        targetRowNumbers
+                )
+                .importOptions(
+                        new ConcurrentHashMap<>(
+                                importOptions
+                        )
+                )
+                .build();
+    }
+
+    private ImportSession buildSession(
+            String jobId
+    ) {
+        return ImportSession.builder()
+                .jobId(jobId)
+                .currentChunk(0)
+                .processedRows(0)
+                .successRows(0)
+                .failedRows(0)
+                .startTime(
+                        System.currentTimeMillis()
+                )
+                .currentLifecycle(
+                        ImportStatus.INITIALIZING
+                )
+                .build();
+    }
+
+    private void generateCorrectedWorkbookIfRequired(
+            String jobId,
+            Path filePath,
+            ImportTemplate template,
+            ImportSession session
+    ) {
+        if (
+                session.getFailedRows() <= 0
+                        || filePath == null
+                        || !Files.isRegularFile(filePath)
+        ) {
+            return;
+        }
+
+        try {
+            Path correctedWorkbook =
+                    correctedWorkbookService
+                            .generateCorrectedWorkbook(
+                                    jobId,
+                                    filePath,
+                                    template
+                            );
+
+            if (correctedWorkbook != null) {
+                log.info(
+                        "Corrected workbook generated for import job {}: {}",
+                        jobId,
+                        correctedWorkbook.getFileName()
+                );
+            }
+        } catch (Exception exception) {
+            /*
+             * Successful rows may already have committed independently.
+             * A report-generation failure must not mark the completed
+             * database import as failed.
+             */
+            log.error(
+                    "Import job {} completed with row errors, but corrected "
+                            + "workbook generation failed.",
+                    jobId,
+                    exception
+            );
+        }
+    }
+
+    private void updateCompletedJob(
+            String jobId,
+            ImportSession session
+    ) {
+        ErpImportJob completedJob =
+                jobRepository.findById(jobId)
+                        .orElseThrow(() ->
+                                new IllegalStateException(
+                                        "Completed import job was not found."
+                                )
+                        );
+
+        completedJob.setStatus(
+                session.getCurrentLifecycle()
+        );
+
+        completedJob.setProcessedRows(
+                session.getProcessedRows()
+        );
+
+        completedJob.setSuccessRows(
+                session.getSuccessRows()
+        );
+
+        completedJob.setFailedRows(
+                session.getFailedRows()
+        );
+
+        completedJob.setCompletedAt(
+                LocalDateTime.now()
+        );
+
+        jobRepository.save(completedJob);
+    }
+
+    private Set<Integer> normalizeTargetRows(
+            ImportMode mode,
+            Set<Integer> targetRowNumbers
+    ) {
+        if (mode != ImportMode.RETRY_FAILED_ROWS) {
+            if (
+                    targetRowNumbers != null
+                            && !targetRowNumbers.isEmpty()
+            ) {
+                throw new IllegalArgumentException(
+                        "Target row numbers can be used only "
+                                + "for Retry Failed Rows."
+                );
+            }
+
+            return null;
+        }
+
+        if (
+                targetRowNumbers == null
+                        || targetRowNumbers.isEmpty()
+        ) {
+            throw new IllegalArgumentException(
+                    "No failed Excel rows were found for retry."
+            );
+        }
+
+        for (Integer rowNumber : targetRowNumbers) {
+            if (
+                    rowNumber == null
+                            || rowNumber <= 1
+            ) {
+                throw new IllegalArgumentException(
+                        "Retry row numbers must reference "
+                                + "physical Excel data rows."
+                );
+            }
+        }
+
+        return Set.copyOf(
+                targetRowNumbers
+        );
     }
 
     private void validateSubmission(
@@ -386,6 +614,16 @@ public class ImportFacade {
                     "Uploaded import filename is required."
             );
         }
+
+        if (
+                uploadedFileName.contains("/")
+                        || uploadedFileName.contains("\\")
+                        || uploadedFileName.contains("..")
+        ) {
+            throw new IllegalArgumentException(
+                    "Uploaded import filename is invalid."
+            );
+        }
     }
 
     private void validatePositiveInteger(
@@ -394,9 +632,7 @@ public class ImportFacade {
     ) {
         try {
             int parsed =
-                    Integer.parseInt(
-                            value
-                    );
+                    Integer.parseInt(value);
 
             if (parsed <= 0) {
                 throw new NumberFormatException();
@@ -414,22 +650,20 @@ public class ImportFacade {
     ) {
         try {
             ErpImportJob job =
-                    jobRepository
-                            .findById(jobId)
+                    jobRepository.findById(jobId)
                             .orElseThrow();
 
             job.setStatus(
                     ImportStatus.FAILED
             );
 
-            String safeMessage =
-                    buildSafeFailureMessage(
-                            exception
-                    );
-
             job.setLastCheckpoint(
-                    "ERROR: " + safeMessage
+                    "ERROR: "
+                            + buildSafeFailureMessage(
+                            exception
+                    )
             );
+
             job.setCompletedAt(
                     LocalDateTime.now()
             );
@@ -463,6 +697,7 @@ public class ImportFacade {
             );
         }
     }
+
     private String buildSafeFailureMessage(
             Exception exception
     ) {

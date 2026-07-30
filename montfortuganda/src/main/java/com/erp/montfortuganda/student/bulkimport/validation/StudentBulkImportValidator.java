@@ -7,12 +7,12 @@ import com.erp.montfortuganda.student.bulkimport.dto.StudentBulkImportRow;
 import com.erp.montfortuganda.student.bulkimport.excel.StudentExcelHeaders;
 import com.erp.montfortuganda.student.bulkimport.excel.StudentExcelValueParser;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService;
+import com.erp.montfortuganda.student.bulkimport.reference.StudentEducationClassNormalizer;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.AcademicYearReference;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.ClassReference;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.LevelReference;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.SectionReference;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.StudentBulkReferenceData;
-import com.erp.montfortuganda.student.entity.ErpParent.PreferredContact;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,7 +26,13 @@ import java.util.regex.Pattern;
 
 /**
  * Validates Student Excel rows without creating or updating database records.
- * Invalid rows receive field-level errors and are excluded from insertion.
+ *
+ * <p>Every physical Student Excel cell is optional. Blank values are accepted
+ * and are resolved later by the secure bulk-request mapper. Values that are
+ * supplied by the user are still checked for valid format, length and
+ * branch-scoped reference compatibility.</p>
+ *
+ * <p>Completely blank rows are skipped.</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -106,12 +112,6 @@ public class StudentBulkImportValidator
                 errors
         );
 
-        validateBranch(
-                row,
-                references,
-                errors
-        );
-
         validateAcademicPlacement(
                 row,
                 references,
@@ -119,8 +119,7 @@ public class StudentBulkImportValidator
         );
 
         validateAdmissionType(
-                row,
-                errors
+                row
         );
 
         validateJoiningDate(
@@ -297,13 +296,6 @@ public class StudentBulkImportValidator
         }
 
         if (admissionYear == null) {
-            addError(
-                    errors,
-                    StudentExcelHeaders.ADMISSION_YEAR,
-                    row.getAdmissionYear(),
-                    "STUDENT_ADMISSION_YEAR_REQUIRED",
-                    "Admission Year is required."
-            );
             return;
         }
 
@@ -334,15 +326,10 @@ public class StudentBulkImportValidator
                         row.getFirstName()
                 );
 
-        if (firstName == null) {
-            addError(
-                    errors,
-                    StudentExcelHeaders.FIRST_NAME,
-                    row.getFirstName(),
-                    "STUDENT_REQUIRED_VALUE_MISSING",
-                    "First Name is required."
-            );
-        } else if (firstName.length() > 100) {
+        if (
+                firstName != null
+                        && firstName.length() > 100
+        ) {
             addError(
                     errors,
                     StudentExcelHeaders.FIRST_NAME,
@@ -375,8 +362,16 @@ public class StudentBulkImportValidator
             StudentBulkImportRow row,
             List<ValidationResult.ValidationError> errors
     ) {
+        if (
+                valueParser.nullableText(
+                        row.getGender()
+                ) == null
+        ) {
+            return;
+        }
+
         try {
-            valueParser.requiredGender(
+            valueParser.nullableGender(
                     row.getGender()
             );
         } catch (IllegalArgumentException exception) {
@@ -402,7 +397,7 @@ public class StudentBulkImportValidator
 
         try {
             dateOfBirth =
-                    valueParser.requiredDate(
+                    valueParser.nullableDate(
                             row.getDateOfBirth(),
                             StudentExcelHeaders.DATE_OF_BIRTH
                     );
@@ -417,6 +412,10 @@ public class StudentBulkImportValidator
             return;
         }
 
+        if (dateOfBirth == null) {
+            return;
+        }
+
         if (!dateOfBirth.isBefore(LocalDate.now())) {
             addError(
                     errors,
@@ -424,51 +423,6 @@ public class StudentBulkImportValidator
                     row.getDateOfBirth(),
                     "STUDENT_DATE_OF_BIRTH_NOT_PAST",
                     "Date of Birth must be before today."
-            );
-        }
-    }
-
-    // =====================================================================
-    // BRANCH
-    // =====================================================================
-
-    private void validateBranch(
-            StudentBulkImportRow row,
-            StudentBulkReferenceData references,
-            List<ValidationResult.ValidationError> errors
-    ) {
-        String branch =
-                valueParser.nullableText(
-                        row.getBranch()
-                );
-
-        if (branch == null) {
-            addError(
-                    errors,
-                    StudentExcelHeaders.BRANCH,
-                    row.getBranch(),
-                    "STUDENT_BRANCH_REQUIRED",
-                    "Branch is required."
-            );
-            return;
-        }
-
-        String normalizedBranch =
-                valueParser.normalizeLookupKey(
-                        branch
-                );
-
-        if (
-                !references.matchesBranch(
-                        normalizedBranch
-                )
-        ) {
-            addError(
-                    errors,
-                    StudentExcelHeaders.BRANCH,
-                    row.getBranch(),
-                    "STUDENT_BRANCH_MISMATCH",
-                    "Branch does not match the authenticated Branch Admin branch."
             );
         }
     }
@@ -489,10 +443,17 @@ public class StudentBulkImportValidator
                         errors
                 );
 
+        NormalizedPlacement normalizedPlacement =
+                normalizePlacement(
+                        row,
+                        errors
+                );
+
         LevelReference level =
                 resolveLevel(
                         row,
                         references,
+                        normalizedPlacement,
                         errors
                 );
 
@@ -500,25 +461,10 @@ public class StudentBulkImportValidator
                 resolveClass(
                         row,
                         references,
+                        level,
+                        normalizedPlacement,
                         errors
                 );
-
-        if (
-                level != null
-                        && schoolClass != null
-                        && !references.classBelongsToLevel(
-                        schoolClass,
-                        level
-                )
-        ) {
-            addError(
-                    errors,
-                    StudentExcelHeaders.CLASS_NAME,
-                    row.getClassName(),
-                    "STUDENT_CLASS_LEVEL_MISMATCH",
-                    "Class does not belong to the selected Education Level."
-            );
-        }
 
         validateSection(
                 row,
@@ -529,6 +475,10 @@ public class StudentBulkImportValidator
         );
     }
 
+    /**
+     * Blank Academic Year uses the current active Academic Year. When no
+     * current year is marked, the latest active/planned year is used.
+     */
     private AcademicYearReference resolveAcademicYear(
             StudentBulkImportRow row,
             StudentBulkReferenceData references,
@@ -540,14 +490,20 @@ public class StudentBulkImportValidator
                 );
 
         if (academicYearValue == null) {
-            addError(
-                    errors,
-                    StudentExcelHeaders.ACADEMIC_YEAR,
-                    row.getAcademicYear(),
-                    "STUDENT_ACADEMIC_YEAR_REQUIRED",
-                    "Academic Year is required."
-            );
-            return null;
+            AcademicYearReference defaultYear =
+                    references.findDefaultAcademicYear();
+
+            if (defaultYear == null) {
+                addError(
+                        errors,
+                        StudentExcelHeaders.ACADEMIC_YEAR,
+                        row.getAcademicYear(),
+                        "STUDENT_ACADEMIC_YEAR_NOT_CONFIGURED",
+                        "No active or planned Academic Year is configured."
+                );
+            }
+
+            return defaultYear;
         }
 
         AcademicYearReference academicYear =
@@ -563,93 +519,285 @@ public class StudentBulkImportValidator
                     StudentExcelHeaders.ACADEMIC_YEAR,
                     row.getAcademicYear(),
                     "STUDENT_ACADEMIC_YEAR_NOT_FOUND",
-                    "Academic Year does not exist or is inactive."
+                    "Academic Year '"
+                            + academicYearValue
+                            + "' does not exist or is inactive."
             );
         }
 
         return academicYear;
     }
 
-    private LevelReference resolveLevel(
+    /**
+     * Converts workbook Education Level and Class labels into canonical ERP
+     * values before branch-scoped reference resolution.
+     *
+     * <p>Supported canonical placement:</p>
+     *
+     * <ul>
+     *     <li>NURSERY: N1, N2, N3</li>
+     *     <li>PRIMARY: P1 to P7</li>
+     *     <li>SECONDARY: S1 to S4</li>
+     *     <li>SENIOR SECONDARY: S5 and S6</li>
+     * </ul>
+     */
+    private NormalizedPlacement normalizePlacement(
             StudentBulkImportRow row,
-            StudentBulkReferenceData references,
             List<ValidationResult.ValidationError> errors
     ) {
-        String levelValue =
+        String rawLevel =
                 valueParser.nullableText(
                         row.getEducationLevel()
                 );
 
-        if (levelValue == null) {
+        String rawClass =
+                valueParser.nullableText(
+                        row.getClassName()
+                );
+
+        String canonicalLevel = null;
+        String canonicalClass = null;
+
+        if (rawLevel != null) {
+            try {
+                canonicalLevel =
+                        StudentEducationClassNormalizer
+                                .normalizeLevel(
+                                        rawLevel
+                                );
+            } catch (IllegalArgumentException exception) {
+                addError(
+                        errors,
+                        StudentExcelHeaders.EDUCATION_LEVEL,
+                        row.getEducationLevel(),
+                        "STUDENT_EDUCATION_LEVEL_INVALID",
+                        exception.getMessage()
+                );
+            }
+        }
+
+        if (rawClass != null) {
+            try {
+                canonicalClass =
+                        StudentEducationClassNormalizer
+                                .normalizeClass(
+                                        rawClass,
+                                        canonicalLevel
+                                );
+            } catch (IllegalArgumentException exception) {
+                addError(
+                        errors,
+                        StudentExcelHeaders.CLASS_NAME,
+                        row.getClassName(),
+                        "STUDENT_CLASS_FORMAT_INVALID",
+                        exception.getMessage()
+                );
+            }
+        }
+
+        String inferredLevel = null;
+
+        if (canonicalClass != null) {
+            inferredLevel =
+                    StudentEducationClassNormalizer
+                            .inferLevelFromClass(
+                                    canonicalClass
+                            );
+        }
+
+        if (
+                canonicalLevel != null
+                        && inferredLevel != null
+                        && !canonicalLevel.equals(
+                        inferredLevel
+                )
+        ) {
+            addError(
+                    errors,
+                    StudentExcelHeaders.CLASS_NAME,
+                    row.getClassName(),
+                    "STUDENT_LEVEL_CLASS_MISMATCH",
+                    "Class "
+                            + canonicalClass
+                            + " belongs to "
+                            + inferredLevel
+                            + ", but Education Level is "
+                            + canonicalLevel
+                            + "."
+            );
+
+            return new NormalizedPlacement(
+                    canonicalLevel,
+                    canonicalClass,
+                    true
+            );
+        }
+
+        if (canonicalLevel == null) {
+            canonicalLevel = inferredLevel;
+        }
+
+        return new NormalizedPlacement(
+                canonicalLevel,
+                canonicalClass,
+                false
+        );
+    }
+
+    /**
+     * Blank Education Level is inferred from Class when possible. When both
+     * are blank, the branch default level is used.
+     */
+    private LevelReference resolveLevel(
+            StudentBulkImportRow row,
+            StudentBulkReferenceData references,
+            NormalizedPlacement normalizedPlacement,
+            List<ValidationResult.ValidationError> errors
+    ) {
+        if (normalizedPlacement.conflict()) {
+            return null;
+        }
+
+        String canonicalLevel =
+                normalizedPlacement.educationLevel();
+
+        LevelReference level;
+
+        if (canonicalLevel == null) {
+            level = references.findDefaultLevel();
+        } else {
+            level = references.findLevel(
+                    canonicalLevel
+            );
+        }
+
+        if (level != null) {
+            return level;
+        }
+
+        if (canonicalLevel == null) {
             addError(
                     errors,
                     StudentExcelHeaders.EDUCATION_LEVEL,
                     row.getEducationLevel(),
-                    "STUDENT_EDUCATION_LEVEL_REQUIRED",
-                    "Education Level is required."
+                    "STUDENT_EDUCATION_LEVEL_NOT_CONFIGURED",
+                    "No active Education Level is configured for this branch."
             );
-            return null;
-        }
-
-        LevelReference level =
-                references.findLevel(
-                        valueParser.normalizeLookupKey(
-                                levelValue
-                        )
-                );
-
-        if (level == null) {
+        } else {
             addError(
                     errors,
                     StudentExcelHeaders.EDUCATION_LEVEL,
                     row.getEducationLevel(),
                     "STUDENT_EDUCATION_LEVEL_NOT_FOUND",
-                    "Education Level is not available for this branch."
+                    "Education Level '"
+                            + row.getEducationLevel()
+                            + "' was normalized to "
+                            + canonicalLevel
+                            + ", but that level is not configured for this branch."
             );
         }
 
-        return level;
+        return null;
     }
 
+    /**
+     * Resolves the canonical Class inside the selected branch Education
+     * Level. Blank Class uses the first active class in that level.
+     */
     private ClassReference resolveClass(
             StudentBulkImportRow row,
             StudentBulkReferenceData references,
+            LevelReference level,
+            NormalizedPlacement normalizedPlacement,
             List<ValidationResult.ValidationError> errors
     ) {
-        String classValue =
-                valueParser.nullableText(
-                        row.getClassName()
-                );
-
-        if (classValue == null) {
-            addError(
-                    errors,
-                    StudentExcelHeaders.CLASS_NAME,
-                    row.getClassName(),
-                    "STUDENT_CLASS_REQUIRED",
-                    "Class is required."
-            );
+        if (
+                level == null
+                        || normalizedPlacement.conflict()
+        ) {
             return null;
         }
 
+        String canonicalClass =
+                normalizedPlacement.classCode();
+
         ClassReference schoolClass =
                 references.findClass(
-                        valueParser.normalizeLookupKey(
-                                classValue
-                        )
+                        level,
+                        canonicalClass
                 );
 
-        if (schoolClass == null) {
+        if (schoolClass != null) {
+            return schoolClass;
+        }
+
+        if (canonicalClass == null) {
             addError(
                     errors,
                     StudentExcelHeaders.CLASS_NAME,
                     row.getClassName(),
-                    "STUDENT_CLASS_NOT_FOUND",
-                    "Class does not exist or is unavailable for this branch."
+                    "STUDENT_CLASS_NOT_CONFIGURED",
+                    "No active Class is configured under the resolved Education Level."
             );
+
+            return null;
         }
 
-        return schoolClass;
+        addError(
+                errors,
+                StudentExcelHeaders.CLASS_NAME,
+                row.getClassName(),
+                "STUDENT_CLASS_NOT_FOUND",
+                "Class '"
+                        + row.getClassName()
+                        + "' was normalized to "
+                        + canonicalClass
+                        + ", but it is not configured under the resolved Education Level. "
+                        + acceptedClassMessage(
+                        normalizedPlacement.educationLevel()
+                )
+        );
+
+        return null;
+    }
+
+    private String acceptedClassMessage(
+            String canonicalLevel
+    ) {
+        if (
+                StudentEducationClassNormalizer.LEVEL_NURSERY
+                        .equals(canonicalLevel)
+        ) {
+            return "Accepted Nursery values include Baby/N1/KG1, "
+                    + "Middle/M-C/N2/KG2, and Top/N3/KG3.";
+        }
+
+        if (
+                StudentEducationClassNormalizer.LEVEL_PRIMARY
+                        .equals(canonicalLevel)
+        ) {
+            return "Accepted Primary values include P1 to P7, "
+                    + "including forms such as P.1, P-1 and Primary 1.";
+        }
+
+        if (
+                StudentEducationClassNormalizer.LEVEL_SECONDARY
+                        .equals(canonicalLevel)
+        ) {
+            return "Accepted Secondary values include S1 to S4, "
+                    + "including forms such as S.1, S-1 and Secondary 1.";
+        }
+
+        if (
+                StudentEducationClassNormalizer
+                        .LEVEL_SENIOR_SECONDARY
+                        .equals(canonicalLevel)
+        ) {
+            return "Accepted Senior Secondary values are S5 and S6, "
+                    + "including forms such as S.5 and S-5.";
+        }
+
+        return "Use a class configured for the selected Education Level.";
     }
 
     private void validateSection(
@@ -690,9 +838,18 @@ public class StudentBulkImportValidator
                     StudentExcelHeaders.SECTION,
                     row.getSection(),
                     "STUDENT_SECTION_NOT_FOUND",
-                    "Section does not belong to the selected Academic Year and Class."
+                    "Section '"
+                            + sectionValue
+                            + "' does not belong to the resolved Academic Year and Class."
             );
         }
+    }
+
+    private record NormalizedPlacement(
+            String educationLevel,
+            String classCode,
+            boolean conflict
+    ) {
     }
 
     // =====================================================================
@@ -700,20 +857,21 @@ public class StudentBulkImportValidator
     // =====================================================================
 
     private void validateAdmissionType(
-            StudentBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
+            StudentBulkImportRow row
     ) {
         try {
             valueParser.requiredAdmissionType(
                     row.getAdmissionType()
             );
         } catch (IllegalArgumentException exception) {
-            addError(
-                    errors,
-                    StudentExcelHeaders.ADMISSION_TYPE,
-                    row.getAdmissionType(),
-                    "STUDENT_ADMISSION_TYPE_INVALID",
-                    exception.getMessage()
+            /*
+             * Admission Type is generated internally as NEW.
+             * An invalid value therefore indicates a backend mapping
+             * problem rather than an editable Excel-cell error.
+             */
+            throw new IllegalStateException(
+                    "Generated Student Admission Type is invalid.",
+                    exception
             );
         }
     }
@@ -730,28 +888,36 @@ public class StudentBulkImportValidator
 
         try {
             joiningDate =
-                    valueParser.requiredDate(
+                    valueParser.nullableDate(
                             row.getJoiningDate(),
                             StudentExcelHeaders.JOINING_DATE
                     );
         } catch (IllegalArgumentException exception) {
+            /*
+             * Joining Date is generated from Admission Year. Therefore,
+             * the correction must point to the real Admission Year column.
+             */
             addError(
                     errors,
-                    StudentExcelHeaders.JOINING_DATE,
-                    row.getJoiningDate(),
+                    StudentExcelHeaders.ADMISSION_YEAR,
+                    row.getAdmissionYear(),
                     "STUDENT_JOINING_DATE_INVALID",
-                    exception.getMessage()
+                    "Admission Year could not generate a valid Joining Date."
             );
+            return;
+        }
+
+        if (joiningDate == null) {
             return;
         }
 
         if (joiningDate.isAfter(LocalDate.now())) {
             addError(
                     errors,
-                    StudentExcelHeaders.JOINING_DATE,
-                    row.getJoiningDate(),
+                    StudentExcelHeaders.ADMISSION_YEAR,
+                    row.getAdmissionYear(),
                     "STUDENT_JOINING_DATE_FUTURE",
-                    "Joining Date cannot be in the future."
+                    "Admission Year generates a Joining Date in the future."
             );
         }
     }
@@ -788,10 +954,10 @@ public class StudentBulkImportValidator
         ) {
             addError(
                     errors,
-                    StudentExcelHeaders.JOINING_DATE,
-                    row.getJoiningDate(),
+                    StudentExcelHeaders.DATE_OF_BIRTH,
+                    row.getDateOfBirth(),
                     "STUDENT_DATE_ORDER_INVALID",
-                    "Joining Date must be after Date of Birth."
+                    "Date of Birth must be before the start of the Admission Year."
             );
         }
     }
@@ -804,151 +970,31 @@ public class StudentBulkImportValidator
             StudentBulkImportRow row,
             List<ValidationResult.ValidationError> errors
     ) {
-        PreferredContact preferredContact =
-                parsePreferredContact(
-                        row,
-                        errors
+        /*
+         * Parent and Guardian Excel cells are optional.
+         *
+         * Preferred Contact, Fee Responsibility and
+         * Parents Living Together are generated by the backend mapper.
+         * Therefore a blank Parent/Guardian group does not invalidate
+         * the Student row.
+         */
+        String preferredContactValue =
+                valueParser.nullableText(
+                        row.getPreferredContact()
                 );
 
-        validateFeeResponsibility(
-                row,
-                errors
-        );
-
-        validateParentsLivingTogether(
-                row,
-                errors
-        );
-
-        if (preferredContact == null) {
+        if (preferredContactValue == null) {
             return;
         }
 
-        switch (preferredContact) {
-            case FATHER ->
-                    validatePreferredName(
-                            row.getFatherOrGuardianName(),
-                            StudentExcelHeaders
-                                    .FATHER_OR_GUARDIAN_NAME,
-                            "Father Name is required when Preferred Contact is FATHER.",
-                            errors
-                    );
-
-            case MOTHER ->
-                    validatePreferredName(
-                            row.getMotherOrGuardianName(),
-                            StudentExcelHeaders
-                                    .MOTHER_OR_GUARDIAN_NAME,
-                            "Mother Name is required when Preferred Contact is MOTHER.",
-                            errors
-                    );
-
-            case GUARDIAN -> {
-                validatePreferredName(
-                        row.getFatherOrGuardianName(),
-                        StudentExcelHeaders
-                                .FATHER_OR_GUARDIAN_NAME,
-                        "Guardian Name is required when Preferred Contact is GUARDIAN.",
-                        errors
-                );
-
-                String relationship =
-                        valueParser.nullableText(
-                                row.getGuardianRelationship()
-                        );
-
-                if (relationship == null) {
-                    addError(
-                            errors,
-                            StudentExcelHeaders
-                                    .GUARDIAN_RELATIONSHIP,
-                            row.getGuardianRelationship(),
-                            "STUDENT_GUARDIAN_RELATIONSHIP_REQUIRED",
-                            "Guardian Relationship is required when Preferred Contact is GUARDIAN."
-                    );
-                }
-            }
-        }
-    }
-
-    private PreferredContact parsePreferredContact(
-            StudentBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
-    ) {
         try {
-            return valueParser.requiredPreferredContact(
-                    row.getPreferredContact()
+            valueParser.nullablePreferredContact(
+                    preferredContactValue
             );
         } catch (IllegalArgumentException exception) {
-            addError(
-                    errors,
-                    StudentExcelHeaders.PREFERRED_CONTACT,
-                    row.getPreferredContact(),
-                    "STUDENT_PREFERRED_CONTACT_INVALID",
-                    exception.getMessage()
-            );
-
-            return null;
-        }
-    }
-
-    private void validateFeeResponsibility(
-            StudentBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
-    ) {
-        try {
-            valueParser.requiredFeeResponsibility(
-                    row.getFeeResponsibility()
-            );
-        } catch (IllegalArgumentException exception) {
-            addError(
-                    errors,
-                    StudentExcelHeaders.FEE_RESPONSIBILITY,
-                    row.getFeeResponsibility(),
-                    "STUDENT_FEE_RESPONSIBILITY_INVALID",
-                    exception.getMessage()
-            );
-        }
-    }
-
-    private void validateParentsLivingTogether(
-            StudentBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
-    ) {
-        try {
-            valueParser.requiredYesNo(
-                    row.getParentsLivingTogether(),
-                    StudentExcelHeaders.PARENTS_LIVING_TOGETHER
-            );
-        } catch (IllegalArgumentException exception) {
-            addError(
-                    errors,
-                    StudentExcelHeaders
-                            .PARENTS_LIVING_TOGETHER,
-                    row.getParentsLivingTogether(),
-                    "STUDENT_PARENTS_LIVING_TOGETHER_INVALID",
-                    exception.getMessage()
-            );
-        }
-    }
-
-    private void validatePreferredName(
-            String value,
-            String columnName,
-            String message,
-            List<ValidationResult.ValidationError> errors
-    ) {
-        if (
-                valueParser.nullableText(
-                        value
-                ) == null
-        ) {
-            addError(
-                    errors,
-                    columnName,
-                    value,
-                    "STUDENT_PREFERRED_CONTACT_NAME_REQUIRED",
-                    message
+            throw new IllegalStateException(
+                    "Generated Student Preferred Contact is invalid.",
+                    exception
             );
         }
     }
@@ -990,7 +1036,7 @@ public class StudentBulkImportValidator
             StudentBulkImportRow row,
             List<ValidationResult.ValidationError> errors
     ) {
-        validateRequiredMobile(
+        validateOptionalMobile(
                 row.getMobileNumber(),
                 errors
         );
@@ -1001,7 +1047,7 @@ public class StudentBulkImportValidator
         );
     }
 
-    private void validateRequiredMobile(
+    private void validateOptionalMobile(
             String value,
             List<ValidationResult.ValidationError> errors
     ) {
@@ -1011,13 +1057,6 @@ public class StudentBulkImportValidator
                 );
 
         if (mobile == null) {
-            addError(
-                    errors,
-                    StudentExcelHeaders.MOBILE_NUMBER,
-                    value,
-                    "STUDENT_MOBILE_REQUIRED",
-                    "Mobile No is required."
-            );
             return;
         }
 
@@ -1135,13 +1174,6 @@ public class StudentBulkImportValidator
             StudentBulkImportRow row,
             List<ValidationResult.ValidationError> errors
     ) {
-        validateOptionalLength(
-                row.getBranch(),
-                StudentExcelHeaders.BRANCH,
-                150,
-                errors
-        );
-
         validateOptionalLength(
                 row.getEducationLevel(),
                 StudentExcelHeaders.EDUCATION_LEVEL,

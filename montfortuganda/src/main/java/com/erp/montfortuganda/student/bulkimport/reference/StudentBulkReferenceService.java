@@ -11,9 +11,11 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -25,11 +27,12 @@ import java.util.Set;
  * every Student row. This prevents repeated database queries for Academic
  * Year, Education Level, Class and Section.
  *
- * The Excel Branch value is used only to verify the authenticated branch.
- * It must never be used to select another branch.
+ * Branch ownership is taken only from the authenticated import context.
+ * Excel cannot choose or change the branch.
  */
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("SpellCheckingInspection")
 public class StudentBulkReferenceService {
 
     private final EntityManager entityManager;
@@ -675,6 +678,39 @@ public class StudentBulkReferenceService {
         private final Map<String, SectionReference>
                 sectionsByCompositeKey;
 
+        private final List<AcademicYearReference>
+                academicYearsOrdered;
+
+        private final List<LevelReference>
+                levelsOrdered;
+
+        private final Map<Integer, LevelReference>
+                levelsById;
+
+        private final Map<Integer, List<ClassReference>>
+                classesByLevelId;
+
+        private final Map<String, ClassReference>
+                classesByLevelAndKey;
+
+        /**
+         * Canonical branch Education Levels keyed by:
+         * NURSERY, PRIMARY, SECONDARY and SENIOR SECONDARY.
+         */
+        private final Map<String, LevelReference>
+                levelsByCanonicalKey;
+
+        /**
+         * Canonical branch Classes keyed by:
+         * canonical-level + ':' + canonical-class.
+         *
+         * Examples:
+         * NURSERY:N1, PRIMARY:P4, SECONDARY:S3,
+         * SENIOR SECONDARY:S6.
+         */
+        private final Map<String, ClassReference>
+                classesByCanonicalKey;
+
         private StudentBulkReferenceData(
                 BranchReference branch,
                 Set<String> branchKeys,
@@ -693,27 +729,48 @@ public class StudentBulkReferenceService {
                     Map.copyOf(classesByKey);
             this.sectionsByCompositeKey =
                     Map.copyOf(sectionsByCompositeKey);
+
+            this.academicYearsOrdered =
+                    buildAcademicYears(
+                            academicYearsByKey
+                    );
+
+            this.levelsOrdered =
+                    buildLevels(
+                            levelsByKey
+                    );
+
+            this.levelsById =
+                    buildLevelsById(
+                            this.levelsOrdered
+                    );
+
+            this.classesByLevelId =
+                    buildClassesByLevel(
+                            classesByKey
+                    );
+
+            this.classesByLevelAndKey =
+                    buildClassesByLevelAndKey(
+                            classesByKey
+                    );
+
+            this.levelsByCanonicalKey =
+                    buildCanonicalLevels(
+                            this.levelsOrdered
+                    );
+
+            this.classesByCanonicalKey =
+                    buildCanonicalClasses(
+                            classesByKey,
+                            this.levelsById
+                    );
         }
 
         public Integer getBranchId() {
             return branch != null
                     ? branch.getBranchId()
                     : null;
-        }
-
-        /**
-         * Validates the Excel Branch cell against the authenticated branch.
-         *
-         * The supplied key must already be normalized with
-         * StudentExcelValueParser.normalizeLookupKey().
-         */
-        public boolean matchesBranch(
-                String normalizedBranchKey
-        ) {
-            return normalizedBranchKey != null
-                    && branchKeys.contains(
-                    normalizedBranchKey
-            );
         }
 
         public AcademicYearReference findAcademicYear(
@@ -728,6 +785,16 @@ public class StudentBulkReferenceService {
             );
         }
 
+        /**
+         * Returns the current Academic Year when configured, otherwise the
+         * latest active/planned Academic Year loaded by the reference query.
+         */
+        public AcademicYearReference findDefaultAcademicYear() {
+            return academicYearsOrdered.isEmpty()
+                    ? null
+                    : academicYearsOrdered.getFirst();
+        }
+
         public LevelReference findLevel(
                 String normalizedKey
         ) {
@@ -735,9 +802,98 @@ public class StudentBulkReferenceService {
                 return null;
             }
 
-            return levelsByKey.get(
-                    normalizedKey
+            LevelReference exact =
+                    levelsByKey.get(
+                            normalizedKey
+                    );
+
+            if (exact != null) {
+                return exact;
+            }
+
+            String canonicalLevel =
+                    safelyNormalizeLevel(
+                            normalizedKey
+                    );
+
+            return canonicalLevel == null
+                    ? null
+                    : levelsByCanonicalKey.get(
+                    canonicalLevel
             );
+        }
+
+        public LevelReference findLevelById(
+                Integer levelId
+        ) {
+            if (levelId == null) {
+                return null;
+            }
+
+            return levelsById.get(levelId);
+        }
+
+        /**
+         * Infers a level from a supplied class. Nursery aliases such as
+         * Baby, KG1, KG2, KG3, Middle and Top resolve to the Nursery level.
+         */
+        public LevelReference findLevelForClass(
+                String normalizedClassKey
+        ) {
+            if (normalizedClassKey == null) {
+                return null;
+            }
+
+            ClassReference exactClass =
+                    classesByKey.get(
+                            normalizedClassKey
+                    );
+
+            if (
+                    exactClass != null
+                            && exactClass.getLevelId() != null
+            ) {
+                return findLevelById(
+                        exactClass.getLevelId()
+                );
+            }
+
+            String canonicalClass =
+                    safelyNormalizeClass(
+                            normalizedClassKey,
+                            null
+                    );
+
+            if (canonicalClass == null) {
+                return null;
+            }
+
+            String canonicalLevel =
+                    StudentEducationClassNormalizer
+                            .inferLevelFromClass(
+                                    canonicalClass
+                            );
+
+            return levelsByCanonicalKey.get(
+                    canonicalLevel
+            );
+        }
+
+        /**
+         * Blank Education Level defaults to Nursery when the branch offers
+         * Nursery. Otherwise, the first active branch level is used.
+         */
+        public LevelReference findDefaultLevel() {
+            LevelReference nursery =
+                    findNurseryLevel();
+
+            if (nursery != null) {
+                return nursery;
+            }
+
+            return levelsOrdered.isEmpty()
+                    ? null
+                    : levelsOrdered.getFirst();
         }
 
         public ClassReference findClass(
@@ -750,6 +906,125 @@ public class StudentBulkReferenceService {
             return classesByKey.get(
                     normalizedKey
             );
+        }
+
+        /**
+         * Resolves a class inside the selected Education Level.
+         *
+         * <p>For Nursery, common workbook labels are accepted even when the
+         * database uses different names:</p>
+         *
+         * <ul>
+         *     <li>Baby / Baby Class / KG1 / Nursery 1</li>
+         *     <li>KG2 / Middle / Middle Class / Nursery 2</li>
+         *     <li>KG3 / Top / Top Class / Nursery 3</li>
+         * </ul>
+         *
+         * <p>When Class is blank, the first active class in the selected
+         * level is returned.</p>
+         */
+        public ClassReference findClass(
+                LevelReference level,
+                String normalizedClassKey
+        ) {
+            if (level == null || level.getLevelId() == null) {
+                return findClass(normalizedClassKey);
+            }
+
+            if (normalizedClassKey == null) {
+                return findDefaultClass(level);
+            }
+
+            String compositeKey =
+                    level.getLevelId()
+                            + ":"
+                            + normalizedClassKey;
+
+            ClassReference exact =
+                    classesByLevelAndKey.get(
+                            compositeKey
+                    );
+
+            if (exact != null) {
+                return exact;
+            }
+
+            ClassReference global =
+                    classesByKey.get(
+                            normalizedClassKey
+                    );
+
+            if (
+                    global != null
+                            && level.getLevelId()
+                            .equals(
+                                    global.getLevelId()
+                            )
+            ) {
+                return global;
+            }
+
+            String canonicalLevel =
+                    safelyNormalizeLevel(
+                            level.getLevelName()
+                    );
+
+            String canonicalClass =
+                    safelyNormalizeClass(
+                            normalizedClassKey,
+                            canonicalLevel
+                    );
+
+            if (
+                    canonicalLevel != null
+                            && canonicalClass != null
+            ) {
+                ClassReference canonicalMatch =
+                        classesByCanonicalKey.get(
+                                canonicalLevel
+                                        + ":"
+                                        + canonicalClass
+                        );
+
+                if (canonicalMatch != null) {
+                    return canonicalMatch;
+                }
+            }
+
+            /*
+             * Final Nursery fallback for branch databases whose class names
+             * are non-standard but whose display order is correct.
+             */
+            if (isNurseryLevel(level)) {
+                int nurseryIndex =
+                        nurseryClassIndex(
+                                normalizedClassKey
+                        );
+
+                if (nurseryIndex >= 0) {
+                    List<ClassReference> nurseryClasses =
+                            classesForLevel(level);
+
+                    if (nurseryIndex < nurseryClasses.size()) {
+                        return nurseryClasses.get(
+                                nurseryIndex
+                        );
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public ClassReference findDefaultClass(
+                LevelReference level
+        ) {
+            List<ClassReference> classes =
+                    classesForLevel(level);
+
+            return classes.isEmpty()
+                    ? null
+                    : classes.getFirst();
         }
 
         public SectionReference findSection(
@@ -777,17 +1052,554 @@ public class StudentBulkReferenceService {
             );
         }
 
-        public boolean classBelongsToLevel(
-                ClassReference schoolClass,
+        private LevelReference findNurseryLevel() {
+            for (LevelReference level : levelsOrdered) {
+                if (isNurseryLevel(level)) {
+                    return level;
+                }
+            }
+
+            return null;
+        }
+
+        private boolean isNurseryLevel(
                 LevelReference level
         ) {
-            return schoolClass != null
-                    && level != null
-                    && schoolClass.getLevelId() != null
-                    && schoolClass.getLevelId()
+            if (level == null) {
+                return false;
+            }
+
+            return StudentEducationClassNormalizer
+                    .LEVEL_NURSERY
                     .equals(
-                            level.getLevelId()
+                            safelyNormalizeLevel(
+                                    level.getLevelName()
+                            )
                     );
+        }
+
+        private List<ClassReference> classesForLevel(
+                LevelReference level
+        ) {
+            if (level == null || level.getLevelId() == null) {
+                return List.of();
+            }
+
+            return classesByLevelId.getOrDefault(
+                    level.getLevelId(),
+                    List.of()
+            );
+        }
+
+        private static int nurseryClassIndex(
+                String normalizedClassKey
+        ) {
+            if (normalizedClassKey == null) {
+                return -1;
+            }
+
+            return switch (normalizedClassKey) {
+                case "BABY",
+                     "BABYCLASS",
+                     "KG1",
+                     "KGI",
+                     "NURSERY1",
+                     "N1" -> 0;
+
+                case "KG2",
+                     "KGII",
+                     "MIDDLE",
+                     "MIDDLECLASS",
+                     "NURSERY2",
+                     "N2" -> 1;
+
+                case "KG3",
+                     "KGIII",
+                     "TOP",
+                     "TOPCLASS",
+                     "NURSERY3",
+                     "N3" -> 2;
+
+                default -> -1;
+            };
+        }
+
+        private static List<AcademicYearReference>
+        buildAcademicYears(
+                Map<String, AcademicYearReference> source
+        ) {
+            Map<Long, AcademicYearReference> byId =
+                    new HashMap<>();
+
+            for (
+                    AcademicYearReference reference
+                    : source.values()
+            ) {
+                if (
+                        reference != null
+                                && reference.getAcademicYearId() != null
+                ) {
+                    byId.putIfAbsent(
+                            reference.getAcademicYearId(),
+                            reference
+                    );
+                }
+            }
+
+            List<AcademicYearReference> ordered =
+                    new ArrayList<>(
+                            byId.values()
+                    );
+
+            ordered.sort(
+                    (left, right) -> {
+                        int currentYearComparison =
+                                Boolean.compare(
+                                        Boolean.TRUE.equals(
+                                                right.getCurrentYear()
+                                        ),
+                                        Boolean.TRUE.equals(
+                                                left.getCurrentYear()
+                                        )
+                                );
+
+                        if (currentYearComparison != 0) {
+                            return currentYearComparison;
+                        }
+
+                        LocalDate leftStart =
+                                left.getStartDate();
+
+                        LocalDate rightStart =
+                                right.getStartDate();
+
+                        if (
+                                leftStart != null
+                                        || rightStart != null
+                        ) {
+                            if (leftStart == null) {
+                                return 1;
+                            }
+
+                            if (rightStart == null) {
+                                return -1;
+                            }
+
+                            int startComparison =
+                                    rightStart.compareTo(
+                                            leftStart
+                                    );
+
+                            if (startComparison != 0) {
+                                return startComparison;
+                            }
+                        }
+
+                        return right.getAcademicYearId()
+                                .compareTo(
+                                        left.getAcademicYearId()
+                                );
+                    }
+            );
+
+            return List.copyOf(ordered);
+        }
+
+        private static List<LevelReference> buildLevels(
+                Map<String, LevelReference> source
+        ) {
+            Map<Integer, LevelReference> byId =
+                    new HashMap<>();
+
+            for (LevelReference reference : source.values()) {
+                if (
+                        reference != null
+                                && reference.getLevelId() != null
+                ) {
+                    byId.putIfAbsent(
+                            reference.getLevelId(),
+                            reference
+                    );
+                }
+            }
+
+            List<LevelReference> ordered =
+                    new ArrayList<>(
+                            byId.values()
+                    );
+
+            ordered.sort(
+                    (left, right) -> {
+                        Integer leftOrder =
+                                left.getDisplayOrder();
+
+                        Integer rightOrder =
+                                right.getDisplayOrder();
+
+                        if (
+                                leftOrder != null
+                                        || rightOrder != null
+                        ) {
+                            if (leftOrder == null) {
+                                return 1;
+                            }
+
+                            if (rightOrder == null) {
+                                return -1;
+                            }
+
+                            int orderComparison =
+                                    leftOrder.compareTo(
+                                            rightOrder
+                                    );
+
+                            if (orderComparison != 0) {
+                                return orderComparison;
+                            }
+                        }
+
+                        return safeText(
+                                left.getLevelName()
+                        ).compareTo(
+                                safeText(
+                                        right.getLevelName()
+                                )
+                        );
+                    }
+            );
+
+            return List.copyOf(ordered);
+        }
+
+        private static Map<Integer, LevelReference>
+        buildLevelsById(
+                List<LevelReference> levels
+        ) {
+            Map<Integer, LevelReference> byId =
+                    new HashMap<>();
+
+            for (LevelReference level : levels) {
+                byId.putIfAbsent(
+                        level.getLevelId(),
+                        level
+                );
+            }
+
+            return Map.copyOf(byId);
+        }
+
+        private static Map<Integer, List<ClassReference>>
+        buildClassesByLevel(
+                Map<String, ClassReference> source
+        ) {
+            Map<Integer, Map<Integer, ClassReference>>
+                    groupedById =
+                    new HashMap<>();
+
+            for (ClassReference schoolClass : source.values()) {
+                if (
+                        schoolClass == null
+                                || schoolClass.getLevelId() == null
+                                || schoolClass.getClassId() == null
+                ) {
+                    continue;
+                }
+
+                groupedById
+                        .computeIfAbsent(
+                                schoolClass.getLevelId(),
+                                ignored -> new HashMap<>()
+                        )
+                        .putIfAbsent(
+                                schoolClass.getClassId(),
+                                schoolClass
+                        );
+            }
+
+            Map<Integer, List<ClassReference>> result =
+                    new HashMap<>();
+
+            for (
+                    Map.Entry<Integer, Map<Integer, ClassReference>>
+                            entry
+                    : groupedById.entrySet()
+            ) {
+                List<ClassReference> ordered =
+                        new ArrayList<>(
+                                entry.getValue()
+                                        .values()
+                        );
+
+                ordered.sort(
+                        (left, right) -> {
+                            Integer leftOrder =
+                                    left.getDisplayOrder();
+
+                            Integer rightOrder =
+                                    right.getDisplayOrder();
+
+                            if (
+                                    leftOrder != null
+                                            || rightOrder != null
+                            ) {
+                                if (leftOrder == null) {
+                                    return 1;
+                                }
+
+                                if (rightOrder == null) {
+                                    return -1;
+                                }
+
+                                int orderComparison =
+                                        leftOrder.compareTo(
+                                                rightOrder
+                                        );
+
+                                if (orderComparison != 0) {
+                                    return orderComparison;
+                                }
+                            }
+
+                            return safeText(
+                                    left.getClassName()
+                            ).compareTo(
+                                    safeText(
+                                            right.getClassName()
+                                    )
+                            );
+                        }
+                );
+
+                result.put(
+                        entry.getKey(),
+                        List.copyOf(ordered)
+                );
+            }
+
+            return Map.copyOf(result);
+        }
+
+        private static Map<String, ClassReference>
+        buildClassesByLevelAndKey(
+                Map<String, ClassReference> source
+        ) {
+            Map<String, ClassReference> result =
+                    new HashMap<>();
+
+            Map<Integer, ClassReference> uniqueById =
+                    new HashMap<>();
+
+            for (ClassReference schoolClass : source.values()) {
+                if (
+                        schoolClass != null
+                                && schoolClass.getClassId() != null
+                ) {
+                    uniqueById.putIfAbsent(
+                            schoolClass.getClassId(),
+                            schoolClass
+                    );
+                }
+            }
+
+            for (ClassReference schoolClass : uniqueById.values()) {
+                putLevelClassKey(
+                        result,
+                        schoolClass,
+                        schoolClass.getClassCode()
+                );
+
+                putLevelClassKey(
+                        result,
+                        schoolClass,
+                        schoolClass.getClassName()
+                );
+
+                putLevelClassKey(
+                        result,
+                        schoolClass,
+                        String.valueOf(
+                                schoolClass.getClassId()
+                        )
+                );
+            }
+
+            return Map.copyOf(result);
+        }
+
+        private static void putLevelClassKey(
+                Map<String, ClassReference> target,
+                ClassReference schoolClass,
+                String rawKey
+        ) {
+            if (
+                    schoolClass == null
+                            || schoolClass.getLevelId() == null
+            ) {
+                return;
+            }
+
+            String normalized =
+                    normalizeKey(rawKey);
+
+            if (normalized == null) {
+                return;
+            }
+
+            target.putIfAbsent(
+                    schoolClass.getLevelId()
+                            + ":"
+                            + normalized,
+                    schoolClass
+            );
+        }
+
+        private static Map<String, LevelReference>
+        buildCanonicalLevels(
+                List<LevelReference> levels
+        ) {
+            Map<String, LevelReference> result =
+                    new HashMap<>();
+
+            for (LevelReference level : levels) {
+                if (level == null) {
+                    continue;
+                }
+
+                String canonicalLevel =
+                        safelyNormalizeLevel(
+                                level.getLevelName()
+                        );
+
+                if (canonicalLevel != null) {
+                    result.putIfAbsent(
+                            canonicalLevel,
+                            level
+                    );
+                }
+            }
+
+            return Map.copyOf(result);
+        }
+
+        private static Map<String, ClassReference>
+        buildCanonicalClasses(
+                Map<String, ClassReference> source,
+                Map<Integer, LevelReference> levelsById
+        ) {
+            Map<Integer, ClassReference> uniqueById =
+                    new HashMap<>();
+
+            for (ClassReference schoolClass : source.values()) {
+                if (
+                        schoolClass != null
+                                && schoolClass.getClassId() != null
+                ) {
+                    uniqueById.putIfAbsent(
+                            schoolClass.getClassId(),
+                            schoolClass
+                    );
+                }
+            }
+
+            Map<String, ClassReference> result =
+                    new HashMap<>();
+
+            for (ClassReference schoolClass : uniqueById.values()) {
+                LevelReference level =
+                        levelsById.get(
+                                schoolClass.getLevelId()
+                        );
+
+                String canonicalLevel =
+                        level == null
+                                ? null
+                                : safelyNormalizeLevel(
+                                level.getLevelName()
+                        );
+
+                if (canonicalLevel == null) {
+                    continue;
+                }
+
+                String canonicalClass =
+                        safelyNormalizeClass(
+                                schoolClass.getClassCode(),
+                                canonicalLevel
+                        );
+
+                if (canonicalClass == null) {
+                    canonicalClass =
+                            safelyNormalizeClass(
+                                    schoolClass.getClassName(),
+                                    canonicalLevel
+                            );
+                }
+
+                if (canonicalClass != null) {
+                    result.putIfAbsent(
+                            canonicalLevel
+                                    + ":"
+                                    + canonicalClass,
+                            schoolClass
+                    );
+                }
+            }
+
+            return Map.copyOf(result);
+        }
+
+        private static String safelyNormalizeLevel(
+                String value
+        ) {
+            try {
+                return StudentEducationClassNormalizer
+                        .normalizeLevel(value);
+            } catch (IllegalArgumentException exception) {
+                return null;
+            }
+        }
+
+        private static String safelyNormalizeClass(
+                String value,
+                String canonicalLevel
+        ) {
+            try {
+                return StudentEducationClassNormalizer
+                        .normalizeClass(
+                                value,
+                                canonicalLevel
+                        );
+            } catch (IllegalArgumentException exception) {
+                return null;
+            }
+        }
+
+        private static String normalizeKey(
+                String value
+        ) {
+            if (value == null) {
+                return null;
+            }
+
+            String normalized =
+                    value.trim()
+                            .toUpperCase(Locale.ROOT)
+                            .replaceAll(
+                                    "[\\s_-]+",
+                                    ""
+                            );
+
+            return normalized.isEmpty()
+                    ? null
+                    : normalized;
+        }
+
+        private static String safeText(
+                String value
+        ) {
+            return value == null
+                    ? ""
+                    : value;
         }
     }
 

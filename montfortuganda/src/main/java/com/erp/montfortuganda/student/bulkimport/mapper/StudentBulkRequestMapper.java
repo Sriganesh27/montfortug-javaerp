@@ -2,8 +2,10 @@ package com.erp.montfortuganda.student.bulkimport.mapper;
 
 import com.erp.montfortuganda.student.bulkimport.dto.StudentBulkImportRow;
 import com.erp.montfortuganda.student.bulkimport.excel.StudentExcelValueParser;
+import com.erp.montfortuganda.student.bulkimport.reference.StudentEducationClassNormalizer;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.AcademicYearReference;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.ClassReference;
+import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.LevelReference;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.SectionReference;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.StudentBulkReferenceData;
 import com.erp.montfortuganda.student.dto.request.StudentAcademicHistoryRequest;
@@ -34,6 +36,12 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class StudentBulkRequestMapper {
 
+    private static final String DEFAULT_FIRST_NAME_PREFIX =
+            "UNNAMED STUDENT ROW ";
+
+    private static final String DEFAULT_GUARDIAN_RELATIONSHIP =
+            "OTHER";
+
     private final StudentExcelValueParser valueParser;
 
     /**
@@ -59,15 +67,27 @@ public class StudentBulkRequestMapper {
         );
 
         AcademicYearReference academicYear =
-                requireAcademicYear(
+                resolveAcademicYear(
                         row,
                         references
                 );
 
-        ClassReference schoolClass =
-                requireClass(
+        NormalizedPlacement placement =
+                normalizePlacement(row);
+
+        LevelReference level =
+                resolveLevel(
                         row,
-                        references
+                        references,
+                        placement
+                );
+
+        ClassReference schoolClass =
+                resolveClass(
+                        row,
+                        references,
+                        level,
+                        placement
                 );
 
         SectionReference section =
@@ -91,6 +111,7 @@ public class StudentBulkRequestMapper {
         StudentEnrollmentRequest enrollmentRequest =
                 buildEnrollmentRequest(
                         row,
+                        personalRequest.admissionYear(),
                         academicYear,
                         schoolClass,
                         section
@@ -127,24 +148,37 @@ public class StudentBulkRequestMapper {
             StudentBulkImportRow row
     ) {
         Integer admissionYear =
-                valueParser.requiredInteger(
+                valueParser.nullableInteger(
                         row.getAdmissionYear(),
                         "Admission Year"
                 );
 
+        if (admissionYear == null) {
+            admissionYear =
+                    LocalDate.now()
+                            .getYear();
+        }
+
         String firstName =
-                valueParser.requiredText(
+                firstNonBlank(
                         row.getFirstName(),
-                        "First Name"
+                        row.getMiddleName(),
+                        row.getLastName()
                 );
 
+        if (firstName == null) {
+            firstName =
+                    DEFAULT_FIRST_NAME_PREFIX
+                            + row.getExcelRowNumber();
+        }
+
         StudentGender gender =
-                valueParser.requiredGender(
+                valueParser.nullableGender(
                         row.getGender()
                 );
 
         LocalDate dateOfBirth =
-                valueParser.requiredDate(
+                valueParser.nullableDate(
                         row.getDateOfBirth(),
                         "Date of Birth"
                 );
@@ -206,32 +240,44 @@ public class StudentBulkRequestMapper {
             StudentBulkImportRow row
     ) {
         PreferredContact preferredContact =
-                valueParser.requiredPreferredContact(
+                valueParser.nullablePreferredContact(
                         row.getPreferredContact()
                 );
 
+        if (preferredContact == null) {
+            preferredContact =
+                    inferPreferredContact(row);
+        }
+
         FeeResponsibility feeResponsibility =
-                valueParser.requiredFeeResponsibility(
+                valueParser.nullableFeeResponsibility(
                         row.getFeeResponsibility()
                 );
 
+        if (feeResponsibility == null) {
+            feeResponsibility =
+                    hasResponsibleContact(row)
+                            ? FeeResponsibility.valueOf(
+                            preferredContact.name()
+                    )
+                            : FeeResponsibility.SPONSOR;
+        }
+
         Boolean parentsLivingTogether =
-                valueParser.requiredYesNo(
+                valueParser.nullableYesNo(
                         row.getParentsLivingTogether(),
                         "Parents Living Together"
                 );
+
+        if (parentsLivingTogether == null) {
+            parentsLivingTogether = Boolean.FALSE;
+        }
 
         ContactMapping contact =
                 mapPrimaryContact(
                         row,
                         preferredContact
                 );
-
-        validateFeeResponsibilityCompatibility(
-                preferredContact,
-                feeResponsibility,
-                contact
-        );
 
         return new StudentParentRequest(
                 // Father
@@ -280,6 +326,58 @@ public class StudentBulkRequestMapper {
         );
     }
 
+    private PreferredContact inferPreferredContact(
+            StudentBulkImportRow row
+    ) {
+        String relationship =
+                valueParser.normalizeEnumValue(
+                        row.getGuardianRelationship()
+                );
+
+        if (
+                "MOTHER".equals(relationship)
+                        && !isBlank(
+                        row.getMotherOrGuardianName()
+                )
+        ) {
+            return PreferredContact.MOTHER;
+        }
+
+        if (
+                "FATHER".equals(relationship)
+                        && !isBlank(
+                        row.getFatherOrGuardianName()
+                )
+        ) {
+            return PreferredContact.FATHER;
+        }
+
+        if (!isBlank(row.getFatherOrGuardianName())) {
+            return PreferredContact.FATHER;
+        }
+
+        if (!isBlank(row.getMotherOrGuardianName())) {
+            return PreferredContact.MOTHER;
+        }
+
+        return PreferredContact.GUARDIAN;
+    }
+
+    private boolean hasResponsibleContact(
+            StudentBulkImportRow row
+    ) {
+        return !isBlank(
+                row.getMobileNumber()
+        ) && (
+                !isBlank(
+                        row.getFatherOrGuardianName()
+                )
+                        || !isBlank(
+                        row.getMotherOrGuardianName()
+                )
+        );
+    }
+
     /**
      * Assigns the workbook's primary phone, alternate phone and email to the
      * contact selected in Preferred Contact.
@@ -299,9 +397,8 @@ public class StudentBulkRequestMapper {
                 );
 
         String mobile =
-                valueParser.requiredText(
-                        row.getMobileNumber(),
-                        "Mobile No"
+                valueParser.nullableText(
+                        row.getMobileNumber()
                 );
 
         String alternateMobile =
@@ -318,6 +415,19 @@ public class StudentBulkRequestMapper {
                 valueParser.nullableText(
                         row.getGuardianRelationship()
                 );
+
+        if (
+                preferredContact == PreferredContact.GUARDIAN
+                        && guardianRelationship == null
+                        && (
+                        fatherOrGuardianName != null
+                                || motherOrGuardianName != null
+                                || mobile != null
+                )
+        ) {
+            guardianRelationship =
+                    DEFAULT_GUARDIAN_RELATIONSHIP;
+        }
 
         if (preferredContact == PreferredContact.FATHER) {
             return new ContactMapping(
@@ -455,20 +565,44 @@ public class StudentBulkRequestMapper {
 
     private StudentEnrollmentRequest buildEnrollmentRequest(
             StudentBulkImportRow row,
+            Integer admissionYear,
             AcademicYearReference academicYear,
             ClassReference schoolClass,
             SectionReference section
     ) {
         AdmissionType admissionType =
-                valueParser.requiredAdmissionType(
+                valueParser.nullableAdmissionType(
                         row.getAdmissionType()
                 );
 
+        if (admissionType == null) {
+            admissionType = AdmissionType.NEW;
+        }
+
         LocalDate joiningDate =
-                valueParser.requiredDate(
+                valueParser.nullableDate(
                         row.getJoiningDate(),
                         "Joining Date"
                 );
+
+        if (joiningDate == null) {
+            int resolvedAdmissionYear =
+                    admissionYear == null
+                            ? LocalDate.now()
+                            .getYear()
+                            : admissionYear;
+
+            joiningDate =
+                    LocalDate.of(
+                            resolvedAdmissionYear,
+                            1,
+                            1
+                    );
+
+            if (joiningDate.isAfter(LocalDate.now())) {
+                joiningDate = LocalDate.now();
+            }
+        }
 
         return new StudentEnrollmentRequest(
                 academicYear.getAcademicYearId(),
@@ -572,7 +706,7 @@ public class StudentBulkRequestMapper {
     // REFERENCE RESOLUTION
     // =====================================================================
 
-    private AcademicYearReference requireAcademicYear(
+    private AcademicYearReference resolveAcademicYear(
             StudentBulkImportRow row,
             StudentBulkReferenceData references
     ) {
@@ -582,7 +716,9 @@ public class StudentBulkRequestMapper {
                 );
 
         AcademicYearReference academicYear =
-                references.findAcademicYear(
+                key == null
+                        ? references.findDefaultAcademicYear()
+                        : references.findAcademicYear(
                         key
                 );
 
@@ -591,25 +727,125 @@ public class StudentBulkRequestMapper {
                         || academicYear.getAcademicYearId() == null
         ) {
             throw new IllegalArgumentException(
-                    "Academic Year does not exist or is inactive."
+                    key == null
+                            ? "No active or planned Academic Year is configured."
+                            : "Academic Year does not exist or is inactive."
             );
         }
 
         return academicYear;
     }
 
-    private ClassReference requireClass(
-            StudentBulkImportRow row,
-            StudentBulkReferenceData references
+    private NormalizedPlacement normalizePlacement(
+            StudentBulkImportRow row
     ) {
-        String key =
-                valueParser.normalizeLookupKey(
+        String rawLevel =
+                valueParser.nullableText(
+                        row.getEducationLevel()
+                );
+
+        String rawClass =
+                valueParser.nullableText(
                         row.getClassName()
                 );
 
+        String canonicalLevel =
+                rawLevel == null
+                        ? null
+                        : StudentEducationClassNormalizer
+                        .normalizeLevel(rawLevel);
+
+        String canonicalClass =
+                rawClass == null
+                        ? null
+                        : StudentEducationClassNormalizer
+                        .normalizeClass(
+                                rawClass,
+                                canonicalLevel
+                        );
+
+        String inferredLevel =
+                canonicalClass == null
+                        ? null
+                        : StudentEducationClassNormalizer
+                        .inferLevelFromClass(
+                                canonicalClass
+                        );
+
+        if (
+                canonicalLevel != null
+                        && inferredLevel != null
+                        && !canonicalLevel.equals(
+                        inferredLevel
+                )
+        ) {
+            throw new IllegalArgumentException(
+                    "Class "
+                            + canonicalClass
+                            + " belongs to "
+                            + inferredLevel
+                            + ", but Education Level is "
+                            + canonicalLevel
+                            + "."
+            );
+        }
+
+        if (canonicalLevel == null) {
+            canonicalLevel = inferredLevel;
+        }
+
+        return new NormalizedPlacement(
+                canonicalLevel,
+                canonicalClass
+        );
+    }
+
+    private LevelReference resolveLevel(
+            StudentBulkImportRow row,
+            StudentBulkReferenceData references,
+            NormalizedPlacement placement
+    ) {
+        String canonicalLevel =
+                placement.educationLevel();
+
+        LevelReference level =
+                canonicalLevel == null
+                        ? references.findDefaultLevel()
+                        : references.findLevel(
+                        canonicalLevel
+                );
+
+        if (
+                level == null
+                        || level.getLevelId() == null
+        ) {
+            throw new IllegalArgumentException(
+                    canonicalLevel == null
+                            ? "No active Education Level is configured for this branch."
+                            : "Education Level '"
+                              + row.getEducationLevel()
+                              + "' was normalized to "
+                              + canonicalLevel
+                              + ", but it is not configured for this branch."
+            );
+        }
+
+        return level;
+    }
+
+    private ClassReference resolveClass(
+            StudentBulkImportRow row,
+            StudentBulkReferenceData references,
+            LevelReference level,
+            NormalizedPlacement placement
+    ) {
+        String canonicalClass =
+                placement.classCode();
+
         ClassReference schoolClass =
                 references.findClass(
-                        key
+                        level,
+                        canonicalClass
                 );
 
         if (
@@ -617,11 +853,61 @@ public class StudentBulkRequestMapper {
                         || schoolClass.getClassId() == null
         ) {
             throw new IllegalArgumentException(
-                    "Class does not exist or is unavailable for this branch."
+                    canonicalClass == null
+                            ? "No active Class is configured under the resolved Education Level."
+                            : "Class '"
+                              + row.getClassName()
+                              + "' was normalized to "
+                              + canonicalClass
+                              + ", but it is not configured under "
+                              + placement.educationLevel()
+                              + " for this branch. "
+                              + acceptedClassMessage(
+                            placement.educationLevel()
+                    )
             );
         }
 
         return schoolClass;
+    }
+
+    private String acceptedClassMessage(
+            String canonicalLevel
+    ) {
+        if (
+                StudentEducationClassNormalizer.LEVEL_NURSERY
+                        .equals(canonicalLevel)
+        ) {
+            return "Accepted Nursery values include Baby/N1/KG1, "
+                    + "Middle/M-C/N2/KG2, and Top/N3/KG3.";
+        }
+
+        if (
+                StudentEducationClassNormalizer.LEVEL_PRIMARY
+                        .equals(canonicalLevel)
+        ) {
+            return "Accepted Primary values include P1 to P7, "
+                    + "including P.1, P-1 and Primary 1.";
+        }
+
+        if (
+                StudentEducationClassNormalizer.LEVEL_SECONDARY
+                        .equals(canonicalLevel)
+        ) {
+            return "Accepted Secondary values include S1 to S4, "
+                    + "including S.1, S-1 and Secondary 1.";
+        }
+
+        if (
+                StudentEducationClassNormalizer
+                        .LEVEL_SENIOR_SECONDARY
+                        .equals(canonicalLevel)
+        ) {
+            return "Accepted Senior Secondary values are S5 and S6, "
+                    + "including S.5, S-5 and Senior Secondary 5.";
+        }
+
+        return "Use a Class configured for the resolved Education Level.";
     }
 
     private SectionReference resolveSection(
@@ -650,7 +936,7 @@ public class StudentBulkRequestMapper {
 
         if (section == null) {
             throw new IllegalArgumentException(
-                    "Section does not belong to the selected "
+                    "Section does not belong to the resolved "
                             + "Academic Year and Class."
             );
         }
@@ -702,6 +988,12 @@ public class StudentBulkRequestMapper {
     ) {
         return value == null
                 || value.isBlank();
+    }
+
+    private record NormalizedPlacement(
+            String educationLevel,
+            String classCode
+    ) {
     }
 
     private record ContactMapping(

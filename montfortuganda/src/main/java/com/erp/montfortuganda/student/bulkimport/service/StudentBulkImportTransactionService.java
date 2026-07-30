@@ -15,31 +15,18 @@ import com.erp.montfortuganda.student.entity.ErpStudentAcademicHistory;
 import com.erp.montfortuganda.student.entity.ErpStudentEnrollment;
 import com.erp.montfortuganda.student.entity.ErpStudentEnrollmentHistory;
 import com.erp.montfortuganda.student.entity.ErpStudentMedical;
-import com.erp.montfortuganda.student.dto.request.StudentParentRequest;
-import com.erp.montfortuganda.student.dto.request.StudentPersonalRequest;
-import com.erp.montfortuganda.student.entity.ErpParent;
-import com.erp.montfortuganda.student.entity.ErpStudent;
-import com.erp.montfortuganda.student.entity.ErpStudentAcademicHistory;
-import com.erp.montfortuganda.student.entity.ErpStudentEnrollment;
-import com.erp.montfortuganda.student.entity.ErpStudentEnrollmentHistory;
-import com.erp.montfortuganda.student.entity.ErpStudentMedical;
 import com.erp.montfortuganda.student.mapper.StudentMapper;
 import com.erp.montfortuganda.student.service.StudentNumberService;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.Comparator;
 import java.util.Locale;
 import java.util.Objects;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Creates one Student from a validated Student bulk-import row.
@@ -56,7 +43,6 @@ public class StudentBulkImportTransactionService {
     private final StudentNumberService numberService;
     private final StudentMapper studentMapper;
     private final EntityManager entityManager;
-    private final Validator validator;
 
     /**
      * Creates one Student in an independent transaction.
@@ -224,7 +210,7 @@ public class StudentBulkImportTransactionService {
 
         if (
                 createdByUserId == null
-                || createdByUserId <= 0
+                        || createdByUserId <= 0
         ) {
             throw new BadRequestException(
                     "A valid Student import user ID is required."
@@ -259,59 +245,96 @@ public class StudentBulkImportTransactionService {
     // REQUEST VALIDATION
     // =====================================================================
 
+    /**
+     * Applies the bulk-import request contract.
+     *
+     * <p>The manual Student API continues to use the normal DTO Bean
+     * Validation rules. Bulk import has its own row validator and allows
+     * missing optional Excel values, so this method enforces only the values
+     * that the database actually requires after backend defaults have been
+     * applied.</p>
+     */
     private void validateRequest(
             StudentCreateRequest request
     ) {
-        Set<ConstraintViolation<StudentCreateRequest>> violations =
-                validator.validate(request);
+        StudentPersonalRequest personal =
+                request.personal();
 
-        if (violations.isEmpty()) {
-            return;
+        StudentParentRequest parent =
+                request.parent();
+
+        StudentEnrollmentRequest enrollment =
+                request.enrollment();
+
+        if (personal == null) {
+            throw new BadRequestException(
+                    "Student personal information is required."
+            );
         }
 
-        String validationMessage =
-                violations.stream()
-                        .sorted(
-                                Comparator.comparing(
-                                        this::violationPropertyPath
-                                )
-                        )
-                        .map(this::formatViolation)
-                        .distinct()
-                        .collect(
-                                Collectors.joining(" ")
-                        );
-
-        throw new BadRequestException(
-                validationMessage.isBlank()
-                        ? "Student import row contains invalid data."
-                        : validationMessage
-        );
-    }
-
-    private String violationPropertyPath(
-            ConstraintViolation<StudentCreateRequest> violation
-    ) {
-        return violation.getPropertyPath()
-                .toString();
-    }
-
-    private String formatViolation(
-            ConstraintViolation<StudentCreateRequest> violation
-    ) {
-        String property =
-                violationPropertyPath(violation);
-
-        String message =
-                violation.getMessage();
-
-        if (!StringUtils.hasText(property)) {
-            return message;
+        if (parent == null) {
+            throw new BadRequestException(
+                    "Student parent information is required."
+            );
         }
 
-        return property
-               + ": "
-               + message;
+        if (enrollment == null) {
+            throw new BadRequestException(
+                    "Student enrollment information is required."
+            );
+        }
+
+        if (
+                personal.admissionYear() == null
+                        || personal.admissionYear() < 1900
+                        || personal.admissionYear() > 2100
+        ) {
+            throw new BadRequestException(
+                    "A valid Admission Year is required after bulk defaults are applied."
+            );
+        }
+
+        if (!StringUtils.hasText(personal.firstName())) {
+            throw new BadRequestException(
+                    "A Student name is required after bulk defaults are applied."
+            );
+        }
+
+        if (personal.firstName().trim().length() > 100) {
+            throw new BadRequestException(
+                    "Student first name cannot exceed 100 characters."
+            );
+        }
+
+        if (parent.preferredContact() == null) {
+            throw new BadRequestException(
+                    "Preferred Contact is required after bulk defaults are applied."
+            );
+        }
+
+        if (parent.feeResponsibility() == null) {
+            throw new BadRequestException(
+                    "Fee Responsibility is required after bulk defaults are applied."
+            );
+        }
+
+        if (parent.parentsLivingTogether() == null) {
+            throw new BadRequestException(
+                    "Parents-living-together selection is required after bulk defaults are applied."
+            );
+        }
+
+        if (enrollment.admissionType() == null) {
+            throw new BadRequestException(
+                    "Admission Type is required after bulk defaults are applied."
+            );
+        }
+
+        if (enrollment.joiningDate() == null) {
+            throw new BadRequestException(
+                    "Joining Date is required after bulk defaults are applied."
+            );
+        }
     }
 
     /**
@@ -356,7 +379,7 @@ public class StudentBulkImportTransactionService {
 
         if (
                 enrollment.academicYearId() == null
-                || enrollment.academicYearId() <= 0
+                        || enrollment.academicYearId() <= 0
         ) {
             throw new BadRequestException(
                     "A valid Academic Year is required."
@@ -365,7 +388,7 @@ public class StudentBulkImportTransactionService {
 
         if (
                 enrollment.classId() == null
-                || enrollment.classId() <= 0
+                        || enrollment.classId() <= 0
         ) {
             throw new BadRequestException(
                     "A valid Class is required."
@@ -395,7 +418,7 @@ public class StudentBulkImportTransactionService {
 
         if (
                 enrollment.sectionId() != null
-                && !existsMatchingSection(
+                        && !existsMatchingSection(
                         enrollment.sectionId(),
                         branchId,
                         enrollment.academicYearId(),
@@ -404,7 +427,7 @@ public class StudentBulkImportTransactionService {
         ) {
             throw new ResourceNotFoundException(
                     "Selected Section does not belong to the selected "
-                    + "branch, Academic Year and Class."
+                            + "branch, Academic Year and Class."
             );
         }
     }
@@ -518,7 +541,7 @@ public class StudentBulkImportTransactionService {
     ) {
         if (
                 personal == null
-                || !StringUtils.hasText(
+                        || !StringUtils.hasText(
                         personal.learnerLin()
                 )
         ) {
@@ -545,10 +568,10 @@ public class StudentBulkImportTransactionService {
         if (count.longValue() > 0) {
             throw new DuplicateResourceException(
                     "Another Student already uses Learner Identification Number "
-                    + personal.learnerLin()
+                            + personal.learnerLin()
                             .trim()
                             .toUpperCase(Locale.ROOT)
-                    + "."
+                            + "."
             );
         }
     }
@@ -559,7 +582,7 @@ public class StudentBulkImportTransactionService {
     ) {
         if (
                 enrollment == null
-                || !StringUtils.hasText(
+                        || !StringUtils.hasText(
                         enrollment.rollNo()
                 )
         ) {
@@ -607,9 +630,9 @@ public class StudentBulkImportTransactionService {
         if (count.longValue() > 0) {
             throw new DuplicateResourceException(
                     "Another Student already uses roll number "
-                    + enrollment.rollNo()
+                            + enrollment.rollNo()
                             .trim()
-                    + " in the selected Class and Section."
+                            + " in the selected Class and Section."
             );
         }
     }
@@ -630,11 +653,11 @@ public class StudentBulkImportTransactionService {
 
         if (sectionId == null) {
             return baseSql
-                   + " and section_id is null";
+                    + " and section_id is null";
         }
 
         return baseSql
-               + " and section_id = :sectionId";
+                + " and section_id = :sectionId";
     }
 
     /**
@@ -653,8 +676,8 @@ public class StudentBulkImportTransactionService {
 
         if (
                 personal == null
-                || parent == null
-                || personal.dateOfBirth() == null
+                        || parent == null
+                        || personal.dateOfBirth() == null
         ) {
             return;
         }
@@ -708,7 +731,7 @@ public class StudentBulkImportTransactionService {
         if (count.longValue() > 0) {
             throw new DuplicateResourceException(
                     "A Student with the same name, Date of Birth and "
-                    + "preferred-contact mobile number already exists."
+                            + "preferred-contact mobile number already exists."
             );
         }
     }
@@ -817,16 +840,16 @@ public class StudentBulkImportTransactionService {
             String column
     ) {
         return "replace("
-               + "replace("
-               + "replace("
-               + "replace("
-               + "trim(coalesce("
-               + column
-               + ", '')), "
-               + "' ', ''), "
-               + "'-', ''), "
-               + "'(', ''), "
-               + "')', '')";
+                + "replace("
+                + "replace("
+                + "replace("
+                + "trim(coalesce("
+                + column
+                + ", '')), "
+                + "' ', ''), "
+                + "'-', ''), "
+                + "'(', ''), "
+                + "')', '')";
     }
 
     // =====================================================================
@@ -841,7 +864,7 @@ public class StudentBulkImportTransactionService {
     ) {
         if (
                 request.medical() == null
-                || !studentMapper.hasMedicalData(
+                        || !studentMapper.hasMedicalData(
                         request.medical()
                 )
         ) {
@@ -867,7 +890,7 @@ public class StudentBulkImportTransactionService {
     ) {
         if (
                 request.academicHistory() == null
-                || !studentMapper
+                        || !studentMapper
                         .hasAcademicHistoryData(
                                 request.academicHistory()
                         )

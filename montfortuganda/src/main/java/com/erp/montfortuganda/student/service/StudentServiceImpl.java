@@ -1620,6 +1620,7 @@ public class StudentServiceImpl implements StudentService {
                             enrollment,
                             parent,
                             enrollment != null
+                                    && enrollment.getAcademicYearId() != null
                                     ? academicYearNames.get(
                                     enrollment.getAcademicYearId()
                             )
@@ -1632,6 +1633,7 @@ public class StudentServiceImpl implements StudentService {
                             )
                                     : null,
                             enrollment != null
+                                    && enrollment.getSectionId() != null
                                     ? sectionNames.get(
                                     enrollment.getSectionId()
                             )

@@ -1,5 +1,5 @@
 // noinspection SpellCheckingInspection
-/* global CrudTable, showLoader, hideLoader, showErrorMessage, showSuccessMessage, createErpCalendar */
+/* global AppImporter, CrudTable, showLoader, hideLoader, showErrorMessage, showSuccessMessage, createErpCalendar */
 
 (function initializeStudentsModule() {
     'use strict';
@@ -213,6 +213,7 @@
         bindPreviousEducation(view, state);
         bindCurrentPlacement(view, state);
         bindNavigation(view, state);
+        bindStudentBulkImport(view);
         bindFormReset(view, form, state);
         bindRegistrationModal(view, form, state);
         bindFormSubmission(view, form, state);
@@ -3318,7 +3319,9 @@
         );
 
         rows.slice(1).forEach(row => {
-            row.parentNode.removeChild(row);
+            if (row instanceof Element) {
+                row.remove();
+            }
         });
 
         rows[0]?.querySelectorAll('input')
@@ -3333,6 +3336,43 @@
         synchronizeHostelSection(view);
         synchronizeTransportSection(view);
         updatePreviousClassSections(view);
+    }
+
+    function bindStudentBulkImport(view) {
+        const bulkImportButton = view.querySelector(
+            '#studentBulkImportBtn'
+        );
+
+        if (!(bulkImportButton instanceof HTMLButtonElement)) {
+            return;
+        }
+
+        if (bulkImportButton.dataset.importBound === 'true') {
+            return;
+        }
+
+        bulkImportButton.dataset.importBound = 'true';
+
+        bulkImportButton.addEventListener(
+            'click',
+            () => {
+                if (
+                    typeof AppImporter === 'undefined' ||
+                    typeof AppImporter.open !== 'function'
+                ) {
+                    showError(
+                        'Student bulk importer is unavailable. Refresh the page and try again.'
+                    );
+                    return;
+                }
+
+                AppImporter.open(
+                    'student',
+                    'Import Students',
+                    'Upload the approved Student XLSX template. Valid rows will continue and invalid cells will be returned in a corrected workbook.'
+                );
+            }
+        );
     }
 
     function bindNavigation(view, state) {
@@ -3703,6 +3743,7 @@
         button.disabled = false;
         button.removeAttribute('aria-busy');
 
+        /** @type {Node[]|undefined} */
         const originalNodes =
             BUTTON_ORIGINAL_NODES.get(button);
 
@@ -3713,13 +3754,23 @@
         const restoredContent =
             document.createDocumentFragment();
 
-        originalNodes.forEach(originalNode => {
-            if (originalNode instanceof Node) {
-                restoredContent.appendChild(
-                    originalNode.cloneNode(true)
-                );
-            }
-        });
+        for (
+            let index = 0;
+            index < originalNodes.length;
+            index += 1
+        ) {
+            const originalNode =
+                /** @type {Node} */ (
+                originalNodes[index]
+            );
+
+            const clonedNode =
+                /** @type {Node} */ (
+                originalNode.cloneNode(true)
+            );
+
+            restoredContent.appendChild(clonedNode);
+        }
 
         button.replaceChildren(restoredContent);
     }
@@ -4380,14 +4431,16 @@
          * the Student list and three reference-data requests.
          */
         if (studentId !== null) {
+            /** @type {Promise<*>|null} */
             let requiredReferencePromise = null;
 
             if (
                 mode === 'edit' ||
                 mode === 'enrollment'
             ) {
-                requiredReferencePromise =
-                    prepareManageReferenceData(context);
+                requiredReferencePromise = Promise.resolve(
+                    prepareManageReferenceData(context)
+                );
             }
 
             const opened = await openStudentDetail(
@@ -4401,13 +4454,19 @@
             }
 
             if (mode === 'edit') {
-                await requiredReferencePromise;
+                if (requiredReferencePromise) {
+                    await requiredReferencePromise;
+                }
+
                 await enterStudentEditMode(context);
                 return;
             }
 
             if (mode === 'enrollment') {
-                await requiredReferencePromise;
+                if (requiredReferencePromise) {
+                    await requiredReferencePromise;
+                }
+
                 openStudentEnrollmentModal(context);
                 return;
             }
@@ -6591,11 +6650,11 @@
             const collection = Array.isArray(
                 context.referenceData?.[
                     configuration.collection
-                ]
+                    ]
             )
                 ? context.referenceData[
                     configuration.collection
-                ]
+                    ]
                 : [];
 
             const matchingRecord = collection.find(item => {
@@ -6603,12 +6662,12 @@
                 const recordId = positiveInteger(
                     type === 'academicYear'
                         ? read(record, 'academicYearId') ??
-                          read(record, 'id')
+                        read(record, 'id')
                         : type === 'class'
                             ? read(record, 'classId') ??
-                              read(record, 'id')
+                            read(record, 'id')
                             : read(record, 'sectionId') ??
-                              read(record, 'id')
+                            read(record, 'id')
                 );
 
                 return recordId === id;

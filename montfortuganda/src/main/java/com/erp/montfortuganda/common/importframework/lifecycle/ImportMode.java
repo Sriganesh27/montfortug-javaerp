@@ -4,5 +4,6 @@ public enum ImportMode {
     INSERT,
     UPDATE,
     UPSERT,
-    VALIDATE_ONLY
+    VALIDATE_ONLY,
+    RETRY_FAILED_ROWS
 }

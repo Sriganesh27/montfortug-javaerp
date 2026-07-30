@@ -4,6 +4,9 @@ import com.erp.montfortuganda.common.importframework.context.ImportContext;
 import com.erp.montfortuganda.common.importframework.model.ErpImportError;
 import com.erp.montfortuganda.common.importframework.plugin.ChunkProcessingResult;
 import com.erp.montfortuganda.common.importframework.plugin.PluginProcessor;
+import com.erp.montfortuganda.exception.BadRequestException;
+import com.erp.montfortuganda.exception.DuplicateResourceException;
+import com.erp.montfortuganda.exception.ResourceNotFoundException;
 import com.erp.montfortuganda.student.bulkimport.dto.StudentBulkImportRow;
 import com.erp.montfortuganda.student.bulkimport.mapper.StudentBulkRequestMapper;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService;
@@ -13,12 +16,13 @@ import com.erp.montfortuganda.student.dto.request.StudentCreateRequest;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 /**
  * Processes validated Student bulk-import rows.
@@ -57,14 +61,14 @@ public class StudentBulkImportProcessor
 
     @Override
     public ChunkProcessingResult processChunk(
-            List<StudentBulkImportRow> validDtos,
+            List<StudentBulkImportRow> validRows,
             ImportContext context
     ) {
         long startedAt =
                 System.currentTimeMillis();
 
         validateInput(
-                validDtos,
+                validRows,
                 context
         );
 
@@ -86,9 +90,6 @@ public class StudentBulkImportProcessor
                         branchId
                 );
 
-        Set<Integer> targetRows =
-                context.getTargetRowNumbers();
-
         int processed = 0;
         int succeeded = 0;
         int processingFailed = 0;
@@ -96,14 +97,16 @@ public class StudentBulkImportProcessor
         List<ErpImportError> processingErrors =
                 new ArrayList<>();
 
-        for (StudentBulkImportRow row : validDtos) {
+        /*
+         * GenericExcelReader already enforces targetRowNumbers before rows
+         * reach this processor. Re-filtering here is unsafe for compact
+         * failed-only retry workbooks because the coordinator translates
+         * compact row numbers back to original Excel row numbers.
+         */
+        for (StudentBulkImportRow row : validRows) {
             if (
                     row == null
                             || row.isBlank()
-                            || !shouldProcessRow(
-                            row,
-                            targetRows
-                    )
             ) {
                 continue;
             }
@@ -180,10 +183,10 @@ public class StudentBulkImportProcessor
     // =====================================================================
 
     private void validateInput(
-            List<StudentBulkImportRow> validDtos,
+            List<StudentBulkImportRow> validRows,
             ImportContext context
     ) {
-        if (validDtos == null) {
+        if (validRows == null) {
             throw new IllegalArgumentException(
                     "Validated Student rows are required."
             );
@@ -255,21 +258,6 @@ public class StudentBulkImportProcessor
     }
 
     // =====================================================================
-    // RETRY ROW FILTERING
-    // =====================================================================
-
-    private boolean shouldProcessRow(
-            StudentBulkImportRow row,
-            Set<Integer> targetRows
-    ) {
-        return targetRows == null
-                || targetRows.isEmpty()
-                || targetRows.contains(
-                row.getExcelRowNumber()
-        );
-    }
-
-    // =====================================================================
     // OPERATION ID
     // =====================================================================
 
@@ -305,6 +293,11 @@ public class StudentBulkImportProcessor
             ImportContext context,
             RuntimeException exception
     ) {
+        ProcessingFailureDetails details =
+                resolveFailureDetails(
+                        exception
+                );
+
         return ErpImportError.builder()
                 .jobId(
                         context.getJobId()
@@ -313,7 +306,7 @@ public class StudentBulkImportProcessor
                         row.getExcelRowNumber()
                 )
                 .columnName(
-                        "Student"
+                        details.columnName()
                 )
                 .cellValue(
                         limitToDatabaseLength(
@@ -323,94 +316,300 @@ public class StudentBulkImportProcessor
                         )
                 )
                 .errorCode(
-                        resolveErrorCode(
-                                exception
-                        )
+                        details.errorCode()
                 )
                 .severity(
                         "ERROR"
                 )
                 .message(
                         limitToDatabaseLength(
-                                safeMessage(
-                                        exception
-                                )
+                                details.message()
                         )
                 )
                 .suggestedFix(
-                        "Correct the Student row and retry this row."
+                        limitToDatabaseLength(
+                                details.suggestedFix()
+                        )
                 )
                 .build();
     }
 
-    private String resolveErrorCode(
+    /**
+     * Converts internal exceptions into safe, exact and actionable row
+     * errors without exposing SQL, package names or database internals.
+     */
+    private ProcessingFailureDetails resolveFailureDetails(
             RuntimeException exception
     ) {
-        String simpleName =
-                exception.getClass()
-                        .getSimpleName();
+        Throwable relevant =
+                findRelevantCause(
+                        exception
+                );
 
-        String normalizedName =
-                simpleName.toUpperCase(
+        String message =
+                safeMessage(
+                        relevant
+                );
+
+        return switch (relevant) {
+            case DuplicateResourceException ignored ->
+                    new ProcessingFailureDetails(
+                            "STUDENT_DUPLICATE",
+                            resolveColumnFromMessage(message),
+                            message,
+                            "Review the duplicate detail, correct the identifying "
+                                    + "Student value, or remove the row when that "
+                                    + "Student is already registered."
+                    );
+
+            case ResourceNotFoundException ignored ->
+                    new ProcessingFailureDetails(
+                            "STUDENT_REFERENCE_NOT_FOUND",
+                            resolveColumnFromMessage(message),
+                            message,
+                            "Verify that the referenced Academic Year, Education "
+                                    + "Level, Class or Section is active for the "
+                                    + "authenticated branch."
+                    );
+
+            case BadRequestException ignored ->
+                    new ProcessingFailureDetails(
+                            "STUDENT_DATA_INVALID",
+                            resolveColumnFromMessage(message),
+                            message,
+                            suggestedFixForMessage(message)
+                    );
+
+            case IllegalArgumentException ignored ->
+                    new ProcessingFailureDetails(
+                            "STUDENT_DATA_INVALID",
+                            resolveColumnFromMessage(message),
+                            message,
+                            suggestedFixForMessage(message)
+                    );
+
+            case DataIntegrityViolationException ignored ->
+                    new ProcessingFailureDetails(
+                            "STUDENT_DATABASE_CONSTRAINT",
+                            "Student",
+                            message,
+                            "Review missing or duplicate Student values. Correct "
+                                    + "the row and retry only this failed record."
+                    );
+
+            case ObjectOptimisticLockingFailureException ignored ->
+                    new ProcessingFailureDetails(
+                            "STUDENT_CONFLICT",
+                            "Student",
+                            "The Student record changed while this row was being processed.",
+                            "Retry this failed row after refreshing the latest data."
+                    );
+
+            case SecurityException ignored ->
+                    new ProcessingFailureDetails(
+                            "STUDENT_ACCESS_DENIED",
+                            "Branch",
+                            message,
+                            "Confirm that the logged-in user is authorized for the "
+                                    + "selected branch and retry the import."
+                    );
+
+            default ->
+                    new ProcessingFailureDetails(
+                            "STUDENT_CREATE_FAILED",
+                            resolveColumnFromMessage(message),
+                            message,
+                            "Correct the value described in the error. When the message "
+                                    + "does not identify a field, review the server log "
+                                    + "using the job ID and Excel row number."
+                    );
+        };
+    }
+
+    /**
+     * Finds the most useful safe cause while retaining the public business
+     * exception whenever one exists in the chain.
+     */
+    private Throwable findRelevantCause(
+            Throwable throwable
+    ) {
+        if (throwable == null) {
+            throw new IllegalArgumentException(
+                    "Student processing exception is required."
+            );
+        }
+
+        Throwable current =
+                throwable;
+
+        Throwable deepest =
+                throwable;
+
+        int depth = 0;
+
+        while (
+                current != null
+                        && depth < 12
+        ) {
+            if (
+                    current instanceof DuplicateResourceException
+                            || current instanceof ResourceNotFoundException
+                            || current instanceof BadRequestException
+                            || current instanceof IllegalArgumentException
+                            || current instanceof DataIntegrityViolationException
+                            || current instanceof ObjectOptimisticLockingFailureException
+                            || current instanceof SecurityException
+            ) {
+                return current;
+            }
+
+            deepest = current;
+            current = current.getCause();
+            depth++;
+        }
+
+        return deepest;
+    }
+
+    private String resolveColumnFromMessage(
+            String message
+    ) {
+        String normalized =
+                message == null
+                        ? ""
+                        : message.toLowerCase(
                         Locale.ROOT
                 );
 
-        if (
-                normalizedName.contains(
-                        "DUPLICATE"
-                )
-                        || normalizedName.contains(
-                        "CONSTRAINTVIOLATION"
-                )
-                        || normalizedName.contains(
-                        "DATAINTEGRITY"
-                )
-        ) {
-            return "STUDENT_DUPLICATE";
+        if (normalized.contains("academic year")) {
+            return "Academic Year";
         }
 
         if (
-                exception instanceof IllegalArgumentException
-                        || normalizedName.contains(
-                        "BADREQUEST"
-                )
-                        || normalizedName.contains(
-                        "RESOURCENOTFOUND"
-                )
-                        || normalizedName.contains(
-                        "VALIDATION"
-                )
+                normalized.contains("education level")
+                        || normalized.contains("level")
         ) {
-            return "STUDENT_DATA_INVALID";
+            return "Education Level";
+        }
+
+        if (normalized.contains("section")) {
+            return "Section";
+        }
+
+        if (normalized.contains("class")) {
+            return "Class";
         }
 
         if (
-                normalizedName.contains(
-                        "OPTIMISTICLOCK"
-                )
-                        || normalizedName.contains(
-                        "CONCURRENCY"
-                )
-                        || normalizedName.contains(
-                        "CONFLICT"
-                )
+                normalized.contains("date of birth")
+                        || normalized.contains("birth date")
         ) {
-            return "STUDENT_CONFLICT";
+            return "Date of Birth";
+        }
+
+        if (normalized.contains("gender")) {
+            return "Gender";
         }
 
         if (
-                exception instanceof SecurityException
-                        || normalizedName.contains(
-                        "ACCESSDENIED"
-                )
-                        || normalizedName.contains(
-                        "SECURITY"
-                )
+                normalized.contains("mobile")
+                        || normalized.contains("phone")
         ) {
-            return "STUDENT_ACCESS_DENIED";
+            return "Mobile No";
         }
 
-        return "STUDENT_CREATE_FAILED";
+        if (normalized.contains("email")) {
+            return "Email";
+        }
+
+        if (
+                normalized.contains("parent")
+                        || normalized.contains("guardian")
+                        || normalized.contains("preferred contact")
+                        || normalized.contains("fee responsibility")
+        ) {
+            return "Father/Guardian Name";
+        }
+
+        if (
+                normalized.contains("learner")
+                        || normalized.contains("lin")
+        ) {
+            return "National ID/Passport";
+        }
+
+        if (normalized.contains("roll")) {
+            return "Class";
+        }
+
+        if (
+                normalized.contains("admission")
+                        && normalized.contains("year")
+        ) {
+            return "Admission Year";
+        }
+
+        if (
+                normalized.contains("first name")
+                        || normalized.contains("student name")
+        ) {
+            return "First Name";
+        }
+
+        if (normalized.contains("branch")) {
+            return "Branch";
+        }
+
+        return "Student";
+    }
+
+    private String suggestedFixForMessage(
+            String message
+    ) {
+        String column =
+                resolveColumnFromMessage(
+                        message
+                );
+
+        return switch (column) {
+            case "Academic Year" ->
+                    "Use an active or planned Academic Year configured for the branch.";
+
+            case "Education Level" ->
+                    "Use Nursery, Primary, Secondary or Senior Secondary, or leave it blank when Class can determine the level.";
+
+            case "Class" ->
+                    "Use N1-N3, P1-P7, S1-S4 or S5-S6 and ensure the class is configured for the branch.";
+
+            case "Section" ->
+                    "Use an active Section belonging to the selected Academic Year and Class, or leave Section blank.";
+
+            case "Date of Birth" ->
+                    "Use a valid date such as 2017-07-31, 7/31/2017 or 31/07/2017, or leave the cell blank.";
+
+            case "Gender" ->
+                    "Use a supported Gender value or leave the cell blank.";
+
+            case "Mobile No" ->
+                    "Enter a valid mobile number or leave the cell blank.";
+
+            case "Email" ->
+                    "Enter a valid email address or leave the cell blank.";
+
+            case "Admission Year" ->
+                    "Enter a four-digit Admission Year or leave it blank to use the current year.";
+
+            default ->
+                    "Correct the value described in the error and retry only this failed row.";
+        };
+    }
+
+    private record ProcessingFailureDetails(
+            String errorCode,
+            String columnName,
+            String message,
+            String suggestedFix
+    ) {
     }
 
     // =====================================================================
@@ -418,7 +617,7 @@ public class StudentBulkImportProcessor
     // =====================================================================
 
     private String safeMessage(
-            RuntimeException exception
+            Throwable exception
     ) {
         String message =
                 exception.getMessage();
@@ -447,6 +646,7 @@ public class StudentBulkImportProcessor
         return message.trim();
     }
 
+    @SuppressWarnings("SpellCheckingInspection")
     private boolean containsSensitiveTechnicalInformation(
             String message
     ) {

@@ -3,26 +3,29 @@ package com.erp.montfortuganda.common.importframework.engine;
 import com.erp.montfortuganda.common.importframework.context.ImportContext;
 import com.erp.montfortuganda.common.importframework.context.ImportSession;
 import com.erp.montfortuganda.common.importframework.excel.GenericExcelReader;
+import com.erp.montfortuganda.common.importframework.lifecycle.ImportMode;
 import com.erp.montfortuganda.common.importframework.lifecycle.ImportStatus;
 import com.erp.montfortuganda.common.importframework.metrics.ImportMetricsCollector;
 import com.erp.montfortuganda.common.importframework.model.ErpImportError;
 import com.erp.montfortuganda.common.importframework.model.ErpImportErrorRepository;
-import com.erp.montfortuganda.common.importframework.model.ErpImportJobRepository;
 import com.erp.montfortuganda.common.importframework.plugin.ChunkProcessingResult;
 import com.erp.montfortuganda.common.importframework.plugin.ImportPlugin;
 import com.erp.montfortuganda.common.importframework.plugin.ValidationResult;
 import com.erp.montfortuganda.common.importframework.registry.ImportTemplate;
+import com.erp.montfortuganda.common.importframework.service.ImportProgressTransactionService;
+import com.erp.montfortuganda.common.importframework.service.RetryWorkbookMetadataService;
 import lombok.RequiredArgsConstructor;
-import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -34,12 +37,25 @@ public class EngineCoordinator {
     private static final int COLUMN_NAME_MAX_LENGTH = 100;
     private static final int DATABASE_TEXT_MAX_LENGTH = 1000;
 
+    /**
+     * Avoids one database update for every row while still keeping the
+     * frontend counters visibly live.
+     */
+    private static final int LIVE_PROGRESS_ROW_INTERVAL = 10;
+    private static final long LIVE_PROGRESS_MIN_INTERVAL_MS = 5_000L;
+
+    /**
+     * Plugin processors return aggregate counters only after their complete
+     * input list finishes. Small internal batches keep success and failure
+     * counters visibly live without changing row-level transactions.
+     */
+    private static final int LIVE_PROCESSING_BATCH_SIZE = 5;
+
     private final GenericExcelReader excelReader;
     private final ImportMetricsCollector metricsCollector;
     private final ErpImportErrorRepository errorRepository;
-    private final ErpImportJobRepository jobRepository;
+    private final ImportProgressTransactionService progressTransactionService;
 
-    @Transactional
     public <DTO> void executeJob(
             ImportContext context,
             ImportSession session,
@@ -61,26 +77,11 @@ public class EngineCoordinator {
                 plugin.getManifest().getModuleName()
         );
 
-        session.setCurrentLifecycle(
-                ImportStatus.INITIALIZING
-        );
+        AtomicInteger totalRowCounter =
+                new AtomicInteger(0);
 
-        executeBeforeImportHook(
-                context,
-                session,
-                plugin
-        );
-
-        session.setCurrentLifecycle(
-                ImportStatus.READING_ROWS
-        );
-
-        /*
-         * Excel row 1 contains headers, so the first data row will
-         * receive row number 2.
-         */
-        AtomicInteger globalRowCounter =
-                new AtomicInteger(1);
+        AtomicInteger processedRowCounter =
+                new AtomicInteger(0);
 
         AtomicInteger totalSucceeded =
                 new AtomicInteger(0);
@@ -91,10 +92,75 @@ public class EngineCoordinator {
         AtomicInteger totalProcessingFailed =
                 new AtomicInteger(0);
 
+        AtomicLong lastProgressPublishedAt =
+                new AtomicLong(0L);
+
         long startedAt =
                 System.currentTimeMillis();
 
         try {
+            session.setCurrentLifecycle(
+                    ImportStatus.INITIALIZING
+            );
+
+            updateProgress(
+                    context,
+                    session,
+                    0
+            );
+
+            executeBeforeImportHook(
+                    context,
+                    session,
+                    plugin
+            );
+
+            /*
+             * A lightweight first SAX/CSV pass calculates the exact number
+             * of selected non-header rows before any Student or Employee is
+             * validated or saved. The reader remains streaming, so the
+             * complete workbook is never loaded into memory.
+             */
+            session.setCurrentLifecycle(
+                    ImportStatus.READING_ROWS
+            );
+
+            updateProgress(
+                    context,
+                    session,
+                    0
+            );
+
+            int totalRows =
+                    countSelectedRows(
+                            filePath,
+                            context,
+                            template
+                    );
+
+            totalRowCounter.set(
+                    totalRows
+            );
+
+            session.setCurrentLifecycle(
+                    ImportStatus.VALIDATING_ROWS
+            );
+
+            updateProgress(
+                    context,
+                    session,
+                    totalRows
+            );
+
+            lastProgressPublishedAt.set(
+                    System.currentTimeMillis()
+            );
+
+            /*
+             * The second streaming pass performs the real import. It uses
+             * the exact same GenericExcelReader, template validation and
+             * target-row restrictions as the count pass.
+             */
             excelReader.processFileInChunks(
                     filePath,
                     context,
@@ -104,10 +170,12 @@ public class EngineCoordinator {
                             context,
                             session,
                             plugin,
-                            globalRowCounter,
+                            totalRowCounter,
+                            processedRowCounter,
                             totalSucceeded,
                             totalValidationFailed,
-                            totalProcessingFailed
+                            totalProcessingFailed,
+                            lastProgressPublishedAt
                     )
             );
 
@@ -121,25 +189,18 @@ public class EngineCoordinator {
                             : ImportStatus.COMPLETED
             );
 
-            session.setProcessedRows(
-                    globalRowCounter.get() - 1
+            updateSessionCounters(
+                    session,
+                    processedRowCounter,
+                    totalSucceeded,
+                    totalValidationFailed,
+                    totalProcessingFailed
             );
 
-            session.setSuccessRows(
-                    totalSucceeded.get()
-            );
-
-            session.setFailedRows(
-                    totalFailed
-            );
-
-            /*
-             * Push the final result to the database before
-             * recording final metrics.
-             */
             updateProgress(
                     context,
-                    session
+                    session,
+                    totalRows
             );
 
             ChunkProcessingResult finalResult =
@@ -160,6 +221,9 @@ public class EngineCoordinator {
                                     System.currentTimeMillis()
                                             - startedAt
                             )
+                            .processingErrors(
+                                    List.of()
+                            )
                             .build();
 
             metricsCollector.recordFinalMetrics(
@@ -169,8 +233,9 @@ public class EngineCoordinator {
 
             log.info(
                     "EngineCoordinator successfully completed job {}. "
-                            + "Processed: {}, successful: {}, failed: {}",
+                            + "Total: {}, processed: {}, successful: {}, failed: {}",
                     context.getJobId(),
+                    totalRows,
                     session.getProcessedRows(),
                     session.getSuccessRows(),
                     session.getFailedRows()
@@ -187,14 +252,19 @@ public class EngineCoordinator {
                     ImportStatus.FAILED
             );
 
-            /*
-             * Attempt to publish the failed status. A failure here
-             * must not hide the original import exception.
-             */
+            updateSessionCounters(
+                    session,
+                    processedRowCounter,
+                    totalSucceeded,
+                    totalValidationFailed,
+                    totalProcessingFailed
+            );
+
             try {
                 updateProgress(
                         context,
-                        session
+                        session,
+                        totalRowCounter.get()
                 );
             } catch (Exception progressException) {
                 log.error(
@@ -211,15 +281,45 @@ public class EngineCoordinator {
         }
     }
 
+    /**
+     * Counts rows using the same streaming reader and secure target-row
+     * restrictions used by the real import.
+     */
+    private int countSelectedRows(
+            Path filePath,
+            ImportContext context,
+            ImportTemplate template
+    ) throws Exception {
+        AtomicInteger rowCount =
+                new AtomicInteger(0);
+
+        excelReader.processFileInChunks(
+                filePath,
+                context,
+                template,
+                rawChunk -> {
+                    if (rawChunk != null) {
+                        rowCount.addAndGet(
+                                rawChunk.size()
+                        );
+                    }
+                }
+        );
+
+        return rowCount.get();
+    }
+
     private <DTO> void processChunk(
             List<Map<String, String>> rawChunk,
             ImportContext context,
             ImportSession session,
             ImportPlugin<DTO> plugin,
-            AtomicInteger globalRowCounter,
+            AtomicInteger totalRowCounter,
+            AtomicInteger processedRowCounter,
             AtomicInteger totalSucceeded,
             AtomicInteger totalValidationFailed,
-            AtomicInteger totalProcessingFailed
+            AtomicInteger totalProcessingFailed,
+            AtomicLong lastProgressPublishedAt
     ) {
         if (
                 rawChunk == null
@@ -235,11 +335,67 @@ public class EngineCoordinator {
         List<DTO> validRows =
                 new ArrayList<>();
 
-        int chunkValidationErrors = 0;
-
         for (Map<String, String> rowData : rawChunk) {
-            int currentRowNumber =
-                    globalRowCounter.incrementAndGet();
+            int processedSequence =
+                    processedRowCounter.incrementAndGet();
+
+            int currentRowNumber;
+
+            Map<String, String> businessRowData;
+
+            try {
+                int workbookRowNumber =
+                        extractPhysicalRowNumber(
+                                rowData
+                        );
+
+                currentRowNumber =
+                        resolveReportedRowNumber(
+                                context,
+                                workbookRowNumber
+                        );
+
+                businessRowData =
+                        removeFrameworkMetadata(
+                                rowData
+                        );
+            } catch (RuntimeException exception) {
+                totalValidationFailed.incrementAndGet();
+
+                int fallbackRowNumber =
+                        processedSequence + 1;
+
+                saveFrameworkValidationError(
+                        context,
+                        fallbackRowNumber,
+                        "ROW_NUMBER_METADATA_INVALID",
+                        "The physical spreadsheet row number is missing or invalid.",
+                        "Upload the file again using the latest import template."
+                );
+
+                log.warn(
+                        "Import row metadata is invalid. Job: {}, "
+                                + "sequence: {}, exception: {}",
+                        context.getJobId(),
+                        processedSequence,
+                        exception.getClass()
+                                .getSimpleName()
+                );
+
+                publishLiveProgressIfDue(
+                        context,
+                        session,
+                        totalRowCounter,
+                        processedRowCounter,
+                        totalSucceeded,
+                        totalValidationFailed,
+                        totalProcessingFailed,
+                        lastProgressPublishedAt,
+                        false
+                );
+
+                continue;
+            }
 
             DTO dto;
 
@@ -247,11 +403,11 @@ public class EngineCoordinator {
                 dto =
                         plugin.getRowMapper()
                                 .mapRow(
-                                        rowData,
+                                        businessRowData,
                                         currentRowNumber
                                 );
             } catch (RuntimeException exception) {
-                chunkValidationErrors++;
+                totalValidationFailed.incrementAndGet();
 
                 saveMappingError(
                         context,
@@ -264,7 +420,20 @@ public class EngineCoordinator {
                                 + "exception: {}",
                         context.getJobId(),
                         currentRowNumber,
-                        exception.getClass().getSimpleName()
+                        exception.getClass()
+                                .getSimpleName()
+                );
+
+                publishLiveProgressIfDue(
+                        context,
+                        session,
+                        totalRowCounter,
+                        processedRowCounter,
+                        totalSucceeded,
+                        totalValidationFailed,
+                        totalProcessingFailed,
+                        lastProgressPublishedAt,
+                        false
                 );
 
                 continue;
@@ -281,7 +450,7 @@ public class EngineCoordinator {
                                         context
                                 );
             } catch (RuntimeException exception) {
-                chunkValidationErrors++;
+                totalValidationFailed.incrementAndGet();
 
                 saveValidationException(
                         context,
@@ -294,14 +463,27 @@ public class EngineCoordinator {
                                 + "Job: {}, row: {}, exception: {}",
                         context.getJobId(),
                         currentRowNumber,
-                        exception.getClass().getSimpleName()
+                        exception.getClass()
+                                .getSimpleName()
+                );
+
+                publishLiveProgressIfDue(
+                        context,
+                        session,
+                        totalRowCounter,
+                        processedRowCounter,
+                        totalSucceeded,
+                        totalValidationFailed,
+                        totalProcessingFailed,
+                        lastProgressPublishedAt,
+                        false
                 );
 
                 continue;
             }
 
             if (validationResult == null) {
-                chunkValidationErrors++;
+                totalValidationFailed.incrementAndGet();
 
                 saveFrameworkValidationError(
                         context,
@@ -309,6 +491,18 @@ public class EngineCoordinator {
                         "VALIDATION_RESULT_MISSING",
                         "The row validator returned no validation result.",
                         "Review the import validator implementation."
+                );
+
+                publishLiveProgressIfDue(
+                        context,
+                        session,
+                        totalRowCounter,
+                        processedRowCounter,
+                        totalSucceeded,
+                        totalValidationFailed,
+                        totalProcessingFailed,
+                        lastProgressPublishedAt,
+                        false
                 );
 
                 continue;
@@ -321,65 +515,258 @@ public class EngineCoordinator {
                         context.getJobId()
                 );
 
+                publishLiveProgressIfDue(
+                        context,
+                        session,
+                        totalRowCounter,
+                        processedRowCounter,
+                        totalSucceeded,
+                        totalValidationFailed,
+                        totalProcessingFailed,
+                        lastProgressPublishedAt,
+                        false
+                );
+
                 continue;
             }
 
             if (validationResult.isSuccess()) {
-                validRows.add(dto);
-                continue;
+                validRows.add(
+                        dto
+                );
+            } else {
+                totalValidationFailed.incrementAndGet();
+
+                saveValidationErrors(
+                        context,
+                        currentRowNumber,
+                        validationResult
+                );
             }
 
-            chunkValidationErrors++;
-
-            saveValidationErrors(
+            publishLiveProgressIfDue(
                     context,
-                    currentRowNumber,
-                    validationResult
+                    session,
+                    totalRowCounter,
+                    processedRowCounter,
+                    totalSucceeded,
+                    totalValidationFailed,
+                    totalProcessingFailed,
+                    lastProgressPublishedAt,
+                    false
             );
         }
 
+        /*
+         * Publish the validation counters before database processing starts.
+         * This lets the frontend change from Validate to Process even when a
+         * large processor transaction takes several seconds.
+         */
         session.setCurrentLifecycle(
                 ImportStatus.SAVING_BATCH
         );
 
-        ChunkProcessingResult chunkResult =
-                processValidRows(
-                        validRows,
-                        context,
-                        plugin
-                );
-
-        saveProcessingErrors(
-                chunkResult,
-                context
-        );
-
-        totalSucceeded.addAndGet(
-                safeCount(
-                        chunkResult.getSucceeded()
-                )
-        );
-
-        totalValidationFailed.addAndGet(
-                chunkValidationErrors
-                        + safeCount(
-                        chunkResult.getValidationFailed()
-                )
-        );
-
-        totalProcessingFailed.addAndGet(
-                safeCount(
-                        chunkResult.getProcessingFailed()
-                )
-        );
-
-        metricsCollector.recordChunkMetrics(
+        publishLiveProgressIfDue(
                 context,
-                chunkResult
+                session,
+                totalRowCounter,
+                processedRowCounter,
+                totalSucceeded,
+                totalValidationFailed,
+                totalProcessingFailed,
+                lastProgressPublishedAt,
+                true
         );
 
+        processValidRowsWithLiveProgress(
+                validRows,
+                context,
+                session,
+                plugin,
+                totalRowCounter,
+                processedRowCounter,
+                totalSucceeded,
+                totalValidationFailed,
+                totalProcessingFailed,
+                lastProgressPublishedAt
+        );
+    }
+
+    /**
+     * Processes valid DTOs in small internal batches so the frontend receives
+     * successful and failed counters while database registration is still
+     * running.
+     *
+     * <p>This does not change the plugin API, row-level REQUIRES_NEW
+     * transactions, duplicate rules, reference caches or import hooks.</p>
+     */
+    private <DTO> void processValidRowsWithLiveProgress(
+            List<DTO> validRows,
+            ImportContext context,
+            ImportSession session,
+            ImportPlugin<DTO> plugin,
+            AtomicInteger totalRowCounter,
+            AtomicInteger processedRowCounter,
+            AtomicInteger totalSucceeded,
+            AtomicInteger totalValidationFailed,
+            AtomicInteger totalProcessingFailed,
+            AtomicLong lastProgressPublishedAt
+    ) {
+        if (
+                validRows == null
+                        || validRows.isEmpty()
+        ) {
+            publishLiveProgressIfDue(
+                    context,
+                    session,
+                    totalRowCounter,
+                    processedRowCounter,
+                    totalSucceeded,
+                    totalValidationFailed,
+                    totalProcessingFailed,
+                    lastProgressPublishedAt,
+                    true
+            );
+
+            return;
+        }
+
+        for (
+                int startIndex = 0;
+                startIndex < validRows.size();
+                startIndex += LIVE_PROCESSING_BATCH_SIZE
+        ) {
+            int endIndex =
+                    Math.min(
+                            startIndex
+                                    + LIVE_PROCESSING_BATCH_SIZE,
+                            validRows.size()
+                    );
+
+            List<DTO> processingBatch =
+                    List.copyOf(
+                            validRows.subList(
+                                    startIndex,
+                                    endIndex
+                            )
+                    );
+
+            ChunkProcessingResult batchResult =
+                    processValidRows(
+                            processingBatch,
+                            context,
+                            plugin
+                    );
+
+            saveProcessingErrors(
+                    batchResult,
+                    context
+            );
+
+            totalSucceeded.addAndGet(
+                    safeCount(
+                            batchResult.getSucceeded()
+                    )
+            );
+
+            totalValidationFailed.addAndGet(
+                    safeCount(
+                            batchResult.getValidationFailed()
+                    )
+            );
+
+            totalProcessingFailed.addAndGet(
+                    safeCount(
+                            batchResult.getProcessingFailed()
+                    )
+            );
+
+            metricsCollector.recordChunkMetrics(
+                    context,
+                    batchResult
+            );
+
+            publishLiveProgressIfDue(
+                    context,
+                    session,
+                    totalRowCounter,
+                    processedRowCounter,
+                    totalSucceeded,
+                    totalValidationFailed,
+                    totalProcessingFailed,
+                    lastProgressPublishedAt,
+                    true
+            );
+        }
+    }
+
+    /**
+     * Publishes row counters at a controlled rate. Forced calls are used
+     * when a lifecycle phase changes or a chunk completes.
+     */
+    private void publishLiveProgressIfDue(
+            ImportContext context,
+            ImportSession session,
+            AtomicInteger totalRowCounter,
+            AtomicInteger processedRowCounter,
+            AtomicInteger totalSucceeded,
+            AtomicInteger totalValidationFailed,
+            AtomicInteger totalProcessingFailed,
+            AtomicLong lastProgressPublishedAt,
+            boolean force
+    ) {
+        int processedRows =
+                processedRowCounter.get();
+
+        long now =
+                System.currentTimeMillis();
+
+        boolean rowIntervalReached =
+                processedRows > 0
+                        && processedRows
+                        % LIVE_PROGRESS_ROW_INTERVAL
+                        == 0;
+
+        boolean timeIntervalReached =
+                now - lastProgressPublishedAt.get()
+                        >= LIVE_PROGRESS_MIN_INTERVAL_MS;
+
+        if (
+                !force
+                        && !rowIntervalReached
+                        && !timeIntervalReached
+        ) {
+            return;
+        }
+
+        updateSessionCounters(
+                session,
+                processedRowCounter,
+                totalSucceeded,
+                totalValidationFailed,
+                totalProcessingFailed
+        );
+
+        updateProgress(
+                context,
+                session,
+                totalRowCounter.get()
+        );
+
+        lastProgressPublishedAt.set(
+                now
+        );
+    }
+
+    private void updateSessionCounters(
+            ImportSession session,
+            AtomicInteger processedRowCounter,
+            AtomicInteger totalSucceeded,
+            AtomicInteger totalValidationFailed,
+            AtomicInteger totalProcessingFailed
+    ) {
         session.setProcessedRows(
-                globalRowCounter.get() - 1
+                processedRowCounter.get()
         );
 
         session.setSuccessRows(
@@ -390,12 +777,240 @@ public class EngineCoordinator {
                 totalValidationFailed.get()
                         + totalProcessingFailed.get()
         );
+    }
 
-        updateProgress(
-                context,
-                session
+    // =====================================================================
+    // ROW NUMBER METADATA
+    // =====================================================================
+
+    private int extractPhysicalRowNumber(
+            Map<String, String> rowData
+    ) {
+        if (rowData == null) {
+            throw new IllegalArgumentException(
+                    "Import row data is missing."
+            );
+        }
+
+        String rowNumberValue =
+                rowData.get(
+                        GenericExcelReader
+                                .ROW_NUMBER_METADATA_KEY
+                );
+
+        if (
+                rowNumberValue == null
+                        || rowNumberValue.isBlank()
+        ) {
+            throw new IllegalArgumentException(
+                    "Spreadsheet row number metadata is missing."
+            );
+        }
+
+        try {
+            int rowNumber =
+                    Integer.parseInt(
+                            rowNumberValue.trim()
+                    );
+
+            if (rowNumber <= 0) {
+                throw new NumberFormatException(
+                        "Row number must be positive."
+                );
+            }
+
+            return rowNumber;
+        } catch (NumberFormatException exception) {
+            throw new IllegalArgumentException(
+                    "Spreadsheet row number metadata is invalid.",
+                    exception
+            );
+        }
+    }
+
+    /**
+     * Converts a compact failed-only workbook row back to its physical row in
+     * the original import workbook.
+     *
+     * <p>Normal imports do not contain retry metadata and therefore retain
+     * their current physical row number unchanged.</p>
+     */
+    private int resolveReportedRowNumber(
+            ImportContext context,
+            int workbookRowNumber
+    ) {
+        if (
+                context.getImportMode()
+                        != ImportMode.RETRY_FAILED_ROWS
+        ) {
+            return workbookRowNumber;
+        }
+
+        Map<Integer, Integer> originalRowMapping =
+                requireRetryRowMapping(
+                        context
+                );
+
+        Integer originalRowNumber =
+                originalRowMapping.get(
+                        workbookRowNumber
+                );
+
+        if (originalRowNumber == null) {
+            throw new IllegalArgumentException(
+                    "Secure retry metadata does not contain workbook row "
+                            + workbookRowNumber
+                            + "."
+            );
+        }
+
+        if (originalRowNumber <= 1) {
+            throw new IllegalArgumentException(
+                    "Secure retry metadata contains an invalid original "
+                            + "Excel row."
+            );
+        }
+
+        return originalRowNumber;
+    }
+
+    /**
+     * Reads the backend-verified compact-to-original row mapping stored in
+     * ImportContext.
+     */
+    private Map<Integer, Integer> requireRetryRowMapping(
+            ImportContext context
+    ) {
+        Map<String, Object> options =
+                context.getImportOptions();
+
+        if (options == null) {
+            throw new IllegalArgumentException(
+                    "Secure retry options are missing."
+            );
+        }
+
+        Object rawMapping =
+                options.get(
+                        RetryWorkbookMetadataService
+                                .RETRY_ROW_MAPPING_OPTION
+                );
+
+        if (!(rawMapping instanceof Map<?, ?> mapping)) {
+            throw new IllegalArgumentException(
+                    "Secure retry row mapping is missing."
+            );
+        }
+
+        Map<Integer, Integer> normalizedMapping =
+                new HashMap<>();
+
+        for (
+                Map.Entry<?, ?> entry
+                : mapping.entrySet()
+        ) {
+            int workbookRowNumber =
+                    positiveRowNumber(
+                            entry.getKey(),
+                            "retry workbook row"
+                    );
+
+            int originalRowNumber =
+                    positiveRowNumber(
+                            entry.getValue(),
+                            "original Excel row"
+                    );
+
+            Integer previous =
+                    normalizedMapping.putIfAbsent(
+                            workbookRowNumber,
+                            originalRowNumber
+                    );
+
+            if (
+                    previous != null
+                            && previous != originalRowNumber
+            ) {
+                throw new IllegalArgumentException(
+                        "Secure retry row mapping contains duplicate "
+                                + "workbook rows."
+                );
+            }
+        }
+
+        if (normalizedMapping.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Secure retry row mapping is empty."
+            );
+        }
+
+        return Map.copyOf(
+                normalizedMapping
         );
     }
+
+    private int positiveRowNumber(
+            Object value,
+            String label
+    ) {
+        if (value == null) {
+            throw new IllegalArgumentException(
+                    "Secure "
+                            + label
+                            + " is missing."
+            );
+        }
+
+        try {
+            int rowNumber;
+
+            if (value instanceof Number number) {
+                rowNumber =
+                        number.intValue();
+            } else {
+                rowNumber =
+                        Integer.parseInt(
+                                value.toString()
+                                        .trim()
+                        );
+            }
+
+            if (rowNumber <= 1) {
+                throw new NumberFormatException(
+                        "Data row must be greater than one."
+                );
+            }
+
+            return rowNumber;
+        } catch (RuntimeException exception) {
+            throw new IllegalArgumentException(
+                    "Secure "
+                            + label
+                            + " is invalid.",
+                    exception
+            );
+        }
+    }
+
+    private Map<String, String> removeFrameworkMetadata(
+            Map<String, String> rowData
+    ) {
+        Map<String, String> businessRowData =
+                new HashMap<>(
+                        rowData
+                );
+
+        businessRowData.remove(
+                GenericExcelReader
+                        .ROW_NUMBER_METADATA_KEY
+        );
+
+        return businessRowData;
+    }
+
+    // =====================================================================
+    // VALIDATION ERRORS
+    // =====================================================================
 
     private void saveValidationErrors(
             ImportContext context,
@@ -404,7 +1019,8 @@ public class EngineCoordinator {
     ) {
         if (
                 validationResult.getErrors() == null
-                        || validationResult.getErrors().isEmpty()
+                        || validationResult.getErrors()
+                        .isEmpty()
         ) {
             saveFrameworkValidationError(
                     context,
@@ -492,6 +1108,10 @@ public class EngineCoordinator {
         );
     }
 
+    // =====================================================================
+    // PROCESSING
+    // =====================================================================
+
     private <DTO> ChunkProcessingResult processValidRows(
             List<DTO> validRows,
             ImportContext context,
@@ -556,7 +1176,8 @@ public class EngineCoordinator {
         if (
                 chunkResult == null
                         || chunkResult.getProcessingErrors() == null
-                        || chunkResult.getProcessingErrors().isEmpty()
+                        || chunkResult.getProcessingErrors()
+                        .isEmpty()
         ) {
             return;
         }
@@ -564,15 +1185,18 @@ public class EngineCoordinator {
         List<ErpImportError> normalizedErrors =
                 chunkResult.getProcessingErrors()
                         .stream()
-                        .filter(Objects::nonNull)
+                        .filter(
+                                Objects::nonNull
+                        )
                         .map(error ->
                                 normalizeProcessingError(
                                         error,
                                         context
                                 )
                         )
-                        .collect(Collectors.toList());
-
+                        .collect(
+                                Collectors.toList()
+                        );
 
         if (!normalizedErrors.isEmpty()) {
             errorRepository.saveAll(
@@ -624,7 +1248,7 @@ public class EngineCoordinator {
                         truncateWithFallback(
                                 error.getMessage(),
                                 DATABASE_TEXT_MAX_LENGTH,
-                                "Employee row processing failed."
+                                "Import row processing failed."
                         )
                 )
                 .suggestedFix(
@@ -635,6 +1259,10 @@ public class EngineCoordinator {
                 )
                 .build();
     }
+
+    // =====================================================================
+    // FRAMEWORK ERRORS
+    // =====================================================================
 
     private void saveMappingError(
             ImportContext context,
@@ -647,9 +1275,9 @@ public class EngineCoordinator {
                 "ROW_MAPPING_FAILED",
                 safeExceptionMessage(
                         exception,
-                        "The Excel row could not be mapped."
+                        "The spreadsheet row could not be mapped."
                 ),
-                "Check the Excel values and template column formats."
+                "Check the spreadsheet values and template column formats."
         );
     }
 
@@ -686,10 +1314,11 @@ public class EngineCoordinator {
                                 rowNumber
                         )
                         .columnName(
-                                "Employee"
+                                "Row"
                         )
                         .cellValue(
-                                "Excel row " + rowNumber
+                                "Spreadsheet row "
+                                        + rowNumber
                         )
                         .errorCode(
                                 normalizeErrorCode(
@@ -718,6 +1347,10 @@ public class EngineCoordinator {
                 error
         );
     }
+
+    // =====================================================================
+    // IMPORT LIFECYCLE
+    // =====================================================================
 
     private <DTO> void executeBeforeImportHook(
             ImportContext context,
@@ -754,16 +1387,22 @@ public class EngineCoordinator {
 
     private void updateProgress(
             ImportContext context,
-            ImportSession session
+            ImportSession session,
+            int totalRows
     ) {
-        jobRepository.updateProgress(
+        progressTransactionService.updateProgress(
                 context.getJobId(),
                 session.getCurrentLifecycle(),
+                Math.max(totalRows, 0),
                 session.getProcessedRows(),
                 session.getSuccessRows(),
                 session.getFailedRows()
         );
     }
+
+    // =====================================================================
+    // CHUNK RESULTS
+    // =====================================================================
 
     private ChunkProcessingResult emptyChunkResult() {
         return ChunkProcessingResult.builder()
@@ -796,6 +1435,10 @@ public class EngineCoordinator {
                 )
                 .build();
     }
+
+    // =====================================================================
+    // ERROR SAFETY
+    // =====================================================================
 
     private String normalizeErrorCode(
             String errorCode
@@ -924,6 +1567,10 @@ public class EngineCoordinator {
         );
     }
 
+    // =====================================================================
+    // INPUT VALIDATION
+    // =====================================================================
+
     private <DTO> void validateInput(
             ImportContext context,
             ImportSession session,
@@ -939,7 +1586,8 @@ public class EngineCoordinator {
 
         if (
                 context.getJobId() == null
-                        || context.getJobId().isBlank()
+                        || context.getJobId()
+                        .isBlank()
         ) {
             throw new IllegalArgumentException(
                     "Import job ID is required."
@@ -991,6 +1639,16 @@ public class EngineCoordinator {
         if (template == null) {
             throw new IllegalArgumentException(
                     "Import template is required."
+            );
+        }
+
+
+        if (
+                context.getImportMode()
+                        == ImportMode.RETRY_FAILED_ROWS
+        ) {
+            requireRetryRowMapping(
+                    context
             );
         }
     }

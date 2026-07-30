@@ -7,7 +7,10 @@ import lombok.ToString;
 /**
  * Raw values read from one row of the Student Excel workbook.
  *
- * All Excel values remain Strings at this stage.
+ * <p>Branch ownership is not accepted from Excel. The trusted branch is
+ * supplied separately through ImportContext from the authenticated user.</p>
+ *
+ * <p>All Excel values remain Strings at this stage.</p>
  *
  * Dates, numbers, Yes/No values, enums and database references are
  * converted only after validation. This prevents invalid Excel text such
@@ -55,16 +58,8 @@ public class StudentBulkImportRow {
     private final String dateOfBirth;
 
     // =====================================================================
-    // BRANCH AND CURRENT ENROLLMENT
+    // CURRENT ENROLLMENT
     // =====================================================================
-
-    /**
-     * Used only to confirm that the row belongs to the authenticated branch.
-     *
-     * The importer must never use this value to choose or change the
-     * authenticated branch.
-     */
-    private final String branch;
 
     private final String educationLevel;
 
@@ -161,7 +156,6 @@ public class StudentBulkImportRow {
                 && isBlankValue(lastName)
                 && isBlankValue(gender)
                 && isBlankValue(dateOfBirth)
-                && isBlankValue(branch)
                 && isBlankValue(educationLevel)
                 && isBlankValue(className)
                 && isBlankValue(section)

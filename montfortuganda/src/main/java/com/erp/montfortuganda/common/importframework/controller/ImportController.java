@@ -6,11 +6,14 @@ import com.erp.montfortuganda.common.importframework.engine.ImportFacade;
 import com.erp.montfortuganda.common.importframework.lifecycle.ImportMode;
 import com.erp.montfortuganda.common.importframework.model.ErpImportJob;
 import com.erp.montfortuganda.common.importframework.service.ImportJobService;
+import com.erp.montfortuganda.common.importframework.service.RetryWorkbookMetadataService;
 import com.erp.montfortuganda.employee.bulkimport.plugin.EmployeeImportPlugin;
 import com.erp.montfortuganda.employee.bulkimport.processor.EmployeeBulkImportProcessor;
 import com.erp.montfortuganda.exception.BranchNotAssignedException;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -41,8 +44,15 @@ public class ImportController {
     private static final long MAXIMUM_IMPORT_FILE_SIZE =
             10L * 1024L * 1024L;
 
+    private static final MediaType XLSX_MEDIA_TYPE =
+            MediaType.parseMediaType(
+                    "application/vnd.openxmlformats-officedocument."
+                            + "spreadsheetml.sheet"
+            );
+
     private final ImportFacade importFacade;
     private final ImportJobService importJobService;
+    private final RetryWorkbookMetadataService retryWorkbookMetadataService;
     private final CurrentUserService currentUserService;
 
     @PostMapping("/{moduleName}")
@@ -56,19 +66,13 @@ public class ImportController {
             @RequestParam(defaultValue = "INSERT")
             ImportMode mode,
 
-            @RequestParam(
-                    defaultValue = "false"
-            )
+            @RequestParam(defaultValue = "false")
             boolean createCredentials,
 
-            @RequestParam(
-                    defaultValue = "false"
-            )
+            @RequestParam(defaultValue = "false")
             boolean sendEmail,
 
-            @RequestParam(
-                    required = false
-            )
+            @RequestParam(required = false)
             Long roleId
     ) {
         Path temporaryFile = null;
@@ -78,9 +82,7 @@ public class ImportController {
                     requireCurrentUser();
 
             String normalizedModule =
-                    normalizeModuleName(
-                            moduleName
-                    );
+                    normalizeModuleName(moduleName);
 
             validateFile(file);
 
@@ -93,41 +95,16 @@ public class ImportController {
                             roleId
                     );
 
-            String fileHash;
-
-            try (
-                    InputStream inputStream =
-                            file.getInputStream()
-            ) {
-                fileHash =
-                        DigestUtils.sha256Hex(
-                                inputStream
-                        );
-            }
-
-            String originalName =
-                    sanitizeOriginalFilename(
-                            file.getOriginalFilename()
-                    );
+            String fileHash =
+                    calculateFileHash(file);
 
             String uniqueFileName =
-                    UUID.randomUUID()
-                            + "_"
-                            + originalName;
+                    buildUniqueFilename(file);
 
             temporaryFile =
-                    Path.of(
-                                    System.getProperty(
-                                            "java.io.tmpdir"
-                                    ),
-                                    uniqueFileName
-                            )
-                            .toAbsolutePath()
-                            .normalize();
+                    resolveTemporaryFile(uniqueFileName);
 
-            file.transferTo(
-                    temporaryFile
-            );
+            file.transferTo(temporaryFile);
 
             String jobId =
                     importFacade.submitImportJob(
@@ -145,7 +122,7 @@ public class ImportController {
                     );
 
             /*
-             * The asynchronous import worker now owns this file.
+             * The asynchronous import worker now owns the file.
              */
             temporaryFile = null;
 
@@ -162,6 +139,16 @@ public class ImportController {
                     .body(
                             safeErrorMessage(exception)
                     );
+        } catch (IllegalStateException exception) {
+            deleteTemporaryFileQuietly(
+                    temporaryFile
+            );
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(
+                            safeErrorMessage(exception)
+                    );
         } catch (
                 BranchNotAssignedException
                 | AccessDeniedException exception
@@ -171,9 +158,7 @@ public class ImportController {
             );
 
             return ResponseEntity
-                    .status(
-                            HttpStatus.FORBIDDEN
-                    )
+                    .status(HttpStatus.FORBIDDEN)
                     .body(
                             safeErrorMessage(exception)
                     );
@@ -192,6 +177,151 @@ public class ImportController {
         }
     }
 
+    /**
+     * Retries only the failed physical Excel rows from an earlier job.
+     *
+     * The module, branch and failed row numbers are resolved by the backend
+     * from the authenticated user's original import job.
+     */
+    @PostMapping("/retry/{originalJobId}")
+    public ResponseEntity<String> retryFailedRows(
+            @PathVariable
+            String originalJobId,
+
+            @RequestParam("file")
+            MultipartFile file,
+
+            @RequestParam(defaultValue = "false")
+            boolean createCredentials,
+
+            @RequestParam(defaultValue = "false")
+            boolean sendEmail,
+
+            @RequestParam(required = false)
+            Long roleId
+    ) {
+        Path temporaryFile = null;
+
+        try {
+            CurrentUserContext currentUser =
+                    requireCurrentUser();
+
+            validateFile(file);
+
+            ImportJobService.RetryImportDetails retryDetails =
+                    importJobService.prepareRetry(
+                            originalJobId
+                    );
+
+            String moduleName =
+                    normalizeModuleName(
+                            retryDetails.module()
+                    );
+
+            Map<String, Object> moduleOptions =
+                    buildImportOptions(
+                            moduleName,
+                            currentUser,
+                            createCredentials,
+                            sendEmail,
+                            roleId
+                    );
+
+            String fileHash =
+                    calculateFileHash(file);
+
+            String uniqueFileName =
+                    buildUniqueFilename(file);
+
+            temporaryFile =
+                    resolveTemporaryFile(uniqueFileName);
+
+            file.transferTo(temporaryFile);
+
+            RetryWorkbookMetadataService
+                    .RetryWorkbookMetadata retryMetadata =
+                    retryWorkbookMetadataService
+                            .readAndValidate(
+                                    temporaryFile,
+                                    retryDetails.originalJobId(),
+                                    retryDetails.targetRowNumbers()
+                            );
+
+            Map<String, Object> retryOptions =
+                    buildRetryImportOptions(
+                            moduleOptions,
+                            retryMetadata
+                    );
+
+            String retryJobId =
+                    importFacade.submitRetryJob(
+                            moduleName,
+                            retryDetails.branchId(),
+                            String.valueOf(
+                                    currentUser.getUserId()
+                            ),
+                            fileHash,
+                            uniqueFileName,
+                            retryOptions,
+                            retryMetadata.workbookRowNumbers()
+                    );
+
+            /*
+             * The asynchronous retry worker now owns the file.
+             */
+            temporaryFile = null;
+
+            return ResponseEntity
+                    .accepted()
+                    .body(retryJobId);
+        } catch (IllegalArgumentException exception) {
+            deleteTemporaryFileQuietly(
+                    temporaryFile
+            );
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(
+                            safeErrorMessage(exception)
+                    );
+        } catch (IllegalStateException exception) {
+            deleteTemporaryFileQuietly(
+                    temporaryFile
+            );
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(
+                            safeErrorMessage(exception)
+                    );
+        } catch (
+                BranchNotAssignedException
+                | AccessDeniedException exception
+        ) {
+            deleteTemporaryFileQuietly(
+                    temporaryFile
+            );
+
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(
+                            safeErrorMessage(exception)
+                    );
+        } catch (Exception exception) {
+            deleteTemporaryFileQuietly(
+                    temporaryFile
+            );
+
+            return ResponseEntity
+                    .status(
+                            HttpStatus.INTERNAL_SERVER_ERROR
+                    )
+                    .body(
+                            "The failed import rows could not be retried."
+                    );
+        }
+    }
+
     @GetMapping("/progress/{jobId}")
     public ResponseEntity<ErpImportJob> getProgress(
             @PathVariable
@@ -199,9 +329,7 @@ public class ImportController {
     ) {
         return importJobService
                 .getJobStatus(jobId)
-                .map(
-                        ResponseEntity::ok
-                )
+                .map(ResponseEntity::ok)
                 .orElse(
                         ResponseEntity
                                 .notFound()
@@ -216,9 +344,7 @@ public class ImportController {
     ) {
         return ResponseEntity.ok(
                 importJobService.getRecentJobs(
-                        normalizeModuleName(
-                                moduleName
-                        )
+                        normalizeModuleName(moduleName)
                 )
         );
     }
@@ -240,26 +366,162 @@ public class ImportController {
         }
 
         HttpHeaders headers =
-                new HttpHeaders();
-
-        headers.setContentType(
-                MediaType.parseMediaType(
-                        "application/vnd.openxmlformats-officedocument."
-                                + "spreadsheetml.sheet"
-                )
-        );
-
-        headers.setContentDispositionFormData(
-                "attachment",
-                "Error_Report_"
-                        + jobId
-                        + ".xlsx"
-        );
+                createDownloadHeaders(
+                        "Error_Report_"
+                                + jobId
+                                + ".xlsx"
+                );
 
         return ResponseEntity
                 .ok()
                 .headers(headers)
+                .contentLength(excelData.length)
                 .body(excelData);
+    }
+
+    @GetMapping("/corrected/{jobId}")
+    public ResponseEntity<Resource> downloadCorrectedWorkbook(
+            @PathVariable
+            String jobId
+    ) {
+        return importJobService
+                .findCorrectedWorkbook(jobId)
+                .map(path ->
+                        buildCorrectedWorkbookResponse(
+                                jobId,
+                                path
+                        )
+                )
+                .orElseGet(() ->
+                        ResponseEntity
+                                .notFound()
+                                .build()
+                );
+    }
+
+    private ResponseEntity<Resource>
+    buildCorrectedWorkbookResponse(
+            String jobId,
+            Path correctedWorkbook
+    ) {
+        try {
+            if (
+                    !Files.isRegularFile(correctedWorkbook)
+                            || !Files.isReadable(
+                            correctedWorkbook
+                    )
+            ) {
+                return ResponseEntity
+                        .notFound()
+                        .build();
+            }
+
+            Resource resource =
+                    new FileSystemResource(
+                            correctedWorkbook
+                    );
+
+            HttpHeaders headers =
+                    createDownloadHeaders(
+                            "Corrected_Import_"
+                                    + jobId
+                                    + ".xlsx"
+                    );
+
+            return ResponseEntity
+                    .ok()
+                    .headers(headers)
+                    .contentLength(
+                            Files.size(correctedWorkbook)
+                    )
+                    .body(resource);
+        } catch (Exception exception) {
+            return ResponseEntity
+                    .status(
+                            HttpStatus.INTERNAL_SERVER_ERROR
+                    )
+                    .build();
+        }
+    }
+
+    private String calculateFileHash(
+            MultipartFile file
+    ) throws Exception {
+        try (
+                InputStream inputStream =
+                        file.getInputStream()
+        ) {
+            return DigestUtils.sha256Hex(
+                    inputStream
+            );
+        }
+    }
+
+    private String buildUniqueFilename(
+            MultipartFile file
+    ) {
+        String originalName =
+                sanitizeOriginalFilename(
+                        file.getOriginalFilename()
+                );
+
+        return UUID.randomUUID()
+                + "_"
+                + originalName;
+    }
+
+    private Path resolveTemporaryFile(
+            String uniqueFileName
+    ) {
+        Path temporaryDirectory =
+                Path.of(
+                                System.getProperty(
+                                        "java.io.tmpdir"
+                                )
+                        )
+                        .toAbsolutePath()
+                        .normalize();
+
+        Path temporaryFile =
+                temporaryDirectory
+                        .resolve(uniqueFileName)
+                        .normalize();
+
+        if (!temporaryFile.startsWith(
+                temporaryDirectory
+        )) {
+            throw new SecurityException(
+                    "The temporary import file path is invalid."
+            );
+        }
+
+        return temporaryFile;
+    }
+
+    private HttpHeaders createDownloadHeaders(
+            String filename
+    ) {
+        HttpHeaders headers =
+                new HttpHeaders();
+
+        headers.setContentType(
+                XLSX_MEDIA_TYPE
+        );
+
+        headers.setContentDispositionFormData(
+                "attachment",
+                filename
+        );
+
+        headers.setCacheControl(
+                "no-store, no-cache, must-revalidate"
+        );
+
+        headers.setPragma(
+                "no-cache"
+        );
+
+        return headers;
     }
 
     private CurrentUserContext requireCurrentUser() {
@@ -268,7 +530,8 @@ public class ImportController {
                         .getCurrentUserContext();
 
         if (
-                currentUser.getUserId() == null
+                currentUser == null
+                        || currentUser.getUserId() == null
                         || currentUser.getUserId() <= 0
         ) {
             throw new AccessDeniedException(
@@ -370,10 +633,6 @@ public class ImportController {
                 sendEmail
         );
 
-        /*
-         * Map.copyOf(...) does not accept null values, so roleId is added
-         * only when account generation is enabled.
-         */
         if (roleId != null) {
             options.put(
                     EmployeeBulkImportProcessor
@@ -391,6 +650,41 @@ public class ImportController {
         return Map.copyOf(options);
     }
 
+    /**
+     * Adds backend-verified retry metadata without modifying the existing
+     * module-specific import options.
+     *
+     * <p>The compact workbook row numbers are used by GenericExcelReader.
+     * The original row mapping is carried through ImportContext for exact
+     * error reporting and secure retry traceability.</p>
+     */
+    private Map<String, Object> buildRetryImportOptions(
+            Map<String, Object> moduleOptions,
+            RetryWorkbookMetadataService
+                    .RetryWorkbookMetadata retryMetadata
+    ) {
+        if (retryMetadata == null) {
+            throw new IllegalArgumentException(
+                    "Verified retry workbook metadata is required."
+            );
+        }
+
+        Map<String, Object> options =
+                new HashMap<>();
+
+        if (moduleOptions != null) {
+            options.putAll(moduleOptions);
+        }
+
+        options.put(
+                RetryWorkbookMetadataService
+                        .RETRY_ROW_MAPPING_OPTION,
+                retryMetadata.originalRowByWorkbookRow()
+        );
+
+        return Map.copyOf(options);
+    }
+
     private void validateFile(
             MultipartFile file
     ) {
@@ -399,7 +693,7 @@ public class ImportController {
                         || file.isEmpty()
         ) {
             throw new IllegalArgumentException(
-                    "An Employee import Excel file is required."
+                    "An import Excel file is required."
             );
         }
 
@@ -419,9 +713,7 @@ public class ImportController {
         if (
                 originalName == null
                         || !originalName
-                        .toLowerCase(
-                                Locale.ROOT
-                        )
+                        .toLowerCase(Locale.ROOT)
                         .endsWith(".xlsx")
         ) {
             throw new IllegalArgumentException(
@@ -442,11 +734,22 @@ public class ImportController {
             );
         }
 
-        return moduleName
-                .trim()
-                .toUpperCase(
-                        Locale.ROOT
-                );
+        String normalizedModule =
+                moduleName.trim()
+                        .toUpperCase(Locale.ROOT);
+
+        if (
+                normalizedModule.length() > 50
+                        || !normalizedModule.matches(
+                        "[A-Z0-9_]+"
+                )
+        ) {
+            throw new IllegalArgumentException(
+                    "Import module is invalid."
+            );
+        }
+
+        return normalizedModule;
     }
 
     private String sanitizeOriginalFilename(
@@ -463,9 +766,7 @@ public class ImportController {
         if (
                 sanitized.isBlank()
                         || !sanitized
-                        .toLowerCase(
-                                Locale.ROOT
-                        )
+                        .toLowerCase(Locale.ROOT)
                         .endsWith(".xlsx")
         ) {
             return "import.xlsx";
