@@ -89,7 +89,8 @@ public class StudentNumberService {
 
         int academicYear =
                 resolveAcademicYear(
-                        academicYearId
+                        academicYearId,
+                        context.branchId()
                 );
 
         lockBranch(
@@ -242,11 +243,18 @@ public class StudentNumberService {
     // =====================================================================
 
     private int resolveAcademicYear(
-            Long academicYearId
+            Long academicYearId,
+            Integer branchId
     ) {
         if (academicYearId == null || academicYearId <= 0) {
             throw new BadRequestException(
                     "A valid academic year is required to generate the Student code."
+            );
+        }
+
+        if (branchId == null || branchId <= 0) {
+            throw new BadRequestException(
+                    "A valid branch is required to validate the Academic Year."
             );
         }
 
@@ -257,6 +265,7 @@ public class StudentNumberService {
                                 select year(start_date)
                                 from erp_academic_years
                                 where academic_year_id = :academicYearId
+                                  and branch_id = :branchId
                                   and active = 1
                                 """
                         )
@@ -264,11 +273,16 @@ public class StudentNumberService {
                                 "academicYearId",
                                 academicYearId
                         )
+                        .setParameter(
+                                "branchId",
+                                branchId
+                        )
                         .getResultList();
 
         if (results.isEmpty()) {
             throw new ResourceNotFoundException(
-                    "Selected academic year was not found or is inactive."
+                    "Selected Academic Year was not found, is inactive, "
+                            + "or does not belong to this branch."
             );
         }
 
@@ -602,7 +616,7 @@ public class StudentNumberService {
     ) {
         if (
                 results == null ||
-                results.isEmpty()
+                        results.isEmpty()
         ) {
             return 0L;
         }

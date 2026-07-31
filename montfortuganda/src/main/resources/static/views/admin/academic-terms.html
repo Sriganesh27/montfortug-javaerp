@@ -1,0 +1,252 @@
+<div id="ba-academic-terms-view" class="fade-in erp-record-module">
+    <div id="academic-term-tableView">
+        <div class="view-header">
+            <div>
+                <h2>Manage Academic Terms</h2>
+                <p class="text-muted">Manage Terms under your branch Academic Years.</p>
+            </div>
+            <div class="action-btn-group">
+                <button type="button" id="academic-term-refresh-btn" class="btn-secondary">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <button type="button" id="btn-add-academic-term" class="btn-primary">
+                    <i class="bi bi-plus-lg"></i> Add Academic Term
+                </button>
+            </div>
+        </div>
+
+        <div id="academic-term-current-card" class="card mb-3 p-3 hidden" aria-live="polite">
+            <div class="ba-flex-panel">
+                <div class="ba-flex-1">
+                    <label>Current Academic Term</label>
+                    <div id="academic-term-current-name" class="detail-text text-strong">-</div>
+                    <div id="academic-term-current-dates" class="text-muted">-</div>
+                </div>
+                <span id="academic-term-current-status" class="status-badge badge active">Current</span>
+            </div>
+        </div>
+
+        <div class="card mb-3 p-3">
+            <form id="academic-term-filter-form" novalidate>
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1">
+                        <label for="academic-term-year-filter">Academic Year</label>
+                        <select id="academic-term-year-filter" class="detail-input w-100">
+                            <option value="">Select Academic Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="academic-term-search-input">Search Terms</label>
+                        <input type="search" id="academic-term-search-input" class="detail-input w-100"
+                               maxlength="100" placeholder="Search by code or name..." autocomplete="off">
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="academic-term-status-filter">Status</label>
+                        <select id="academic-term-status-filter" class="detail-input w-100">
+                            <option value="">All Statuses</option>
+                            <option value="PLANNED">Planned</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="CLOSED">Closed</option>
+                        </select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="academic-term-active-filter">Record State</label>
+                        <select id="academic-term-active-filter" class="detail-input w-100">
+                            <option value="">All Records</option>
+                            <option value="true">Active Records</option>
+                            <option value="false">Inactive Records</option>
+                        </select>
+                    </div>
+                    <div class="form-group ba-pagination-controls">
+                        <button type="submit" class="btn-primary">
+                            <i class="bi bi-search"></i> Search
+                        </button>
+                        <button type="button" id="academic-term-reset-btn" class="btn-secondary">
+                            <i class="bi bi-x-circle"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table id="academic-term-table" class="data-table">
+                    <thead>
+                    <tr>
+                        <th>S.No.</th>
+                        <th>Code</th>
+                        <th>Term</th>
+                        <th>Academic Year</th>
+                        <th>Duration</th>
+                        <th>Order</th>
+                        <th>Status</th>
+                        <th>Current</th>
+                        <th>Record State</th>
+                        <th class="col-action align-center">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="academic-term-table-body">
+                    <tr><td colspan="10" class="text-center py-4">Loading Academic Terms...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="ba-pagination-footer">
+                <div class="ba-pagination-controls">
+                    <select id="academic-term-page-size" class="detail-input w-auto">
+                        <option value="5">5</option><option value="10" selected>10</option>
+                        <option value="25">25</option><option value="50">50</option>
+                    </select>
+                    <span id="academic-term-page-info" class="text-muted">Showing page 1 of 1</span>
+                </div>
+                <div class="ba-pagination-controls">
+                    <button type="button" id="academic-term-prev-btn" class="btn-secondary btn-sm" disabled>
+                        <i class="bi bi-chevron-left"></i> Previous
+                    </button>
+                    <button type="button" id="academic-term-next-btn" class="btn-secondary btn-sm" disabled>
+                        Next <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="academic-term-form-view" class="fade-in hidden">
+        <div class="card max-w-2xl mx-auto mt-4">
+            <div class="view-header p-3 border-bottom">
+                <div>
+                    <h2 id="academic-term-form-title" class="mb-0">
+                        <i class="bi bi-calendar-event me-2"></i>Create Academic Term
+                    </h2>
+                    <p id="academic-term-form-subtitle" class="text-muted mb-0">
+                        Create a Term under an Academic Year of your branch.
+                    </p>
+                </div>
+                <button type="button" id="academic-term-back-btn" class="btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back
+                </button>
+            </div>
+            <div class="card-body p-4">
+                <form id="academic-term-form" novalidate>
+                    <input type="hidden" id="academic-term-id">
+                    <input type="hidden" id="academic-term-version">
+
+                    <div class="ba-flex-panel">
+                        <div class="form-group ba-flex-1">
+                            <label for="academic-term-year">Academic Year <span class="text-danger">*</span></label>
+                            <select id="academic-term-year" class="detail-input w-100" required>
+                                <option value="">Select Academic Year</option>
+                            </select>
+                        </div>
+                        <div class="form-group ba-flex-1">
+                            <label for="academic-term-code">Term Code <span class="text-danger">*</span></label>
+                            <input type="text" id="academic-term-code" class="detail-input w-100"
+                                   maxlength="20" placeholder="e.g. TERM1" required>
+                        </div>
+                        <div class="form-group ba-flex-1">
+                            <label for="academic-term-name">Term Name <span class="text-danger">*</span></label>
+                            <input type="text" id="academic-term-name" class="detail-input w-100"
+                                   maxlength="100" placeholder="e.g. Term I" required>
+                        </div>
+                    </div>
+
+                    <div class="ba-flex-panel">
+                        <div class="form-group ba-flex-1">
+                            <label for="academic-term-start-date">Start Date <span class="text-danger">*</span></label>
+                            <input type="date" id="academic-term-start-date" class="detail-input w-100" required>
+                        </div>
+                        <div class="form-group ba-flex-1">
+                            <label for="academic-term-end-date">End Date <span class="text-danger">*</span></label>
+                            <input type="date" id="academic-term-end-date" class="detail-input w-100" required>
+                        </div>
+                        <div class="form-group ba-flex-1">
+                            <label for="academic-term-display-order">Display Order <span class="text-danger">*</span></label>
+                            <input type="number" id="academic-term-display-order" class="detail-input w-100"
+                                   min="1" step="1" required>
+                        </div>
+                    </div>
+
+                    <div class="ba-flex-panel">
+                        <div class="form-group ba-flex-1">
+                            <label for="academic-term-status">Status <span class="text-danger">*</span></label>
+                            <select id="academic-term-status" class="detail-input w-100" required>
+                                <option value="">Select Status</option>
+                                <option value="PLANNED">Planned</option>
+                                <option value="ACTIVE">Active</option>
+                                <option value="CLOSED">Closed</option>
+                            </select>
+                        </div>
+                        <div class="form-group ba-flex-1">
+                            <label for="academic-term-active">Record State</label>
+                            <select id="academic-term-active" class="detail-input w-100">
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="form-group ba-flex-1">
+                            <label for="academic-term-current">Current Term</label>
+                            <select id="academic-term-current" class="detail-input w-100">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="academic-term-description">Description</label>
+                        <textarea id="academic-term-description" class="detail-input w-100"
+                                  rows="3" maxlength="500" placeholder="Optional description..."></textarea>
+                    </div>
+
+                    <div id="academic-term-form-error" class="emp-validation-summary hidden" role="alert">
+                        <strong>Please correct the highlighted fields.</strong>
+                        <p id="academic-term-form-error-text"></p>
+                    </div>
+
+                    <div class="text-end border-top pt-3">
+                        <button type="button" id="academic-term-cancel-btn" class="btn-secondary">Cancel</button>
+                        <button type="submit" id="academic-term-save-btn" class="btn-primary px-4">
+                            <i class="bi bi-check-lg"></i> Save Academic Term
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <template id="academic-term-row-template">
+        <tr>
+            <td class="col-serial font-monospace text-muted"></td>
+            <td class="col-code font-medium"></td>
+            <td class="col-name text-primary"><strong></strong></td>
+            <td class="col-year"></td>
+            <td class="col-duration"></td>
+            <td class="col-order"></td>
+            <td><span class="col-status status-badge badge"></span></td>
+            <td><span class="col-current status-badge badge"></span></td>
+            <td><span class="col-active status-badge badge"></span></td>
+            <td class="col-action align-center">
+                <button type="button" class="btn-primary btn-sm academic-term-edit-btn me-1" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button type="button" class="btn-success btn-sm academic-term-current-btn me-1" title="Make Current">
+                    <i class="bi bi-check-circle"></i>
+                </button>
+                <button type="button" class="btn-secondary btn-sm academic-term-active-btn" title="Change State">
+                    <i class="bi bi-power"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+
+    <div id="academic-term-operation-overlay" class="employee-operation-overlay"
+         role="status" aria-live="polite" aria-hidden="true">
+        <section class="employee-operation-card">
+            <span class="employee-operation-spinner" aria-hidden="true"></span>
+            <div class="employee-operation-content">
+                <strong id="academic-term-operation-title" class="employee-operation-title">Processing</strong>
+                <span id="academic-term-operation-message" class="employee-operation-message">Please wait...</span>
+            </div>
+        </section>
+    </div>
+</div>

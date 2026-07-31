@@ -5,6 +5,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
 
 import java.io.Serial;
@@ -15,7 +17,20 @@ import java.time.LocalDateTime;
 @Data
 @Entity
 @DynamicUpdate
-@Table(name = "erp_academic_years")
+@Table(
+        name = "erp_academic_years",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_branch_academic_year_code",
+                        columnNames = {
+                                "branch_id",
+                                "academic_year_code"
+                        }
+                )
+        }
+)
+@EqualsAndHashCode(exclude = {"branch", "sections"})
+@ToString(exclude = {"branch", "sections"})
 public class ErpAcademicYear implements Serializable {
 
     @Serial
@@ -28,9 +43,23 @@ public class ErpAcademicYear implements Serializable {
     @Column(name = "academic_year_id")
     private Long academicYearId;
 
+    @NotNull
+    @ManyToOne(
+            fetch = FetchType.LAZY,
+            optional = false
+    )
+    @JoinColumn(
+            name = "branch_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_academic_year_branch"
+            )
+    )
+    private Branch branch;
+
     @NotBlank
     @Size(max = 20)
-    @Column(name = "academic_year_code", nullable = false, unique = true, length = 20)
+    @Column(name = "academic_year_code", nullable = false, length = 20)
     private String academicYearCode;
 
     @NotBlank
@@ -130,6 +159,24 @@ public class ErpAcademicYear implements Serializable {
     private java.util.List<ErpSection> sections = new java.util.ArrayList<>();
 
     public void addSection(ErpSection section) {
+        if (section == null) {
+            throw new IllegalArgumentException(
+                    "Section is required."
+            );
+        }
+
+        if (
+                branch != null
+                        && section.getBranch() != null
+                        && !branch.getBranchId().equals(
+                        section.getBranch().getBranchId()
+                )
+        ) {
+            throw new IllegalArgumentException(
+                    "Section branch must match Academic Year branch."
+            );
+        }
+
         sections.add(section);
         section.setAcademicYear(this);
     }

@@ -486,12 +486,17 @@ public class StudentServiceImpl implements StudentService {
                                        academic_year.status,
                                        academic_year.current_year
                                 from erp_academic_years academic_year
-                                where academic_year.active = 1
+                                where academic_year.branch_id = :branchId
+                                  and academic_year.active = 1
                                   and upper(academic_year.status) in ('PLANNED', 'ACTIVE')
                                 order by academic_year.current_year desc,
                                          academic_year.start_date desc,
                                          academic_year.academic_year_id desc
                                 """
+                        )
+                        .setParameter(
+                                "branchId",
+                                branchId
                         )
                         .getResultList();
 
@@ -532,7 +537,8 @@ public class StudentServiceImpl implements StudentService {
                                 join erp_academic_years academic_year
                                   on academic_year.academic_year_id =
                                      academic_term.academic_year_id
-                                where academic_term.active = 1
+                                where academic_year.branch_id = :branchId
+                                  and academic_term.active = 1
                                   and academic_year.active = 1
                                   and upper(academic_year.status) in ('PLANNED', 'ACTIVE')
                                 order by academic_year.current_year desc,
@@ -540,6 +546,10 @@ public class StudentServiceImpl implements StudentService {
                                          academic_term.display_order asc,
                                          academic_term.term_id asc
                                 """
+                        )
+                        .setParameter(
+                                "branchId",
+                                branchId
                         )
                         .getResultList();
 
@@ -661,6 +671,7 @@ public class StudentServiceImpl implements StudentService {
                                   on academic_year.academic_year_id =
                                      section.academic_year_id
                                 where section.branch_id = :branchId
+                                  and academic_year.branch_id = :branchId
                                   and section.active = 1
                                   and upper(section.status) = 'ACTIVE'
                                   and academic_year.active = 1
@@ -855,7 +866,8 @@ public class StudentServiceImpl implements StudentService {
 
         PlacementNames names =
                 resolvePlacementNames(
-                        enrollment
+                        enrollment,
+                        branchContext.branch().getBranchId()
                 );
 
         return studentMapper.toEnrollmentResponse(
@@ -979,7 +991,8 @@ public class StudentServiceImpl implements StudentService {
         if (enrollment != null) {
             PlacementNames names =
                     resolvePlacementNames(
-                            enrollment
+                            enrollment,
+                            branchId
                     );
 
             enrollmentResponse =
@@ -1003,7 +1016,8 @@ public class StudentServiceImpl implements StudentService {
                                     resolvePlacementNames(
                                             history.getAcademicYearId(),
                                             history.getClassId(),
-                                            history.getSectionId()
+                                            history.getSectionId(),
+                                            branchId
                                     );
                             return studentMapper
                                     .toEnrollmentHistoryResponse(
@@ -1575,11 +1589,12 @@ public class StudentServiceImpl implements StudentService {
                         .toList();
 
         Map<Long, String> academicYearNames =
-                fetchNameMap(
+                fetchBranchOwnedNameMap(
                         "erp_academic_years",
                         "academic_year_id",
                         "academic_year_name",
-                        academicYearIds
+                        academicYearIds,
+                        branchId
                 );
 
         Map<Long, String> classNames =
@@ -1591,11 +1606,12 @@ public class StudentServiceImpl implements StudentService {
                 );
 
         Map<Long, String> sectionNames =
-                fetchNameMap(
+                fetchBranchOwnedNameMap(
                         "erp_sections",
                         "section_id",
                         "section_name",
-                        sectionIds
+                        sectionIds,
+                        branchId
                 );
 
         List<StudentSummaryResponse> responses =
@@ -1942,26 +1958,30 @@ public class StudentServiceImpl implements StudentService {
     // =====================================================================
 
     private PlacementNames resolvePlacementNames(
-            ErpStudentEnrollment enrollment
+            ErpStudentEnrollment enrollment,
+            Integer branchId
     ) {
         return resolvePlacementNames(
                 enrollment.getAcademicYearId(),
                 enrollment.getClassId(),
-                enrollment.getSectionId()
+                enrollment.getSectionId(),
+                branchId
         );
     }
 
     private PlacementNames resolvePlacementNames(
             Long academicYearId,
             Integer classId,
-            Long sectionId
+            Long sectionId,
+            Integer branchId
     ) {
         return new PlacementNames(
-                resolveName(
+                resolveBranchOwnedName(
                         "erp_academic_years",
                         "academic_year_id",
                         "academic_year_name",
-                        academicYearId
+                        academicYearId,
+                        branchId
                 ),
                 resolveName(
                         "erp_classes",
@@ -1969,11 +1989,12 @@ public class StudentServiceImpl implements StudentService {
                         "class_name",
                         classId
                 ),
-                resolveName(
+                resolveBranchOwnedName(
                         "erp_sections",
                         "section_id",
                         "section_name",
-                        sectionId
+                        sectionId,
+                        branchId
                 ),
                 null
         );
@@ -2043,6 +2064,128 @@ public class StudentServiceImpl implements StudentService {
         return StringUtils.hasText(value)
                 ? value.trim()
                 : null;
+    }
+
+    private String resolveBranchOwnedName(
+            String tableName,
+            String idColumn,
+            String nameColumn,
+            Number id,
+            Integer branchId
+    ) {
+        if (
+                id == null
+                        || branchId == null
+        ) {
+            return null;
+        }
+
+        String sql =
+                "select "
+                        + nameColumn
+                        + " from "
+                        + tableName
+                        + " where "
+                        + idColumn
+                        + " = :id"
+                        + " and branch_id = :branchId";
+
+        List<?> results =
+                entityManager
+                        .createNativeQuery(sql)
+                        .setParameter(
+                                "id",
+                                id
+                        )
+                        .setParameter(
+                                "branchId",
+                                branchId
+                        )
+                        .setMaxResults(1)
+                        .getResultList();
+
+        if (results.isEmpty()) {
+            return null;
+        }
+
+        String value =
+                Objects.toString(
+                        results.getFirst(),
+                        null
+                );
+
+        return StringUtils.hasText(value)
+                ? value.trim()
+                : null;
+    }
+
+    private Map<Long, String> fetchBranchOwnedNameMap(
+            String tableName,
+            String idColumn,
+            String nameColumn,
+            Collection<? extends Number> ids,
+            Integer branchId
+    ) {
+        if (
+                ids == null
+                        || ids.isEmpty()
+                        || branchId == null
+        ) {
+            return Map.of();
+        }
+
+        String sql =
+                "select "
+                        + idColumn
+                        + ", "
+                        + nameColumn
+                        + " from "
+                        + tableName
+                        + " where "
+                        + idColumn
+                        + " in (:ids)"
+                        + " and branch_id = :branchId";
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> results =
+                entityManager
+                        .createNativeQuery(sql)
+                        .setParameter(
+                                "ids",
+                                ids
+                        )
+                        .setParameter(
+                                "branchId",
+                                branchId
+                        )
+                        .getResultList();
+
+        Map<Long, String> mapped =
+                new LinkedHashMap<>();
+
+        for (Object[] row : results) {
+            if (
+                    row.length < 2
+                            || row[0] == null
+            ) {
+                continue;
+            }
+
+            String name =
+                    Objects.toString(
+                            row[1],
+                            null
+                    );
+
+            mapped.put(
+                    ((Number) row[0]).longValue(),
+                    StringUtils.hasText(name)
+                            ? name.trim()
+                            : null
+            );
+        }
+
+        return mapped;
     }
 
     private Map<Long, String> fetchNameMap(

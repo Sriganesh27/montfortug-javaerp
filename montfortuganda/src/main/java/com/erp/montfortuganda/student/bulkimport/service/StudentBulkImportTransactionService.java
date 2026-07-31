@@ -397,11 +397,13 @@ public class StudentBulkImportTransactionService {
 
         if (
                 !existsActiveAcademicYear(
-                        enrollment.academicYearId()
+                        enrollment.academicYearId(),
+                        branchId
                 )
         ) {
             throw new ResourceNotFoundException(
-                    "Selected Academic Year was not found or is inactive."
+                    "Selected Academic Year was not found, is inactive, "
+                            + "or does not belong to the authenticated branch."
             );
         }
 
@@ -433,7 +435,8 @@ public class StudentBulkImportTransactionService {
     }
 
     private boolean existsActiveAcademicYear(
-            Long academicYearId
+            Long academicYearId,
+            Integer branchId
     ) {
         Number count =
                 (Number) entityManager
@@ -442,6 +445,7 @@ public class StudentBulkImportTransactionService {
                                 select count(*)
                                 from erp_academic_years
                                 where academic_year_id = :academicYearId
+                                  and branch_id = :branchId
                                   and active = 1
                                   and upper(status)
                                       in ('PLANNED', 'ACTIVE')
@@ -450,6 +454,10 @@ public class StudentBulkImportTransactionService {
                         .setParameter(
                                 "academicYearId",
                                 academicYearId
+                        )
+                        .setParameter(
+                                "branchId",
+                                branchId
                         )
                         .getSingleResult();
 
@@ -502,13 +510,19 @@ public class StudentBulkImportTransactionService {
                         .createNativeQuery(
                                 """
                                 select count(*)
-                                from erp_sections
-                                where section_id = :sectionId
-                                  and branch_id = :branchId
-                                  and academic_year_id = :academicYearId
-                                  and class_id = :classId
-                                  and active = 1
-                                  and upper(status) = 'ACTIVE'
+                                from erp_sections section
+                                join erp_academic_years academic_year
+                                  on academic_year.academic_year_id =
+                                     section.academic_year_id
+                                where section.section_id = :sectionId
+                                  and section.branch_id = :branchId
+                                  and academic_year.branch_id = :branchId
+                                  and section.academic_year_id =
+                                      :academicYearId
+                                  and section.class_id = :classId
+                                  and section.active = 1
+                                  and upper(section.status) = 'ACTIVE'
+                                  and academic_year.active = 1
                                 """
                         )
                         .setParameter(

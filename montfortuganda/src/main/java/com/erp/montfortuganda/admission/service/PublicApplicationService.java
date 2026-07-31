@@ -7,9 +7,11 @@ import com.erp.montfortuganda.admission.entity.ErpApplicationStatusHistory;
 import com.erp.montfortuganda.admission.entity.ErpApplicationDocument;
 import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
 import com.erp.montfortuganda.school.entity.Branch;
+import com.erp.montfortuganda.school.entity.ErpAcademicYear;
 import com.erp.montfortuganda.school.entity.BranchLevel;
 import com.erp.montfortuganda.school.entity.Level;
 import com.erp.montfortuganda.school.entity.SchoolClass;
+import com.erp.montfortuganda.school.repository.AcademicYearRepository;
 import com.erp.montfortuganda.school.repository.BranchRepository;
 import com.erp.montfortuganda.school.repository.LevelRepository;
 import com.erp.montfortuganda.school.repository.SchoolClassRepository;
@@ -32,6 +34,7 @@ public class PublicApplicationService {
 
     private final ErpApplicationRepository applicationRepository;
     private final BranchRepository branchRepository;
+    private final AcademicYearRepository academicYearRepository;
     private final SchoolClassRepository classRepository;
     private final LevelRepository levelRepository;
 
@@ -39,14 +42,71 @@ public class PublicApplicationService {
     private EmailService emailService;
 
     @Transactional
-    public ApplicationResponseDTO submitApplication(ApplicationCreateDTO dto) {
+    public ApplicationResponseDTO submitApplication(
+            ApplicationCreateDTO dto
+    ) {
+        if (dto == null) {
+            throw new IllegalArgumentException(
+                    "Application details are required."
+            );
+        }
 
-        // FIXED: Removed .longValue() so it matches the Integer parameter exactly
-        Branch branch = branchRepository.findById(dto.getBranchId().intValue())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid Branch ID"));
+        if (
+                dto.getBranchId() == null
+                        || dto.getBranchId() <= 0
+        ) {
+            throw new IllegalArgumentException(
+                    "A valid Branch is required."
+            );
+        }
 
-        String yearString = String.valueOf(java.time.LocalDateTime.now().getYear());
-        long currentCount = applicationRepository.countApplicationsByBranchAndAcademicYear(branch.getBranchId(), dto.getAcademicYearId());
+        if (
+                dto.getAcademicYearId() == null
+                        || dto.getAcademicYearId() <= 0
+        ) {
+            throw new IllegalArgumentException(
+                    "A valid Academic Year is required."
+            );
+        }
+
+        Integer branchId =
+                dto.getBranchId().intValue();
+
+        Branch branch =
+                branchRepository.findById(
+                                branchId
+                        )
+                        .orElseThrow(
+                                () -> new IllegalArgumentException(
+                                        "Selected Branch was not found."
+                                )
+                        );
+
+        ErpAcademicYear academicYear =
+                academicYearRepository
+                        .findByAcademicYearIdAndBranchBranchIdAndActiveTrue(
+                                dto.getAcademicYearId(),
+                                branchId
+                        )
+                        .orElseThrow(
+                                () -> new IllegalArgumentException(
+                                        "Selected Academic Year is inactive "
+                                                + "or does not belong to the "
+                                                + "selected Branch."
+                                )
+                        );
+
+        String yearString =
+                academicYear
+                        .getStartDate()
+                        .getYear()
+                        + "";
+        long currentCount =
+                applicationRepository
+                        .countApplicationsByBranchAndAcademicYear(
+                                branch.getBranchId(),
+                                academicYear.getAcademicYearId()
+                        );
         String sequence = String.format("%03d", currentCount + 1); // 3 digits as requested
         String applicationNo = "APP-" + yearString + "-" + branch.getSchoolCode() + "-" + sequence;
 
@@ -60,7 +120,9 @@ public class PublicApplicationService {
         ErpApplication app = new ErpApplication();
         app.setApplicationNo(applicationNo);
         app.setBranch(branch);
-        app.setAcademicYearId(dto.getAcademicYearId());
+        app.setAcademicYearId(
+                academicYear.getAcademicYearId()
+        );
         app.setBranchClassId(dto.getBranchClassId());
 
         app.setFirstName(dto.getFirstName());

@@ -95,7 +95,8 @@ public class StudentValidationService {
 
         AcademicYearWindow academicYear =
                 requireAcademicYearWindow(
-                        request.enrollment().academicYearId()
+                        request.enrollment().academicYearId(),
+                        branchContext.branch().getBranchId()
                 );
 
         validateHostelForCreate(
@@ -678,7 +679,12 @@ public class StudentValidationService {
             );
         }
 
-        if (!existsActiveAcademicYear(academicYearId)) {
+        if (
+                !existsActiveAcademicYear(
+                        academicYearId,
+                        branchId
+                )
+        ) {
             throw new ResourceNotFoundException(
                     "Selected academic year was not found or is inactive."
             );
@@ -706,7 +712,8 @@ public class StudentValidationService {
     }
 
     private boolean existsActiveAcademicYear(
-            Long academicYearId
+            Long academicYearId,
+            Integer branchId
     ) {
         Number count =
                 (Number) entityManager
@@ -715,12 +722,17 @@ public class StudentValidationService {
                                 select count(*)
                                 from erp_academic_years
                                 where academic_year_id = :academicYearId
+                                  and branch_id = :branchId
                                   and active = 1
                                 """
                         )
                         .setParameter(
                                 "academicYearId",
                                 academicYearId
+                        )
+                        .setParameter(
+                                "branchId",
+                                branchId
                         )
                         .getSingleResult();
 
@@ -760,13 +772,19 @@ public class StudentValidationService {
                         .createNativeQuery(
                                 """
                                 select count(*)
-                                from erp_sections
-                                where section_id = :sectionId
-                                  and branch_id = :branchId
-                                  and academic_year_id = :academicYearId
-                                  and class_id = :classId
-                                  and active = 1
-                                  and upper(status) = 'ACTIVE'
+                                from erp_sections section
+                                join erp_academic_years academic_year
+                                  on academic_year.academic_year_id =
+                                     section.academic_year_id
+                                where section.section_id = :sectionId
+                                  and section.branch_id = :branchId
+                                  and academic_year.branch_id = :branchId
+                                  and section.academic_year_id =
+                                      :academicYearId
+                                  and section.class_id = :classId
+                                  and section.active = 1
+                                  and upper(section.status) = 'ACTIVE'
+                                  and academic_year.active = 1
                                 """
                         )
                         .setParameter(
@@ -1093,7 +1111,8 @@ public class StudentValidationService {
     }
 
     private AcademicYearWindow requireAcademicYearWindow(
-            Long academicYearId
+            Long academicYearId,
+            Integer branchId
     ) {
         if (academicYearId == null || academicYearId <= 0) {
             throw new BadRequestException(
@@ -1111,12 +1130,17 @@ public class StudentValidationService {
                                        end_date
                                 from erp_academic_years
                                 where academic_year_id = :academicYearId
+                                  and branch_id = :branchId
                                   and active = 1
                                 """
                         )
                         .setParameter(
                                 "academicYearId",
                                 academicYearId
+                        )
+                        .setParameter(
+                                "branchId",
+                                branchId
                         )
                         .setMaxResults(1)
                         .getResultList();

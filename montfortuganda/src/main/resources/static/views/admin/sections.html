@@ -1,0 +1,229 @@
+<div id="ba-sections-view" class="fade-in erp-record-module">
+    <div id="section-tableView">
+        <div class="view-header">
+            <div>
+                <h2>Manage Sections</h2>
+                <p class="text-muted">Manage branch Sections by Academic Year and Class.</p>
+            </div>
+            <div class="action-btn-group">
+                <button type="button" id="section-refresh-btn" class="btn-secondary">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+                <button type="button" id="btn-add-section" class="btn-primary">
+                    <i class="bi bi-plus-lg"></i> Add Section
+                </button>
+            </div>
+        </div>
+
+        <div class="card mb-3 p-3">
+            <form id="section-filter-form" novalidate>
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1">
+                        <label for="section-year-filter">Academic Year</label>
+                        <select id="section-year-filter" class="detail-input w-100">
+                            <option value="">All Academic Years</option>
+                        </select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="section-class-filter">Class</label>
+                        <select id="section-class-filter" class="detail-input w-100">
+                            <option value="">All Classes</option>
+                        </select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="section-search-input">Search Sections</label>
+                        <input type="search" id="section-search-input" class="detail-input w-100"
+                               maxlength="100" placeholder="Search by code or name..." autocomplete="off">
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="section-status-filter">Status</label>
+                        <select id="section-status-filter" class="detail-input w-100">
+                            <option value="">All Statuses</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                        </select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="section-active-filter">Record State</label>
+                        <select id="section-active-filter" class="detail-input w-100">
+                            <option value="">All Records</option>
+                            <option value="true">Active Records</option>
+                            <option value="false">Inactive Records</option>
+                        </select>
+                    </div>
+                    <div class="form-group ba-pagination-controls">
+                        <button type="submit" class="btn-primary"><i class="bi bi-search"></i> Search</button>
+                        <button type="button" id="section-reset-btn" class="btn-secondary">
+                            <i class="bi bi-x-circle"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table id="section-table" class="data-table">
+                    <thead>
+                    <tr>
+                        <th>S.No.</th>
+                        <th>Code</th>
+                        <th>Section</th>
+                        <th>Academic Year</th>
+                        <th>Class</th>
+                        <th>Capacity</th>
+                        <th>Status</th>
+                        <th>Record State</th>
+                        <th class="col-action align-center">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody id="section-table-body">
+                    <tr><td colspan="9" class="text-center py-4">Loading Sections...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="ba-pagination-footer">
+                <div class="ba-pagination-controls">
+                    <select id="section-page-size" class="detail-input w-auto">
+                        <option value="5">5</option><option value="10" selected>10</option>
+                        <option value="25">25</option><option value="50">50</option>
+                    </select>
+                    <span id="section-page-info" class="text-muted">Showing page 1 of 1</span>
+                </div>
+                <div class="ba-pagination-controls">
+                    <button type="button" id="section-prev-btn" class="btn-secondary btn-sm" disabled>
+                        <i class="bi bi-chevron-left"></i> Previous
+                    </button>
+                    <button type="button" id="section-next-btn" class="btn-secondary btn-sm" disabled>
+                        Next <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="section-form-view" class="fade-in hidden">
+        <div class="card max-w-2xl mx-auto mt-4">
+            <div class="view-header p-3 border-bottom">
+                <div>
+                    <h2 id="section-form-title" class="mb-0">
+                        <i class="bi bi-grid-3x3-gap me-2"></i>Create Section
+                    </h2>
+                    <p id="section-form-subtitle" class="text-muted mb-0">
+                        Create a Section for your branch.
+                    </p>
+                </div>
+                <button type="button" id="section-back-btn" class="btn-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back
+                </button>
+            </div>
+            <div class="card-body p-4">
+                <form id="section-form" novalidate>
+                    <input type="hidden" id="section-id">
+                    <input type="hidden" id="section-version">
+
+                    <div class="ba-flex-panel">
+                        <div class="form-group ba-flex-1">
+                            <label for="section-year">Academic Year <span class="text-danger">*</span></label>
+                            <select id="section-year" class="detail-input w-100" required>
+                                <option value="">Select Academic Year</option>
+                            </select>
+                        </div>
+                        <div class="form-group ba-flex-1">
+                            <label for="section-class">Class <span class="text-danger">*</span></label>
+                            <select id="section-class" class="detail-input w-100" required>
+                                <option value="">Select Class</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="ba-flex-panel">
+                        <div class="form-group ba-flex-1">
+                            <label for="section-code">Section Code <span class="text-danger">*</span></label>
+                            <input type="text" id="section-code" class="detail-input w-100"
+                                   maxlength="20" placeholder="e.g. A" required>
+                        </div>
+                        <div class="form-group ba-flex-1">
+                            <label for="section-name">Section Name <span class="text-danger">*</span></label>
+                            <input type="text" id="section-name" class="detail-input w-100"
+                                   maxlength="100" placeholder="e.g. Section A" required>
+                        </div>
+                        <div class="form-group ba-flex-1">
+                            <label for="section-capacity">Capacity <span class="text-danger">*</span></label>
+                            <input type="number" id="section-capacity" class="detail-input w-100"
+                                   min="1" step="1" required>
+                        </div>
+                    </div>
+
+                    <div class="ba-flex-panel">
+                        <div class="form-group ba-flex-1">
+                            <label for="section-status">Status <span class="text-danger">*</span></label>
+                            <select id="section-status" class="detail-input w-100" required>
+                                <option value="">Select Status</option>
+                                <option value="ACTIVE">Active</option>
+                                <option value="INACTIVE">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="form-group ba-flex-1">
+                            <label for="section-active">Record State</label>
+                            <select id="section-active" class="detail-input w-100">
+                                <option value="true">Active</option>
+                                <option value="false">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group mb-4">
+                        <label for="section-description">Description</label>
+                        <textarea id="section-description" class="detail-input w-100"
+                                  rows="3" maxlength="500" placeholder="Optional description..."></textarea>
+                    </div>
+
+                    <div id="section-form-error" class="emp-validation-summary hidden" role="alert">
+                        <strong>Please correct the highlighted fields.</strong>
+                        <p id="section-form-error-text"></p>
+                    </div>
+
+                    <div class="text-end border-top pt-3">
+                        <button type="button" id="section-cancel-btn" class="btn-secondary">Cancel</button>
+                        <button type="submit" id="section-save-btn" class="btn-primary px-4">
+                            <i class="bi bi-check-lg"></i> Save Section
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <template id="section-row-template">
+        <tr>
+            <td class="col-serial font-monospace text-muted"></td>
+            <td class="col-code font-medium"></td>
+            <td class="col-name text-primary"><strong></strong></td>
+            <td class="col-year"></td>
+            <td class="col-class"></td>
+            <td class="col-capacity"></td>
+            <td><span class="col-status status-badge badge"></span></td>
+            <td><span class="col-active status-badge badge"></span></td>
+            <td class="col-action align-center">
+                <button type="button" class="btn-primary btn-sm section-edit-btn me-1" title="Edit">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <button type="button" class="btn-secondary btn-sm section-active-btn" title="Change State">
+                    <i class="bi bi-power"></i>
+                </button>
+            </td>
+        </tr>
+    </template>
+
+    <div id="section-operation-overlay" class="employee-operation-overlay"
+         role="status" aria-live="polite" aria-hidden="true">
+        <section class="employee-operation-card">
+            <span class="employee-operation-spinner" aria-hidden="true"></span>
+            <div class="employee-operation-content">
+                <strong id="section-operation-title" class="employee-operation-title">Processing</strong>
+                <span id="section-operation-message" class="employee-operation-message">Please wait...</span>
+            </div>
+        </section>
+    </div>
+</div>

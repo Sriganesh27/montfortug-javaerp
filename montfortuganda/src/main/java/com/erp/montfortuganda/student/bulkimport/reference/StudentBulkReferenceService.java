@@ -61,7 +61,9 @@ public class StudentBulkReferenceService {
                 loadBranch(branchId);
 
         Map<String, AcademicYearReference> academicYears =
-                loadAcademicYears();
+                loadAcademicYears(
+                        branchId
+                );
 
         Map<String, LevelReference> levels =
                 loadBranchLevels(branchId);
@@ -158,7 +160,9 @@ public class StudentBulkReferenceService {
     // ACADEMIC YEARS
     // =====================================================================
 
-    private Map<String, AcademicYearReference> loadAcademicYears() {
+    private Map<String, AcademicYearReference> loadAcademicYears(
+            Integer branchId
+    ) {
         @SuppressWarnings("unchecked")
         List<Object[]> rows =
                 entityManager
@@ -172,13 +176,18 @@ public class StudentBulkReferenceService {
                                        academic_year.status,
                                        academic_year.current_year
                                 from erp_academic_years academic_year
-                                where academic_year.active = 1
+                                where academic_year.branch_id = :branchId
+                                  and academic_year.active = 1
                                   and upper(academic_year.status)
                                       in ('PLANNED', 'ACTIVE')
                                 order by academic_year.current_year desc,
                                          academic_year.start_date desc,
                                          academic_year.academic_year_id desc
                                 """
+                        )
+                        .setParameter(
+                                "branchId",
+                                branchId
                         )
                         .getResultList();
 
@@ -382,6 +391,7 @@ public class StudentBulkReferenceService {
                                   on academic_year.academic_year_id =
                                      section.academic_year_id
                                 where section.branch_id = :branchId
+                                  and academic_year.branch_id = :branchId
                                   and section.active = 1
                                   and upper(section.status) = 'ACTIVE'
                                   and academic_year.active = 1
