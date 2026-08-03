@@ -2,5 +2,10 @@
 <project version="4">
   <component name="SqlDialectMappings">
     <file url="file://$PROJECT_DIR$/montfortuganda/src/main/java/com/erp/montfortuganda/config/ErpDataSourceWarmup.java" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/montfortuganda/src/main/java/com/erp/montfortuganda/student/bulkimport/reference/StudentBulkReferenceService.java" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/montfortuganda/src/main/java/com/erp/montfortuganda/student/bulkimport/service/StudentBulkImportTransactionService.java" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/montfortuganda/src/main/java/com/erp/montfortuganda/student/service/StudentNumberService.java" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/montfortuganda/src/main/java/com/erp/montfortuganda/student/service/StudentServiceImpl.java" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/montfortuganda/src/main/java/com/erp/montfortuganda/student/service/StudentValidationService.java" dialect="GenericSQL" />
   </component>
 </project>
