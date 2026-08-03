@@ -19,9 +19,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.nio.file.Path;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -241,10 +243,17 @@ public class EngineCoordinator {
                     session.getFailedRows()
             );
         } catch (Exception exception) {
+            ImportFailureDetails failureDetails =
+                    resolveImportFailure(
+                            exception,
+                            session
+                    );
+
             log.error(
-                    "EngineCoordinator encountered a fatal system "
-                            + "error for job {}",
+                    "EngineCoordinator failed job {} at stage {} with code {}",
                     context.getJobId(),
+                    failureDetails.stage(),
+                    failureDetails.code(),
                     exception
             );
 
@@ -261,10 +270,13 @@ public class EngineCoordinator {
             );
 
             try {
-                updateProgress(
-                        context,
-                        session,
-                        totalRowCounter.get()
+                progressTransactionService.updateFailure(
+                        context.getJobId(),
+                        totalRowCounter.get(),
+                        session.getProcessedRows(),
+                        session.getSuccessRows(),
+                        session.getFailedRows(),
+                        failureDetails.databaseReason()
                 );
             } catch (Exception progressException) {
                 log.error(
@@ -275,11 +287,260 @@ public class EngineCoordinator {
             }
 
             throw new RuntimeException(
-                    "Import job execution failed.",
+                    failureDetails.userMessage(),
                     exception
             );
         }
     }
+    private ImportFailureDetails resolveImportFailure(
+            Exception exception,
+            ImportSession session
+    ) {
+        Throwable rootCause =
+                rootCause(
+                        exception
+                );
+
+        String rawMessage =
+                safeMessage(
+                        rootCause
+                );
+
+        String normalizedMessage =
+                rawMessage.toLowerCase(
+                        Locale.ROOT
+                );
+
+        String stage =
+                resolveFailureStage(
+                        session,
+                        normalizedMessage
+                );
+
+        String code =
+                resolveFailureCode(
+                        rootCause,
+                        normalizedMessage
+                );
+
+        String userMessage =
+                resolveUserFailureMessage(
+                        code,
+                        rawMessage
+                );
+
+        return new ImportFailureDetails(
+                stage,
+                code,
+                userMessage,
+                stage
+                        + ":"
+                        + code
+                        + ": "
+                        + userMessage
+        );
+    }
+
+    private String resolveFailureStage(
+            ImportSession session,
+            String message
+    ) {
+        ImportStatus lifecycle =
+                session.getCurrentLifecycle();
+
+        if (
+                message.contains("header")
+                        || message.contains("column")
+                        || message.contains("template")
+        ) {
+            return "HEADER_VALIDATION";
+        }
+
+        if (
+                message.contains("workbook")
+                        || message.contains("sheet")
+                        || message.contains("excel")
+                        || message.contains("csv")
+                        || message.contains("zip")
+        ) {
+            return "WORKBOOK_READING";
+        }
+
+        if (
+                lifecycle == ImportStatus.READING_ROWS
+        ) {
+            return "WORKBOOK_READING";
+        }
+
+        if (
+                lifecycle == ImportStatus.VALIDATING_ROWS
+        ) {
+            return "ROW_VALIDATION";
+        }
+
+        return "UNEXPECTED_ERROR";
+    }
+
+    private String resolveFailureCode(
+            Throwable rootCause,
+            String message
+    ) {
+        if (
+                message.contains("unexpected column")
+                        || message.contains("missing column")
+                        || message.contains("invalid header")
+                        || message.contains("duplicate header")
+        ) {
+            return "INVALID_HEADERS";
+        }
+
+        if (
+                message.contains("empty file")
+                        || message.contains("file is empty")
+        ) {
+            return "EMPTY_FILE";
+        }
+
+        if (
+                message.contains("unsupported")
+                        && message.contains("file")
+        ) {
+            return "UNSUPPORTED_FILE_TYPE";
+        }
+
+        if (
+                message.contains("password")
+                        || message.contains("encrypted")
+                        || message.contains("corrupt")
+                        || message.contains("invalid zip")
+        ) {
+            return "CORRUPTED_WORKBOOK";
+        }
+
+        if (
+                message.contains("sheet")
+                        && message.contains("not found")
+        ) {
+            return "SHEET_NOT_FOUND";
+        }
+
+        if (
+                rootCause instanceof SQLException
+                        || message.contains("sqlstate")
+                        || message.contains("connection")
+                        || message.contains("database")
+        ) {
+            return "DATABASE_UNAVAILABLE";
+        }
+
+        return "INTERNAL_IMPORT_ERROR";
+    }
+
+    private String resolveUserFailureMessage(
+            String code,
+            String rawMessage
+    ) {
+        return switch (code) {
+            case "INVALID_HEADERS" ->
+                    readableMessage(
+                            rawMessage,
+                            "Import could not start because the Excel headers are invalid."
+                    );
+
+            case "EMPTY_FILE" ->
+                    "The uploaded import file is empty.";
+
+            case "UNSUPPORTED_FILE_TYPE" ->
+                    "The uploaded file type is not supported. Upload the approved Excel template.";
+
+            case "CORRUPTED_WORKBOOK" ->
+                    "The workbook could not be read. It may be corrupted, encrypted or password protected.";
+
+            case "SHEET_NOT_FOUND" ->
+                    readableMessage(
+                            rawMessage,
+                            "The required worksheet was not found in the uploaded workbook."
+                    );
+
+            case "DATABASE_UNAVAILABLE" ->
+                    "The import could not continue because the database was unavailable. Retry after the connection is restored.";
+
+            default ->
+                    "The import could not be completed because of an unexpected system error. Use the job ID when reporting this issue.";
+        };
+    }
+
+    private String readableMessage(
+            String rawMessage,
+            String fallback
+    ) {
+        if (
+                rawMessage == null
+                        || rawMessage.isBlank()
+        ) {
+            return fallback;
+        }
+
+        String normalized =
+                rawMessage
+                        .replaceAll(
+                                "\\s+",
+                                " "
+                        )
+                        .trim();
+
+        if (normalized.length() > 350) {
+            return normalized.substring(
+                    0,
+                    350
+            );
+        }
+
+        return normalized;
+    }
+
+    private Throwable rootCause(
+            Throwable throwable
+    ) {
+        Throwable current =
+                Objects.requireNonNull(
+                        throwable,
+                        "Import failure is required."
+                );
+
+        while (
+                current.getCause() != null
+                        && current.getCause() != current
+        ) {
+            current =
+                    current.getCause();
+        }
+
+        return current;
+    }
+
+    private String safeMessage(
+            Throwable throwable
+    ) {
+        String message =
+                throwable == null
+                        ? null
+                        : throwable.getMessage();
+
+        return message == null
+                ? ""
+                : message;
+    }
+
+    private record ImportFailureDetails(
+            String stage,
+            String code,
+            String userMessage,
+            String databaseReason
+    ) {
+    }
+
+
 
     /**
      * Counts rows using the same streaming reader and secure target-row

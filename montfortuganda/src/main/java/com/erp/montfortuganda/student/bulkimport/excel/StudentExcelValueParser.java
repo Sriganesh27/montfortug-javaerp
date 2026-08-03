@@ -258,6 +258,52 @@ public class StudentExcelValueParser {
         return parsed;
     }
 
+    /**
+     * Parses the Student joining-date cell.
+     *
+     * A four-digit year such as 2022 is valid, but it is not converted into
+     * an artificial January 1 date. The original year is stored separately
+     * in admissionYear, while joiningDate remains null.
+     *
+     * Full dates continue to use all formats supported by nullableDate.
+     */
+    public LocalDate nullableJoiningDateOrYear(
+            String value,
+            String fieldName
+    ) {
+        String normalized =
+                nullableText(value);
+
+        if (normalized == null) {
+            return null;
+        }
+
+        if (normalized.matches("^\\d{4}$")) {
+            int year;
+
+            try {
+                year = Integer.parseInt(normalized);
+            } catch (NumberFormatException exception) {
+                throw new IllegalArgumentException(
+                        fieldName + " contains an invalid year"
+                );
+            }
+
+            if (year < 1900 || year > 2100) {
+                throw new IllegalArgumentException(
+                        fieldName + " year must be between 1900 and 2100"
+                );
+            }
+
+            return null;
+        }
+
+        return nullableDate(
+                normalized,
+                fieldName
+        );
+    }
+
     private LocalDate parseNumericSeparatedDate(
             String value
     ) {

@@ -61,14 +61,6 @@ public interface ErpStudentRepository
     );
 
     /**
-     * Branch-safe Student-code lookup.
-     */
-    Optional<ErpStudent> findByStudentCodeIgnoreCaseAndBranch_BranchId(
-            String studentCode,
-            Integer branchId
-    );
-
-    /**
      * Finds a Student created from an admission application.
      */
     Optional<ErpStudent> findByApplication_ApplicationIdAndBranch_BranchId(
@@ -89,22 +81,6 @@ public interface ErpStudentRepository
      */
     boolean existsByAdmissionNoIgnoreCaseAndStudentIdNot(
             String admissionNo,
-            Long studentId
-    );
-
-    /**
-     * Global duplicate check matching the current database unique constraint
-     * on student_code.
-     */
-    boolean existsByStudentCodeIgnoreCase(
-            String studentCode
-    );
-
-    /**
-     * Global duplicate check used during Student updates.
-     */
-    boolean existsByStudentCodeIgnoreCaseAndStudentIdNot(
-            String studentCode,
             Long studentId
     );
 

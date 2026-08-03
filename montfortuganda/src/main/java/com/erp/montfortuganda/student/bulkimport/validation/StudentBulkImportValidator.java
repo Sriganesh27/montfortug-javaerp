@@ -1363,7 +1363,6 @@ public class StudentBulkImportValidator
             );
         }
     }
-
     // =====================================================================
     // IN-FILE DUPLICATES
     // =====================================================================
@@ -1404,10 +1403,11 @@ public class StudentBulkImportValidator
         if (!identities.add(identity)) {
             addError(
                     errors,
-                    StudentExcelHeaders.FIRST_NAME,
-                    row.getFirstName(),
+                    "Student",
+                    buildStudentDisplayName(row),
                     "STUDENT_DUPLICATE_INSIDE_WORKBOOK",
-                    "The same Student name, Date of Birth and Mobile No are duplicated inside the workbook."
+                    "The same Student full name, Date of Birth and Mobile No "
+                            + "are duplicated inside the workbook."
             );
         }
     }
@@ -1431,12 +1431,12 @@ public class StudentBulkImportValidator
                 );
 
         String dateOfBirth =
-                normalizeDuplicateValue(
+                normalizeDuplicateDate(
                         row.getDateOfBirth()
                 );
 
         String mobile =
-                normalizeDuplicateValue(
+                normalizeDuplicatePhone(
                         row.getMobileNumber()
                 );
 
@@ -1457,6 +1457,100 @@ public class StudentBulkImportValidator
                 + dateOfBirth
                 + "|"
                 + mobile;
+    }
+
+    private String normalizeDuplicateDate(
+            String value
+    ) {
+        try {
+            LocalDate parsedDate =
+                    valueParser.nullableDate(
+                            value,
+                            StudentExcelHeaders.DATE_OF_BIRTH
+                    );
+
+            return parsedDate == null
+                    ? null
+                    : parsedDate.toString();
+        } catch (IllegalArgumentException exception) {
+            return null;
+        }
+    }
+
+    private String normalizeDuplicatePhone(
+            String value
+    ) {
+        String normalized =
+                valueParser.nullableText(
+                        value
+                );
+
+        if (normalized == null) {
+            return null;
+        }
+
+        String digits =
+                normalized.replaceAll(
+                        "\\D",
+                        ""
+                );
+
+        if (digits.isBlank()) {
+            return null;
+        }
+
+        if (
+                digits.length() == 10
+                        && digits.startsWith("0")
+        ) {
+            digits =
+                    "256"
+                            + digits.substring(1);
+        }
+
+        return digits;
+    }
+
+    private String buildStudentDisplayName(
+            StudentBulkImportRow row
+    ) {
+        String firstName =
+                valueOrEmpty(
+                        valueParser.nullableText(
+                                row.getFirstName()
+                        )
+                );
+
+        String middleName =
+                valueOrEmpty(
+                        valueParser.nullableText(
+                                row.getMiddleName()
+                        )
+                );
+
+        String lastName =
+                valueOrEmpty(
+                        valueParser.nullableText(
+                                row.getLastName()
+                        )
+                );
+
+        String fullName =
+                String.join(
+                                " ",
+                                firstName,
+                                middleName,
+                                lastName
+                        )
+                        .trim()
+                        .replaceAll(
+                                "\\s+",
+                                " "
+                        );
+
+        return fullName.isBlank()
+                ? firstName
+                : fullName;
     }
 
     private String normalizeDuplicateValue(

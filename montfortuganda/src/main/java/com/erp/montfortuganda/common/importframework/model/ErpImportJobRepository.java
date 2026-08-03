@@ -116,4 +116,47 @@ public interface ErpImportJobRepository
             @Param("failed")
             int failed
     );
+
+    /**
+     * Stores a safe job-level failure reason in last_checkpoint.
+     */
+    @Modifying(
+            clearAutomatically = true,
+            flushAutomatically = true
+    )
+    @Query(
+            """
+            UPDATE ErpImportJob job
+               SET job.status = :status,
+                   job.totalRows = :total,
+                   job.processedRows = :processed,
+                   job.successRows = :success,
+                   job.failedRows = :failed,
+                   job.lastCheckpoint = :failureReason
+             WHERE job.jobId = :jobId
+            """
+    )
+    int updateFailedProgress(
+            @Param("jobId")
+            String jobId,
+
+            @Param("status")
+            ImportStatus status,
+
+            @Param("total")
+            int total,
+
+            @Param("processed")
+            int processed,
+
+            @Param("success")
+            int success,
+
+            @Param("failed")
+            int failed,
+
+            @Param("failureReason")
+            String failureReason
+    );
+
 }

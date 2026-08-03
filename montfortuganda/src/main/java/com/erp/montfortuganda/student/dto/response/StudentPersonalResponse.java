@@ -23,11 +23,13 @@ public record StudentPersonalResponse(
 
         String admissionNo,
 
-        String studentCode,
-
         String learnerLin,
 
         Integer admissionYear,
+
+        Integer joiningClassId,
+
+        Long joiningTermId,
 
         String firstName,
 

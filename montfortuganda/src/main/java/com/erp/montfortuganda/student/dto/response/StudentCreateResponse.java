@@ -14,7 +14,9 @@ public record StudentCreateResponse(
 
         String admissionNo,
 
-        String studentCode,
+        Integer joiningClassId,
+
+        Long joiningTermId,
 
         String fullName,
 

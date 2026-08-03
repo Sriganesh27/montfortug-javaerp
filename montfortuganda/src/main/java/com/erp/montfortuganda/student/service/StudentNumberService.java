@@ -15,17 +15,13 @@ import java.util.Objects;
 /**
  * Generates concurrency-safe Student identifiers.
  *
- * Student Code:
- * {school_code}-STU-{academic_year_last_2_digits}-{4_digit_sequence}
- * Example: U021-STU-26-005
+ * Permanent Admission Number:
+ * {school_code}-{original_joining_year_last_2_digits}-{joining_class_code}-{4_digit_sequence}
+ * Example: U021-25-P4-0001
  *
- * Admission Number:
- * {school_code}-ADM-{6_digit_branch_lifetime_sequence}
- * Example: U021-ADM-00005
- *
- * Student-code sequences are maintained per branch and academic year.
- * Admission-number sequences are maintained for the lifetime of the branch
- * and do not reset when the academic year changes.
+ * The sequence is common across the school for each original joining year.
+ * It does not reset per class and the generated admission number never
+ * changes when the Student is promoted.
  */
 @Service
 public class StudentNumberService {
@@ -33,33 +29,11 @@ public class StudentNumberService {
     private static final String STUDENT_MODULE_CODE =
             "STUDENT";
 
-    private static final String ADMISSION_MODULE_CODE =
-            "STUDENT_ADMISSION";
-
-    private static final String STUDENT_CODE =
-            "STU";
-
-    private static final String ADMISSION_CODE =
-            "ADM";
-
-    /**
-     * The admission-register sequence is branch-lifetime, so it does not
-     * belong to a real academic year. Zero is the permanent sequence bucket.
-     */
-    private static final int ADMISSION_RUNNING_YEAR =
-            0;
-
     private static final int STUDENT_SEQUENCE_PADDING =
-            3;
-
-    private static final int ADMISSION_SEQUENCE_PADDING =
-            5;
+            4;
 
     private static final long MAX_STUDENT_SEQUENCE =
-            999L;
-
-    private static final long MAX_ADMISSION_SEQUENCE =
-            99_999L;
+            9_999L;
 
     private final EntityManager entityManager;
 
@@ -75,10 +49,24 @@ public class StudentNumberService {
      * This method joins the surrounding Student-creation transaction. When
      * Student creation fails, the sequence increment also rolls back.
      */
+    /**
+     * Generates the permanent Student admission number.
+     *
+     * Format:
+     * {schoolCode}-{joiningYearYY}-{joiningClassCode}-{sequence}
+     *
+     * Example:
+     * U021-25-P4-0001
+     *
+     * The sequence is branch-wide for the original joining year and does not
+     * reset per class. This method joins the surrounding registration
+     * transaction, so the sequence increment rolls back when creation fails.
+     */
     @Transactional
     public String generateStudentCode(
             Branch branch,
-            Long academicYearId,
+            Integer admissionYear,
+            Integer joiningClassId,
             Integer authenticatedUserId
     ) {
         BranchSequenceContext context =
@@ -87,10 +75,14 @@ public class StudentNumberService {
                         authenticatedUserId
                 );
 
-        int academicYear =
-                resolveAcademicYear(
-                        academicYearId,
-                        context.branchId()
+        int validatedAdmissionYear =
+                validateAdmissionYear(
+                        admissionYear
+                );
+
+        String joiningClassCode =
+                resolveJoiningClassCode(
+                        joiningClassId
                 );
 
         lockBranch(
@@ -101,100 +93,44 @@ public class StudentNumberService {
                 resolveExistingStudentCodeBaseline(
                         context.branchId(),
                         context.schoolCode(),
-                        academicYear
+                        validatedAdmissionYear
                 ) + 1L;
 
         long sequence =
                 nextSequence(
                         context.branchId(),
                         STUDENT_MODULE_CODE,
-                        academicYear,
+                        validatedAdmissionYear,
                         context.actor(),
                         firstSequence
                 );
 
         if (sequence > MAX_STUDENT_SEQUENCE) {
             throw new IllegalStateException(
-                    "Student-code sequence exceeded "
+                    "Student admission-number sequence exceeded "
                             + MAX_STUDENT_SEQUENCE
                             + " for school "
                             + context.schoolCode()
-                            + " and academic year "
-                            + academicYear
+                            + " and joining year "
+                            + validatedAdmissionYear
                             + "."
             );
         }
 
         int shortYear =
                 Math.floorMod(
-                        academicYear,
+                        validatedAdmissionYear,
                         100
                 );
 
         return String.format(
                 Locale.ROOT,
-                "%s-%s-%02d-%0"
+                "%s-%02d-%s-%0"
                         + STUDENT_SEQUENCE_PADDING
                         + "d",
                 context.schoolCode(),
-                STUDENT_CODE,
                 shortYear,
-                sequence
-        );
-    }
-
-    /**
-     * Generates the next official branch-wide Admission Number.
-     *
-     * The sequence includes every Student ever admitted to the branch and
-     * never resets by academic year.
-     */
-    @Transactional
-    public String generateAdmissionNumber(
-            Branch branch,
-            Integer authenticatedUserId
-    ) {
-        BranchSequenceContext context =
-                requireBranchContext(
-                        branch,
-                        authenticatedUserId
-                );
-
-        lockBranch(
-                context.branchId()
-        );
-
-        long firstSequence =
-                resolveExistingAdmissionBaseline(
-                        context.branchId()
-                ) + 1L;
-
-        long sequence =
-                nextSequence(
-                        context.branchId(),
-                        ADMISSION_MODULE_CODE,
-                        ADMISSION_RUNNING_YEAR,
-                        context.actor(),
-                        firstSequence
-                );
-
-        if (sequence > MAX_ADMISSION_SEQUENCE) {
-            throw new IllegalStateException(
-                    "Admission-register sequence exceeded "
-                            + MAX_ADMISSION_SEQUENCE
-                            + " for school "
-                            + context.schoolCode()
-                            + "."
-            );
-        }
-
-        return String.format(
-                Locale.ROOT,
-                "%s-%s-%0"
-                        + ADMISSION_SEQUENCE_PADDING
-                        + "d",
-                context.schoolCode(),
-                ADMISSION_CODE,
+                joiningClassCode,
                 sequence
         );
     }
@@ -239,22 +175,36 @@ public class StudentNumberService {
     }
 
     // =====================================================================
-    // ACADEMIC YEAR
+    // ORIGINAL JOINING YEAR
     // =====================================================================
 
-    private int resolveAcademicYear(
-            Long academicYearId,
-            Integer branchId
+    private int validateAdmissionYear(
+            Integer admissionYear
     ) {
-        if (academicYearId == null || academicYearId <= 0) {
+        if (
+                admissionYear == null
+                        || admissionYear < 1900
+                        || admissionYear > 2100
+        ) {
             throw new BadRequestException(
-                    "A valid academic year is required to generate the Student code."
+                    "A valid Student joining year between 1900 and 2100 "
+                            + "is required to generate the admission number."
             );
         }
 
-        if (branchId == null || branchId <= 0) {
+        return admissionYear;
+    }
+
+    // =====================================================================
+    // JOINING CLASS
+    // =====================================================================
+
+    private String resolveJoiningClassCode(
+            Integer joiningClassId
+    ) {
+        if (joiningClassId == null || joiningClassId <= 0) {
             throw new BadRequestException(
-                    "A valid branch is required to validate the Academic Year."
+                    "A valid joining class is required to generate the Student code."
             );
         }
 
@@ -262,49 +212,45 @@ public class StudentNumberService {
                 entityManager
                         .createNativeQuery(
                                 """
-                                select year(start_date)
-                                from erp_academic_years
-                                where academic_year_id = :academicYearId
-                                  and branch_id = :branchId
-                                  and active = 1
+                                select class_code
+                                from erp_classes
+                                where class_id = :classId
+                                  and status = 1
                                 """
                         )
                         .setParameter(
-                                "academicYearId",
-                                academicYearId
-                        )
-                        .setParameter(
-                                "branchId",
-                                branchId
+                                "classId",
+                                joiningClassId
                         )
                         .getResultList();
 
         if (results.isEmpty()) {
             throw new ResourceNotFoundException(
-                    "Selected Academic Year was not found, is inactive, "
-                            + "or does not belong to this branch."
+                    "Selected joining class was not found or is inactive."
             );
         }
 
         Object result =
                 results.getFirst();
 
-        if (!(result instanceof Number number)) {
+        if (!(result instanceof String classCode)) {
             throw new IllegalStateException(
-                    "Academic year start year could not be resolved."
+                    "Joining class code could not be resolved."
             );
         }
 
-        int academicYear =
-                number.intValue();
+        String normalized =
+                classCode
+                        .trim()
+                        .toUpperCase(Locale.ROOT);
 
-        if (academicYear < 1900 || academicYear > 2100) {
-            throw new IllegalStateException(
-                    "Academic year contains an unsupported start year."
+        if (!normalized.matches("N[1-3]|P[1-7]|S[1-6]")) {
+            throw new BadRequestException(
+                    "Joining class code must be N1-N3, P1-P7 or S1-S6."
             );
         }
 
-        return academicYear;
+        return normalized;
     }
 
     // =====================================================================
@@ -510,8 +456,8 @@ public class StudentNumberService {
 
     /**
      * Protects a branch if the sequence table is missing but Student rows
-     * already exist. The next generated Student code continues from the
-     * highest matching code suffix.
+     * already exist. The next generated permanent admission number continues
+     * from the highest matching admission_no suffix.
      */
     private long resolveExistingStudentCodeBaseline(
             Integer branchId,
@@ -524,12 +470,11 @@ public class StudentNumberService {
                         100
                 );
 
-        String prefix =
+        String admissionPrefix =
                 String.format(
                         Locale.ROOT,
-                        "%s-%s-%02d-%%",
+                        "%s-%02d-%%",
                         schoolCode,
-                        STUDENT_CODE,
                         shortYear
                 );
 
@@ -541,7 +486,7 @@ public class StudentNumberService {
                                            max(
                                                cast(
                                                    substring_index(
-                                                       student_code,
+                                                       admission_no,
                                                        '-',
                                                        -1
                                                    ) as unsigned
@@ -551,7 +496,7 @@ public class StudentNumberService {
                                        )
                                 from erp_students
                                 where branch_id = :branchId
-                                  and student_code like :prefix
+                                  and admission_no like :admissionPrefix
                                 """
                         )
                         .setParameter(
@@ -559,50 +504,8 @@ public class StudentNumberService {
                                 branchId
                         )
                         .setParameter(
-                                "prefix",
-                                prefix
-                        )
-                        .getResultList();
-
-        return firstNumberOrZero(
-                results
-        );
-    }
-
-    /**
-     * Seeds the first branch-lifetime Admission Number safely for existing
-     * installations. It considers both the total historical Student count
-     * and the largest numeric suffix already present in admission_no.
-     */
-    private long resolveExistingAdmissionBaseline(
-            Integer branchId
-    ) {
-        List<?> results =
-                entityManager
-                        .createNativeQuery(
-                                """
-                                select greatest(
-                                           count(*),
-                                           coalesce(
-                                               max(
-                                                   cast(
-                                                       substring_index(
-                                                           admission_no,
-                                                           '-',
-                                                           -1
-                                                       ) as unsigned
-                                                   )
-                                               ),
-                                               0
-                                           )
-                                       )
-                                from erp_students
-                                where branch_id = :branchId
-                                """
-                        )
-                        .setParameter(
-                                "branchId",
-                                branchId
+                                "admissionPrefix",
+                                admissionPrefix
                         )
                         .getResultList();
 

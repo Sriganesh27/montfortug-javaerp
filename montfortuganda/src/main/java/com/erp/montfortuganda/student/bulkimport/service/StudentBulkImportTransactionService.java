@@ -32,7 +32,7 @@ import java.util.Objects;
  * Creates one Student from a validated Student bulk-import row.
  * <p>Every invocation runs in an independent transaction. A failure in one
  * Excel row does not roll back Students created from other valid rows.</p>
- * <p>Branch ownership, Admission Number, Student Code, status values,
+ * <p>Branch ownership, permanent Admission Number, status values,
  * audit fields and entity versions remain controlled by the backend.</p>
  */
 @Service
@@ -100,17 +100,16 @@ public class StudentBulkImportTransactionService {
         Long authenticatedUserId =
                 createdByUserId.longValue();
 
-        String studentCode =
-                numberService.generateStudentCode(
-                        branch,
-                        request.enrollment()
-                                .academicYearId(),
-                        createdByUserId
-                );
+        Integer joiningClassId =
+                request.personal().joiningClassId() != null
+                        ? request.personal().joiningClassId()
+                        : request.enrollment().classId();
 
         String admissionNo =
-                numberService.generateAdmissionNumber(
+                numberService.generateStudentCode(
                         branch,
+                        request.personal().admissionYear(),
+                        joiningClassId,
                         createdByUserId
                 );
 
@@ -120,7 +119,6 @@ public class StudentBulkImportTransactionService {
                         branch,
                         null,
                         admissionNo,
-                        studentCode,
                         authenticatedUserId
                 );
 
@@ -179,7 +177,6 @@ public class StudentBulkImportTransactionService {
                 student.getStudentId(),
                 enrollment.getEnrollmentId(),
                 student.getAdmissionNo(),
-                student.getStudentCode(),
                 student.getFullName(),
                 branch.getBranchId(),
                 enrollment.getAcademicYearId(),
@@ -934,7 +931,6 @@ public class StudentBulkImportTransactionService {
             Long studentId,
             Long enrollmentId,
             String admissionNo,
-            String studentCode,
             String fullName,
             Integer branchId,
             Long academicYearId,

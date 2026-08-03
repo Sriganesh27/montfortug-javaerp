@@ -58,10 +58,22 @@ public class ErpStudent {
     @Column(name = "admission_year", nullable = false)
     private Integer admissionYear;
 
-    @NotNull(message = "Student code is required")
-    @Size(max = 50, message = "Student code cannot exceed 50 characters")
-    @Column(name = "student_code", nullable = false, unique = true, length = 50)
-    private String studentCode;
+    /**
+     * Original class in which the student first joined this school.
+     *
+     * This value is permanent and must not change when the student is
+     * promoted. The current/present class remains in
+     * erp_student_enrollment.class_id.
+     */
+    @Column(name = "joining_class_id")
+    private Integer joiningClassId;
+    /**
+     * Original academic term in which the student first joined this school.
+     *
+     * This value remains unchanged when the school's current term changes.
+     */
+    @Column(name = "joining_term_id")
+    private Long joiningTermId;
 
     @NotNull(message = "First name is required")
     @Size(max = 100, message = "First name cannot exceed 100 characters")

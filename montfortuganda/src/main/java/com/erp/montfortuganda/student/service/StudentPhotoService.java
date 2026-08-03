@@ -336,8 +336,8 @@ public class StudentPhotoService {
                 );
 
         String studentCode =
-                StringUtils.hasText(student.getStudentCode())
-                        ? student.getStudentCode().trim()
+                StringUtils.hasText(student.getAdmissionNo())
+                        ? student.getAdmissionNo().trim()
                         : "student";
 
         return studentCode

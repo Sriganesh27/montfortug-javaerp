@@ -273,6 +273,18 @@
                 </div>
 
                 <div class="emp-grid emp-grid-4 mb-3">
+                    <div class="form-group">
+                        <label for="add-studentJoiningTerm">Joining Term</label>
+                        <select
+                                id="add-studentJoiningTerm"
+                                class="detail-input w-100"
+                                data-validation-label="Joining Term"
+                                disabled
+                        >
+                            <option value="">-- Select Joining Term --</option>
+                        </select>
+                    </div>
+
                     <div class="form-group emp-required-field">
                         <label for="add-studentAdmissionType">Admission Type</label>
                         <select
@@ -288,14 +300,12 @@
                         </select>
                     </div>
 
-                    <div class="form-group emp-required-field">
+                    <div class="form-group">
                         <label for="add-studentJoiningDate">Joining Date</label>
                         <input
                                 type="date"
                                 id="add-studentJoiningDate"
                                 class="detail-input w-100"
-                                required
-                                aria-required="true"
                                 data-validation-label="Joining Date"
                         >
                     </div>
@@ -1736,11 +1746,6 @@
                     </div>
 
                     <div>
-                        <span>Student Code</span>
-                        <strong id="student-registration-result-code">-</strong>
-                    </div>
-
-                    <div>
                         <span>Admission Number</span>
                         <strong id="student-registration-result-admission">-</strong>
                     </div>
@@ -1758,6 +1763,11 @@
                     <div>
                         <span>Section</span>
                         <strong id="student-registration-result-section">Not assigned</strong>
+                    </div>
+
+                    <div>
+                        <span>Joining Term</span>
+                        <strong id="student-registration-result-term">Not selected</strong>
                     </div>
                 </div>
 

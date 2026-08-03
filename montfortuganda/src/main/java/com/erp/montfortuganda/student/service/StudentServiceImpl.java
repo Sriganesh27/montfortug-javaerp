@@ -153,16 +153,16 @@ public class StudentServiceImpl implements StudentService {
                         request.applicationId()
                 );
 
-        String studentCode =
-                numberService.generateStudentCode(
-                        branch,
-                        request.enrollment().academicYearId(),
-                        branchContext.userId()
-                );
+        Integer joiningClassId =
+                request.personal().joiningClassId() != null
+                        ? request.personal().joiningClassId()
+                        : request.enrollment().classId();
 
         String admissionNo =
-                numberService.generateAdmissionNumber(
+                numberService.generateStudentCode(
                         branch,
+                        request.personal().admissionYear(),
+                        joiningClassId,
                         branchContext.userId()
                 );
 
@@ -172,7 +172,6 @@ public class StudentServiceImpl implements StudentService {
                         branch,
                         application,
                         admissionNo,
-                        studentCode,
                         authenticatedUserId
                 );
 

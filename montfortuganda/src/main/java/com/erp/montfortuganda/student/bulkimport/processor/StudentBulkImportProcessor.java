@@ -355,11 +355,11 @@ public class StudentBulkImportProcessor
             case DuplicateResourceException ignored ->
                     new ProcessingFailureDetails(
                             "STUDENT_DUPLICATE",
-                            resolveColumnFromMessage(message),
+                            "Student",
                             message,
-                            "Review the duplicate detail, correct the identifying "
-                                    + "Student value, or remove the row when that "
-                                    + "Student is already registered."
+                            "Remove this row when the Student is already registered, "
+                                    + "or correct the Student name, Date of Birth or "
+                                    + "preferred-contact mobile number and retry."
                     );
 
             case ResourceNotFoundException ignored ->
@@ -417,11 +417,10 @@ public class StudentBulkImportProcessor
             default ->
                     new ProcessingFailureDetails(
                             "STUDENT_CREATE_FAILED",
-                            resolveColumnFromMessage(message),
+                            "Student",
                             message,
-                            "Correct the value described in the error. When the message "
-                                    + "does not identify a field, review the server log "
-                                    + "using the job ID and Excel row number."
+                            "The student could not be created because of a backend processing error. "
+                                    + "Review the server log using the job ID and Excel row number."
                     );
         };
     }

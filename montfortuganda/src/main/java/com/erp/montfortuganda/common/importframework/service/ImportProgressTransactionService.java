@@ -118,6 +118,79 @@ public class ImportProgressTransactionService {
                 updatedRows
         );
     }
+    /**
+     * Publishes the failed state and a safe job-level failure reason.
+     */
+    @Transactional(
+            transactionManager = "erpTransactionManager",
+            propagation = Propagation.REQUIRES_NEW,
+            rollbackFor = Exception.class
+    )
+    public void updateFailure(
+            String jobId,
+            int totalRows,
+            int processedRows,
+            int successRows,
+            int failedRows,
+            String failureReason
+    ) {
+        String normalizedJobId =
+                requireJobId(jobId);
+
+        validateCounters(
+                totalRows,
+                processedRows,
+                successRows,
+                failedRows
+        );
+
+        String normalizedFailureReason =
+                normalizeFailureReason(
+                        failureReason
+                );
+
+        int updatedRows =
+                jobRepository.updateFailedProgress(
+                        normalizedJobId,
+                        ImportStatus.FAILED,
+                        totalRows,
+                        processedRows,
+                        successRows,
+                        failedRows,
+                        normalizedFailureReason
+                );
+
+        ensureJobUpdated(
+                normalizedJobId,
+                updatedRows
+        );
+    }
+
+    private String normalizeFailureReason(
+            String failureReason
+    ) {
+        String normalized =
+                failureReason == null
+                        ? ""
+                        : failureReason.trim();
+
+        if (normalized.isBlank()) {
+            normalized =
+                    "UNEXPECTED_ERROR:INTERNAL_IMPORT_ERROR: "
+                            + "Import could not be completed.";
+        }
+
+        if (normalized.length() > 500) {
+            return normalized.substring(
+                    0,
+                    500
+            );
+        }
+
+        return normalized;
+    }
+
+
 
     private String requireJobId(
             String jobId

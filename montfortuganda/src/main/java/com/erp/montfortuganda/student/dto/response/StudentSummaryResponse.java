@@ -11,8 +11,6 @@ public record StudentSummaryResponse(
 
         Long studentId,
 
-        String studentCode,
-
         String admissionNo,
 
         String learnerLin,
@@ -22,6 +20,10 @@ public record StudentSummaryResponse(
         String gender,
 
         Integer admissionYear,
+
+        Integer joiningClassId,
+
+        Long joiningTermId,
 
         /*
          * Public API URL for the Student photo.

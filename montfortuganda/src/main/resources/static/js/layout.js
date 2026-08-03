@@ -3,9 +3,11 @@
 // ==========================================
 const ERP_IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 1 hour
 const ERP_LAST_ACTIVITY_KEY = 'erp_last_activity';
+const ERP_ACTIVITY_WRITE_THROTTLE_MS = 1000;
 
 let erpIdleTimer = null;
 let erpLogoutStarted = false;
+let erpLastActivityWriteAt = 0;
 
 function normalizeErpRole(role) {
     let normalizedRole = String(role || '')
@@ -87,33 +89,163 @@ async function logoutDueToInactivity() {
     }
 }
 
+function readErpLastActivity() {
+    const rawValue =
+        localStorage.getItem(ERP_LAST_ACTIVITY_KEY);
+
+    if (!rawValue) {
+        return null;
+    }
+
+    const parsedValue = Number(rawValue);
+
+    if (
+        !Number.isFinite(parsedValue) ||
+        parsedValue <= 0 ||
+        parsedValue > Date.now() + 60 * 1000
+    ) {
+        return null;
+    }
+
+    return parsedValue;
+}
+
+function writeErpLastActivity(timestamp = Date.now()) {
+    localStorage.setItem(
+        ERP_LAST_ACTIVITY_KEY,
+        String(timestamp)
+    );
+
+    erpLastActivityWriteAt = timestamp;
+    return timestamp;
+}
+
 function scheduleIdleTimeout() {
     clearTimeout(erpIdleTimer);
 
-    const lastActivity = Number(
-        localStorage.getItem(ERP_LAST_ACTIVITY_KEY) || Date.now()
-    );
+    if (erpLogoutStarted) {
+        return;
+    }
 
-    const elapsed = Date.now() - lastActivity;
-    const remaining = ERP_IDLE_TIMEOUT_MS - elapsed;
+    let lastActivity = readErpLastActivity();
+
+    /*
+     * A missing, invalid or old browser value must never expire a newly
+     * authenticated dashboard immediately. Start a fresh one-hour window
+     * when the authenticated layout initializes.
+     */
+    if (lastActivity === null) {
+        lastActivity = writeErpLastActivity();
+    }
+
+    const elapsed = Math.max(
+        0,
+        Date.now() - lastActivity
+    );
+    const remaining =
+        ERP_IDLE_TIMEOUT_MS - elapsed;
 
     if (remaining <= 0) {
         void logoutDueToInactivity();
         return;
     }
 
-    erpIdleTimer = setTimeout(
-        logoutDueToInactivity,
+    erpIdleTimer = window.setTimeout(
+        () => void logoutDueToInactivity(),
         remaining
     );
 }
 
 function recordErpActivity() {
-    if (erpLogoutStarted) return;
+    if (erpLogoutStarted) {
+        return;
+    }
 
-    localStorage.setItem(
-        ERP_LAST_ACTIVITY_KEY,
-        Date.now().toString()
+    const now = Date.now();
+
+    /*
+     * Mouse and scroll events can fire many times per second. Throttling
+     * avoids excessive localStorage writes while still keeping the timeout
+     * accurate.
+     */
+    if (
+        now - erpLastActivityWriteAt <
+        ERP_ACTIVITY_WRITE_THROTTLE_MS
+    ) {
+        return;
+    }
+
+    writeErpLastActivity(now);
+    scheduleIdleTimeout();
+}
+
+function initializeErpIdleTracking() {
+    /*
+     * The user has reached an authenticated layout. Reset stale or absent
+     * activity data so a previous browser session cannot instantly log out
+     * the new login.
+     */
+    const existingActivity = readErpLastActivity();
+
+    if (
+        existingActivity === null ||
+        Date.now() - existingActivity >=
+            ERP_IDLE_TIMEOUT_MS
+    ) {
+        writeErpLastActivity();
+    } else {
+        erpLastActivityWriteAt =
+            existingActivity;
+    }
+
+    const activityEvents = [
+        'mousedown',
+        'keydown',
+        'scroll',
+        'touchstart'
+    ];
+
+    activityEvents.forEach(eventName => {
+        document.addEventListener(
+            eventName,
+            recordErpActivity,
+            { passive: true }
+        );
+    });
+
+    window.addEventListener(
+        'focus',
+        recordErpActivity
+    );
+
+    document.addEventListener(
+        'visibilitychange',
+        () => {
+            if (!document.hidden) {
+                recordErpActivity();
+            }
+        }
+    );
+
+    window.addEventListener(
+        'storage',
+        event => {
+            if (
+                event.key ===
+                ERP_LAST_ACTIVITY_KEY
+            ) {
+                scheduleIdleTimeout();
+            }
+
+            if (
+                event.key === 'user_role' &&
+                event.newValue === null
+            ) {
+                clearTimeout(erpIdleTimer);
+                window.location.href =
+                    '/login.html';
+            }
+        }
     );
 
     scheduleIdleTimeout();
@@ -168,33 +300,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         'user_role',
         userRole
     );
-    const activityEvents = [
-        'mousedown',
-        'keydown',
-        'scroll',
-        'touchstart'
-    ];
-
-    activityEvents.forEach(eventName => {
-        document.addEventListener(eventName, recordErpActivity, {
-            passive: true
-        });
-    });
-
-    if (!localStorage.getItem(ERP_LAST_ACTIVITY_KEY)) {
-        localStorage.setItem(
-            ERP_LAST_ACTIVITY_KEY,
-            Date.now().toString()
-        );
-    }
-
-    scheduleIdleTimeout();
-
-    window.addEventListener('storage', function(event) {
-        if (event.key === ERP_LAST_ACTIVITY_KEY) {
-            scheduleIdleTimeout();
-        }
-    });
+    initializeErpIdleTracking();
     const urlRole =
         resolvePortalRole(userRole);
 

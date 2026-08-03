@@ -100,7 +100,8 @@ public class StudentBulkRequestMapper {
 
         StudentPersonalRequest personalRequest =
                 buildPersonalRequest(
-                        row
+                        row,
+                        schoolClass.getClassId()
                 );
 
         StudentParentRequest parentRequest =
@@ -145,7 +146,8 @@ public class StudentBulkRequestMapper {
     // =====================================================================
 
     private StudentPersonalRequest buildPersonalRequest(
-            StudentBulkImportRow row
+            StudentBulkImportRow row,
+            Integer joiningClassId
     ) {
         Integer admissionYear =
                 valueParser.nullableInteger(
@@ -186,6 +188,8 @@ public class StudentBulkRequestMapper {
         return new StudentPersonalRequest(
                 null,
                 admissionYear,
+                joiningClassId,
+                null, // joiningTermId — updated Excel mapping will be added later
                 firstName,
                 valueParser.nullableText(
                         row.getMiddleName()

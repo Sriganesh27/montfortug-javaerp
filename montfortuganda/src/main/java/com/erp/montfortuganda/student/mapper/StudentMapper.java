@@ -63,7 +63,6 @@ public class StudentMapper {
             Branch branch,
             ErpApplication application,
             String admissionNo,
-            String studentCode,
             Long authenticatedUserId
     ) {
         Objects.requireNonNull(
@@ -78,17 +77,13 @@ public class StudentMapper {
                 admissionNo,
                 "Generated admission number is required."
         );
-        Objects.requireNonNull(
-                studentCode,
-                "Generated Student code is required."
-        );
+
 
         ErpStudent student = new ErpStudent();
 
         student.setApplication(application);
         student.setBranch(branch);
         student.setAdmissionNo(trimRequired(admissionNo));
-        student.setStudentCode(trimRequired(studentCode));
 
         mapStudentPersonalFields(
                 request,
@@ -132,6 +127,12 @@ public class StudentMapper {
         );
         student.setAdmissionYear(
                 request.admissionYear()
+        );
+        student.setJoiningClassId(
+                request.joiningClassId()
+        );
+        student.setJoiningTermId(
+                request.joiningTermId()
         );
 
         student.setFirstName(
@@ -1235,7 +1236,8 @@ public class StudentMapper {
                 student.getStudentId(),
                 enrollment.getEnrollmentId(),
                 student.getAdmissionNo(),
-                student.getStudentCode(),
+                student.getJoiningClassId(),
+                student.getJoiningTermId(),
                 student.getFullName(),
                 branchId(student.getBranch()),
                 enrollment.getAcademicYearId(),
@@ -1266,9 +1268,10 @@ public class StudentMapper {
                 branchCode(student.getBranch()),
                 branchName(student.getBranch()),
                 student.getAdmissionNo(),
-                student.getStudentCode(),
                 student.getLearnerLin(),
                 student.getAdmissionYear(),
+                student.getJoiningClassId(),
+                student.getJoiningTermId(),
                 student.getFirstName(),
                 student.getMiddleName(),
                 student.getLastName(),
@@ -1701,12 +1704,13 @@ public class StudentMapper {
 
         return new StudentSummaryResponse(
                 student.getStudentId(),
-                student.getStudentCode(),
                 student.getAdmissionNo(),
                 student.getLearnerLin(),
                 student.getFullName(),
                 student.getGender(),
                 student.getAdmissionYear(),
+                student.getJoiningClassId(),
+                student.getJoiningTermId(),
                 studentPhotoUrl(student),
                 branchId(student.getBranch()),
                 branchName(student.getBranch()),

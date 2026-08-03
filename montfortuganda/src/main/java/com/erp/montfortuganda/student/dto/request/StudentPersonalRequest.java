@@ -14,8 +14,8 @@ import java.time.LocalDate;
  * Student personal and residential information submitted during
  * Student registration or profile editing.
  *
- * Student ID, branch, admission number, Student code, full name,
- * status, file path, active flag, audit fields and entity version
+ * Student ID, branch, admission number, full name, status,
+ * file path, active flag, audit fields and entity version
  * are controlled by the backend.
  */
 @SuppressWarnings("unused")
@@ -37,6 +37,10 @@ public record StudentPersonalRequest(
                 message = "Admission year cannot exceed 2100."
         )
         Integer admissionYear,
+
+        Integer joiningClassId,
+
+        Long joiningTermId,
 
         @NotBlank(message = "Student first name is required.")
         @Size(

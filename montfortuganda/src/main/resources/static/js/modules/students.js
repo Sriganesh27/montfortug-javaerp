@@ -18,6 +18,7 @@
         applicationId: '#add-studentApplicationId',
         'personal.learnerLin': '#add-studentLearnerLin',
         'personal.admissionYear': '#add-studentAdmissionYear',
+        'personal.joiningTermId': '#add-studentJoiningTerm',
         'personal.firstName': '#add-studentFirstName',
         'personal.middleName': '#add-studentMiddleName',
         'personal.lastName': '#add-studentLastName',
@@ -314,6 +315,7 @@
 
         populateAcademicYears(view, state);
         populateCurrentClasses(view, state);
+        populateJoiningTerms(view, state);
         populatePreviousLevels(view, state);
         populateHostelOptions(view, state);
         populateTransportOptions(view, state);
@@ -329,6 +331,13 @@
                 source,
                 'academicYears',
                 'academicYearOptions'
+            ),
+            academicTerms: firstArrayProperty(
+                source,
+                'academicTerms',
+                'academicTermOptions',
+                'terms',
+                'termOptions'
             ),
             levels: firstArrayProperty(
                 source,
@@ -469,6 +478,130 @@
                 view,
                 currentOption
             );
+        }
+    }
+
+    function populateJoiningTerms(view, state) {
+        const select = view.querySelector(
+            '#add-studentJoiningTerm'
+        );
+
+        if (!(select instanceof HTMLSelectElement)) {
+            return;
+        }
+
+        const previousValue = select.value;
+        const admissionYear = integerOrNull(
+            valueOf(view, '#add-studentAdmissionYear')
+        );
+
+        replaceSelectOptions(
+            select,
+            '-- Select Joining Term --'
+        );
+
+        if (admissionYear === null) {
+            select.disabled = true;
+            return;
+        }
+
+        const matchingYear = state.referenceData.academicYears
+            .find(year => {
+                const startDate = String(
+                    readProperty(year, 'startDate') || ''
+                );
+                const code = String(
+                    firstDefined(
+                        readProperty(year, 'academicYearCode'),
+                        readProperty(year, 'code'),
+                        ''
+                    )
+                );
+                const name = String(
+                    firstDefined(
+                        readProperty(year, 'academicYearName'),
+                        readProperty(year, 'name'),
+                        ''
+                    )
+                );
+
+                return startDate.startsWith(
+                    `${admissionYear}-`
+                ) || code.includes(
+                    String(admissionYear)
+                ) || name.includes(
+                    String(admissionYear)
+                );
+            });
+
+        const academicYearId = positiveIntegerOrNull(
+            firstDefined(
+                readProperty(matchingYear, 'academicYearId'),
+                readProperty(matchingYear, 'id')
+            )
+        );
+
+        if (academicYearId === null) {
+            select.disabled = true;
+            return;
+        }
+
+        const terms = [...state.referenceData.academicTerms]
+            .filter(term =>
+                positiveIntegerOrNull(
+                    firstDefined(
+                        readProperty(term, 'academicYearId'),
+                        readNestedProperty(
+                            term,
+                            'academicYear',
+                            'academicYearId'
+                        )
+                    )
+                ) === academicYearId
+            )
+            .sort((first, second) =>
+                Number(
+                    readProperty(first, 'displayOrder') || 0
+                ) - Number(
+                    readProperty(second, 'displayOrder') || 0
+                )
+            );
+
+        terms.forEach(term => {
+            const termId = firstDefined(
+                readProperty(term, 'termId'),
+                readProperty(term, 'id')
+            );
+
+            if (!isPositiveInteger(termId)) {
+                return;
+            }
+
+            const label = firstNonBlank(
+                readProperty(term, 'termName'),
+                readProperty(term, 'name'),
+                readProperty(term, 'termCode'),
+                readProperty(term, 'code'),
+                String(termId)
+            );
+
+            select.appendChild(
+                new Option(
+                    label,
+                    String(termId)
+                )
+            );
+        });
+
+        select.disabled = terms.length === 0;
+
+        if (
+            previousValue &&
+            Array.from(select.options).some(
+                option => option.value === previousValue
+            )
+        ) {
+            select.value = previousValue;
         }
     }
 
@@ -708,6 +841,10 @@
             '#add-studentClass'
         );
 
+        const admissionYearInput = view.querySelector(
+            '#add-studentAdmissionYear'
+        );
+
         academicYearSelect?.addEventListener(
             'change',
             () => {
@@ -719,7 +856,21 @@
                     view,
                     option
                 );
+                populateJoiningTerms(
+                    view,
+                    state
+                );
                 populateCurrentSections(
+                    view,
+                    state
+                );
+            }
+        );
+
+        admissionYearInput?.addEventListener(
+            'input',
+            () => {
+                populateJoiningTerms(
                     view,
                     state
                 );
@@ -2314,6 +2465,11 @@
                 '#add-studentSection'
             )
         );
+        const joiningTermOption = selectedOption(
+            view.querySelector(
+                '#add-studentJoiningTerm'
+            )
+        );
 
         state.selectedAcademicYearText =
             selectedOptionText(academicYearOption, '-');
@@ -2327,6 +2483,11 @@
                 sectionOption,
                 'Not assigned'
             );
+        state.selectedJoiningTermText =
+            selectedOptionText(
+                joiningTermOption,
+                'Not selected'
+            );
 
         const payload = {
             applicationId: positiveIntegerOrNull(
@@ -2339,6 +2500,12 @@
                 ),
                 admissionYear: integerOrNull(
                     valueOf(view, '#add-studentAdmissionYear')
+                ),
+                joiningClassId: positiveIntegerOrNull(
+                    valueOf(view, '#add-studentClass')
+                ),
+                joiningTermId: positiveIntegerOrNull(
+                    valueOf(view, '#add-studentJoiningTerm')
                 ),
                 firstName: valueOf(
                     view,
@@ -3011,11 +3178,6 @@
         );
         setText(
             view,
-            '#student-registration-result-code',
-            readProperty(result, 'studentCode') || '-'
-        );
-        setText(
-            view,
             '#student-registration-result-admission',
             readProperty(result, 'admissionNo') || '-'
         );
@@ -3033,6 +3195,11 @@
             view,
             '#student-registration-result-section',
             state.selectedSectionText
+        );
+        setText(
+            view,
+            '#student-registration-result-term',
+            state.selectedJoiningTermText
         );
         toggleHidden(
             view.querySelector(
@@ -3299,6 +3466,7 @@
             );
         }
 
+        populateJoiningTerms(view, state);
         populateCurrentSections(view, state);
         populatePreviousClasses(view, state);
         updatePreviousClassSections(view);
@@ -4528,6 +4696,7 @@
     function createManageReferenceData() {
         return {
             academicYears: [],
+            academicTerms: [],
             classes: [],
             previousClasses: [],
             sections: [],
@@ -5040,6 +5209,12 @@
             const referenceData = {
                 academicYears: toArray(
                     read(secured, 'academicYears')
+                ),
+                academicTerms: toArray(
+                    manageFirstDefined(
+                        read(secured, 'academicTerms'),
+                        read(secured, 'terms')
+                    )
                 ),
                 classes: toArray(
                     read(secured, 'classes')
@@ -5604,7 +5779,6 @@
             '#student-searchInput'
         );
         const payload = {
-            studentCode: null,
             admissionNo: null,
             learnerLin: null,
             studentName: null,
@@ -5636,14 +5810,10 @@
             const compact = normalized.replace(/\s+/g, '');
             const upper = compact.toUpperCase();
 
-            if (
-                upper.includes('STU') ||
-                /^U\d{2,4}[-/]STU/.test(upper)
-            ) {
-                payload.studentCode = normalized;
-            } else if (/^[0-9]{8,}$/.test(compact)) {
+            if (/^[0-9]{8,}$/.test(compact)) {
                 payload.learnerLin = normalized;
             } else if (
+                /^U\d{2,4}[-/]/.test(upper) ||
                 upper.includes('ADM') ||
                 upper.includes('APP') ||
                 normalized.includes('/')
@@ -5802,7 +5972,7 @@
         setRowText(
             rowNode,
             '.col-code',
-            read(student, 'studentCode')
+            read(student, 'admissionNo')
         );
         setRowText(
             rowNode,
@@ -6687,6 +6857,72 @@
         return '-';
     }
 
+    function manageFirstDefined(...values) {
+        for (const value of values) {
+            if (value !== undefined && value !== null) {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    function joiningClassLabel(context, personal) {
+        const joiningClassId = positiveInteger(
+            read(personal, 'joiningClassId')
+        );
+
+        if (joiningClassId === null) {
+            return '-';
+        }
+
+        const matchedClass = context.referenceData.classes.find(item =>
+            positiveInteger(
+                manageFirstDefined(
+                    read(item, 'classId'),
+                    read(item, 'id')
+                )
+            ) === joiningClassId
+        );
+
+        return textOrDash(
+            manageFirstDefined(
+                read(matchedClass, 'className'),
+                read(matchedClass, 'name'),
+                read(matchedClass, 'classCode'),
+                read(matchedClass, 'code')
+            )
+        );
+    }
+
+    function joiningTermLabel(context, personal) {
+        const joiningTermId = positiveInteger(
+            read(personal, 'joiningTermId')
+        );
+
+        if (joiningTermId === null) {
+            return '-';
+        }
+
+        const matchedTerm = context.referenceData.academicTerms.find(item =>
+            positiveInteger(
+                manageFirstDefined(
+                    read(item, 'termId'),
+                    read(item, 'id')
+                )
+            ) === joiningTermId
+        );
+
+        return textOrDash(
+            manageFirstDefined(
+                read(matchedTerm, 'termName'),
+                read(matchedTerm, 'name'),
+                read(matchedTerm, 'termCode'),
+                read(matchedTerm, 'code')
+            )
+        );
+    }
+
     function renderStudentProfile(context, profileValue) {
         const profile = toRecord(profileValue);
         const personal = profileSection(profile, 'personal');
@@ -6707,7 +6943,15 @@
         );
 
         const fullName = resolveStudentFullName(personal);
-        const studentCode = read(personal, 'studentCode');
+        const admissionNo = read(personal, 'admissionNo');
+        const joiningClass = joiningClassLabel(
+            context,
+            personal
+        );
+        const joiningTerm = joiningTermLabel(
+            context,
+            personal
+        );
         const status = read(personal, 'studentStatus');
         const academicYearLabel =
             enrollmentReferenceLabel(
@@ -6738,8 +6982,8 @@
         );
         setManageText(
             context.view,
-            '#detail-studentCodeHeader',
-            studentCode ? `(${studentCode})` : ''
+            '#detail-studentAdmissionNoHeader',
+            admissionNo ? `(${admissionNo})` : ''
         );
         setManageText(
             context.view,
@@ -6748,13 +6992,18 @@
         );
         setManageText(
             context.view,
-            '#view-studentCode',
-            studentCode
+            '#summary-studentAdmissionNo',
+            admissionNo
         );
         setManageText(
             context.view,
-            '#summary-studentAdmissionNo',
-            read(personal, 'admissionNo')
+            '#view-studentJoiningClass',
+            joiningClass
+        );
+        setManageText(
+            context.view,
+            '#view-studentJoiningTerm',
+            joiningTerm
         );
         setManageText(
             context.view,

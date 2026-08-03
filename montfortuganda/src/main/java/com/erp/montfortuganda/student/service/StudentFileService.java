@@ -111,10 +111,6 @@ public class StudentFileService {
         }
     }
 
-    // =====================================================================
-    // STUDENT PHOTO
-    // =====================================================================
-
     public StoredFile storeStudentPhoto(
             MultipartFile photo,
             ErpStudent student
@@ -146,10 +142,6 @@ public class StudentFileService {
 
         return storedFile;
     }
-
-    // =====================================================================
-    // STUDENT DOCUMENTS
-    // =====================================================================
 
     public StoredFile storeStudentDocument(
             MultipartFile file,
@@ -186,10 +178,6 @@ public class StudentFileService {
         return storedFile;
     }
 
-    // =====================================================================
-    // ACADEMIC-HISTORY DOCUMENTS
-    // =====================================================================
-
     public StoredFile storeAcademicHistoryDocument(
             MultipartFile file,
             ErpStudent student,
@@ -225,14 +213,6 @@ public class StudentFileService {
         return storedFile;
     }
 
-    // =====================================================================
-    // PRIVATE FILE READING
-    // =====================================================================
-
-    /**
-     * The caller must validate Student and branch ownership before calling
-     * this method.
-     */
     public Resource loadPrivateFile(
             String relativePath
     ) {
@@ -321,10 +301,6 @@ public class StudentFileService {
                 .toString();
     }
 
-    // =====================================================================
-    // FILE DELETION
-    // =====================================================================
-
     public void deletePrivateFile(
             String relativePath
     ) {
@@ -396,9 +372,7 @@ public class StudentFileService {
                         relativePath
                 );
             } catch (RuntimeException ignored) {
-                /*
-                 * Cleanup must not hide the original application failure.
-                 */
+                // Cleanup must not hide the original application failure.
             }
         }
     }
@@ -483,10 +457,6 @@ public class StudentFileService {
                         }
                 );
     }
-
-    // =====================================================================
-    // MULTIPART VALIDATION AND STORAGE
-    // =====================================================================
 
     private StoredFile storeMultipartFile(
             MultipartFile multipartFile,
@@ -593,10 +563,7 @@ public class StudentFileService {
                             temporaryFile
                     );
                 } catch (IOException ignored) {
-                    /*
-                     * Temporary-file cleanup failure must not hide the
-                     * original storage result.
-                     */
+                    // Temporary-file cleanup failure must not hide the original result.
                 }
             }
         }
@@ -715,10 +682,6 @@ public class StudentFileService {
                 extensionForMimeType(detectedMimeType)
         );
     }
-
-    // =====================================================================
-    // FILE-SIGNATURE VALIDATION
-    // =====================================================================
 
     private String detectMimeType(
             byte[] bytes
@@ -907,10 +870,6 @@ public class StudentFileService {
         }
     }
 
-    // =====================================================================
-    // STORAGE PATHS
-    // =====================================================================
-
     private Path buildStudentDirectory(
             ErpStudent student,
             String documentGroup
@@ -929,7 +888,7 @@ public class StudentFileService {
 
         String studentFolder =
                 sanitizePathSegment(
-                        student.getStudentCode()
+                        student.getAdmissionNo()
                                 + "-"
                                 + student.getFullName()
                 );
@@ -999,9 +958,9 @@ public class StudentFileService {
             );
         }
 
-        if (!StringUtils.hasText(student.getStudentCode())) {
+        if (!StringUtils.hasText(student.getAdmissionNo())) {
             throw new IllegalStateException(
-                    "Student code is required before storing files."
+                    "Admission number is required before storing files."
             );
         }
 
@@ -1138,10 +1097,6 @@ public class StudentFileService {
                 .toString()
                 .replace('\\', '/');
     }
-
-    // =====================================================================
-    // NORMALIZATION
-    // =====================================================================
 
     private String normalizeMimeType(
             String contentType
@@ -1360,10 +1315,6 @@ public class StudentFileService {
             );
         }
     }
-
-    // =====================================================================
-    // RESULT RECORDS
-    // =====================================================================
 
     public record StoredFile(
             String relativePath,

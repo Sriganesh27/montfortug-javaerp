@@ -198,6 +198,8 @@ document.addEventListener('viewLoaded', function(e) {
 // 1. DASHBOARD HOME LOGIC
 // ---------------------------------------------------------
 async function initHomeView() {
+    const loaderToken = showLoader('Loading dashboard...');
+
     const linkBranches = document.getElementById('sa-btnLinkBranches');
     if (linkBranches) {
         linkBranches.addEventListener('click', () => {
@@ -219,6 +221,8 @@ async function initHomeView() {
     } catch (error) {
         console.error("Failed to load dashboard stats", error);
         showErrorMessage("Could not load dashboard statistics.");
+    } finally {
+        hideLoader(loaderToken);
     }
 }
 
@@ -482,7 +486,15 @@ function initBranchesView() {
     }
 
     async function loadBranches() {
-        if (tableBody) renderFetchingMessage(tableBody, 6, 'Fetching branches...');
+        const loaderToken = showLoader('Loading branches...');
+
+        if (tableBody) {
+            renderFetchingMessage(
+                tableBody,
+                6,
+                'Fetching branches...'
+            );
+        }
 
         try {
             const response = await apiGet('/superadmin/branches');
@@ -518,7 +530,16 @@ function initBranchesView() {
             });
         } catch (error) {
             console.error(error);
-            if (tableBody) renderEmptyTableMessage(tableBody, 6, 'Failed to load branches.');
+
+            if (tableBody) {
+                renderEmptyTableMessage(
+                    tableBody,
+                    6,
+                    'Failed to load branches.'
+                );
+            }
+        } finally {
+            hideLoader(loaderToken);
         }
     }
 
@@ -1726,6 +1747,8 @@ async function initSystemStatsView() {
     const viewContainer = document.querySelector('#superadmin-stats-view');
     if (!viewContainer) return;
 
+    const loaderToken = showLoader('Loading system statistics...');
+
     try {
         // Fetch everything first so they animate perfectly in sync!
         const [branchRes, stdRes, staffRes, sessRes] = await Promise.all([
@@ -1775,6 +1798,11 @@ async function initSystemStatsView() {
             'System statistics failed to load.',
             error
         );
+        showErrorMessage(
+            'Could not load system statistics.'
+        );
+    } finally {
+        hideLoader(loaderToken);
     }
 }
 
@@ -1784,6 +1812,8 @@ async function initSystemStatsView() {
 async function initAuditLogsView() {
     const viewContainer = document.querySelector('#superadmin-audit-view');
     if (!viewContainer) return;
+
+    const loaderToken = showLoader('Loading audit logs...');
 
     const tbody = viewContainer.querySelector('#global-audit-tbody');
     const template = viewContainer.querySelector('#global-audit-row-template');
@@ -1813,6 +1843,8 @@ async function initAuditLogsView() {
             10,
             'Failed to load audit logs.'
         );
+    } finally {
+        hideLoader(loaderToken);
     }
 }
 
@@ -1865,6 +1897,8 @@ function initSystemBackupsView() {
 async function initScholarshipsFundsGotView() {
     const viewContainer = document.querySelector('#superadmin-funds-got-view');
     if (!viewContainer) return;
+
+    const loaderToken = showLoader('Loading treasury data...');
 
     const tbody = viewContainer.querySelector('#treasury-donors-tbody');
     if (tbody) renderFetchingMessage(tbody, 10, 'Fetching treasury data...');
@@ -1944,7 +1978,18 @@ async function initScholarshipsFundsGotView() {
         }
     } catch (error) {
         console.error("Treasury load failed:", error);
+
+        if (tbody) {
+            renderEmptyTableMessage(
+                tbody,
+                10,
+                'Failed to load treasury data.'
+            );
+        }
+
         showErrorMessage("Failed to load global treasury data.");
+    } finally {
+        hideLoader(loaderToken);
     }
 }
 // ==========================================
@@ -1953,6 +1998,8 @@ async function initScholarshipsFundsGotView() {
 async function initScholarshipsApplicationsView() {
     const viewContainer = document.querySelector('#superadmin-global-search-view');
     if (!viewContainer) return;
+
+    const loaderToken = showLoader('Loading scholarship applications...');
 
     const branchSelect = viewContainer.querySelector('#gs-branch-filter');
     if (branchSelect) void populateBranchDropdowns([branchSelect]);
@@ -2121,6 +2168,20 @@ async function initScholarshipsApplicationsView() {
 
     } catch (error) {
         console.error("Global search view load failed:", error);
+
+        if (tbody) {
+            renderEmptyTableMessage(
+                tbody,
+                10,
+                'Failed to load scholarship applications.'
+            );
+        }
+
+        showErrorMessage(
+            'Failed to load scholarship applications.'
+        );
+    } finally {
+        hideLoader(loaderToken);
     }
 }
 
@@ -2137,7 +2198,15 @@ function initBulkDistributionView() {
     let currentHistoryData = [];
 
     const branchTable = document.querySelector('#superadmin-bulk-distribution-view tbody');
-    if (branchTable) renderFetchingMessage(branchTable, 10, 'Fetching branch demands...');
+    const loaderToken = showLoader('Loading branch scholarship demands...');
+
+    if (branchTable) {
+        renderFetchingMessage(
+            branchTable,
+            10,
+            'Fetching branch demands...'
+        );
+    }
 
     try {apiGet('/superadmin/scholarships/branch-demands').then(res => {
         const demands = Array.isArray(res) ? res : (res.data || []);
@@ -2185,9 +2254,31 @@ function initBulkDistributionView() {
                 branchTable.appendChild(clone);
             });
         }
-    }).catch(e => console.error("Failed to load demands:", e));
+    }).catch(e => {
+        console.error("Failed to load demands:", e);
+
+        if (branchTable) {
+            renderEmptyTableMessage(
+                branchTable,
+                10,
+                'Failed to load branch demands.'
+            );
+        }
+    }).finally(() => {
+        hideLoader(loaderToken);
+    });
     } catch(err) {
         console.error("Failed to start branch demands request:", err);
+
+        if (branchTable) {
+            renderEmptyTableMessage(
+                branchTable,
+                10,
+                'Failed to load branch demands.'
+            );
+        }
+
+        hideLoader(loaderToken);
     }
 
     function renderHistoryTable(dataArray) {
@@ -2298,11 +2389,24 @@ function initOneToOneSponsorshipView() {
     const listSection = viewContainer.querySelector('#pairings-list-section');
     const wizardSection = viewContainer.querySelector('#pairing-wizard-section');
 
-    function loadActivePairings() {
+    async function loadActivePairings() {
+        const loaderToken = showLoader('Loading active sponsorships...');
         const tbody = viewContainer.querySelector('tbody');
-        if (tbody) renderFetchingMessage(tbody, 10, 'Fetching active sponsorships...');
 
-        apiGet('/superadmin/scholarships/active-sponsorships').then(res => {
+        if (tbody) {
+            renderFetchingMessage(
+                tbody,
+                10,
+                'Fetching active sponsorships...'
+            );
+        }
+
+        try {
+            const res =
+                await apiGet(
+                    '/superadmin/scholarships/active-sponsorships'
+                );
+
             const active = Array.isArray(res) ? res : (res.data || []);
             const tbody = viewContainer.querySelector('tbody');
             const template = document.getElementById('active-pairing-row-template');
@@ -2324,10 +2428,25 @@ function initOneToOneSponsorshipView() {
                     tbody.appendChild(clone);
                 });
             }
-        }).catch(e => console.error("Failed to load active sponsorships:", e));
+        } catch (error) {
+            console.error(
+                "Failed to load active sponsorships:",
+                error
+            );
+
+            if (tbody) {
+                renderEmptyTableMessage(
+                    tbody,
+                    10,
+                    'Failed to load active sponsorships.'
+                );
+            }
+        } finally {
+            hideLoader(loaderToken);
+        }
     }
 
-    loadActivePairings();
+    void loadActivePairings();
 
     let selectedDonorId = '', selectedStudentId = '';
     let selectedDonorName = null, selectedStudentName = null;
@@ -2540,7 +2659,7 @@ function initOneToOneSponsorshipView() {
                 if(mainHeader) mainHeader.classList.remove('hidden');
                 if(listSection) listSection.classList.remove('hidden');
 
-                loadActivePairings();
+                void loadActivePairings();
 
             } catch(err) {
                 showErrorMessage("Error: Failed to process match.");
@@ -2579,8 +2698,16 @@ async function initPartialStudentFundView() {
     }
 
     async function loadData() {
+        const loaderToken = showLoader('Loading student sponsorships...');
         const tbody = viewContainer.querySelector('#partial-fund-tbody');
-        if (tbody) window.renderFetchingMessage(tbody, 10, 'Fetching sponsorships...');
+
+        if (tbody) {
+            window.renderFetchingMessage(
+                tbody,
+                10,
+                'Fetching sponsorships...'
+            );
+        }
 
         try {
             const [summaryResult, studentsResult] =
@@ -2646,6 +2773,8 @@ async function initPartialStudentFundView() {
             );
             allStudents = [];
             renderTable();
+        } finally {
+            hideLoader(loaderToken);
         }
     }
 
