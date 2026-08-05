@@ -452,7 +452,7 @@ public class EmployeeBulkImportValidator
 
         try {
             joiningDate =
-                    valueParser.nullableDate(
+                    valueParser.nullableJoiningDate(
                             row.getJoiningDate(),
                             EmployeeExcelHeaders.JOINING_DATE
                     );
@@ -493,7 +493,7 @@ public class EmployeeBulkImportValidator
                     );
 
             joiningDate =
-                    valueParser.nullableDate(
+                    valueParser.nullableJoiningDate(
                             row.getJoiningDate(),
                             EmployeeExcelHeaders.JOINING_DATE
                     );

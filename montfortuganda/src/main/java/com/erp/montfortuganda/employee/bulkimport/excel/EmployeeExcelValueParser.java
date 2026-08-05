@@ -28,6 +28,16 @@ import java.util.regex.Pattern;
 @Component
 public class EmployeeExcelValueParser {
 
+    /**
+     * A four-digit year is accepted only for Employee bulk-import
+     * Joining Date. It is converted to 1 January of that year.
+     *
+     * <p>This rule is not used for Date of Birth and is not used by
+     * individual/manual Employee creation.</p>
+     */
+    private static final Pattern YEAR_ONLY_PATTERN =
+            Pattern.compile("^\\d{4}$");
+
     private static final Pattern NUMERIC_DATE_PATTERN =
             Pattern.compile(
                     "^(\\d{1,4})[./-](\\d{1,2})[./-](\\d{1,4})$"
@@ -187,6 +197,81 @@ public class EmployeeExcelValueParser {
         }
 
         return date;
+    }
+
+    /**
+     * Parses the Joining Date used by Employee bulk import.
+     *
+     * <p>A complete date is stored exactly as supplied. A four-digit year
+     * such as {@code 2025} is converted to {@code 2025-01-01}. This allows
+     * Employee Number generation to use year {@code 25} without adding a
+     * second database column.</p>
+     *
+     * <p>This method is intentionally separate from {@link #nullableDate}
+     * so a year-only value is never accepted for Date of Birth.</p>
+     */
+    public LocalDate nullableJoiningDate(
+            String value,
+            String fieldName
+    ) {
+        String normalized =
+                nullableText(value);
+
+        if (normalized == null) {
+            return null;
+        }
+
+        String dateText =
+                normalizeDateText(normalized);
+
+        if (YEAR_ONLY_PATTERN.matcher(dateText).matches()) {
+            int year =
+                    Integer.parseInt(dateText);
+
+            if (year < 1900 || year > 2100) {
+                throw new IllegalArgumentException(
+                        fieldName
+                                + " contains an invalid year. "
+                                + "Enter a year between 1900 and 2100 "
+                                + "or a complete date."
+                );
+            }
+
+            return LocalDate.of(
+                    year,
+                    1,
+                    1
+            );
+        }
+
+        return nullableDate(
+                normalized,
+                fieldName
+        );
+    }
+
+    /**
+     * Required Joining Date parser for Employee bulk import only.
+     */
+    public LocalDate requiredJoiningDate(
+            String value,
+            String fieldName
+    ) {
+        LocalDate joiningDate =
+                nullableJoiningDate(
+                        value,
+                        fieldName
+                );
+
+        if (joiningDate == null) {
+            throw new IllegalArgumentException(
+                    fieldName
+                            + " is required. Enter a complete date "
+                            + "or a four-digit year such as 2025."
+            );
+        }
+
+        return joiningDate;
     }
 
     private LocalDate parseNumericSeparatedDate(

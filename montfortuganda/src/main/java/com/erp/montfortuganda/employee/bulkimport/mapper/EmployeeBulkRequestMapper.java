@@ -109,7 +109,7 @@ public class EmployeeBulkRequestMapper {
                 );
 
         LocalDate joiningDate =
-                valueParser.requiredDate(
+                valueParser.requiredJoiningDate(
                         row.getJoiningDate(),
                         "Joining Date"
                 );
