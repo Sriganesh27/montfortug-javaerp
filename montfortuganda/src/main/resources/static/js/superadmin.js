@@ -268,6 +268,12 @@ function initBranchesView() {
         return normalized || '-';
     };
 
+    /**
+     * @param {number|string} branchId
+     * @param {'logo'|'photo'|'document'} fileType
+     * @param {number|null} [documentIndex]
+     * @returns {string|null}
+     */
     const buildPrivateBranchFileUrl = (
         branchId,
         fileType,
@@ -304,6 +310,10 @@ function initBranchesView() {
         return null;
     };
 
+    /**
+     * @param {Object|null|undefined} branch
+     * @returns {string[]}
+     */
     const extractStoredDocumentEntries = branch => {
         if (Array.isArray(branch?.govDocumentUrls)) {
             return branch.govDocumentUrls
@@ -324,6 +334,14 @@ function initBranchesView() {
             .filter(Boolean);
     };
 
+    /**
+     * @param {{
+     *   imageElement: HTMLImageElement|null,
+     *   emptyElement?: HTMLElement|null,
+     *   hasStoredFile: boolean,
+     *   secureUrl: string|null
+     * }} options
+     */
     const renderPrivateBranchImage = ({
                                           imageElement,
                                           emptyElement = null,
@@ -820,10 +838,13 @@ function initBranchesView() {
                 }
             }
 
+            /** @type {HTMLImageElement|null} */
             const logoImage =
                 viewContainer.querySelector(
                     '#view-branchLogo'
                 );
+
+            /** @type {HTMLElement|null} */
             const logoEmpty =
                 viewContainer.querySelector(
                     '#view-branchLogoEmpty'
@@ -842,11 +863,12 @@ function initBranchesView() {
                 hasStoredFile: hasStoredLogo,
                 secureUrl:
                     buildPrivateBranchFileUrl(
-                        branchId,
+                        id,
                         'logo'
                     )
             });
 
+            /** @type {HTMLImageElement|null} */
             const photoImage =
                 viewContainer.querySelector(
                     '#view-schoolPhoto'
@@ -863,11 +885,12 @@ function initBranchesView() {
                 hasStoredFile: hasStoredPhoto,
                 secureUrl:
                     buildPrivateBranchFileUrl(
-                        branchId,
+                        id,
                         'photo'
                     )
             });
 
+            /** @type {HTMLElement|null} */
             const documentContainer =
                 viewContainer.querySelector(
                     '#view-govDocument'
@@ -889,7 +912,7 @@ function initBranchesView() {
                         (ignoredStoredPath, documentIndex) => {
                             const secureDocumentUrl =
                                 buildPrivateBranchFileUrl(
-                                    branchId,
+                                    id,
                                     'document',
                                     documentIndex
                                 );
