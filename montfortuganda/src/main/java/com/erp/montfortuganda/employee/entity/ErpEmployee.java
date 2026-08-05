@@ -90,7 +90,7 @@ public class ErpEmployee extends AuditableEntity {
     @Column(name = "middle_name", length = 100)
     private String middleName;
 
-    @Column(name = "last_name", nullable = false, length = 100)
+    @Column(name = "last_name", length = 100)
     private String lastName;
 
     @Column(name = "full_name", length = 255)
@@ -177,7 +177,7 @@ public class ErpEmployee extends AuditableEntity {
     private EmployeeCategory employeeCategory;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "employee_type", nullable = false, length = 30)
+    @Column(name = "employee_type", length = 30)
     private EmployeeType employeeType;
 
     @Enumerated(EnumType.STRING)

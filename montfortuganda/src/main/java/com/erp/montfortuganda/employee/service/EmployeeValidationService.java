@@ -445,6 +445,45 @@ public class EmployeeValidationService {
         return designation;
     }
 
+    /**
+     * Resolves an optional branch-owned Department for Employee bulk import.
+     *
+     * <p>A missing Department is allowed only in the bulk-import path. When
+     * an ID is supplied, the normal branch ownership and active-status checks
+     * are still enforced.</p>
+     */
+    private Department resolveOptionalActiveDepartmentForBulk(
+            Long departmentId,
+            Integer branchId
+    ) {
+        if (departmentId == null) {
+            return null;
+        }
+
+        return requireActiveDepartment(
+                departmentId,
+                branchId
+        );
+    }
+
+    /**
+     * Resolves an optional active Designation for Employee bulk import.
+     *
+     * <p>A missing Designation is allowed only in the bulk-import path. When
+     * an ID is supplied, the normal active-status checks are still enforced.</p>
+     */
+    private Designation resolveOptionalActiveDesignationForBulk(
+            Long designationId
+    ) {
+        if (designationId == null) {
+            return null;
+        }
+
+        return requireActiveDesignation(
+                designationId
+        );
+    }
+
     private ErpEmployee requireOptionalActiveReportingManager(
             Long reportingManagerId,
             Integer branchId
@@ -1326,13 +1365,13 @@ public class EmployeeValidationService {
         }
 
         Department department =
-                requireActiveDepartment(
+                resolveOptionalActiveDepartmentForBulk(
                         request.departmentId(),
                         branch.getBranchId()
                 );
 
         Designation designation =
-                requireActiveDesignation(
+                resolveOptionalActiveDesignationForBulk(
                         request.designationId()
                 );
 

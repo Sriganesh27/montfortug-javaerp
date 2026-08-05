@@ -69,12 +69,15 @@ public class EmployeeBulkImportValidator
         List<ValidationResult.ValidationError> errors =
                 new ArrayList<>();
 
+        List<ValidationResult.ValidationWarning> warnings =
+                new ArrayList<>();
+
         if (row == null || row.isBlank()) {
             return ValidationResult.builder()
                     .success(true)
                     .skipRow(true)
                     .errors(List.of())
-                    .warnings(List.of())
+                    .warnings(List.copyOf(warnings))
                     .build();
         }
 
@@ -93,38 +96,38 @@ public class EmployeeBulkImportValidator
                 errors
         );
 
-        validateRequiredName(
+        validateOptionalName(
                 row.getLastName(),
                 EmployeeExcelHeaders.LAST_NAME,
-                errors
+                warnings
         );
 
         validateDepartment(
                 row,
                 references,
-                errors
+                warnings
         );
 
         validateDesignation(
                 row,
                 references,
-                errors
+                warnings
         );
 
         validateReportingManager(
                 row,
                 references,
-                errors
+                warnings
         );
 
         validateGender(
                 row,
-                errors
+                warnings
         );
 
         validateDateOfBirth(
                 row,
-                errors
+                warnings
         );
 
         validateJoiningDate(
@@ -134,7 +137,7 @@ public class EmployeeBulkImportValidator
 
         validateDateRelationship(
                 row,
-                errors
+                warnings
         );
 
         validateEmployeeCategory(
@@ -145,57 +148,57 @@ public class EmployeeBulkImportValidator
 
         validateEmployeeType(
                 row,
-                errors
+                warnings
         );
 
         validateEmploymentMode(
                 row,
-                errors
+                warnings
         );
 
         validateLoginEnabled(
                 row,
-                errors
+                warnings
         );
 
         validateOptionalEmail(
                 row.getOfficialEmail(),
                 EmployeeExcelHeaders.OFFICIAL_EMAIL,
-                errors
+                warnings
         );
 
         validateOptionalEmail(
                 row.getPersonalEmail(),
                 EmployeeExcelHeaders.PERSONAL_EMAIL,
-                errors
+                warnings
         );
 
         validateOptionalMobile(
                 row.getMobileNumber(),
-                errors
+                warnings
         );
 
         validateOptionalAlternateMobile(
                 row.getAlternateMobile(),
-                errors
+                warnings
         );
 
         validateMaximumLengths(
                 row,
-                errors
+                warnings
         );
 
         validateInFileDuplicates(
                 row,
                 context,
-                errors
+                warnings
         );
 
         return ValidationResult.builder()
                 .success(errors.isEmpty())
                 .skipRow(false)
                 .errors(List.copyOf(errors))
-                .warnings(List.of())
+                .warnings(List.copyOf(warnings))
                 .build();
     }
 
@@ -266,7 +269,7 @@ public class EmployeeBulkImportValidator
     private void validateDepartment(
             EmployeeBulkImportRow row,
             EmployeeBulkReferenceData references,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         String value =
                 valueParser.nullableText(
@@ -274,13 +277,6 @@ public class EmployeeBulkImportValidator
                 );
 
         if (value == null) {
-            addError(
-                    errors,
-                    EmployeeExcelHeaders.DEPARTMENT_NAME,
-                    row.getDepartmentName(),
-                    "EMPLOYEE_DEPARTMENT_REQUIRED",
-                    "Department Name is required"
-            );
             return;
         }
 
@@ -290,12 +286,12 @@ public class EmployeeBulkImportValidator
                 );
 
         if (references.findDepartment(key) == null) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders.DEPARTMENT_NAME,
                     row.getDepartmentName(),
-                    "EMPLOYEE_DEPARTMENT_NOT_FOUND",
-                    "Department does not exist or is inactive for this branch"
+                    "Department does not exist or is inactive for this branch. "
+                            + "It will be saved as empty for bulk import."
             );
         }
     }
@@ -303,7 +299,7 @@ public class EmployeeBulkImportValidator
     private void validateDesignation(
             EmployeeBulkImportRow row,
             EmployeeBulkReferenceData references,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         String value =
                 valueParser.nullableText(
@@ -311,13 +307,6 @@ public class EmployeeBulkImportValidator
                 );
 
         if (value == null) {
-            addError(
-                    errors,
-                    EmployeeExcelHeaders.DESIGNATION_NAME,
-                    row.getDesignationName(),
-                    "EMPLOYEE_DESIGNATION_REQUIRED",
-                    "Designation Name is required"
-            );
             return;
         }
 
@@ -327,12 +316,12 @@ public class EmployeeBulkImportValidator
                 );
 
         if (references.findDesignation(key) == null) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders.DESIGNATION_NAME,
                     row.getDesignationName(),
-                    "EMPLOYEE_DESIGNATION_NOT_FOUND",
-                    "Designation does not exist or is inactive"
+                    "Designation does not exist or is inactive. "
+                            + "It will be saved as empty for bulk import."
             );
         }
     }
@@ -340,7 +329,7 @@ public class EmployeeBulkImportValidator
     private void validateReportingManager(
             EmployeeBulkImportRow row,
             EmployeeBulkReferenceData references,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         String employeeNo =
                 valueParser.nullableText(
@@ -357,39 +346,39 @@ public class EmployeeBulkImportValidator
                 );
 
         if (references.findReportingManager(key) == null) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders
                             .REPORTING_MANAGER_EMPLOYEE_NO,
                     row.getReportingManagerEmployeeNo(),
-                    "EMPLOYEE_REPORTING_MANAGER_NOT_FOUND",
-                    "Reporting Manager Employee No does not exist in this branch"
+                    "Reporting Manager Employee No does not exist in this branch. "
+                            + "It will be saved as empty for bulk import."
             );
         }
     }
 
     private void validateGender(
             EmployeeBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         try {
             valueParser.nullableGender(
                     row.getGender()
             );
         } catch (IllegalArgumentException exception) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders.GENDER,
                     row.getGender(),
-                    "EMPLOYEE_GENDER_INVALID",
                     exception.getMessage()
+                            + ". It will be saved as empty for bulk import."
             );
         }
     }
 
     private void validateDateOfBirth(
             EmployeeBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         LocalDate dateOfBirth;
 
@@ -400,12 +389,12 @@ public class EmployeeBulkImportValidator
                             EmployeeExcelHeaders.DATE_OF_BIRTH
                     );
         } catch (IllegalArgumentException exception) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders.DATE_OF_BIRTH,
                     row.getDateOfBirth(),
-                    "EMPLOYEE_DATE_OF_BIRTH_INVALID",
                     exception.getMessage()
+                            + " It will be saved as empty for bulk import."
             );
             return;
         }
@@ -418,12 +407,12 @@ public class EmployeeBulkImportValidator
                 LocalDate.now();
 
         if (!dateOfBirth.isBefore(today)) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders.DATE_OF_BIRTH,
                     row.getDateOfBirth(),
-                    "EMPLOYEE_DATE_OF_BIRTH_FUTURE",
-                    "Date of Birth must be before today"
+                    "Date of Birth must be before today. "
+                            + "It will be saved as empty for bulk import."
             );
             return;
         }
@@ -434,12 +423,12 @@ public class EmployeeBulkImportValidator
                         today
                 ).getYears() < 18
         ) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders.DATE_OF_BIRTH,
                     row.getDateOfBirth(),
-                    "EMPLOYEE_MINIMUM_AGE",
-                    "Employee must be at least 18 years old"
+                    "Employee must be at least 18 years old. "
+                            + "Date of Birth will be saved as empty for bulk import."
             );
         }
     }
@@ -480,7 +469,7 @@ public class EmployeeBulkImportValidator
 
     private void validateDateRelationship(
             EmployeeBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         LocalDate dateOfBirth;
         LocalDate joiningDate;
@@ -506,12 +495,12 @@ public class EmployeeBulkImportValidator
                         && joiningDate != null
                         && !dateOfBirth.isBefore(joiningDate)
         ) {
-            addError(
-                    errors,
-                    EmployeeExcelHeaders.JOINING_DATE,
-                    row.getJoiningDate(),
-                    "EMPLOYEE_DATE_ORDER_INVALID",
-                    "Joining Date must be after Date of Birth"
+            addWarning(
+                    warnings,
+                    EmployeeExcelHeaders.DATE_OF_BIRTH,
+                    row.getDateOfBirth(),
+                    "Date of Birth must be before Joining Date. "
+                            + "Date of Birth will be saved as empty for bulk import."
             );
         }
     }
@@ -557,64 +546,72 @@ public class EmployeeBulkImportValidator
 
     private void validateEmployeeType(
             EmployeeBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
+        String value =
+                valueParser.nullableText(
+                        row.getEmployeeType()
+                );
+
+        if (value == null) {
+            return;
+        }
+
         try {
-            valueParser.requiredEmployeeType(
-                    row.getEmployeeType()
-            );
+            valueParser.requiredEmployeeType(value);
         } catch (IllegalArgumentException exception) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders.EMPLOYEE_TYPE,
                     row.getEmployeeType(),
-                    "EMPLOYEE_TYPE_INVALID",
                     exception.getMessage()
+                            + ". It will be saved as empty for bulk import."
             );
         }
     }
 
     private void validateEmploymentMode(
             EmployeeBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
+        String value =
+                valueParser.nullableText(
+                        row.getEmploymentMode()
+                );
+
+        if (value == null) {
+            return;
+        }
+
         try {
-            valueParser.requiredEmploymentMode(
-                    row.getEmploymentMode()
-            );
+            valueParser.requiredEmploymentMode(value);
         } catch (IllegalArgumentException exception) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders.EMPLOYMENT_MODE,
                     row.getEmploymentMode(),
-                    "EMPLOYMENT_MODE_INVALID",
                     exception.getMessage()
+                            + ". It will be saved as empty for bulk import."
             );
         }
     }
 
     private void validateLoginEnabled(
             EmployeeBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         try {
-            Boolean loginEnabled =
-                    valueParser.nullableYesNo(
-                            row.getLoginEnabled(),
-                            EmployeeExcelHeaders.LOGIN_ENABLED
-                    );
-
-            // Blank Login Enabled is allowed and defaults to false in the mapper.
-            if (loginEnabled == null) {
-                return;
-            }
+            valueParser.nullableYesNo(
+                    row.getLoginEnabled(),
+                    EmployeeExcelHeaders.LOGIN_ENABLED
+            );
         } catch (IllegalArgumentException exception) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders.LOGIN_ENABLED,
                     row.getLoginEnabled(),
-                    "EMPLOYEE_LOGIN_ENABLED_INVALID",
                     exception.getMessage()
+                            + ". Login creation will default to disabled."
             );
         }
     }
@@ -622,7 +619,7 @@ public class EmployeeBulkImportValidator
     private void validateOptionalEmail(
             String value,
             String column,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         String email =
                 valueParser.nullableText(
@@ -639,20 +636,20 @@ public class EmployeeBulkImportValidator
                         .matcher(email)
                         .matches()
         ) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     column,
                     value,
-                    "EMPLOYEE_EMAIL_INVALID",
                     column
-                            + " must contain a valid email address"
+                            + " must contain a valid email address. "
+                            + "It will be saved as empty for bulk import."
             );
         }
     }
 
     private void validateOptionalMobile(
             String value,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         String mobile =
                 valueParser.nullableText(value);
@@ -662,19 +659,19 @@ public class EmployeeBulkImportValidator
         }
 
         if (!MOBILE_PATTERN.matcher(mobile).matches()) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders.MOBILE_NUMBER,
                     value,
-                    "EMPLOYEE_MOBILE_INVALID",
-                    "Mobile Number contains an invalid mobile number"
+                    "Mobile Number contains an invalid mobile number. "
+                            + "It will be saved as empty for bulk import."
             );
         }
     }
 
     private void validateOptionalAlternateMobile(
             String value,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         String mobile =
                 valueParser.nullableText(value);
@@ -684,12 +681,12 @@ public class EmployeeBulkImportValidator
         }
 
         if (!MOBILE_PATTERN.matcher(mobile).matches()) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     EmployeeExcelHeaders.ALTERNATE_MOBILE,
                     value,
-                    "EMPLOYEE_MOBILE_INVALID",
-                    "Alternate Mobile contains an invalid mobile number"
+                    "Alternate Mobile contains an invalid mobile number. "
+                            + "It will be saved as empty for bulk import."
             );
         }
     }
@@ -727,92 +724,117 @@ public class EmployeeBulkImportValidator
         }
     }
 
+    private void validateOptionalName(
+            String value,
+            String column,
+            List<ValidationResult.ValidationWarning> warnings
+    ) {
+        String normalized =
+                valueParser.nullableText(
+                        value
+                );
+
+        if (
+                normalized != null
+                        && normalized.length() > 100
+        ) {
+            addWarning(
+                    warnings,
+                    column,
+                    value,
+                    column
+                            + " cannot exceed 100 characters. "
+                            + "It will be saved as empty for bulk import."
+            );
+        }
+    }
+
     private void validateMaximumLengths(
             EmployeeBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         validateOptionalLength(
                 row.getTitle(),
                 EmployeeExcelHeaders.TITLE,
                 20,
-                errors
+                warnings
         );
 
         validateOptionalLength(
                 row.getMiddleName(),
                 EmployeeExcelHeaders.MIDDLE_NAME,
                 100,
-                errors
+                warnings
         );
 
         validateOptionalLength(
                 row.getNationality(),
                 EmployeeExcelHeaders.NATIONALITY,
                 100,
-                errors
+                warnings
         );
 
         validateOptionalLength(
                 row.getNationalId(),
                 EmployeeExcelHeaders.NATIONAL_ID,
                 100,
-                errors
+                warnings
         );
 
         validateOptionalLength(
                 row.getDistrict(),
                 EmployeeExcelHeaders.DISTRICT,
                 100,
-                errors
+                warnings
         );
 
         validateOptionalLength(
                 row.getCounty(),
                 EmployeeExcelHeaders.COUNTY,
                 100,
-                errors
+                warnings
         );
 
         validateOptionalLength(
                 row.getSubCounty(),
                 EmployeeExcelHeaders.SUB_COUNTY,
                 100,
-                errors
+                warnings
         );
 
         validateOptionalLength(
                 row.getParish(),
                 EmployeeExcelHeaders.PARISH,
                 100,
-                errors
+                warnings
         );
 
         validateOptionalLength(
                 row.getVillage(),
                 EmployeeExcelHeaders.VILLAGE,
                 150,
-                errors
+                warnings
         );
 
         validateOptionalLength(
                 row.getStreet(),
                 EmployeeExcelHeaders.STREET,
                 255,
-                errors
+                warnings
         );
 
         validateOptionalLength(
                 row.getPostalCode(),
                 EmployeeExcelHeaders.POSTAL_CODE,
                 30,
-                errors
+                warnings
         );
 
         validateOptionalLength(
                 row.getRemarks(),
                 EmployeeExcelHeaders.REMARKS,
                 10000,
-                errors
+                warnings
         );
     }
 
@@ -820,7 +842,7 @@ public class EmployeeBulkImportValidator
             String value,
             String column,
             int maximumLength,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         String normalized =
                 valueParser.nullableText(
@@ -831,15 +853,15 @@ public class EmployeeBulkImportValidator
                 normalized != null
                         && normalized.length() > maximumLength
         ) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     column,
                     value,
-                    "EMPLOYEE_VALUE_TOO_LONG",
                     column
                             + " cannot exceed "
                             + maximumLength
-                            + " characters"
+                            + " characters. It will be saved as empty "
+                            + "for bulk import."
             );
         }
     }
@@ -847,15 +869,14 @@ public class EmployeeBulkImportValidator
     private void validateInFileDuplicates(
             EmployeeBulkImportRow row,
             ImportContext context,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         validateDuplicateValue(
                 context,
                 OFFICIAL_EMAIL_CACHE_KEY,
                 row.getOfficialEmail(),
                 EmployeeExcelHeaders.OFFICIAL_EMAIL,
-                "EMPLOYEE_DUPLICATE_OFFICIAL_EMAIL",
-                errors
+                warnings
         );
 
         validateDuplicateValue(
@@ -863,8 +884,7 @@ public class EmployeeBulkImportValidator
                 NATIONAL_ID_CACHE_KEY,
                 row.getNationalId(),
                 EmployeeExcelHeaders.NATIONAL_ID,
-                "EMPLOYEE_DUPLICATE_NATIONAL_ID",
-                errors
+                warnings
         );
 
         validateDuplicateValue(
@@ -872,8 +892,7 @@ public class EmployeeBulkImportValidator
                 MOBILE_CACHE_KEY,
                 row.getMobileNumber(),
                 EmployeeExcelHeaders.MOBILE_NUMBER,
-                "EMPLOYEE_DUPLICATE_MOBILE",
-                errors
+                warnings
         );
     }
 
@@ -883,8 +902,7 @@ public class EmployeeBulkImportValidator
             String cacheKey,
             String rawValue,
             String column,
-            String errorCode,
-            List<ValidationResult.ValidationError> errors
+            List<ValidationResult.ValidationWarning> warnings
     ) {
         String value =
                 normalizeDuplicateValue(
@@ -915,13 +933,13 @@ public class EmployeeBulkImportValidator
                 (Set<String>) rawSet;
 
         if (!values.add(value)) {
-            addError(
-                    errors,
+            addWarning(
+                    warnings,
                     column,
                     rawValue,
-                    errorCode,
                     column
-                            + " is duplicated inside the workbook"
+                            + " is duplicated inside the workbook. "
+                            + "Review this value before creating login credentials."
             );
         }
     }
@@ -941,6 +959,22 @@ public class EmployeeBulkImportValidator
         return normalized
                 .trim()
                 .toLowerCase(Locale.ROOT);
+    }
+
+    private void addWarning(
+            List<ValidationResult.ValidationWarning> warnings,
+            String columnName,
+            String cellValue,
+            String message
+    ) {
+        warnings.add(
+                ValidationResult.ValidationWarning
+                        .builder()
+                        .columnName(columnName)
+                        .cellValue(cellValue)
+                        .message(message)
+                        .build()
+        );
     }
 
     private void addError(

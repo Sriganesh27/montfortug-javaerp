@@ -1,7 +1,7 @@
 package com.erp.montfortuganda.employee.enums;
 
 public enum EmployeeType {
-    PERMANENT,
+    REGULARISED,
     CONTRACT,
     TEMPORARY,
     PART_TIME,

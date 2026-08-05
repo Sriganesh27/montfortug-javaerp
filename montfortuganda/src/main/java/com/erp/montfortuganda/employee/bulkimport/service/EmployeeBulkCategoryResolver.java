@@ -7,11 +7,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves an Employee category for bulk import.
+ * Resolves an Employee Category for Employee bulk import.
  *
  * <p>An explicitly supplied Excel category always wins. A category is inferred
- * only when the Excel cell is blank. Unknown designations remain unresolved so
- * the row can be reported instead of being silently misclassified.</p>
+ * from the configured Designation only when the Excel category cell is blank.
+ * Unknown Designations remain unresolved so the row is not silently assigned
+ * to an incorrect category.</p>
  */
 @Component
 @RequiredArgsConstructor
@@ -24,7 +25,9 @@ public class EmployeeBulkCategoryResolver {
             Designation designation
     ) {
         EmployeeCategory supplied =
-                valueParser.nullableEmployeeCategory(rawCategory);
+                valueParser.nullableEmployeeCategory(
+                        rawCategory
+                );
 
         if (supplied != null) {
             return supplied;
@@ -52,41 +55,77 @@ public class EmployeeBulkCategoryResolver {
         );
     }
 
-    private EmployeeCategory infer(String designationKey) {
+    private EmployeeCategory infer(
+            String designationKey
+    ) {
         if (designationKey == null) {
             return null;
         }
 
         return switch (designationKey) {
+
+            // =============================================================
+            // TEACHING
+            // =============================================================
             case "TEACHER" ->
                     EmployeeCategory.TEACHING;
 
+            // =============================================================
+            // MANAGEMENT + TEACHING
+            // =============================================================
             case "HEADTEACHER",
                  "HEADMASTER",
                  "PRINCIPAL",
-                 "VICEPRINCIPAL" ->
+                 "VICEPRINCIPAL",
+                 "DOS",
+                 "DIRECTOROFSTUDIESDOS",
+                 "DEANOFSTUDIESDOS",
+                 "HOD",
+                 "HEADOFDEPARTMENT" ->
                     EmployeeCategory.MANAGEMENT_TEACHING;
 
-            case "RECEPTIONIST",
+            // =============================================================
+            // NON-TEACHING
+            // =============================================================
+            case "ADMISSIONSOFFICER",
                  "ACCOUNTANT",
+                 "ACCOUNTANTS",
+                 "ICTOFFICER",
+                 "RECEPTIONIST",
                  "CLERK",
                  "SECRETARY",
                  "LIBRARIAN",
-                 "NURSE" ->
+                 "NURSE",
+                 "SCHOOLNURSE",
+                 "COUNSELOR",
+                 "COUNSELLOR" ->
                     EmployeeCategory.NON_TEACHING;
 
-            case "BURSAR",
+            // =============================================================
+            // MANAGEMENT + NON-TEACHING
+            // =============================================================
+            case "DIRECTOR",
+                 "BURSAR",
                  "ADMINISTRATOR",
                  "SCHOOLADMIN",
-                 "HRMANAGER" ->
+                 "SCHOOLADMINISTRATOR",
+                 "HRMANAGER",
+                 "FINANCE" ->
                     EmployeeCategory.MANAGEMENT_NON_TEACHING;
 
+            // =============================================================
+            // SUPPORT STAFF
+            // =============================================================
             case "CLEANER",
                  "COOK",
+                 "STAFFCOOK",
                  "GUARD",
+                 "SECURITY",
                  "SECURITYGUARD",
                  "GARDENER",
-                 "DRIVER" ->
+                 "DRIVER",
+                 "HYGIENE",
+                 "FOOD" ->
                     EmployeeCategory.SUPPORT_STAFF;
 
             default -> null;

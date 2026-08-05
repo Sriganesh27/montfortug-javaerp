@@ -90,6 +90,7 @@ public class EmployeeMapper {
         mapRegistrationFields(
                 request,
                 employee,
+                true,
                 true
         );
         employee.setLoginEnabled(false);
@@ -283,9 +284,11 @@ public class EmployeeMapper {
     /**
      * Creates an Employee from the trusted bulk-import flow.
      *
-     * <p>The normal Add Employee flow remains strict. Bulk import permits an
-     * optional mobile number because the Excel template may contain a blank
-     * mobile cell.</p>
+     * <p>The normal Add Employee flow remains strict. Employee bulk import
+     * permits nullable Last Name and Mobile Number values so incomplete legacy
+     * records can be created and completed later. Department, Designation,
+     * Reporting Manager, Employee Type and Employment Mode are supplied as
+     * nullable values by the trusted bulk-import flow.</p>
      */
     public ErpEmployee toNewBulkEmployee(
             EmployeeRegistrationRequest request,
@@ -322,6 +325,7 @@ public class EmployeeMapper {
         mapRegistrationFields(
                 request,
                 employee,
+                false,
                 false
         );
 
@@ -334,7 +338,8 @@ public class EmployeeMapper {
     private void mapRegistrationFields(
             EmployeeRegistrationRequest request,
             ErpEmployee employee,
-            boolean requireMobileNumber
+            boolean requireMobileNumber,
+            boolean requireLastName
     ) {
         employee.setTitle(
                 trimToNull(request.title())
@@ -346,7 +351,9 @@ public class EmployeeMapper {
                 trimToNull(request.middleName())
         );
         employee.setLastName(
-                trimRequired(request.lastName())
+                requireLastName
+                        ? trimRequired(request.lastName())
+                        : trimToNull(request.lastName())
         );
         employee.setFullName(
                 buildFullName(

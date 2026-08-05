@@ -553,7 +553,7 @@ public class EmployeeExcelValueParser {
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException(
                     "Employee Type must be one of: "
-                            + "PERMANENT, CONTRACT, TEMPORARY, PART_TIME, "
+                            + "REGULARISED, CONTRACT, TEMPORARY, PART_TIME, "
                             + "INTERN, VOLUNTEER or HONORY"
             );
         }
