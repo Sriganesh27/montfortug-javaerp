@@ -318,53 +318,124 @@ public class StudentBulkReferenceService {
                     academicTerm.getDisplayOrder();
 
             if (displayOrder != null && displayOrder > 0) {
-                putTermReference(
+                registerTermAliases(
                         references,
                         academicTerm,
-                        String.valueOf(displayOrder)
+                        displayOrder
                 );
-
-                putTermReference(
-                        references,
-                        academicTerm,
-                        "T" + displayOrder
-                );
-
-                putTermReference(
-                        references,
-                        academicTerm,
-                        "TERM" + displayOrder
-                );
-
-                putTermReference(
-                        references,
-                        academicTerm,
-                        "TERM " + displayOrder
-                );
-
-                if (displayOrder == 1) {
-                    putTermReference(
-                            references,
-                            academicTerm,
-                            "FIRST TERM"
-                    );
-                } else if (displayOrder == 2) {
-                    putTermReference(
-                            references,
-                            academicTerm,
-                            "SECOND TERM"
-                    );
-                } else if (displayOrder == 3) {
-                    putTermReference(
-                            references,
-                            academicTerm,
-                            "THIRD TERM"
-                    );
-                }
             }
         }
 
         return Map.copyOf(references);
+    }
+
+    /**
+     * Registers all supported Excel aliases for one Academic Term.
+     *
+     * <p>The term remains scoped to its Academic Year through the composite
+     * reference key created by {@link #putTermReference(Map, TermReference,
+     * String)}. Therefore, importing a Student who joined in a previous term
+     * does not depend on the branch's current term.</p>
+     *
+     * <p>Accepted examples:</p>
+     *
+     * <ul>
+     *     <li>I, 1, T1, TERM1, TERM 1, FIRST, FIRST TERM, 1ST TERM</li>
+     *     <li>II, 2, T2, TERM2, TERM 2, SECOND, SECOND TERM, 2ND TERM</li>
+     *     <li>III, 3, T3, TERM3, TERM 3, THIRD, THIRD TERM, 3RD TERM</li>
+     * </ul>
+     */
+    private void registerTermAliases(
+            Map<String, TermReference> references,
+            TermReference academicTerm,
+            Integer displayOrder
+    ) {
+        if (
+                references == null
+                        || academicTerm == null
+                        || displayOrder == null
+                        || displayOrder <= 0
+        ) {
+            return;
+        }
+
+        putTermAliases(
+                references,
+                academicTerm,
+                String.valueOf(displayOrder),
+                "T" + displayOrder,
+                "TERM" + displayOrder,
+                "TERM " + displayOrder
+        );
+
+        switch (displayOrder) {
+            case 1 -> putTermAliases(
+                    references,
+                    academicTerm,
+                    "I",
+                    "T I",
+                    "TI",
+                    "TERM I",
+                    "TERMI",
+                    "FIRST",
+                    "FIRST TERM",
+                    "1ST",
+                    "1ST TERM"
+            );
+
+            case 2 -> putTermAliases(
+                    references,
+                    academicTerm,
+                    "II",
+                    "T II",
+                    "TII",
+                    "TERM II",
+                    "TERMII",
+                    "SECOND",
+                    "SECOND TERM",
+                    "2ND",
+                    "2ND TERM"
+            );
+
+            case 3 -> putTermAliases(
+                    references,
+                    academicTerm,
+                    "III",
+                    "T III",
+                    "TIII",
+                    "TERM III",
+                    "TERMIII",
+                    "THIRD",
+                    "THIRD TERM",
+                    "3RD",
+                    "3RD TERM"
+            );
+
+            default -> {
+                // Numeric aliases above support any additional configured term.
+            }
+        }
+    }
+
+    /**
+     * Registers multiple aliases for the same Academic Term.
+     */
+    private void putTermAliases(
+            Map<String, TermReference> references,
+            TermReference academicTerm,
+            String... aliases
+    ) {
+        if (aliases == null) {
+            return;
+        }
+
+        for (String alias : aliases) {
+            putTermReference(
+                    references,
+                    academicTerm,
+                    alias
+            );
+        }
     }
 
     // =====================================================================
