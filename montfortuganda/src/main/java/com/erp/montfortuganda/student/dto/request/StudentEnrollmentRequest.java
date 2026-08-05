@@ -34,6 +34,9 @@ public record StudentEnrollmentRequest(
         @NotNull(message = "Admission type is required.")
         AdmissionType admissionType,
 
+
+        Boolean scholarshipRequired,
+
         @PastOrPresent(
                 message = "Joining date cannot be in the future."
         )

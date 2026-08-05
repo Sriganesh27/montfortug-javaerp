@@ -25,7 +25,7 @@ import java.util.Set;
  *
  * Reference data is loaded once for an import job and reused while validating
  * every Student row. This prevents repeated database queries for Academic
- * Year, Education Level, Class and Section.
+ * Year, Academic Term, Education Level, Class and Section.
  *
  * Branch ownership is taken only from the authenticated import context.
  * Excel cannot choose or change the branch.
@@ -43,10 +43,11 @@ public class StudentBulkReferenceService {
      *
      * Expected complexity:
      *
-     * Time: O(y + l + c + s)
-     * Space: O(y + l + c + s)
+     * Time: O(y + t + l + c + s)
+     * Space: O(y + t + l + c + s)
      *
      * y = Academic Years
+     * t = Academic Terms
      * l = Branch Education Levels
      * c = Branch Classes
      * s = Branch Sections
@@ -62,6 +63,11 @@ public class StudentBulkReferenceService {
 
         Map<String, AcademicYearReference> academicYears =
                 loadAcademicYears(
+                        branchId
+                );
+
+        Map<String, TermReference> academicTerms =
+                loadAcademicTerms(
                         branchId
                 );
 
@@ -81,6 +87,7 @@ public class StudentBulkReferenceService {
                 branch,
                 branchKeys,
                 academicYears,
+                academicTerms,
                 levels,
                 classes,
                 sections
@@ -179,7 +186,7 @@ public class StudentBulkReferenceService {
                                 where academic_year.branch_id = :branchId
                                   and academic_year.active = 1
                                   and upper(academic_year.status)
-                                      in ('PLANNED', 'ACTIVE')
+                                      in ('PLANNED', 'ACTIVE', 'CLOSED')
                                 order by academic_year.current_year desc,
                                          academic_year.start_date desc,
                                          academic_year.academic_year_id desc
@@ -226,6 +233,134 @@ public class StudentBulkReferenceService {
                         ),
                         academicYear
                 );
+            }
+        }
+
+        return Map.copyOf(references);
+    }
+
+    // =====================================================================
+    // ACADEMIC TERMS
+    // =====================================================================
+
+    private Map<String, TermReference> loadAcademicTerms(
+            Integer branchId
+    ) {
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows =
+                entityManager
+                        .createNativeQuery(
+                                """
+                                select academic_term.term_id,
+                                       academic_term.academic_year_id,
+                                       academic_term.term_code,
+                                       academic_term.term_name,
+                                       academic_term.display_order,
+                                       academic_term.current_term
+                                from erp_academic_terms academic_term
+                                join erp_academic_years academic_year
+                                  on academic_year.academic_year_id =
+                                     academic_term.academic_year_id
+                                where academic_year.branch_id = :branchId
+                                  and academic_year.active = 1
+                                  and academic_term.active = 1
+                                  and upper(academic_term.status)
+                                      in ('PLANNED', 'ACTIVE', 'CLOSED')
+                                order by academic_year.current_year desc,
+                                         academic_year.start_date desc,
+                                         academic_term.display_order asc,
+                                         academic_term.term_id asc
+                                """
+                        )
+                        .setParameter(
+                                "branchId",
+                                branchId
+                        )
+                        .getResultList();
+
+        Map<String, TermReference> references =
+                new HashMap<>();
+
+        for (Object[] row : rows) {
+            TermReference academicTerm =
+                    new TermReference(
+                            toLong(row[0]),
+                            toLong(row[1]),
+                            toText(row[2]),
+                            toText(row[3]),
+                            toInteger(row[4]),
+                            toBoolean(row[5])
+                    );
+
+            putTermReference(
+                    references,
+                    academicTerm,
+                    academicTerm.getTermCode()
+            );
+
+            putTermReference(
+                    references,
+                    academicTerm,
+                    academicTerm.getTermName()
+            );
+
+            if (academicTerm.getTermId() != null) {
+                putTermReference(
+                        references,
+                        academicTerm,
+                        String.valueOf(
+                                academicTerm.getTermId()
+                        )
+                );
+            }
+
+            Integer displayOrder =
+                    academicTerm.getDisplayOrder();
+
+            if (displayOrder != null && displayOrder > 0) {
+                putTermReference(
+                        references,
+                        academicTerm,
+                        String.valueOf(displayOrder)
+                );
+
+                putTermReference(
+                        references,
+                        academicTerm,
+                        "T" + displayOrder
+                );
+
+                putTermReference(
+                        references,
+                        academicTerm,
+                        "TERM" + displayOrder
+                );
+
+                putTermReference(
+                        references,
+                        academicTerm,
+                        "TERM " + displayOrder
+                );
+
+                if (displayOrder == 1) {
+                    putTermReference(
+                            references,
+                            academicTerm,
+                            "FIRST TERM"
+                    );
+                } else if (displayOrder == 2) {
+                    putTermReference(
+                            references,
+                            academicTerm,
+                            "SECOND TERM"
+                    );
+                } else if (displayOrder == 3) {
+                    putTermReference(
+                            references,
+                            academicTerm,
+                            "THIRD TERM"
+                    );
+                }
             }
         }
 
@@ -470,6 +605,38 @@ public class StudentBulkReferenceService {
         }
     }
 
+    private void putTermReference(
+            Map<String, TermReference> target,
+            TermReference academicTerm,
+            String rawKey
+    ) {
+        if (
+                academicTerm == null
+                        || academicTerm.getAcademicYearId() == null
+        ) {
+            return;
+        }
+
+        String normalizedKey =
+                valueParser.normalizeLookupKey(
+                        rawKey
+                );
+
+        if (normalizedKey == null) {
+            return;
+        }
+
+        String compositeKey =
+                academicTerm.getAcademicYearId()
+                        + ":"
+                        + normalizedKey;
+
+        target.putIfAbsent(
+                compositeKey,
+                academicTerm
+        );
+    }
+
     private void putSectionReference(
             Map<String, SectionReference> target,
             SectionReference section,
@@ -679,6 +846,9 @@ public class StudentBulkReferenceService {
         private final Map<String, AcademicYearReference>
                 academicYearsByKey;
 
+        private final Map<String, TermReference>
+                academicTermsByCompositeKey;
+
         private final Map<String, LevelReference>
                 levelsByKey;
 
@@ -725,6 +895,7 @@ public class StudentBulkReferenceService {
                 BranchReference branch,
                 Set<String> branchKeys,
                 Map<String, AcademicYearReference> academicYearsByKey,
+                Map<String, TermReference> academicTermsByCompositeKey,
                 Map<String, LevelReference> levelsByKey,
                 Map<String, ClassReference> classesByKey,
                 Map<String, SectionReference> sectionsByCompositeKey
@@ -733,6 +904,8 @@ public class StudentBulkReferenceService {
             this.branchKeys = Set.copyOf(branchKeys);
             this.academicYearsByKey =
                     Map.copyOf(academicYearsByKey);
+            this.academicTermsByCompositeKey =
+                    Map.copyOf(academicTermsByCompositeKey);
             this.levelsByKey =
                     Map.copyOf(levelsByKey);
             this.classesByKey =
@@ -803,6 +976,27 @@ public class StudentBulkReferenceService {
             return academicYearsOrdered.isEmpty()
                     ? null
                     : academicYearsOrdered.getFirst();
+        }
+
+        public TermReference findTerm(
+                Long academicYearId,
+                String normalizedTermKey
+        ) {
+            if (
+                    academicYearId == null
+                            || normalizedTermKey == null
+            ) {
+                return null;
+            }
+
+            String compositeKey =
+                    academicYearId
+                            + ":"
+                            + normalizedTermKey;
+
+            return academicTermsByCompositeKey.get(
+                    compositeKey
+            );
         }
 
         public LevelReference findLevel(
@@ -1662,6 +1856,33 @@ public class StudentBulkReferenceService {
             this.endDate = endDate;
             this.status = status;
             this.currentYear = currentYear;
+        }
+    }
+
+    @Getter
+    public static final class TermReference {
+
+        private final Long termId;
+        private final Long academicYearId;
+        private final String termCode;
+        private final String termName;
+        private final Integer displayOrder;
+        private final Boolean currentTerm;
+
+        private TermReference(
+                Long termId,
+                Long academicYearId,
+                String termCode,
+                String termName,
+                Integer displayOrder,
+                Boolean currentTerm
+        ) {
+            this.termId = termId;
+            this.academicYearId = academicYearId;
+            this.termCode = termCode;
+            this.termName = termName;
+            this.displayOrder = displayOrder;
+            this.currentTerm = currentTerm;
         }
     }
 

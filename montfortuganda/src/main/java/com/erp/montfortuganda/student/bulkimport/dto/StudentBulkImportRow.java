@@ -5,172 +5,108 @@ import lombok.Getter;
 import lombok.ToString;
 
 /**
- * Raw values read from one row of the Student Excel workbook.
+ * Raw values read from one Student Excel row.
  *
- * <p>Branch ownership is not accepted from Excel. The trusted branch is
- * supplied separately through ImportContext from the authenticated user.</p>
- *
- * <p>All Excel values remain Strings at this stage.</p>
- *
- * Dates, numbers, Yes/No values, enums and database references are
- * converted only after validation. This prevents invalid Excel text such
- * as "ENTER VALID DATA" from reaching database columns.
+ * <p>All physical workbook values remain Strings until validation and secure
+ * request mapping. Branch ownership, permanent admission number, audit data
+ * and database identifiers are never read from Excel.</p>
  */
 @Getter
 @Builder
 @ToString(onlyExplicitlyIncluded = true)
 public class StudentBulkImportRow {
 
-    /**
-     * Actual one-based Excel row number.
-     *
-     * The header is normally row 1, so Student data normally begins
-     * from row 2.
-     */
     @ToString.Include
     private final int excelRowNumber;
 
-    // =====================================================================
-    // STUDENT IDENTIFICATION AND PERSONAL INFORMATION
-    // =====================================================================
-
-    /**
-     * Optional legacy Admission Number supplied in the workbook.
-     *
-     * The final validator and processor will decide whether this value is
-     * accepted or whether StudentNumberService generates a new number.
-     */
-    private final String admissionNo;
-
+    // Original admission information.
     private final String admissionYear;
+    private final String admissionDate;
+    private final String joiningClass;
+    private final String joinedTerm;
 
+    // Personal information.
     private final String firstName;
-
     private final String middleName;
-
     private final String lastName;
-
     private final String gender;
-
-    /**
-     * Kept as text until successfully parsed and validated.
-     */
     private final String dateOfBirth;
 
-    // =====================================================================
-    // CURRENT ENROLLMENT
-    // =====================================================================
-
-    private final String educationLevel;
-
-    private final String className;
-
+    // Present enrollment.
+    private final String presentEducationLevel;
+    private final String presentClass;
+    private final String presentTerm;
     private final String section;
-
     private final String academicYear;
 
+    // Backend-generated logical values.
     private final String admissionType;
 
-    /**
-     * Kept as text until successfully parsed and validated.
-     */
-    private final String joiningDate;
-
-    // =====================================================================
-    // PARENT / GUARDIAN CONTACT
-    // =====================================================================
-
-    private final String fatherOrGuardianName;
-
-    private final String motherOrGuardianName;
-
+    // Parent and guardian information.
+    private final String fatherName;
+    private final String motherName;
+    private final String guardianName;
     private final String guardianRelationship;
-
+    private final String presentResponsiblePerson;
     private final String mobileNumber;
-
     private final String alternateMobile;
-
     private final String email;
-
     private final String preferredContact;
-
     private final String feeResponsibility;
-
     private final String parentsLivingTogether;
 
-    // =====================================================================
-    // NATIONALITY AND ADDRESS
-    // =====================================================================
-
+    // Nationality and address.
     private final String nationality;
-
     private final String nationalIdOrPassport;
-
     private final String addressCountry;
-
     private final String state;
-
     private final String district;
-
     private final String county;
-
     private final String subCounty;
-
     private final String parish;
-
     private final String village;
-
     private final String street;
 
-    // =====================================================================
-    // PREVIOUS EDUCATION, RELIGION AND MEDICAL INFORMATION
-    // =====================================================================
-
+    // Previous education, service and medical information.
     private final String previousSchool;
-
     private final String religion;
-
     private final String bloodGroup;
-
     private final String transportRequired;
-
     private final String hostelRequired;
-
     private final String scholarship;
-
     private final String medicalConditions;
-
     private final String remarks;
 
     /**
-     * Returns true when the Excel row contains no Student information.
+     * Returns true only when all physical Excel cells are blank.
      *
-     * Completely blank rows must be ignored instead of being reported as
-     * failed Student records.
+     * <p>Backend defaults such as Admission Type and Preferred Contact are
+     * intentionally excluded, otherwise a completely blank Excel row would
+     * never be skipped.</p>
      */
     public boolean isBlank() {
-        return isBlankValue(admissionNo)
-                && isBlankValue(admissionYear)
+        return isBlankValue(admissionYear)
+                && isBlankValue(admissionDate)
+                && isBlankValue(joiningClass)
+                && isBlankValue(joinedTerm)
                 && isBlankValue(firstName)
                 && isBlankValue(middleName)
                 && isBlankValue(lastName)
                 && isBlankValue(gender)
                 && isBlankValue(dateOfBirth)
-                && isBlankValue(educationLevel)
-                && isBlankValue(className)
+                && isBlankValue(presentEducationLevel)
+                && isBlankValue(presentClass)
+                && isBlankValue(presentTerm)
                 && isBlankValue(section)
                 && isBlankValue(academicYear)
-                && isBlankValue(admissionType)
-                && isBlankValue(joiningDate)
-                && isBlankValue(fatherOrGuardianName)
-                && isBlankValue(motherOrGuardianName)
+                && isBlankValue(fatherName)
+                && isBlankValue(motherName)
+                && isBlankValue(guardianName)
                 && isBlankValue(guardianRelationship)
+                && isBlankValue(presentResponsiblePerson)
                 && isBlankValue(mobileNumber)
                 && isBlankValue(alternateMobile)
                 && isBlankValue(email)
-                && isBlankValue(preferredContact)
-                && isBlankValue(feeResponsibility)
-                && isBlankValue(parentsLivingTogether)
                 && isBlankValue(nationality)
                 && isBlankValue(nationalIdOrPassport)
                 && isBlankValue(addressCountry)

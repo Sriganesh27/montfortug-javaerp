@@ -4473,18 +4473,6 @@
             return;
         }
 
-        const routeParams = Array.isArray(
-            read(detail, 'routeParams')
-        )
-            ? /** @type {Array<*>} */ (
-                read(detail, 'routeParams')
-            ).map(String)
-            : [];
-
-        const routeStudentId = positiveInteger(
-            routeParams[0]
-        );
-
         const initializationPromise =
             initManageStudentsView(detail).catch(error => {
                 console.error(
@@ -4500,17 +4488,16 @@
                 throw error;
             });
 
-        /*
-         * Keep the existing global navigation loader active only while
-         * opening a Student record. The list page remains non-blocking
-         * and renders its own table-loading state.
-         */
         const waitUntil = read(detail, 'waitUntil');
 
-        if (
-            routeStudentId !== null &&
-            typeof waitUntil === 'function'
-        ) {
+        /*
+         * Keep the global page loader active until Student data and all
+         * required reference values are ready. This prevents the table or
+         * profile from rendering first with blank/ID values and then being
+         * rendered again when Academic Year, Class, Section and Term names
+         * arrive.
+         */
+        if (typeof waitUntil === 'function') {
             waitUntil(initializationPromise);
             return;
         }
@@ -4594,23 +4581,20 @@
         ).toLowerCase();
 
         /*
-         * Employee-style route handling:
-         * open the requested Student immediately. Do not first wait for
-         * the Student list and three reference-data requests.
+         * Load all branch-scoped reference values first. Student list and
+         * profile rendering depend on these values for Academic Year,
+         * Joined Term, Class, Section and Education Level names.
+         *
+         * Waiting here ensures every visible field is populated in one
+         * render instead of loading extra columns after the page appears.
+         */
+        await prepareManageReferenceData(context);
+
+        /*
+         * Open a route-selected Student only after all reference values are
+         * available. The profile is rendered once with complete labels.
          */
         if (studentId !== null) {
-            /** @type {Promise<*>|null} */
-            let requiredReferencePromise = null;
-
-            if (
-                mode === 'edit' ||
-                mode === 'enrollment'
-            ) {
-                requiredReferencePromise = Promise.resolve(
-                    prepareManageReferenceData(context)
-                );
-            }
-
             const opened = await openStudentDetail(
                 context,
                 studentId,
@@ -4622,63 +4606,27 @@
             }
 
             if (mode === 'edit') {
-                if (requiredReferencePromise) {
-                    await requiredReferencePromise;
-                }
-
                 await enterStudentEditMode(context);
                 return;
             }
 
             if (mode === 'enrollment') {
-                if (requiredReferencePromise) {
-                    await requiredReferencePromise;
-                }
-
                 openStudentEnrollmentModal(context);
                 return;
             }
 
             if (mode === 'status') {
                 openStudentStatusModal(context);
-                return;
             }
-
-            /*
-             * Prepare dropdown data after the profile is already visible.
-             * This makes a later Edit or Enrollment action faster without
-             * delaying the initial profile opening.
-             */
-            void prepareManageReferenceData(context)
-                .then(() => {
-                    if (
-                        context.currentStudentId === studentId &&
-                        context.currentProfile
-                    ) {
-                        renderStudentProfile(
-                            context,
-                            context.currentProfile
-                        );
-                    }
-                })
-                .catch(error => {
-                    console.warn(
-                        'Student reference data could not be prefetched.',
-                        error
-                    );
-                });
 
             return;
         }
 
-        const referencePromise =
-            prepareManageReferenceData(context);
-        const listPromise = loadStudents(context);
-
-        await Promise.allSettled([
-            referencePromise,
-            listPromise
-        ]);
+        /*
+         * Load the Student list only after reference data is ready. Table
+         * rows therefore render once and do not receive late column updates.
+         */
+        await loadStudents(context);
     }
 
     async function prepareManageReferenceData(context) {
@@ -7128,11 +7076,18 @@
         bindStudentField(context, 'Dob', read(personal, 'dateOfBirth'), dateLabel);
         bindStudentField(context, 'AdmissionYear', read(personal, 'admissionYear'));
         bindStudentField(context, 'Nationality', read(personal, 'nationality'));
+        bindStudentField(
+            context,
+            'NationalIdPassport',
+            read(personal, 'nationalIdPassport')
+        );
         bindStudentField(context, 'HouseNo', read(personal, 'houseNo'));
         bindStudentField(context, 'Street', read(personal, 'street'));
         bindStudentField(context, 'Village', read(personal, 'village'));
         bindStudentField(context, 'TownCity', read(personal, 'townCity'));
         bindStudentField(context, 'District', read(personal, 'district'));
+        bindStudentField(context, 'County', read(personal, 'county'));
+        bindStudentField(context, 'SubCounty', read(personal, 'subCounty'));
         bindStudentField(context, 'State', read(personal, 'state'));
         bindStudentField(context, 'Country', read(personal, 'country'));
         bindStudentField(context, 'PostalCode', read(personal, 'postalCode'));
@@ -7179,6 +7134,12 @@
         setManageText(context.view, '#view-studentJoiningDate', read(enrollment, 'joiningDate'), dateLabel);
         setManageText(context.view, '#view-studentRollNo', read(enrollment, 'rollNo'));
         setManageText(context.view, '#view-studentEnrollmentStatus', read(enrollment, 'enrollmentStatus'), enumLabel);
+        setManageText(
+            context.view,
+            '#view-studentScholarshipRequired',
+            read(enrollment, 'scholarshipRequired'),
+            booleanLabel
+        );
         setManageText(context.view, '#view-studentEnrollmentRemarks', read(enrollment, 'remarks'));
     }
 
@@ -8533,10 +8494,21 @@
     }
 
     function buildStudentPersonalPayload(context) {
+        const personal = profileSection(
+            context.currentProfile,
+            'personal'
+        );
+
         return {
             learnerLin: manageValue(context, 'LearnerLin'),
             admissionYear: finiteNumber(
                 manageValue(context, 'AdmissionYear')
+            ),
+            joiningClassId: positiveIntegerOrNull(
+                read(personal, 'joiningClassId')
+            ),
+            joiningTermId: positiveIntegerOrNull(
+                read(personal, 'joiningTermId')
             ),
             firstName: manageValue(context, 'FirstName'),
             middleName: manageValue(context, 'MiddleName'),
@@ -8544,11 +8516,17 @@
             gender: manageValue(context, 'Gender'),
             dateOfBirth: manageValue(context, 'Dob'),
             nationality: manageValue(context, 'Nationality'),
+            nationalIdPassport: manageValue(
+                context,
+                'NationalIdPassport'
+            ),
             houseNo: manageValue(context, 'HouseNo'),
             street: manageValue(context, 'Street'),
             village: manageValue(context, 'Village'),
             townCity: manageValue(context, 'TownCity'),
             district: manageValue(context, 'District'),
+            county: manageValue(context, 'County'),
+            subCounty: manageValue(context, 'SubCounty'),
             state: manageValue(context, 'State'),
             country: manageValue(context, 'Country'),
             postalCode: manageValue(context, 'PostalCode')
@@ -8711,11 +8689,14 @@
             'personal.gender': '#edit-studentGender',
             'personal.dateOfBirth': '#edit-studentDob',
             'personal.nationality': '#edit-studentNationality',
+            'personal.nationalIdPassport': '#edit-studentNationalIdPassport',
             'personal.houseNo': '#edit-studentHouseNo',
             'personal.street': '#edit-studentStreet',
             'personal.village': '#edit-studentVillage',
             'personal.townCity': '#edit-studentTownCity',
             'personal.district': '#edit-studentDistrict',
+            'personal.county': '#edit-studentCounty',
+            'personal.subCounty': '#edit-studentSubCounty',
             'personal.state': '#edit-studentState',
             'personal.country': '#edit-studentCountry',
             'personal.postalCode': '#edit-studentPostalCode',

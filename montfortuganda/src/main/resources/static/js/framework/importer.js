@@ -1198,6 +1198,8 @@ const AppImporter = (() => {
             failed
         });
 
+        const hasDownloadableRowReport = failed > 0;
+
         progressStep.classList.add('hidden');
         resultStep.classList.remove('hidden');
         uploadButton.classList.add('hidden');
@@ -1239,7 +1241,7 @@ const AppImporter = (() => {
                     data.message
                     || 'Valid Student rows were imported. Download the failed-rows workbook, correct only those records, and retry them securely.';
 
-                if (currentJobId) {
+                if (currentJobId && hasDownloadableRowReport) {
                     configureResultActions(currentJobId);
                 }
             } else {
@@ -1247,7 +1249,7 @@ const AppImporter = (() => {
                     data.message
                     || 'Valid Employee rows were imported. Download the error report, correct the failed rows and import them again.';
 
-                if (currentJobId) {
+                if (currentJobId && hasDownloadableRowReport) {
                     configureErrorOnlyAction(currentJobId);
                 }
             }
@@ -1272,7 +1274,7 @@ const AppImporter = (() => {
             || data.lastCheckpoint
             || `The ${label.toLowerCase()} file could not be imported.`;
 
-        if (currentJobId) {
+        if (currentJobId && hasDownloadableRowReport) {
             configureErrorOnlyAction(currentJobId);
         }
     }

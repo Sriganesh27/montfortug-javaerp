@@ -87,11 +87,6 @@ public class StudentBulkImportValidator
                         branchId
                 );
 
-        validateAdmissionNumber(
-                row,
-                errors
-        );
-
         validateAdmissionYear(
                 row,
                 errors
@@ -122,7 +117,12 @@ public class StudentBulkImportValidator
                 row
         );
 
-        validateJoiningDate(
+        validateAdmissionDate(
+                row,
+                errors
+        );
+
+        validateAdmissionYearDateConsistency(
                 row,
                 errors
         );
@@ -133,8 +133,7 @@ public class StudentBulkImportValidator
         );
 
         validateParentAndGuardian(
-                row,
-                errors
+                row
         );
 
         validateEmail(
@@ -250,22 +249,6 @@ public class StudentBulkImportValidator
         }
 
         return references;
-    }
-
-    // =====================================================================
-    // ADMISSION NUMBER
-    // =====================================================================
-
-    private void validateAdmissionNumber(
-            StudentBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
-    ) {
-        validateOptionalLength(
-                row.getAdmissionNo(),
-                StudentExcelHeaders.ADMISSION_NO,
-                50,
-                errors
-        );
     }
 
     // =====================================================================
@@ -473,6 +456,12 @@ public class StudentBulkImportValidator
                 schoolClass,
                 errors
         );
+
+        validateJoiningClass(
+                row,
+                references,
+                errors
+        );
     }
 
     /**
@@ -547,12 +536,12 @@ public class StudentBulkImportValidator
     ) {
         String rawLevel =
                 valueParser.nullableText(
-                        row.getEducationLevel()
+                        row.getPresentEducationLevel()
                 );
 
         String rawClass =
                 valueParser.nullableText(
-                        row.getClassName()
+                        row.getPresentClass()
                 );
 
         String canonicalLevel = null;
@@ -568,8 +557,8 @@ public class StudentBulkImportValidator
             } catch (IllegalArgumentException exception) {
                 addError(
                         errors,
-                        StudentExcelHeaders.EDUCATION_LEVEL,
-                        row.getEducationLevel(),
+                        StudentExcelHeaders.PRESENT_EDUCATION_LEVEL,
+                        row.getPresentEducationLevel(),
                         "STUDENT_EDUCATION_LEVEL_INVALID",
                         exception.getMessage()
                 );
@@ -587,8 +576,8 @@ public class StudentBulkImportValidator
             } catch (IllegalArgumentException exception) {
                 addError(
                         errors,
-                        StudentExcelHeaders.CLASS_NAME,
-                        row.getClassName(),
+                        StudentExcelHeaders.PRESENT_CLASS,
+                        row.getPresentClass(),
                         "STUDENT_CLASS_FORMAT_INVALID",
                         exception.getMessage()
                 );
@@ -614,8 +603,8 @@ public class StudentBulkImportValidator
         ) {
             addError(
                     errors,
-                    StudentExcelHeaders.CLASS_NAME,
-                    row.getClassName(),
+                    StudentExcelHeaders.PRESENT_CLASS,
+                    row.getPresentClass(),
                     "STUDENT_LEVEL_CLASS_MISMATCH",
                     "Class "
                             + canonicalClass
@@ -678,19 +667,19 @@ public class StudentBulkImportValidator
         if (canonicalLevel == null) {
             addError(
                     errors,
-                    StudentExcelHeaders.EDUCATION_LEVEL,
-                    row.getEducationLevel(),
+                    StudentExcelHeaders.PRESENT_EDUCATION_LEVEL,
+                    row.getPresentEducationLevel(),
                     "STUDENT_EDUCATION_LEVEL_NOT_CONFIGURED",
                     "No active Education Level is configured for this branch."
             );
         } else {
             addError(
                     errors,
-                    StudentExcelHeaders.EDUCATION_LEVEL,
-                    row.getEducationLevel(),
+                    StudentExcelHeaders.PRESENT_EDUCATION_LEVEL,
+                    row.getPresentEducationLevel(),
                     "STUDENT_EDUCATION_LEVEL_NOT_FOUND",
                     "Education Level '"
-                            + row.getEducationLevel()
+                            + row.getPresentEducationLevel()
                             + "' was normalized to "
                             + canonicalLevel
                             + ", but that level is not configured for this branch."
@@ -734,8 +723,8 @@ public class StudentBulkImportValidator
         if (canonicalClass == null) {
             addError(
                     errors,
-                    StudentExcelHeaders.CLASS_NAME,
-                    row.getClassName(),
+                    StudentExcelHeaders.PRESENT_CLASS,
+                    row.getPresentClass(),
                     "STUDENT_CLASS_NOT_CONFIGURED",
                     "No active Class is configured under the resolved Education Level."
             );
@@ -745,11 +734,11 @@ public class StudentBulkImportValidator
 
         addError(
                 errors,
-                StudentExcelHeaders.CLASS_NAME,
-                row.getClassName(),
+                StudentExcelHeaders.PRESENT_CLASS,
+                row.getPresentClass(),
                 "STUDENT_CLASS_NOT_FOUND",
                 "Class '"
-                        + row.getClassName()
+                        + row.getPresentClass()
                         + "' was normalized to "
                         + canonicalClass
                         + ", but it is not configured under the resolved Education Level. "
@@ -845,6 +834,68 @@ public class StudentBulkImportValidator
         }
     }
 
+    private void validateJoiningClass(
+            StudentBulkImportRow row,
+            StudentBulkReferenceData references,
+            List<ValidationResult.ValidationError> errors
+    ) {
+        String rawJoiningClass =
+                valueParser.nullableText(
+                        row.getJoiningClass()
+                );
+
+        if (rawJoiningClass == null) {
+            return;
+        }
+
+        String canonicalClass;
+
+        try {
+            canonicalClass =
+                    StudentEducationClassNormalizer.normalizeClass(
+                            rawJoiningClass,
+                            null
+                    );
+        } catch (IllegalArgumentException exception) {
+            addError(
+                    errors,
+                    StudentExcelHeaders.JOINING_CLASS,
+                    row.getJoiningClass(),
+                    "STUDENT_JOINING_CLASS_INVALID",
+                    exception.getMessage()
+            );
+            return;
+        }
+
+        String canonicalLevel =
+                StudentEducationClassNormalizer.inferLevelFromClass(
+                        canonicalClass
+                );
+
+        LevelReference level =
+                references.findLevel(canonicalLevel);
+
+        ClassReference joiningClass =
+                references.findClass(
+                        level,
+                        canonicalClass
+                );
+
+        if (joiningClass == null) {
+            addError(
+                    errors,
+                    StudentExcelHeaders.JOINING_CLASS,
+                    row.getJoiningClass(),
+                    "STUDENT_JOINING_CLASS_NOT_FOUND",
+                    "Joining Class '"
+                            + rawJoiningClass
+                            + "' was normalized to "
+                            + canonicalClass
+                            + ", but it is not configured for this branch."
+            );
+        }
+    }
+
     private record NormalizedPlacement(
             String educationLevel,
             String classCode,
@@ -877,10 +928,10 @@ public class StudentBulkImportValidator
     }
 
     // =====================================================================
-    // JOINING DATE
+    // ADMISSION DATE
     // =====================================================================
 
-    private void validateJoiningDate(
+    private void validateAdmissionDate(
             StudentBulkImportRow row,
             List<ValidationResult.ValidationError> errors
     ) {
@@ -889,20 +940,20 @@ public class StudentBulkImportValidator
         try {
             joiningDate =
                     valueParser.nullableDate(
-                            row.getJoiningDate(),
-                            StudentExcelHeaders.JOINING_DATE
+                            row.getAdmissionDate(),
+                            StudentExcelHeaders.ADMISSION_DATE
                     );
         } catch (IllegalArgumentException exception) {
             /*
-             * Joining Date is generated from Admission Year. Therefore,
-             * the correction must point to the real Admission Year column.
+             * Admission Date is entered separately from Admission Year.
+             * The correction must point to the Admission Date column.
              */
             addError(
                     errors,
-                    StudentExcelHeaders.ADMISSION_YEAR,
-                    row.getAdmissionYear(),
-                    "STUDENT_JOINING_DATE_INVALID",
-                    "Admission Year could not generate a valid Joining Date."
+                    StudentExcelHeaders.ADMISSION_DATE,
+                    row.getAdmissionDate(),
+                    "STUDENT_ADMISSION_DATE_INVALID",
+                    "Admission Date must contain a supported date."
             );
             return;
         }
@@ -914,10 +965,50 @@ public class StudentBulkImportValidator
         if (joiningDate.isAfter(LocalDate.now())) {
             addError(
                     errors,
-                    StudentExcelHeaders.ADMISSION_YEAR,
-                    row.getAdmissionYear(),
-                    "STUDENT_JOINING_DATE_FUTURE",
-                    "Admission Year generates a Joining Date in the future."
+                    StudentExcelHeaders.ADMISSION_DATE,
+                    row.getAdmissionDate(),
+                    "STUDENT_ADMISSION_DATE_FUTURE",
+                    "Admission Date cannot be in the future."
+            );
+        }
+    }
+
+    private void validateAdmissionYearDateConsistency(
+            StudentBulkImportRow row,
+            List<ValidationResult.ValidationError> errors
+    ) {
+        Integer admissionYear;
+        LocalDate admissionDate;
+
+        try {
+            admissionYear =
+                    valueParser.nullableInteger(
+                            row.getAdmissionYear(),
+                            StudentExcelHeaders.ADMISSION_YEAR
+                    );
+
+            admissionDate =
+                    valueParser.nullableDate(
+                            row.getAdmissionDate(),
+                            StudentExcelHeaders.ADMISSION_DATE
+                    );
+        } catch (IllegalArgumentException exception) {
+            return;
+        }
+
+        if (
+                admissionYear != null
+                        && admissionDate != null
+                        && admissionYear != admissionDate.getYear()
+        ) {
+            addError(
+                    errors,
+                    StudentExcelHeaders.ADMISSION_DATE,
+                    row.getAdmissionDate(),
+                    "STUDENT_ADMISSION_YEAR_DATE_MISMATCH",
+                    "Admission Date must fall inside Admission Year "
+                            + admissionYear
+                            + "."
             );
         }
     }
@@ -938,8 +1029,8 @@ public class StudentBulkImportValidator
 
             joiningDate =
                     valueParser.nullableDate(
-                            row.getJoiningDate(),
-                            StudentExcelHeaders.JOINING_DATE
+                            row.getAdmissionDate(),
+                            StudentExcelHeaders.ADMISSION_DATE
                     );
         } catch (IllegalArgumentException exception) {
             return;
@@ -957,7 +1048,7 @@ public class StudentBulkImportValidator
                     StudentExcelHeaders.DATE_OF_BIRTH,
                     row.getDateOfBirth(),
                     "STUDENT_DATE_ORDER_INVALID",
-                    "Date of Birth must be before the start of the Admission Year."
+                    "Date of Birth must be before the Admission Date."
             );
         }
     }
@@ -967,15 +1058,14 @@ public class StudentBulkImportValidator
     // =====================================================================
 
     private void validateParentAndGuardian(
-            StudentBulkImportRow row,
-            List<ValidationResult.ValidationError> errors
+            StudentBulkImportRow row
     ) {
         /*
          * Parent and Guardian Excel cells are optional.
          *
          * Preferred Contact, Fee Responsibility and
          * Parents Living Together are generated by the backend mapper.
-         * Therefore a blank Parent/Guardian group does not invalidate
+         * Therefore, a blank Parent/Guardian group does not invalidate
          * the Student row.
          */
         String preferredContactValue =
@@ -1175,15 +1265,50 @@ public class StudentBulkImportValidator
             List<ValidationResult.ValidationError> errors
     ) {
         validateOptionalLength(
-                row.getEducationLevel(),
-                StudentExcelHeaders.EDUCATION_LEVEL,
+                row.getAdmissionYear(),
+                StudentExcelHeaders.ADMISSION_YEAR,
+                4,
+                errors
+        );
+
+        validateOptionalLength(
+                row.getAdmissionDate(),
+                StudentExcelHeaders.ADMISSION_DATE,
+                30,
+                errors
+        );
+
+        validateOptionalLength(
+                row.getJoiningClass(),
+                StudentExcelHeaders.JOINING_CLASS,
                 100,
                 errors
         );
 
         validateOptionalLength(
-                row.getClassName(),
-                StudentExcelHeaders.CLASS_NAME,
+                row.getJoinedTerm(),
+                StudentExcelHeaders.JOINED_TERM,
+                100,
+                errors
+        );
+
+        validateOptionalLength(
+                row.getPresentTerm(),
+                StudentExcelHeaders.PRESENT_TERM,
+                100,
+                errors
+        );
+
+        validateOptionalLength(
+                row.getPresentEducationLevel(),
+                StudentExcelHeaders.PRESENT_EDUCATION_LEVEL,
+                100,
+                errors
+        );
+
+        validateOptionalLength(
+                row.getPresentClass(),
+                StudentExcelHeaders.PRESENT_CLASS,
                 100,
                 errors
         );
@@ -1203,22 +1328,36 @@ public class StudentBulkImportValidator
         );
 
         validateOptionalLength(
-                row.getFatherOrGuardianName(),
-                StudentExcelHeaders.FATHER_OR_GUARDIAN_NAME,
+                row.getFatherName(),
+                StudentExcelHeaders.FATHER,
                 150,
                 errors
         );
 
         validateOptionalLength(
-                row.getMotherOrGuardianName(),
-                StudentExcelHeaders.MOTHER_OR_GUARDIAN_NAME,
+                row.getMotherName(),
+                StudentExcelHeaders.MOTHER,
                 150,
+                errors
+        );
+
+        validateOptionalLength(
+                row.getGuardianName(),
+                StudentExcelHeaders.GUARDIAN_NAME,
+                150,
+                errors
+        );
+
+        validateOptionalLength(
+                row.getPresentResponsiblePerson(),
+                StudentExcelHeaders.PRESENT_RESPONSIBLE_PERSON,
+                30,
                 errors
         );
 
         validateOptionalLength(
                 row.getGuardianRelationship(),
-                StudentExcelHeaders.GUARDIAN_RELATIONSHIP,
+                StudentExcelHeaders.GUARDIAN_RELATION,
                 100,
                 errors
         );

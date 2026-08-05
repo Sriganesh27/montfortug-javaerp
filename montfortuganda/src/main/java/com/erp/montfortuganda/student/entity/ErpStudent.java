@@ -103,6 +103,15 @@ public class ErpStudent {
     @Column(name = "nationality", length = 100)
     private String nationality;
 
+    /**
+     * National ID or passport value supplied through the current school
+     * Excel template. This remains a combined field until the template is
+     * changed to separate identity columns.
+     */
+    @Size(max = 100, message = "National ID / Passport cannot exceed 100 characters")
+    @Column(name = "national_id_passport", length = 100)
+    private String nationalIdPassport;
+
     // Demographic Identifiers
     @Column(name = "blood_group_id")
     private Long bloodGroupId;
@@ -132,6 +141,14 @@ public class ErpStudent {
     @Size(max = 100)
     @Column(name = "district", length = 100)
     private String district;
+
+    @Size(max = 100, message = "County cannot exceed 100 characters")
+    @Column(name = "county", length = 100)
+    private String county;
+
+    @Size(max = 100, message = "Sub County cannot exceed 100 characters")
+    @Column(name = "sub_county", length = 100)
+    private String subCounty;
 
     @Size(max = 100)
     @Column(name = "state", length = 100)

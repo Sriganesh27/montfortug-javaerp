@@ -75,6 +75,12 @@ public record StudentPersonalRequest(
         String nationality,
 
         @Size(
+                max = 100,
+                message = "National ID / Passport cannot exceed 100 characters."
+        )
+        String nationalIdPassport,
+
+        @Size(
                 max = 50,
                 message = "House number cannot exceed 50 characters."
         )
@@ -103,6 +109,18 @@ public record StudentPersonalRequest(
                 message = "District cannot exceed 100 characters."
         )
         String district,
+
+        @Size(
+                max = 100,
+                message = "County cannot exceed 100 characters."
+        )
+        String county,
+
+        @Size(
+                max = 100,
+                message = "Sub County cannot exceed 100 characters."
+        )
+        String subCounty,
 
         @Size(
                 max = 100,

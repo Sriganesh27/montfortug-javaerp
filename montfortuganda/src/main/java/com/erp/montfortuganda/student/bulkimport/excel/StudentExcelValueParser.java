@@ -533,13 +533,19 @@ public class StudentExcelValueParser {
             return null;
         }
 
+        String canonical = switch (normalized) {
+            case "M", "BOY" -> "MALE";
+            case "F", "GIRL" -> "FEMALE";
+            default -> normalized;
+        };
+
         try {
             return StudentGender.valueOf(
-                    normalized
+                    canonical
             );
         } catch (IllegalArgumentException exception) {
             throw new IllegalArgumentException(
-                    "Gender must be MALE, FEMALE or OTHER"
+                    "Gender must be MALE, FEMALE, OTHER, M or F"
             );
         }
     }

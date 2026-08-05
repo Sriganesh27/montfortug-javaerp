@@ -8,6 +8,7 @@ import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceS
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.LevelReference;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.SectionReference;
 import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.StudentBulkReferenceData;
+import com.erp.montfortuganda.student.bulkimport.reference.StudentBulkReferenceService.TermReference;
 import com.erp.montfortuganda.student.dto.request.StudentAcademicHistoryRequest;
 import com.erp.montfortuganda.student.dto.request.StudentCreateRequest;
 import com.erp.montfortuganda.student.dto.request.StudentEnrollmentRequest;
@@ -98,10 +99,27 @@ public class StudentBulkRequestMapper {
                         schoolClass
                 );
 
+        ClassReference joiningClass =
+                resolveJoiningClass(
+                        row,
+                        references,
+                        schoolClass
+                );
+
+        TermReference joiningTerm =
+                resolveJoiningTerm(
+                        row,
+                        references,
+                        academicYear
+                );
+
         StudentPersonalRequest personalRequest =
                 buildPersonalRequest(
                         row,
-                        schoolClass.getClassId()
+                        joiningClass.getClassId(),
+                        joiningTerm == null
+                                ? null
+                                : joiningTerm.getTermId()
                 );
 
         StudentParentRequest parentRequest =
@@ -147,19 +165,11 @@ public class StudentBulkRequestMapper {
 
     private StudentPersonalRequest buildPersonalRequest(
             StudentBulkImportRow row,
-            Integer joiningClassId
+            Integer joiningClassId,
+            Long joiningTermId
     ) {
         Integer admissionYear =
-                valueParser.nullableInteger(
-                        row.getAdmissionYear(),
-                        "Admission Year"
-                );
-
-        if (admissionYear == null) {
-            admissionYear =
-                    LocalDate.now()
-                            .getYear();
-        }
+                resolveAdmissionYear(row);
 
         String firstName =
                 firstNonBlank(
@@ -189,7 +199,7 @@ public class StudentBulkRequestMapper {
                 null,
                 admissionYear,
                 joiningClassId,
-                null, // joiningTermId — updated Excel mapping will be added later
+                joiningTermId,
                 firstName,
                 valueParser.nullableText(
                         row.getMiddleName()
@@ -202,7 +212,10 @@ public class StudentBulkRequestMapper {
                 valueParser.nullableText(
                         row.getNationality()
                 ),
-                null,
+                valueParser.nullableText(
+                        row.getNationalIdOrPassport()
+                ),
+                null, // houseNo
                 valueParser.nullableText(
                         row.getStreet()
                 ),
@@ -214,13 +227,43 @@ public class StudentBulkRequestMapper {
                         row.getDistrict()
                 ),
                 valueParser.nullableText(
+                        row.getCounty()
+                ),
+                valueParser.nullableText(
+                        row.getSubCounty()
+                ),
+                valueParser.nullableText(
                         row.getState()
                 ),
                 valueParser.nullableText(
                         row.getAddressCountry()
                 ),
-                null
+                null // postalCode
         );
+    }
+
+    private Integer resolveAdmissionYear(
+            StudentBulkImportRow row
+    ) {
+        Integer admissionYear =
+                valueParser.nullableInteger(
+                        row.getAdmissionYear(),
+                        "Admission Year"
+                );
+
+        if (admissionYear != null) {
+            return admissionYear;
+        }
+
+        LocalDate admissionDate =
+                valueParser.nullableDate(
+                        row.getAdmissionDate(),
+                        "Admission Date"
+                );
+
+        return admissionDate == null
+                ? LocalDate.now().getYear()
+                : admissionDate.getYear();
     }
 
     /**
@@ -283,6 +326,12 @@ public class StudentBulkRequestMapper {
                         preferredContact
                 );
 
+        validateFeeResponsibilityCompatibility(
+                preferredContact,
+                feeResponsibility,
+                contact
+        );
+
         return new StudentParentRequest(
                 // Father
                 contact.fatherName(),
@@ -333,34 +382,11 @@ public class StudentBulkRequestMapper {
     private PreferredContact inferPreferredContact(
             StudentBulkImportRow row
     ) {
-        String relationship =
-                valueParser.normalizeEnumValue(
-                        row.getGuardianRelationship()
-                );
-
-        if (
-                "MOTHER".equals(relationship)
-                        && !isBlank(
-                        row.getMotherOrGuardianName()
-                )
-        ) {
-            return PreferredContact.MOTHER;
-        }
-
-        if (
-                "FATHER".equals(relationship)
-                        && !isBlank(
-                        row.getFatherOrGuardianName()
-                )
-        ) {
+        if (!isBlank(row.getFatherName())) {
             return PreferredContact.FATHER;
         }
 
-        if (!isBlank(row.getFatherOrGuardianName())) {
-            return PreferredContact.FATHER;
-        }
-
-        if (!isBlank(row.getMotherOrGuardianName())) {
+        if (!isBlank(row.getMotherName())) {
             return PreferredContact.MOTHER;
         }
 
@@ -370,34 +396,35 @@ public class StudentBulkRequestMapper {
     private boolean hasResponsibleContact(
             StudentBulkImportRow row
     ) {
-        return !isBlank(
-                row.getMobileNumber()
-        ) && (
-                !isBlank(
-                        row.getFatherOrGuardianName()
-                )
-                        || !isBlank(
-                        row.getMotherOrGuardianName()
-                )
+        return !isBlank(row.getMobileNumber())
+                && (
+                !isBlank(row.getFatherName())
+                        || !isBlank(row.getMotherName())
+                        || !isBlank(row.getGuardianName())
         );
     }
 
     /**
      * Assigns the workbook's primary phone, alternate phone and email to the
-     * contact selected in Preferred Contact.
+     * contact selected as Preferred Contact while preserving all names.
      */
     private ContactMapping mapPrimaryContact(
             StudentBulkImportRow row,
             PreferredContact preferredContact
     ) {
-        String fatherOrGuardianName =
+        String fatherName =
                 valueParser.nullableText(
-                        row.getFatherOrGuardianName()
+                        row.getFatherName()
                 );
 
-        String motherOrGuardianName =
+        String motherName =
                 valueParser.nullableText(
-                        row.getMotherOrGuardianName()
+                        row.getMotherName()
+                );
+
+        String guardianName =
+                valueParser.nullableText(
+                        row.getGuardianName()
                 );
 
         String mobile =
@@ -421,13 +448,8 @@ public class StudentBulkRequestMapper {
                 );
 
         if (
-                preferredContact == PreferredContact.GUARDIAN
+                guardianName != null
                         && guardianRelationship == null
-                        && (
-                        fatherOrGuardianName != null
-                                || motherOrGuardianName != null
-                                || mobile != null
-                )
         ) {
             guardianRelationship =
                     DEFAULT_GUARDIAN_RELATIONSHIP;
@@ -435,18 +457,18 @@ public class StudentBulkRequestMapper {
 
         if (preferredContact == PreferredContact.FATHER) {
             return new ContactMapping(
-                    fatherOrGuardianName,
+                    fatherName,
                     mobile,
                     alternateMobile,
                     email,
 
-                    motherOrGuardianName,
+                    motherName,
                     null,
                     null,
                     null,
 
-                    null,
-                    null,
+                    guardianName,
+                    guardianRelationship,
                     null,
                     null,
                     null
@@ -455,18 +477,18 @@ public class StudentBulkRequestMapper {
 
         if (preferredContact == PreferredContact.MOTHER) {
             return new ContactMapping(
-                    fatherOrGuardianName,
+                    fatherName,
                     null,
                     null,
                     null,
 
-                    motherOrGuardianName,
+                    motherName,
                     mobile,
                     alternateMobile,
                     email,
 
-                    null,
-                    null,
+                    guardianName,
+                    guardianRelationship,
                     null,
                     null,
                     null
@@ -474,20 +496,17 @@ public class StudentBulkRequestMapper {
         }
 
         return new ContactMapping(
-                null,
-                null,
-                null,
-                null,
-
-                null,
+                fatherName,
                 null,
                 null,
                 null,
 
-                firstNonBlank(
-                        fatherOrGuardianName,
-                        motherOrGuardianName
-                ),
+                motherName,
+                null,
+                null,
+                null,
+
+                guardianName,
                 guardianRelationship,
                 mobile,
                 alternateMobile,
@@ -585,8 +604,8 @@ public class StudentBulkRequestMapper {
 
         LocalDate joiningDate =
                 valueParser.nullableDate(
-                        row.getJoiningDate(),
-                        "Joining Date"
+                        row.getAdmissionDate(),
+                        "Admission Date"
                 );
 
         if (joiningDate == null) {
@@ -616,6 +635,12 @@ public class StudentBulkRequestMapper {
                         : section.getSectionId(),
                 null,
                 admissionType,
+                Boolean.TRUE.equals(
+                        valueParser.nullableYesNo(
+                                row.getScholarship(),
+                                "Scholarship"
+                        )
+                ),
                 joiningDate,
                 valueParser.nullableText(
                         row.getRemarks()
@@ -740,17 +765,98 @@ public class StudentBulkRequestMapper {
         return academicYear;
     }
 
+    /**
+     * Resolves the original term in which the Student joined.
+     *
+     * <p>The import first attempts to resolve the term under an Academic Year
+     * matching Admission Year. When historical Academic Years are not
+     * configured, it falls back to the row's resolved current Academic Year.
+     * Blank Joined Term values remain null.</p>
+     */
+    private TermReference resolveJoiningTerm(
+            StudentBulkImportRow row,
+            StudentBulkReferenceData references,
+            AcademicYearReference currentAcademicYear
+    ) {
+        String rawJoinedTerm =
+                valueParser.nullableText(
+                        row.getJoinedTerm()
+                );
+
+        if (rawJoinedTerm == null) {
+            return null;
+        }
+
+        String normalizedTermKey =
+                valueParser.normalizeLookupKey(
+                        rawJoinedTerm
+                );
+
+        AcademicYearReference joiningAcademicYear =
+                null;
+
+        Integer admissionYear =
+                resolveAdmissionYear(row);
+
+        if (admissionYear != null) {
+            joiningAcademicYear =
+                    references.findAcademicYear(
+                            valueParser.normalizeLookupKey(
+                                    String.valueOf(
+                                            admissionYear
+                                    )
+                            )
+                    );
+        }
+
+        TermReference joiningTerm =
+                null;
+
+        if (
+                joiningAcademicYear != null
+                        && joiningAcademicYear.getAcademicYearId() != null
+        ) {
+            joiningTerm =
+                    references.findTerm(
+                            joiningAcademicYear.getAcademicYearId(),
+                            normalizedTermKey
+                    );
+        }
+
+        if (
+                joiningTerm == null
+                        && currentAcademicYear != null
+                        && currentAcademicYear.getAcademicYearId() != null
+        ) {
+            joiningTerm =
+                    references.findTerm(
+                            currentAcademicYear.getAcademicYearId(),
+                            normalizedTermKey
+                    );
+        }
+
+        if (joiningTerm == null) {
+            throw new IllegalArgumentException(
+                    "Joined Term '"
+                            + rawJoinedTerm
+                            + "' is not configured for the resolved Academic Year."
+            );
+        }
+
+        return joiningTerm;
+    }
+
     private NormalizedPlacement normalizePlacement(
             StudentBulkImportRow row
     ) {
         String rawLevel =
                 valueParser.nullableText(
-                        row.getEducationLevel()
+                        row.getPresentEducationLevel()
                 );
 
         String rawClass =
                 valueParser.nullableText(
-                        row.getClassName()
+                        row.getPresentClass()
                 );
 
         String canonicalLevel =
@@ -827,7 +933,7 @@ public class StudentBulkRequestMapper {
                     canonicalLevel == null
                             ? "No active Education Level is configured for this branch."
                             : "Education Level '"
-                              + row.getEducationLevel()
+                              + row.getPresentEducationLevel()
                               + "' was normalized to "
                               + canonicalLevel
                               + ", but it is not configured for this branch."
@@ -860,7 +966,7 @@ public class StudentBulkRequestMapper {
                     canonicalClass == null
                             ? "No active Class is configured under the resolved Education Level."
                             : "Class '"
-                              + row.getClassName()
+                              + row.getPresentClass()
                               + "' was normalized to "
                               + canonicalClass
                               + ", but it is not configured under "
@@ -873,6 +979,56 @@ public class StudentBulkRequestMapper {
         }
 
         return schoolClass;
+    }
+
+    private ClassReference resolveJoiningClass(
+            StudentBulkImportRow row,
+            StudentBulkReferenceData references,
+            ClassReference fallbackClass
+    ) {
+        String rawJoiningClass =
+                valueParser.nullableText(
+                        row.getJoiningClass()
+                );
+
+        if (rawJoiningClass == null) {
+            return fallbackClass;
+        }
+
+        String canonicalClass =
+                StudentEducationClassNormalizer.normalizeClass(
+                        rawJoiningClass,
+                        null
+                );
+
+        String canonicalLevel =
+                StudentEducationClassNormalizer.inferLevelFromClass(
+                        canonicalClass
+                );
+
+        LevelReference level =
+                references.findLevel(canonicalLevel);
+
+        ClassReference joiningClass =
+                references.findClass(
+                        level,
+                        canonicalClass
+                );
+
+        if (
+                joiningClass == null
+                        || joiningClass.getClassId() == null
+        ) {
+            throw new IllegalArgumentException(
+                    "Joining Class '"
+                            + rawJoiningClass
+                            + "' was normalized to "
+                            + canonicalClass
+                            + ", but it is not configured for this branch."
+            );
+        }
+
+        return joiningClass;
     }
 
     private String acceptedClassMessage(

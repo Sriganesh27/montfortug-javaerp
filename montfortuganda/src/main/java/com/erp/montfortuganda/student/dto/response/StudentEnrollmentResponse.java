@@ -6,8 +6,8 @@ import java.time.LocalDateTime;
 /**
  * Current academic enrollment details of a Student.
  *
- * Academic-year, class and section names are resolved from their
- * respective master tables by the service or mapper.
+ * <p>Academic-year, class and section names are resolved from their
+ * respective master tables by the service or mapper.</p>
  */
 public record StudentEnrollmentResponse(
 
@@ -44,6 +44,8 @@ public record StudentEnrollmentResponse(
         Long bedId,
 
         String rollNo,
+
+        Boolean scholarshipRequired,
 
         String admissionType,
 

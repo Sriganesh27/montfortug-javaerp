@@ -163,7 +163,9 @@ public class StudentMapper {
         student.setNationality(
                 trimToNull(request.nationality())
         );
-
+        student.setNationalIdPassport(
+                trimToNull(request.nationalIdPassport())
+        );
         student.setHouseNo(
                 trimToNull(request.houseNo())
         );
@@ -178,6 +180,13 @@ public class StudentMapper {
         );
         student.setDistrict(
                 trimToNull(request.district())
+        );
+        student.setCounty(
+                trimToNull(request.county())
+        );
+
+        student.setSubCounty(
+                trimToNull(request.subCounty())
         );
         student.setState(
                 trimToNull(request.state())
@@ -429,6 +438,13 @@ public class StudentMapper {
         enrollment.setAdmissionType(
                 request.admissionType()
         );
+
+        enrollment.setScholarshipRequired(
+                Boolean.TRUE.equals(
+                        request.scholarshipRequired()
+                )
+        );
+
         enrollment.setPromotionType(
                 ErpStudentEnrollment.PromotionType.NEW
         );
@@ -1279,11 +1295,14 @@ public class StudentMapper {
                 student.getGender(),
                 student.getDateOfBirth(),
                 student.getNationality(),
+                student.getNationalIdPassport(),
                 student.getHouseNo(),
                 student.getStreet(),
                 student.getVillage(),
                 student.getTownCity(),
                 student.getDistrict(),
+                student.getCounty(),
+                student.getSubCounty(),
                 student.getState(),
                 student.getCountry(),
                 student.getPostalCode(),
@@ -1383,6 +1402,9 @@ public class StudentMapper {
                 enrollment.getHostelId(),
                 enrollment.getBedId(),
                 enrollment.getRollNo(),
+                Boolean.TRUE.equals(
+                        enrollment.getScholarshipRequired()
+                ),
                 enumName(enrollment.getAdmissionType()),
                 enumName(enrollment.getPromotionType()),
                 enumName(enrollment.getEnrollmentStatus()),

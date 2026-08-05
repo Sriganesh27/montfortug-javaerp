@@ -6,8 +6,8 @@ import java.time.LocalDateTime;
 /**
  * Student identity, personal information and residential address.
  *
- * The physical photo_path value must never be returned to the frontend.
- * photoUrl should point to a protected Student photo endpoint.
+ * <p>The physical photo_path value must never be returned to the frontend.
+ * photoUrl points to the protected Student photo endpoint.</p>
  */
 public record StudentPersonalResponse(
 
@@ -45,6 +45,8 @@ public record StudentPersonalResponse(
 
         String nationality,
 
+        String nationalIdPassport,
+
         String houseNo,
 
         String street,
@@ -54,6 +56,10 @@ public record StudentPersonalResponse(
         String townCity,
 
         String district,
+
+        String county,
+
+        String subCounty,
 
         String state,
 

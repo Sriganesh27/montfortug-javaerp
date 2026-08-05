@@ -26,7 +26,11 @@ import java.time.LocalDateTime;
                 @Index(name = "idx_enrollment_admission", columnList = "admission_no"),
                 @Index(name = "idx_enrollment_year", columnList = "academic_year_id"),
                 @Index(name = "idx_enrollment_class", columnList = "class_id"),
-                @Index(name = "idx_enrollment_status", columnList = "enrollment_status")
+                @Index(name = "idx_enrollment_status", columnList = "enrollment_status"),
+                @Index(
+                        name = "idx_enrollment_scholarship_required",
+                        columnList = "branch_id, scholarship_required"
+                )
         },
         uniqueConstraints = {
                 @UniqueConstraint(name = "uk_student_current", columnNames = "student_id")
@@ -112,6 +116,14 @@ public class ErpStudentEnrollment {
     @Column(name = "admission_type", nullable = false, length = 20)
     private AdmissionType admissionType = AdmissionType.NEW;
 
+    /**
+     * Indicates that scholarship support is required/requested.
+     * This does not mean the scholarship has been approved.
+     */
+    @NotNull(message = "Scholarship required flag is required")
+    @Column(name = "scholarship_required", nullable = false)
+    private Boolean scholarshipRequired = false;
+
     @NotNull(message = "Promotion type is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "promotion_type", nullable = false, length = 20)
@@ -122,8 +134,7 @@ public class ErpStudentEnrollment {
     @Column(name = "enrollment_status", nullable = false, length = 20)
     private EnrollmentStatus enrollmentStatus = EnrollmentStatus.ACTIVE;
 
-    @NotNull(message = "Joining date is required")
-    @Column(name = "joining_date", nullable = false)
+    @Column(name = "joining_date")
     private LocalDate joiningDate;
 
     @Column(name = "leaving_date")

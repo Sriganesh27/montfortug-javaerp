@@ -255,7 +255,7 @@
                         <h3 id="view-studentName"></h3>
 
                         <div class="emp-profile-summary-grid emp-profile-facts">
-                            `<div>
+                            <div>
                                 <span class="text-muted">Admission Number</span>
                                 <strong id="summary-studentAdmissionNo" class="font-monospace"></strong>
                             </div>
@@ -268,7 +268,7 @@
                             <div>
                                 <span class="text-muted">Student Status</span>
                                 <span id="summary-studentStatus" class="status-badge badge"></span>
-                            </div>`
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -387,6 +387,26 @@
                             >
                         </div>
                     </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label for="edit-studentNationalIdPassport">
+                                National ID / Passport
+                            </label>
+
+                            <span
+                                    id="view-studentNationalIdPassport"
+                                    class="detail-text student-view-control"
+                            ></span>
+
+                            <input
+                                    type="text"
+                                    id="edit-studentNationalIdPassport"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="100"
+                            >
+                        </div>
+                    </div>
                 </div>
             </fieldset>
 
@@ -451,15 +471,29 @@
                         </div>
                     </div>
 
-                    <div class="emp-detail-grid emp-detail-grid-2">
+                    <div class="emp-detail-grid emp-detail-grid-3">
                         <div class="form-group">
                             <label>Enrollment Status</label>
-                            <span id="view-studentEnrollmentStatus" class="detail-text student-view-control"></span>
+                            <span
+                                    id="view-studentEnrollmentStatus"
+                                    class="detail-text student-view-control"
+                            ></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Scholarship Required</label>
+                            <span
+                                    id="view-studentScholarshipRequired"
+                                    class="detail-text student-view-control"
+                            ></span>
                         </div>
 
                         <div class="form-group">
                             <label>Enrollment Remarks</label>
-                            <span id="view-studentEnrollmentRemarks" class="detail-text student-view-control"></span>
+                            <span
+                                    id="view-studentEnrollmentRemarks"
+                                    class="detail-text student-view-control"
+                            ></span>
                         </div>
                     </div>
 
@@ -505,26 +539,88 @@
                     <div class="emp-detail-grid emp-detail-grid-4">
                         <div class="form-group">
                             <label for="edit-studentDistrict">District</label>
-                            <span id="view-studentDistrict" class="detail-text student-view-control"></span>
-                            <input type="text" id="edit-studentDistrict" class="detail-input hidden w-100 student-edit-control" maxlength="100">
+                            <span
+                                    id="view-studentDistrict"
+                                    class="detail-text student-view-control"
+                            ></span>
+                            <input
+                                    type="text"
+                                    id="edit-studentDistrict"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentCounty">County</label>
+                            <span
+                                    id="view-studentCounty"
+                                    class="detail-text student-view-control"
+                            ></span>
+                            <input
+                                    type="text"
+                                    id="edit-studentCounty"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="100"
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit-studentSubCounty">Sub County</label>
+                            <span
+                                    id="view-studentSubCounty"
+                                    class="detail-text student-view-control"
+                            ></span>
+                            <input
+                                    type="text"
+                                    id="edit-studentSubCounty"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="100"
+                            >
                         </div>
 
                         <div class="form-group">
                             <label for="edit-studentState">State / Region</label>
-                            <span id="view-studentState" class="detail-text student-view-control"></span>
-                            <input type="text" id="edit-studentState" class="detail-input hidden w-100 student-edit-control" maxlength="100">
+                            <span
+                                    id="view-studentState"
+                                    class="detail-text student-view-control"
+                            ></span>
+                            <input
+                                    type="text"
+                                    id="edit-studentState"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="100"
+                            >
                         </div>
+                    </div>
 
+                    <div class="emp-detail-grid emp-detail-grid-2">
                         <div class="form-group">
                             <label for="edit-studentCountry">Country</label>
-                            <span id="view-studentCountry" class="detail-text student-view-control"></span>
-                            <input type="text" id="edit-studentCountry" class="detail-input hidden w-100 student-edit-control" maxlength="100">
+                            <span
+                                    id="view-studentCountry"
+                                    class="detail-text student-view-control"
+                            ></span>
+                            <input
+                                    type="text"
+                                    id="edit-studentCountry"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="100"
+                            >
                         </div>
 
                         <div class="form-group">
                             <label for="edit-studentPostalCode">Postal Code</label>
-                            <span id="view-studentPostalCode" class="detail-text student-view-control"></span>
-                            <input type="text" id="edit-studentPostalCode" class="detail-input hidden w-100 student-edit-control" maxlength="20">
+                            <span
+                                    id="view-studentPostalCode"
+                                    class="detail-text student-view-control"
+                            ></span>
+                            <input
+                                    type="text"
+                                    id="edit-studentPostalCode"
+                                    class="detail-input hidden w-100 student-edit-control"
+                                    maxlength="20"
+                            >
                         </div>
                     </div>
                 </div>
