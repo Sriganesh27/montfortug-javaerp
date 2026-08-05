@@ -75,7 +75,7 @@ async function populateDynamicLevels(containerId) {
         levels.forEach(level => {
             const label = document.createElement('label');
             label.className = 'cb-container';
-            
+
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -266,6 +266,97 @@ function initBranchesView() {
     const displayValue = value => {
         const normalized = normalizeText(value);
         return normalized || '-';
+    };
+
+    const buildPrivateBranchFileUrl = (
+        branchId,
+        fileType,
+        documentIndex = null
+    ) => {
+        const normalizedBranchId = Number(branchId);
+
+        if (
+            !Number.isInteger(normalizedBranchId)
+            || normalizedBranchId <= 0
+        ) {
+            return null;
+        }
+
+        const baseUrl =
+            `/api/superadmin/branches/${normalizedBranchId}/files`;
+
+        if (fileType === 'logo') {
+            return `${baseUrl}/logo`;
+        }
+
+        if (fileType === 'photo') {
+            return `${baseUrl}/photo`;
+        }
+
+        if (
+            fileType === 'document'
+            && Number.isInteger(documentIndex)
+            && documentIndex >= 0
+        ) {
+            return `${baseUrl}/documents/${documentIndex}`;
+        }
+
+        return null;
+    };
+
+    const extractStoredDocumentEntries = branch => {
+        if (Array.isArray(branch?.govDocumentUrls)) {
+            return branch.govDocumentUrls
+                .map(normalizeText)
+                .filter(Boolean);
+        }
+
+        const storedValue =
+            normalizeText(branch?.govDocumentUrl);
+
+        if (!storedValue) {
+            return [];
+        }
+
+        return storedValue
+            .split(',')
+            .map(normalizeText)
+            .filter(Boolean);
+    };
+
+    const renderPrivateBranchImage = ({
+                                          imageElement,
+                                          emptyElement = null,
+                                          hasStoredFile,
+                                          secureUrl
+                                      }) => {
+        if (!imageElement) return;
+
+        imageElement.onload = null;
+        imageElement.onerror = null;
+
+        if (!hasStoredFile || !secureUrl) {
+            imageElement.removeAttribute('src');
+            imageElement.classList.add('hidden');
+            emptyElement?.classList.remove('hidden');
+            return;
+        }
+
+        imageElement.classList.add('hidden');
+        emptyElement?.classList.remove('hidden');
+
+        imageElement.onload = () => {
+            imageElement.classList.remove('hidden');
+            emptyElement?.classList.add('hidden');
+        };
+
+        imageElement.onerror = () => {
+            imageElement.removeAttribute('src');
+            imageElement.classList.add('hidden');
+            emptyElement?.classList.remove('hidden');
+        };
+
+        imageElement.src = secureUrl;
     };
 
     const setText = (selector, value) => {
@@ -729,43 +820,101 @@ function initBranchesView() {
                 }
             }
 
-            const logoImage = viewContainer.querySelector('#view-branchLogo');
-            const logoEmpty = viewContainer.querySelector('#view-branchLogoEmpty');
-            const branchLogoUrl = branch.branchLogoUrl || branch.logoUrl || null;
+            const logoImage =
+                viewContainer.querySelector(
+                    '#view-branchLogo'
+                );
+            const logoEmpty =
+                viewContainer.querySelector(
+                    '#view-branchLogoEmpty'
+                );
+            const hasStoredLogo =
+                Boolean(
+                    normalizeText(
+                        branch.branchLogoUrl
+                        || branch.logoUrl
+                    )
+                );
 
-            if (logoImage && branchLogoUrl) {
-                logoImage.src = branchLogoUrl;
-                logoImage.classList.remove('hidden');
-                logoEmpty?.classList.add('hidden');
-            } else if (logoImage) {
-                logoImage.removeAttribute('src');
-                logoImage.classList.add('hidden');
-                logoEmpty?.classList.remove('hidden');
-            }
+            renderPrivateBranchImage({
+                imageElement: logoImage,
+                emptyElement: logoEmpty,
+                hasStoredFile: hasStoredLogo,
+                secureUrl:
+                    buildPrivateBranchFileUrl(
+                        branchId,
+                        'logo'
+                    )
+            });
 
-            const photoImage = viewContainer.querySelector('#view-schoolPhoto');
-            if (photoImage && branch.schoolPhotoUrl) {
-                photoImage.src = branch.schoolPhotoUrl;
-                photoImage.classList.remove('hidden');
-            } else if (photoImage) {
-                photoImage.removeAttribute('src');
-                photoImage.classList.add('hidden');
-            }
+            const photoImage =
+                viewContainer.querySelector(
+                    '#view-schoolPhoto'
+                );
+            const hasStoredPhoto =
+                Boolean(
+                    normalizeText(
+                        branch.schoolPhotoUrl
+                    )
+                );
 
-            const documentContainer = viewContainer.querySelector('#view-govDocument');
+            renderPrivateBranchImage({
+                imageElement: photoImage,
+                hasStoredFile: hasStoredPhoto,
+                secureUrl:
+                    buildPrivateBranchFileUrl(
+                        branchId,
+                        'photo'
+                    )
+            });
+
+            const documentContainer =
+                viewContainer.querySelector(
+                    '#view-govDocument'
+                );
+
             if (documentContainer) {
                 documentContainer.textContent = '';
 
-                if (branch.govDocumentUrl) {
-                    const link = document.createElement('a');
-                    link.href = branch.govDocumentUrl;
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                    link.className = 'btn-secondary';
-                    link.textContent = 'View Document';
-                    documentContainer.appendChild(link);
+                const documentEntries =
+                    extractStoredDocumentEntries(
+                        branch
+                    );
+
+                if (documentEntries.length === 0) {
+                    documentContainer.textContent =
+                        'No document uploaded.';
                 } else {
-                    documentContainer.textContent = 'No document uploaded.';
+                    documentEntries.forEach(
+                        (ignoredStoredPath, documentIndex) => {
+                            const secureDocumentUrl =
+                                buildPrivateBranchFileUrl(
+                                    branchId,
+                                    'document',
+                                    documentIndex
+                                );
+
+                            if (!secureDocumentUrl) {
+                                return;
+                            }
+
+                            const link =
+                                document.createElement('a');
+
+                            link.href = secureDocumentUrl;
+                            link.target = '_blank';
+                            link.rel = 'noopener noreferrer';
+                            link.className = 'btn-secondary';
+                            link.textContent =
+                                documentEntries.length === 1
+                                    ? 'View Document'
+                                    : `View Document ${documentIndex + 1}`;
+
+                            documentContainer.appendChild(
+                                link
+                            );
+                        }
+                    );
                 }
             }
 
