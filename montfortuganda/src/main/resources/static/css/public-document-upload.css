@@ -1,0 +1,644 @@
+:root {
+    --email-black: #000000;
+    --email-gold: #d4af37;
+    --email-gold-dark: #b89220;
+    --page-bg: #f1f5f9;
+    --card-bg: #ffffff;
+    --text-strong: #0f172a;
+    --text-main: #475569;
+    --text-muted: #64748b;
+    --text-light: #94a3b8;
+    --border: #e2e8f0;
+    --surface: #f8fafc;
+    --danger: #b42318;
+    --warning: #a15c00;
+    --success: #16794b;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    color: var(--text-main);
+    background:
+        linear-gradient(
+            rgba(15, 23, 42, 0.72),
+            rgba(15, 23, 42, 0.82)
+        ),
+        url("/assets/Images/apply1.webp")
+        center / cover fixed;
+    font-family:
+        "Segoe UI",
+        Tahoma,
+        Geneva,
+        Verdana,
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+.upload-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 38px 18px;
+}
+
+.email-style-card {
+    width: min(650px, 100%);
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--card-bg);
+    box-shadow:
+        0 24px 70px rgba(0, 0, 0, 0.30);
+}
+
+
+/* =========================================================
+   SCHOOL HEADER — MATCHES EMAIL TEMPLATE
+   ========================================================= */
+
+.school-header {
+    min-height: 156px;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+    padding: 34px 32px;
+    border-bottom: 4px solid var(--email-gold);
+    color: #ffffff;
+    background: var(--email-black);
+}
+
+.school-logo-frame {
+    width: 88px;
+    height: 88px;
+    flex: 0 0 88px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.school-logo {
+    width: 100%;
+    height: 100%;
+    display: block;
+    padding: 5px;
+    object-fit: contain;
+    background: #ffffff;
+}
+
+.school-logo-fallback {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--email-black);
+    background: #ffffff;
+    font-size: 1.65rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+}
+
+.school-header-copy {
+    min-width: 0;
+}
+
+.school-supertitle {
+    margin: 0 0 7px;
+    color: var(--email-gold);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.school-title {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(1.45rem, 4vw, 2rem);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    line-height: 1.28;
+    overflow-wrap: anywhere;
+}
+
+.school-subtitle {
+    margin: 9px 0 0;
+    color: var(--text-light);
+    font-size: 0.84rem;
+    letter-spacing: 0.12em;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.school-code:not(:empty)::before {
+    content: " • ";
+}
+
+
+/* =========================================================
+   BODY
+   ========================================================= */
+
+.upload-body {
+    padding: 38px 36px;
+}
+
+.page-heading {
+    margin: 0 0 24px;
+    color: var(--text-strong);
+    font-size: 1.42rem;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+.greeting {
+    margin: 0 0 20px;
+    color: #334155;
+    font-size: 1rem;
+    font-weight: 650;
+}
+
+.body-text {
+    margin: 0 0 24px;
+    color: var(--text-main);
+    font-size: 0.96rem;
+    line-height: 1.75;
+}
+
+.body-text-last {
+    margin-bottom: 0;
+}
+
+.strong-text {
+    color: var(--text-strong);
+    font-weight: 750;
+}
+
+
+/* =========================================================
+   APPLICATION REFERENCE — MATCHES EMAIL TEMPLATE
+   ========================================================= */
+
+.application-reference {
+    margin: 28px 0;
+    padding: 25px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    background: var(--surface);
+    text-align: center;
+}
+
+.reference-label {
+    display: block;
+    margin-bottom: 9px;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.reference-value {
+    display: block;
+    color: var(--text-strong);
+    font-size: clamp(1.3rem, 4.5vw, 1.75rem);
+    font-weight: 850;
+    letter-spacing: 0.09em;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   REQUEST DETAILS
+   ========================================================= */
+
+.request-summary {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 30px;
+}
+
+.request-line {
+    color: var(--text-main);
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.request-label {
+    color: var(--text-strong);
+    font-weight: 750;
+}
+
+.request-value {
+    overflow-wrap: anywhere;
+}
+
+.deadline-value {
+    color: #b45309;
+}
+
+
+/* =========================================================
+   UPLOAD FORM
+   ========================================================= */
+
+.upload-form {
+    padding: 24px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: #ffffff;
+}
+
+.upload-form-heading {
+    margin-bottom: 20px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.upload-form-heading h3 {
+    margin: 0;
+    color: var(--text-strong);
+    font-size: 1.02rem;
+    font-weight: 750;
+    line-height: 1.4;
+}
+
+.upload-form-heading p {
+    margin: 6px 0 0;
+    color: var(--text-muted);
+    font-size: 0.84rem;
+    line-height: 1.55;
+}
+
+.file-field-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-strong);
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.file-input {
+    width: 100%;
+    min-height: 48px;
+    padding: 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    color: var(--text-main);
+    background: #ffffff;
+    font-family: inherit;
+    font-size: 0.88rem;
+}
+
+.file-input:focus {
+    outline: none;
+    border-color: var(--email-gold);
+    box-shadow:
+        0 0 0 3px rgba(212, 175, 55, 0.18);
+}
+
+.file-rules {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 11px;
+}
+
+.file-rules span {
+    padding: 5px 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    background: var(--surface);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.upload-action {
+    display: flex;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.upload-button {
+    min-height: 48px;
+    padding: 13px 30px;
+    border: 1px solid var(--email-gold);
+    border-radius: 30px;
+    color: var(--text-strong);
+    background: var(--email-gold);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 750;
+    cursor: pointer;
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.upload-button:hover:not(:disabled) {
+    border-color: var(--email-gold-dark);
+    background: #e2be48;
+    box-shadow:
+        0 8px 20px rgba(180, 137, 25, 0.20);
+    transform: translateY(-1px);
+}
+
+.upload-button:focus-visible {
+    outline: none;
+    box-shadow:
+        0 0 0 4px rgba(212, 175, 55, 0.24);
+}
+
+.upload-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+    transform: none;
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   PROGRESS AND MESSAGES
+   ========================================================= */
+
+.progress-wrap {
+    margin-top: 18px;
+}
+
+.progress-track {
+    height: 9px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
+.progress-bar {
+    width: 0;
+    height: 100%;
+    background:
+        linear-gradient(
+            90deg,
+            var(--email-gold-dark),
+            var(--email-gold)
+        );
+    transition: width 0.2s ease;
+}
+
+.progress-text {
+    margin-top: 7px;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-align: right;
+}
+
+.message {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border-radius: 7px;
+    font-size: 0.84rem;
+    line-height: 1.55;
+}
+
+.message.error {
+    color: var(--danger);
+    border: 1px solid #f4c7c3;
+    background: #fff2f1;
+}
+
+.message.warning {
+    color: var(--warning);
+    border: 1px solid #f2d29d;
+    background: #fff8e8;
+}
+
+
+/* =========================================================
+   SECURITY NOTE
+   ========================================================= */
+
+.security-note {
+    margin: 24px 0;
+    padding: 14px 16px;
+    border-left: 4px solid var(--email-gold);
+    color: var(--text-muted);
+    background: #fffbeb;
+    font-size: 0.82rem;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   LOADING, ERROR, SUCCESS
+   ========================================================= */
+
+.status-state {
+    padding: 34px 18px;
+    text-align: center;
+}
+
+.status-state h2 {
+    margin: 0 0 12px;
+    color: var(--text-strong);
+    font-size: 1.35rem;
+}
+
+.status-state p {
+    margin: 0;
+    color: var(--text-main);
+    line-height: 1.65;
+}
+
+.loading-spinner {
+    width: 42px;
+    height: 42px;
+    margin: 0 auto 18px;
+    border: 4px solid #e2e8f0;
+    border-top-color: var(--email-gold);
+    border-radius: 50%;
+    animation: uploadSpin 0.8s linear infinite;
+}
+
+@keyframes uploadSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.state-icon {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1.55rem;
+    font-weight: 800;
+}
+
+.state-icon-warning {
+    color: var(--warning);
+    background: #fff8e8;
+}
+
+.state-icon-success {
+    color: var(--success);
+    background: #effaf4;
+}
+
+.success-reference {
+    margin-bottom: 20px;
+}
+
+.success-file {
+    margin: 0 auto;
+    color: var(--text-main);
+    line-height: 1.6;
+}
+
+.secondary-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 22px;
+    padding: 0 22px;
+    border: 1px solid var(--email-gold);
+    border-radius: 30px;
+    color: var(--text-strong);
+    background: var(--email-gold);
+    font-size: 0.88rem;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+
+/* =========================================================
+   FOOTER — MATCHES EMAIL TEMPLATE
+   ========================================================= */
+
+.upload-footer {
+    padding: 24px 34px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    text-align: center;
+}
+
+.upload-footer p {
+    margin: 0;
+    color: var(--text-light);
+    font-size: 0.78rem;
+    line-height: 1.55;
+}
+
+.upload-footer .footer-privacy {
+    margin-top: 7px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.hidden {
+    display: none !important;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 620px) {
+    .upload-page {
+        padding: 14px 7px;
+    }
+
+    .school-header {
+        min-height: auto;
+        gap: 14px;
+        padding: 28px 18px;
+    }
+
+    .school-logo-frame {
+        width: 66px;
+        height: 66px;
+        flex-basis: 66px;
+    }
+
+    .school-supertitle {
+        font-size: 0.58rem;
+        letter-spacing: 0.11em;
+    }
+
+    .school-title {
+        font-size: 1.2rem;
+    }
+
+    .school-subtitle {
+        font-size: 0.67rem;
+    }
+
+    .upload-body {
+        padding: 30px 20px;
+    }
+
+    .upload-form {
+        padding: 19px;
+    }
+
+    .application-reference {
+        padding: 21px 14px;
+    }
+
+    .reference-value {
+        font-size: 1.14rem;
+        letter-spacing: 0.05em;
+    }
+
+    .upload-button {
+        width: 100%;
+        padding-left: 18px;
+        padding-right: 18px;
+    }
+
+    .upload-footer {
+        padding: 22px 20px;
+    }
+}
+
+@media (max-width: 420px) {
+    .school-header {
+        align-items: flex-start;
+    }
+
+    .school-logo-frame {
+        width: 58px;
+        height: 58px;
+        flex-basis: 58px;
+    }
+
+    .school-title {
+        font-size: 1.05rem;
+    }
+
+    .file-rules {
+        display: grid;
+    }
+}

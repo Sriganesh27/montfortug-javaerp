@@ -8,10 +8,12 @@ import com.erp.montfortuganda.admission.entity.ErpApplicationDocument;
 import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
 import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.entity.ErpAcademicYear;
+import com.erp.montfortuganda.school.entity.ErpAcademicTerm;
 import com.erp.montfortuganda.school.entity.BranchLevel;
 import com.erp.montfortuganda.school.entity.Level;
 import com.erp.montfortuganda.school.entity.SchoolClass;
 import com.erp.montfortuganda.school.repository.AcademicYearRepository;
+import com.erp.montfortuganda.school.repository.AcademicTermRepository;
 import com.erp.montfortuganda.school.repository.BranchRepository;
 import com.erp.montfortuganda.school.repository.LevelRepository;
 import com.erp.montfortuganda.school.repository.SchoolClassRepository;
@@ -21,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,6 +38,7 @@ public class PublicApplicationService {
     private final ErpApplicationRepository applicationRepository;
     private final BranchRepository branchRepository;
     private final AcademicYearRepository academicYearRepository;
+    private final AcademicTermRepository academicTermRepository;
     private final SchoolClassRepository classRepository;
     private final LevelRepository levelRepository;
 
@@ -69,6 +73,15 @@ public class PublicApplicationService {
             );
         }
 
+        if (
+                dto.getJoiningTermId() == null
+                        || dto.getJoiningTermId() <= 0
+        ) {
+            throw new IllegalArgumentException(
+                    "A valid Admission Term is required."
+            );
+        }
+
         Integer branchId =
                 dto.getBranchId().intValue();
 
@@ -95,6 +108,54 @@ public class PublicApplicationService {
                                                 + "selected Branch."
                                 )
                         );
+
+        LocalDate today = LocalDate.now();
+
+        if (!isAdmissionOpenForAcademicYear(
+                academicYear,
+                today
+        )) {
+            throw new IllegalArgumentException(
+                    "Admissions are not open for the selected Academic Year."
+            );
+        }
+
+        ErpAcademicTerm academicTerm =
+                academicTermRepository
+                        .findActiveByTermIdAndBranchId(
+                                dto.getJoiningTermId(),
+                                branchId
+                        )
+                        .orElseThrow(
+                                () -> new IllegalArgumentException(
+                                        "Selected Admission Term is inactive "
+                                                + "or does not belong to the "
+                                                + "selected Branch."
+                                )
+                        );
+
+        if (
+                academicTerm.getAcademicYear() == null
+                        || !academicYear.getAcademicYearId().equals(
+                        academicTerm
+                                .getAcademicYear()
+                                .getAcademicYearId()
+                )
+        ) {
+            throw new IllegalArgumentException(
+                    "Selected Admission Term does not belong to the "
+                            + "selected Academic Year."
+            );
+        }
+
+        if (
+                academicTerm.getStatus()
+                        == ErpAcademicTerm.Status.CLOSED
+        ) {
+            throw new IllegalArgumentException(
+                    "The selected Admission Term is closed."
+            );
+        }
 
         String yearString =
                 academicYear
@@ -124,6 +185,12 @@ public class PublicApplicationService {
                 academicYear.getAcademicYearId()
         );
         app.setBranchClassId(dto.getBranchClassId());
+        app.setJoiningTermId(
+                academicTerm.getTermId()
+        );
+        app.setTerm(
+                academicTerm.getTermName()
+        );
 
         app.setFirstName(dto.getFirstName());
         app.setMiddleName(dto.getMiddleName());
@@ -182,7 +249,6 @@ public class PublicApplicationService {
         app.setSubjectMarks(dto.getSubjectMarks());
         app.setScholarshipStatus(dto.getScholarshipStatus());
         app.setMoreInfo(dto.getMoreInfo());
-        app.setTerm(dto.getTerm());
         app.setApplicationStatus(ErpApplication.ApplicationStatus.SUBMITTED);
 
         ErpApplicationStatusHistory history = new ErpApplicationStatusHistory();
@@ -837,16 +903,297 @@ public class PublicApplicationService {
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getPublicBranches() {
         List<Map<String, Object>> branchList = new ArrayList<>();
-        for (Branch b : branchRepository.findAll()) {
+
+        for (Branch branch : branchRepository.findAll()) {
             Map<String, Object> branchMap = new HashMap<>();
-            branchMap.put("branchId", b.getBranchId());
-            branchMap.put("branchName", b.getBranchName());
-            branchMap.put("branchLocation", b.getBranchLocation());
-            branchMap.put("schoolCode", b.getSchoolCode());
-            branchMap.put("branchLevels", extractBranchLevelsList(b.getBranchLevels()));
+
+            branchMap.put(
+                    "branchId",
+                    branch.getBranchId()
+            );
+            branchMap.put(
+                    "branchName",
+                    branch.getBranchName()
+            );
+            branchMap.put(
+                    "branchLocation",
+                    branch.getBranchLocation()
+            );
+            branchMap.put(
+                    "schoolCode",
+                    branch.getSchoolCode()
+            );
+            branchMap.put(
+                    "branchLevels",
+                    extractBranchLevelsList(
+                            branch.getBranchLevels()
+                    )
+            );
+            branchMap.put(
+                    "academicYears",
+                    extractActiveAcademicYears(
+                            branch.getBranchId()
+                    )
+            );
+
             branchList.add(branchMap);
         }
+
         return branchList;
+    }
+
+    private List<Map<String, Object>> extractActiveAcademicYears(
+            Integer branchId
+    ) {
+        List<Map<String, Object>> academicYears =
+                new ArrayList<>();
+
+        if (branchId == null || branchId <= 0) {
+            return academicYears;
+        }
+
+        LocalDate today = LocalDate.now();
+
+        for (ErpAcademicYear academicYear
+                : academicYearRepository
+                .findAllByBranchBranchIdAndActiveTrueOrderByStartDateDesc(
+                        branchId
+                )) {
+
+            if (!isAdmissionOpenForAcademicYear(
+                    academicYear,
+                    today
+            )) {
+                continue;
+            }
+
+            Map<String, Object> academicYearMap =
+                    new HashMap<>();
+
+            academicYearMap.put(
+                    "academicYearId",
+                    academicYear.getAcademicYearId()
+            );
+            academicYearMap.put(
+                    "academicYearCode",
+                    academicYear.getAcademicYearCode()
+            );
+            academicYearMap.put(
+                    "academicYearName",
+                    academicYear.getAcademicYearName()
+            );
+            academicYearMap.put(
+                    "startDate",
+                    academicYear.getStartDate()
+            );
+            academicYearMap.put(
+                    "endDate",
+                    academicYear.getEndDate()
+            );
+            academicYearMap.put(
+                    "admissionStartDate",
+                    academicYear.getAdmissionStartDate()
+            );
+            academicYearMap.put(
+                    "admissionEndDate",
+                    academicYear.getAdmissionEndDate()
+            );
+            academicYearMap.put(
+                    "currentYear",
+                    academicYear.getCurrentYear()
+            );
+            academicYearMap.put(
+                    "admissionYearType",
+                    resolveAdmissionYearType(
+                            academicYear,
+                            today
+                    )
+            );
+            academicYearMap.put(
+                    "terms",
+                    extractAdmissionTerms(
+                            branchId,
+                            academicYear.getAcademicYearId()
+                    )
+            );
+
+            academicYears.add(academicYearMap);
+        }
+
+        return academicYears;
+    }
+
+    private boolean isAdmissionOpenForAcademicYear(
+            ErpAcademicYear academicYear,
+            LocalDate today
+    ) {
+        if (
+                academicYear == null
+                        || !Boolean.TRUE.equals(
+                        academicYear.getActive()
+                )
+                        || academicYear.getStatus()
+                        == ErpAcademicYear.Status.CLOSED
+        ) {
+            return false;
+        }
+
+        String admissionYearType =
+                resolveAdmissionYearType(
+                        academicYear,
+                        today
+                );
+
+        if (admissionYearType == null) {
+            return false;
+        }
+
+        LocalDate admissionStartDate =
+                academicYear.getAdmissionStartDate();
+
+        LocalDate admissionEndDate =
+                academicYear.getAdmissionEndDate();
+
+        boolean hasAdmissionWindow =
+                admissionStartDate != null
+                        || admissionEndDate != null;
+
+        if (hasAdmissionWindow) {
+            boolean started =
+                    admissionStartDate == null
+                            || !today.isBefore(
+                            admissionStartDate
+                    );
+
+            boolean notEnded =
+                    admissionEndDate == null
+                            || !today.isAfter(
+                            admissionEndDate
+                    );
+
+            return started && notEnded;
+        }
+
+        /*
+         * Backward-compatible default:
+         * the branch's current active Academic Year remains available when
+         * admission dates have not yet been configured. Upcoming years are
+         * exposed only after their admission window is configured and open.
+         */
+        return "CURRENT".equals(
+                admissionYearType
+        );
+    }
+
+    private String resolveAdmissionYearType(
+            ErpAcademicYear academicYear,
+            LocalDate today
+    ) {
+        if (academicYear == null || today == null) {
+            return null;
+        }
+
+        if (Boolean.TRUE.equals(
+                academicYear.getCurrentYear()
+        )) {
+            return "CURRENT";
+        }
+
+        LocalDate startDate =
+                academicYear.getStartDate();
+
+        LocalDate endDate =
+                academicYear.getEndDate();
+
+        if (
+                startDate != null
+                        && endDate != null
+                        && !today.isBefore(startDate)
+                        && !today.isAfter(endDate)
+        ) {
+            return "CURRENT";
+        }
+
+        if (
+                startDate != null
+                        && startDate.isAfter(today)
+        ) {
+            return "UPCOMING";
+        }
+
+        return null;
+    }
+
+    private List<Map<String, Object>> extractAdmissionTerms(
+            Integer branchId,
+            Long academicYearId
+    ) {
+        List<Map<String, Object>> terms =
+                new ArrayList<>();
+
+        if (
+                branchId == null
+                        || branchId <= 0
+                        || academicYearId == null
+                        || academicYearId <= 0
+        ) {
+            return terms;
+        }
+
+        for (ErpAcademicTerm academicTerm
+                : academicTermRepository
+                .findAllActiveByBranchAndAcademicYear(
+                        branchId,
+                        academicYearId
+                )) {
+
+            if (
+                    academicTerm.getStatus()
+                            == ErpAcademicTerm.Status.CLOSED
+            ) {
+                continue;
+            }
+
+            Map<String, Object> termMap =
+                    new HashMap<>();
+
+            termMap.put(
+                    "termId",
+                    academicTerm.getTermId()
+            );
+            termMap.put(
+                    "termCode",
+                    academicTerm.getTermCode()
+            );
+            termMap.put(
+                    "termName",
+                    academicTerm.getTermName()
+            );
+            termMap.put(
+                    "displayOrder",
+                    academicTerm.getDisplayOrder()
+            );
+            termMap.put(
+                    "startDate",
+                    academicTerm.getStartDate()
+            );
+            termMap.put(
+                    "endDate",
+                    academicTerm.getEndDate()
+            );
+            termMap.put(
+                    "currentTerm",
+                    academicTerm.getCurrentTerm()
+            );
+            termMap.put(
+                    "status",
+                    academicTerm.getStatus()
+            );
+
+            terms.add(termMap);
+        }
+
+        return terms;
     }
 
     private List<Map<String, Object>> extractBranchLevelsList(List<BranchLevel> branchLevels) {

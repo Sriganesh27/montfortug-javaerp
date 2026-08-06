@@ -8,6 +8,7 @@ import lombok.Data;
 import java.time.LocalDate;
 
 import jakarta.validation.constraints.PastOrPresent;
+import jakarta.validation.constraints.Positive;
 
 @Data
 public class ApplicationCreateDTO {
@@ -16,7 +17,12 @@ public class ApplicationCreateDTO {
     private Long branchId;
 
     @NotNull(message = "Academic Year ID is required")
+    @Positive(message = "Academic Year ID must be valid")
     private Long academicYearId;
+
+    @NotNull(message = "Joining Term ID is required")
+    @Positive(message = "Joining Term ID must be valid")
+    private Long joiningTermId;
 
     @NotNull(message = "Class ID is required")
     private Long branchClassId;
@@ -86,5 +92,12 @@ public class ApplicationCreateDTO {
     private String subjectMarks;
     private String scholarshipStatus;
     private String moreInfo;
+
+    /**
+     * Legacy display value retained temporarily for compatibility with
+     * existing application print/email code. Public submission must use
+     * {@link #joiningTermId}; the backend will derive this text from the
+     * validated academic-term master record.
+     */
     private String term;
 }

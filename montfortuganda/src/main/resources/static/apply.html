@@ -123,19 +123,30 @@
                     <div class="grid-3 align-items-end">
                         <div class="form-group">
                             <label for="academicYear">Admission Year <span class="text-danger">*</span></label>
-                            <input type="number" name="academicYear" id="academicYear" class="form-control" value="2026" required>
+                            <select name="academicYearId"
+                                    id="academicYear"
+                                    class="form-control custom-select"
+                                    required
+                                    disabled>
+                                <option value="" disabled selected>
+                                    Select Branch First
+                                </option>
+                            </select>
                         </div>
+
                         <div class="form-group">
-                            <label>Term</label>
-                            <div class="ios-segmented-control">
-                                <input type="radio" id="term1" name="term" value="Term I" class="hidden-radio" checked>
-                                <label for="term1" class="segment-label">Term I</label>
-                                <input type="radio" id="term2" name="term" value="Term II" class="hidden-radio">
-                                <label for="term2" class="segment-label">Term II</label>
-                                <input type="radio" id="term3" name="term" value="Term III" class="hidden-radio">
-                                <label for="term3" class="segment-label">Term III</label>
-                            </div>
+                            <label for="joiningTerm">Admission Term <span class="text-danger">*</span></label>
+                            <select name="joiningTermId"
+                                    id="joiningTerm"
+                                    class="form-control custom-select"
+                                    required
+                                    disabled>
+                                <option value="" disabled selected>
+                                    Select Admission Year First
+                                </option>
+                            </select>
                         </div>
+
                         <div class="form-group">
                             <label for="dateOfRegistration">Date of Registration <span class="text-danger">*</span></label>
                             <input type="date" name="dateOfRegistration" id="dateOfRegistration" class="form-control" placeholder="YYYY-MM-DD" required>

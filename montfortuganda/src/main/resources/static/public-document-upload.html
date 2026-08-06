@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <meta name="referrer"
+          content="no-referrer">
+
+    <meta http-equiv="Content-Security-Policy"
+          content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
+
+    <title>Upload Requested Document</title>
+
+    <link rel="icon"
+          type="image/webp"
+          href="/assets/Images/logo_MBSG_UG_8.webp">
+
+    <link rel="stylesheet"
+          href="/css/global.css">
+
+    <link rel="stylesheet"
+          href="/css/public-document-upload.css">
+</head>
+<body>
+
+<main class="upload-page">
+    <section class="email-style-card"
+             aria-labelledby="pageTitle">
+
+        <!-- ================================================= -->
+        <!-- SCHOOL HEADER                                     -->
+        <!-- ================================================= -->
+        <header class="school-header">
+            <div class="school-logo-frame">
+                <img id="headerSchoolLogo"
+                     class="school-logo hidden"
+                     alt="">
+
+                <span id="headerSchoolLogoFallback"
+                      class="school-logo-fallback"
+                      aria-hidden="true">
+                    S
+                </span>
+            </div>
+
+            <div class="school-header-copy">
+                <p class="school-supertitle">
+                    Montfort Brothers of St. Gabriel, Uganda
+                </p>
+
+                <h1 id="headerSchoolName"
+                    class="school-title">
+                    School
+                </h1>
+
+                <p class="school-subtitle">
+                    Admissions Department
+                </p>
+            </div>
+        </header>
+
+        <!-- ================================================= -->
+        <!-- PAGE BODY                                         -->
+        <!-- ================================================= -->
+        <div class="upload-body">
+
+            <!-- Loading -->
+            <section id="loadingState"
+                     class="status-state"
+                     aria-live="polite">
+                <div class="loading-spinner"
+                     aria-hidden="true"></div>
+
+                <h2>Checking your secure link</h2>
+
+                <p>
+                    Please wait while the document request is validated.
+                </p>
+            </section>
+
+            <!-- Request -->
+            <section id="requestSection"
+                     class="hidden">
+
+                <h2 id="pageTitle"
+                    class="page-heading">
+                    Upload Requested Document
+                </h2>
+
+                <p class="greeting">
+                    Dear Parent / Guardian,
+                </p>
+
+                <p class="body-text">
+                    During the review of the admission application for
+                    <strong id="studentName"
+                            class="strong-text">
+                        Student Name
+                    </strong>,
+                    the admissions team at
+                    <strong id="schoolName"
+                            class="strong-text">
+                        School
+                    </strong>
+                    requires one additional document.
+                </p>
+
+                <section class="application-reference"
+                         aria-label="Application reference">
+                    <span class="reference-label">
+                        Application Reference
+                    </span>
+
+                    <strong id="applicationNo"
+                            class="reference-value">
+                        —
+                    </strong>
+                </section>
+
+                <section class="request-summary">
+                    <div class="request-line">
+                        <span class="request-label">
+                            Required document:
+                        </span>
+
+                        <strong id="documentName"
+                                class="request-value">
+                            —
+                        </strong>
+                    </div>
+
+                    <div class="request-line">
+                        <span class="request-label">
+                            Reason:
+                        </span>
+
+                        <span id="requestReason"
+                              class="request-value">
+                            —
+                        </span>
+                    </div>
+
+                    <div id="remarksDetail"
+                         class="request-line hidden">
+                        <span class="request-label">
+                            School instructions:
+                        </span>
+
+                        <span id="publicRemarks"
+                              class="request-value">
+                            —
+                        </span>
+                    </div>
+
+                    <div id="deadlineDetail"
+                         class="request-line hidden">
+                        <span class="request-label">
+                            Upload deadline:
+                        </span>
+
+                        <strong id="uploadDeadline"
+                                class="request-value deadline-value">
+                            —
+                        </strong>
+                    </div>
+                </section>
+
+                <form id="uploadForm"
+                      class="upload-form"
+                      enctype="multipart/form-data"
+                      novalidate>
+
+                    <div class="upload-form-heading">
+                        <div>
+                            <h3>Select the requested document</h3>
+
+                            <p>
+                                Upload one clear PDF or image of the document
+                                requested by the school.
+                            </p>
+                        </div>
+                    </div>
+
+                    <label for="documentFile"
+                           class="file-field-label">
+                        Choose document
+                    </label>
+
+                    <input id="documentFile"
+                           class="file-input"
+                           type="file"
+                           name="file"
+                           accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                           required>
+
+                    <div class="file-rules">
+                        <span>PDF, JPG, JPEG, or PNG</span>
+                        <span>Maximum 10 MB</span>
+                        <span>Single-use secure link</span>
+                    </div>
+
+                    <div id="progressWrap"
+                         class="progress-wrap hidden"
+                         aria-live="polite">
+                        <div class="progress-track">
+                            <div id="progressBar"
+                                 class="progress-bar"></div>
+                        </div>
+
+                        <div id="progressText"
+                             class="progress-text">
+                            0%
+                        </div>
+                    </div>
+
+                    <div id="formMessage"
+                         class="message error hidden"
+                         role="alert"></div>
+
+                    <div class="upload-action">
+                        <button id="uploadButton"
+                                class="upload-button"
+                                type="submit">
+                            Upload Requested Document
+                        </button>
+                    </div>
+                </form>
+
+                <p class="security-note">
+                    This link is private, time-limited, and intended only for
+                    this application. Please do not forward it.
+                </p>
+
+                <p class="body-text body-text-last">
+                    After the document is uploaded, the school will review it
+                    and update the admission application.
+                </p>
+            </section>
+
+            <!-- Unavailable -->
+            <section id="unavailableSection"
+                     class="status-state hidden"
+                     aria-live="polite">
+                <div class="state-icon state-icon-warning"
+                     aria-hidden="true">
+                    !
+                </div>
+
+                <h2>Upload unavailable</h2>
+
+                <div id="unavailableMessage"
+                     class="message warning"></div>
+
+                <a class="secondary-link"
+                   href="/apply/status">
+                    Track Application
+                </a>
+            </section>
+
+            <!-- Success -->
+            <section id="successSection"
+                     class="status-state success-state hidden"
+                     aria-live="polite">
+                <div class="state-icon state-icon-success"
+                     aria-hidden="true">
+                    ✓
+                </div>
+
+                <h2>Document uploaded successfully</h2>
+
+                <p id="successMessage"></p>
+
+                <section class="application-reference success-reference">
+                    <span class="reference-label">
+                        Application Reference
+                    </span>
+
+                    <strong id="successApplicationNo"
+                            class="reference-value">
+                        —
+                    </strong>
+                </section>
+
+                <div class="success-file">
+                    <span class="request-label">
+                        Uploaded file:
+                    </span>
+
+                    <strong id="successFileName">
+                        —
+                    </strong>
+                </div>
+
+                <a class="secondary-link"
+                   href="/apply/status">
+                    Track Application
+                </a>
+            </section>
+        </div>
+
+        <!-- ================================================= -->
+        <!-- FOOTER                                            -->
+        <!-- ================================================= -->
+        <footer class="upload-footer">
+            <p>
+                This is a secure page from the ERP Admission System.
+                For assistance, contact the school using its official
+                contact details.
+            </p>
+
+            <p class="footer-privacy">
+                For your privacy, the secure token is not stored in this
+                browser. Close this page after the upload is complete.
+            </p>
+        </footer>
+    </section>
+</main>
+
+<script src="/js/public-document-upload.js"
+        defer></script>
+</body>
+</html>

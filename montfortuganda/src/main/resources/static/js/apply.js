@@ -12,11 +12,32 @@
  */
 
 /**
+ * @typedef {Object} AcademicTerm
+ * @property {number} termId
+ * @property {string} termCode
+ * @property {string} termName
+ * @property {number} displayOrder
+ * @property {boolean} currentTerm
+ * @property {string} status
+ */
+
+/**
+ * @typedef {Object} AcademicYear
+ * @property {number} academicYearId
+ * @property {string} academicYearCode
+ * @property {string} academicYearName
+ * @property {boolean} currentYear
+ * @property {'CURRENT'|'UPCOMING'} admissionYearType
+ * @property {AcademicTerm[]} terms
+ */
+
+/**
  * @typedef {Object} Branch
  * @property {number} branchId
  * @property {string} branchName
  * @property {string} schoolCode
  * @property {BranchLevel[]} branchLevels
+ * @property {AcademicYear[]} academicYears
  */
 
 /**
@@ -84,6 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
     Promise.all([fetchBranches(), fetchClasses()]).catch(e => console.error("Initialization error:", e));
 
     document.getElementById("branchSelect").addEventListener("change", handleBranchChange);
+    document.getElementById("academicYear").addEventListener("change", handleAcademicYearChange);
     document.getElementById("level").addEventListener("change", handleLevelChange);
     document.getElementById("classSelect").addEventListener("change", handleClassChange);
     document.getElementById("addSubjectBtn").addEventListener("click", addSubjectRow);
@@ -371,7 +393,10 @@ function buildReviewSummary() {
     appendSectionBreak("Enrollment");
     appendItem("Branch", getSelectText('branchSelect'));
     appendItem("Class", getSelectText('classSelect'));
-    appendItem("Year & Term", `${getVal('academicYear')} - ${getRadio('term')}`);
+    appendItem(
+        "Year & Term",
+        `${getSelectText('academicYear')} - ${getSelectText('joiningTerm')}`
+    );
 
     appendSectionBreak("Student Info");
     appendItem("Full Name", `${getVal('studentName')} ${getVal('middleName')} ${getVal('studentSurname')}`);
@@ -431,21 +456,284 @@ async function fetchClasses() {
 
 // DYNAMIC CASCADING LOGIC
 function handleBranchChange() {
-    const selectedId = parseInt(this.value);
-    const branch = branchList.find(b => b.branchId === selectedId);
+    const selectedId = parseInt(this.value, 10);
+    const branch = branchList.find(
+        b => Number(b.branchId) === selectedId
+    );
 
     const levelSelect = document.getElementById("level");
+    const classSelect = document.getElementById("classSelect");
+    const academicYearSelect = document.getElementById("academicYear");
+    const joiningTermSelect = document.getElementById("joiningTerm");
+
     setupDefaultOption(levelSelect, "Select Level");
-    setupDefaultOption(document.getElementById("classSelect"), "Select Class");
+    setupDefaultOption(classSelect, "Select Class");
+    setupDefaultOption(
+        academicYearSelect,
+        "Select Admission Year"
+    );
+    setupDefaultOption(
+        joiningTermSelect,
+        "Select Admission Year First"
+    );
+
+    academicYearSelect.disabled = true;
+    joiningTermSelect.disabled = true;
+
     document.getElementById("dynamic-exam-container").textContent = '';
     document.getElementById("dynamic-subjects-container").classList.add("hidden-element");
 
-    if (branch && branch.branchLevels) {
+    const hiddenCode = document.getElementById("hiddenClassCode");
+    const hiddenApplied = document.getElementById("hiddenAppliedClass");
+
+    if (hiddenCode) hiddenCode.value = "";
+    if (hiddenApplied) hiddenApplied.value = "";
+
+    if (branch && Array.isArray(branch.branchLevels)) {
         branch.branchLevels.forEach(bl => {
             const lvl = bl.level;
-            levelSelect.appendChild(new Option(lvl.levelName, lvl.levelName));
+
+            if (lvl && lvl.levelName) {
+                levelSelect.appendChild(
+                    new Option(
+                        lvl.levelName,
+                        lvl.levelName
+                    )
+                );
+            }
         });
     }
+
+    populateAcademicYears(
+        academicYearSelect,
+        joiningTermSelect,
+        branch
+    );
+}
+
+function populateAcademicYears(
+    academicYearSelect,
+    joiningTermSelect,
+    branch
+) {
+    const academicYears =
+        branch && Array.isArray(branch.academicYears)
+            ? branch.academicYears
+            : [];
+
+    setupDefaultOption(
+        academicYearSelect,
+        academicYears.length > 0
+            ? "Select Admission Year"
+            : "No Admission-Open Year"
+    );
+
+    setupDefaultOption(
+        joiningTermSelect,
+        "Select Admission Year First"
+    );
+
+    academicYearSelect.disabled = true;
+    joiningTermSelect.disabled = true;
+
+    if (academicYears.length === 0) {
+        return;
+    }
+
+    let preferredAcademicYearId = null;
+    let availableYearCount = 0;
+
+    academicYears.forEach(academicYear => {
+        const academicYearId =
+            Number(academicYear.academicYearId);
+
+        if (!Number.isInteger(academicYearId)
+                || academicYearId <= 0) {
+            return;
+        }
+
+        const code =
+            academicYear.academicYearCode
+            || String(academicYearId);
+
+        const suffix =
+            academicYear.admissionYearType === "CURRENT"
+                ? " (Current)"
+                : academicYear.admissionYearType === "UPCOMING"
+                    ? " (Upcoming)"
+                    : "";
+
+        const option =
+            new Option(
+                `${code}${suffix}`,
+                String(academicYearId)
+            );
+
+        academicYearSelect.appendChild(option);
+        availableYearCount++;
+
+        if (academicYear.admissionYearType === "CURRENT"
+                && preferredAcademicYearId === null) {
+            preferredAcademicYearId =
+                academicYearId;
+        }
+    });
+
+    if (availableYearCount === 0) {
+        setupDefaultOption(
+            academicYearSelect,
+            "No Admission-Open Year"
+        );
+        return;
+    }
+
+    if (preferredAcademicYearId === null) {
+        preferredAcademicYearId =
+            Number(
+                academicYearSelect.options[1].value
+            );
+    }
+
+    academicYearSelect.value =
+        String(preferredAcademicYearId);
+
+    /*
+     * One admission-open year is selected and locked. When the school opens
+     * both the current and an upcoming year, the dropdown becomes editable.
+     */
+    academicYearSelect.disabled =
+        availableYearCount === 1;
+
+    populateTermsForAcademicYear(
+        joiningTermSelect,
+        branch,
+        preferredAcademicYearId
+    );
+}
+
+function handleAcademicYearChange() {
+    const branch = getSelectedBranch();
+
+    populateTermsForAcademicYear(
+        document.getElementById("joiningTerm"),
+        branch,
+        Number(this.value)
+    );
+}
+
+function populateTermsForAcademicYear(
+    joiningTermSelect,
+    branch,
+    academicYearId
+) {
+    setupDefaultOption(
+        joiningTermSelect,
+        "Select Admission Term"
+    );
+
+    joiningTermSelect.disabled = true;
+
+    if (!branch
+            || !Number.isInteger(academicYearId)
+            || academicYearId <= 0) {
+        return;
+    }
+
+    const academicYear =
+        Array.isArray(branch.academicYears)
+            ? branch.academicYears.find(
+                year =>
+                    Number(year.academicYearId)
+                    === academicYearId
+            )
+            : null;
+
+    const terms =
+        academicYear
+        && Array.isArray(academicYear.terms)
+            ? academicYear.terms
+            : [];
+
+    let preferredTermId = null;
+    let availableTermCount = 0;
+
+    terms.forEach(term => {
+        const termId = Number(term.termId);
+
+        if (!Number.isInteger(termId)
+                || termId <= 0) {
+            return;
+        }
+
+        const code =
+            term.termCode
+            || String(termId);
+
+        const name =
+            term.termName;
+
+        const termLabel =
+            name && name !== code
+                ? name
+                : code;
+
+        const suffix =
+            term.currentTerm === true
+                ? " (Current)"
+                : " (Upcoming)";
+
+        const option =
+            new Option(
+                `${termLabel}${suffix}`,
+                String(termId)
+            );
+
+        joiningTermSelect.appendChild(option);
+        availableTermCount++;
+
+        if (term.currentTerm === true
+                && preferredTermId === null) {
+            preferredTermId = termId;
+        }
+    });
+
+    if (availableTermCount === 0) {
+        setupDefaultOption(
+            joiningTermSelect,
+            "No Active Admission Term"
+        );
+        return;
+    }
+
+    if (preferredTermId === null) {
+        preferredTermId =
+            Number(
+                joiningTermSelect.options[1].value
+            );
+    }
+
+    joiningTermSelect.value =
+        String(preferredTermId);
+
+    joiningTermSelect.disabled =
+        availableTermCount === 1;
+}
+
+function getSelectedBranch() {
+    const branchId =
+        Number(
+            document.getElementById("branchSelect").value
+        );
+
+    if (!Number.isInteger(branchId)
+            || branchId <= 0) {
+        return null;
+    }
+
+    return branchList.find(
+        branch =>
+            Number(branch.branchId) === branchId
+    ) || null;
 }
 
 function handleLevelChange() {
@@ -551,7 +839,20 @@ async function handleFormSubmit(e) {
     // MAPPING FRONTEND TO BACKEND: Create the clean ApplicationCreateDTO JSON payload
     const payload = {
         branchId: document.getElementById("branchSelect").value ? parseInt(document.getElementById("branchSelect").value) : null,
-        academicYearId: document.getElementById("academicYear") ? parseInt(document.getElementById("academicYear").value) : 2026,
+        academicYearId: document.getElementById("academicYear")
+            && document.getElementById("academicYear").value
+                ? parseInt(
+                    document.getElementById("academicYear").value,
+                    10
+                )
+                : null,
+        joiningTermId: document.getElementById("joiningTerm")
+            && document.getElementById("joiningTerm").value
+                ? parseInt(
+                    document.getElementById("joiningTerm").value,
+                    10
+                )
+                : null,
         branchClassId: trueClassId,
 
         primaryEmail: form.querySelector("[name='primaryEmail']") ? form.querySelector("[name='primaryEmail']").value : "",
@@ -607,8 +908,7 @@ async function handleFormSubmit(e) {
         uceScore: form.querySelector("[name='uceScore']") && form.querySelector("[name='uceScore']").value ? parseFloat(form.querySelector("[name='uceScore']").value) : null,
         subjectMarks: form.querySelector("[name='subjectMarks']") ? form.querySelector("[name='subjectMarks']").value : "",
         scholarshipStatus: form.querySelector("[name='scholarshipStatus']") ? form.querySelector("[name='scholarshipStatus']").value : "",
-        moreInfo: form.querySelector("[name='moreInfo']") ? form.querySelector("[name='moreInfo']").value : "",
-        term: form.querySelector("input[name='term']:checked") ? form.querySelector("input[name='term']:checked").value : null
+        moreInfo: form.querySelector("[name='moreInfo']") ? form.querySelector("[name='moreInfo']").value : ""
     };
 
     try {

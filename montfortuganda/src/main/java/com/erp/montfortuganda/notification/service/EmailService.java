@@ -1,6 +1,7 @@
 package com.erp.montfortuganda.notification.service;
 
 import com.erp.montfortuganda.admission.entity.ErpApplication;
+import com.erp.montfortuganda.admission.entity.ErpApplicationDocumentRequest;
 import com.erp.montfortuganda.employee.entity.ErpEmployee;
 import com.erp.montfortuganda.notification.config.BranchMailSenderFactory;
 import com.erp.montfortuganda.school.entity.Branch;
@@ -20,6 +21,8 @@ import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Year;
 import java.time.format.DateTimeFormatter;
 
@@ -41,6 +44,12 @@ public class EmailService {
     private static final DateTimeFormatter EXPIRY_FORMATTER =
             DateTimeFormatter.ofPattern(
                     "dd MMM yyyy, hh:mm a 'UTC'"
+            );
+
+    private static final DateTimeFormatter
+            DOCUMENT_DEADLINE_FORMATTER =
+            DateTimeFormatter.ofPattern(
+                    "dd MMM yyyy, hh:mm a"
             );
 
     private final JavaMailSender centralMailSender;
@@ -183,6 +192,159 @@ public class EmailService {
                     "Application receipt email failed "
                             + "for application: {}",
                     applicationNumber,
+                    exception
+            );
+        }
+    }
+
+    /**
+     * Sends a branch-branded, time-limited upload link for one requested
+     * admission document.
+     *
+     * <p>This method deliberately does not catch delivery failures. The
+     * after-commit listener that invokes it must update the request and
+     * admission-history email statuses to SENT or FAILED.</p>
+     */
+    public void sendAdditionalDocumentRequest(
+            ErpApplication application,
+            ErpApplicationDocumentRequest documentRequest,
+            String rawUploadToken
+    ) {
+        validateAdditionalDocumentEmailRequest(
+                application,
+                documentRequest,
+                rawUploadToken
+        );
+
+        String applicationNumber =
+                application.getApplicationNo().trim();
+
+        String recipientEmail =
+                application.getPrimaryEmail().trim();
+
+        try {
+            Branch branch = requireBranch(
+                    application.getBranch(),
+                    "Application"
+            );
+
+            String schoolName = resolveSchoolName(branch);
+            EmailLogo emailLogo = resolveBranchLogo(branch);
+
+            Context context = new Context();
+
+            context.setVariable(
+                    "schoolName",
+                    schoolName
+            );
+
+            context.setVariable(
+                    "schoolLogo",
+                    "cid:" + SCHOOL_LOGO_CONTENT_ID
+            );
+
+            context.setVariable(
+                    "studentName",
+                    buildFullName(
+                            application.getFirstName(),
+                            application.getLastName()
+                    )
+            );
+
+            context.setVariable(
+                    "applicationNo",
+                    applicationNumber
+            );
+
+            context.setVariable(
+                    "requestedDocumentName",
+                    documentRequest
+                            .getRequestedDocumentName()
+                            .trim()
+            );
+
+            context.setVariable(
+                    "requestReason",
+                    documentRequest
+                            .getRequestReason()
+                            .trim()
+            );
+
+            context.setVariable(
+                    "publicRemarks",
+                    trimToNull(
+                            documentRequest.getPublicRemarks()
+                    )
+            );
+
+            context.setVariable(
+                    "uploadDeadlineText",
+                    formatDocumentUploadDeadline(
+                            documentRequest
+                                    .getUploadTokenExpiresAt()
+                    )
+            );
+
+            context.setVariable(
+                    "uploadUrl",
+                    buildAdditionalDocumentUploadUrl(
+                            rawUploadToken
+                    )
+            );
+
+            context.setVariable(
+                    "currentYear",
+                    Year.now().getValue()
+            );
+
+            String htmlContent = templateEngine.process(
+                    "email/application-additional-document-request",
+                    context
+            );
+
+            JavaMailSender branchMailSender =
+                    branchMailSenderFactory.getMailSender(branch);
+
+            MimeMessage message =
+                    branchMailSender.createMimeMessage();
+
+            MimeMessageHelper helper =
+                    createMessageHelper(message);
+
+            configureBranchSender(
+                    helper,
+                    branch,
+                    " Admissions"
+            );
+
+            helper.setTo(recipientEmail);
+
+            helper.setSubject(
+                    "Additional Document Required - "
+                            + applicationNumber
+            );
+
+            helper.setText(htmlContent, true);
+
+            addInlineLogo(helper, emailLogo);
+
+            branchMailSender.send(message);
+
+            LOGGER.info(
+                    "Additional-document request email sent "
+                            + "from branch {} <{}> for application {} "
+                            + "and request {}",
+                    branch.getSchoolCode(),
+                    branch.getBranchEmail(),
+                    applicationNumber,
+                    documentRequest.getRequestId()
+            );
+        } catch (Exception exception) {
+            throw new IllegalStateException(
+                    "Additional-document request email "
+                            + "could not be sent for application "
+                            + applicationNumber
+                            + ".",
                     exception
             );
         }
@@ -689,6 +851,108 @@ public class EmailService {
                 + applicationNumber.trim();
     }
 
+    private String buildAdditionalDocumentUploadUrl(
+            String rawUploadToken
+    ) {
+        requireText(
+                rawUploadToken,
+                "Additional-document upload token"
+        );
+
+        String encodedToken =
+                URLEncoder.encode(
+                        rawUploadToken.trim(),
+                        StandardCharsets.UTF_8
+                );
+
+        return normalizeConfiguredUrl(
+                appBaseUrl,
+                "app.base-url"
+        )
+                + "/apply/document-upload?token="
+                + encodedToken;
+    }
+
+    private String formatDocumentUploadDeadline(
+            java.time.LocalDateTime deadline
+    ) {
+        return deadline == null
+                ? null
+                : deadline.format(
+                        DOCUMENT_DEADLINE_FORMATTER
+                );
+    }
+
+    private void validateAdditionalDocumentEmailRequest(
+            ErpApplication application,
+            ErpApplicationDocumentRequest documentRequest,
+            String rawUploadToken
+    ) {
+        if (application == null) {
+            throw new IllegalArgumentException(
+                    "Application is required for document-request email delivery."
+            );
+        }
+
+        requireText(
+                application.getApplicationNo(),
+                "Application number"
+        );
+
+        requireText(
+                application.getPrimaryEmail(),
+                "Applicant email"
+        );
+
+        if (documentRequest == null) {
+            throw new IllegalArgumentException(
+                    "Application document request is required."
+            );
+        }
+
+        requireText(
+                documentRequest.getRequestedDocumentName(),
+                "Requested document name"
+        );
+
+        requireText(
+                documentRequest.getRequestReason(),
+                "Document request reason"
+        );
+
+        requireText(
+                rawUploadToken,
+                "Additional-document upload token"
+        );
+
+        if (documentRequest.getRequestStatus()
+                != ErpApplicationDocumentRequest
+                .RequestStatus.PENDING) {
+            throw new IllegalArgumentException(
+                    "Only a pending document request can be emailed."
+            );
+        }
+
+        if (documentRequest.getApplication() != null
+                && documentRequest.getApplication()
+                .getApplicationId() != null
+                && application.getApplicationId() != null
+                && !application.getApplicationId().equals(
+                documentRequest.getApplication()
+                        .getApplicationId()
+        )) {
+            throw new IllegalArgumentException(
+                    "Document request does not belong to the application."
+            );
+        }
+
+        if (documentRequest.getUploadTokenExpiresAt() == null) {
+            throw new IllegalArgumentException(
+                    "Document upload-token expiry is required."
+            );
+        }
+    }
+
     private String buildLoginUrl() {
         return normalizeConfiguredUrl(
                 appLoginUrl,
@@ -758,6 +1022,14 @@ public class EmailService {
         }
 
         return normalizedUrl;
+    }
+
+    private String trimToNull(
+            String value
+    ) {
+        return hasText(value)
+                ? value.trim()
+                : null;
     }
 
     private boolean hasText(

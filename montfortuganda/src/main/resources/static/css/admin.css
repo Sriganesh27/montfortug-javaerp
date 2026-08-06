@@ -100,6 +100,10 @@
     left: 0;
     width: 100vw;
     height: 100vh;
+    padding: 20px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-sizing: border-box;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1050;
     display: flex;
@@ -109,8 +113,13 @@
 
 .ba-modal-box {
     background-color: #ffffff;
-    width: 400px;
+    width: min(400px, 100%);
+    max-height: calc(100vh - 40px);
+    margin: auto;
     padding: 15px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    box-sizing: border-box;
     border-radius: 6px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
 }
@@ -6763,4 +6772,809 @@ textarea.emp-input-invalid:focus {
     ) .employee-confirm-actions button {
         width: 100%;
     }
+}
+/* =========================================================
+   BRANCH ADMIN — APPLICATION PROFILE VIEW
+   Reuses the Employee/Student profile structure.
+   Strictly scoped to #ba-applications-view.
+   ========================================================= */
+
+#ba-applications-view #ba-appDetailComponent {
+    position: relative;
+    min-width: 0;
+}
+
+#ba-applications-view #ba-appDetailComponent.hidden,
+#ba-applications-view .hidden {
+    display: none !important;
+}
+
+/* ---------------------------------------------------------
+   APPLICATION PROFILE — TOOLBAR
+   --------------------------------------------------------- */
+
+#ba-applications-view .emp-detail-toolbar {
+    margin-bottom: 0.9rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #d4af37;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#ba-applications-view .emp-detail-toolbar h2 {
+    font-size: 1.2rem;
+}
+
+#ba-applications-view .emp-detail-toolbar .text-muted {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+#ba-applications-view .emp-detail-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* ---------------------------------------------------------
+   APPLICATION PROFILE SUMMARY
+   --------------------------------------------------------- */
+
+#ba-applications-view .emp-profile-summary-card {
+    margin-bottom: 1rem;
+    padding: 1.1rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+#ba-applications-view .emp-profile-layout,
+#ba-applications-view .emp-profile-header {
+    display: grid;
+    grid-template-columns: 145px minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: center;
+}
+
+#ba-applications-view .emp-profile-photo-panel {
+    min-width: 0;
+    padding-right: 1.1rem;
+    border-right: 1px solid #e2e8f0;
+}
+
+#ba-applications-view .emp-profile-photo-box {
+    width: 128px;
+    height: 154px;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#ba-applications-view .emp-profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+#ba-applications-view .emp-profile-photo-placeholder {
+    min-height: 100%;
+    padding: 0.75rem;
+    color: #64748b;
+    font-size: 0.74rem;
+    line-height: 1.35;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+}
+
+#ba-applications-view .emp-profile-photo-placeholder i {
+    color: #94a3b8;
+    font-size: 2rem;
+}
+
+#ba-applications-view .emp-profile-summary {
+    min-width: 0;
+}
+
+#ba-applications-view .emp-profile-summary h3 {
+    margin: 0 0 0.9rem;
+    color: #0f172a;
+    font-size: clamp(1.15rem, 2vw, 1.45rem);
+    font-weight: 750;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+#ba-applications-view .emp-profile-facts,
+#ba-applications-view .emp-profile-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.7rem;
+}
+
+#ba-applications-view .emp-profile-summary-grid > div {
+    min-width: 0;
+    min-height: 72px;
+    padding: 0.7rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#ba-applications-view .emp-profile-summary-grid .text-muted {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: #64748b;
+    font-size: 0.69rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+#ba-applications-view .emp-profile-summary-grid strong {
+    display: block;
+    color: #1e293b;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------
+   APPLICATION DETAIL SECTIONS
+   --------------------------------------------------------- */
+
+#ba-applications-view .emp-detail-section {
+    min-width: 0;
+    margin: 0 0 1rem;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
+}
+
+#ba-applications-view .emp-detail-section-header {
+    box-sizing: border-box;
+    width: 100%;
+    margin: 0;
+    padding: 0.72rem 1rem;
+    border: 0;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.88rem;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+#ba-applications-view .emp-detail-section-header span {
+    margin-left: 0.25rem;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+#ba-applications-view .emp-detail-section-body {
+    padding: 1rem;
+}
+
+#ba-applications-view .emp-detail-grid {
+    display: grid;
+    gap: 0.9rem 1rem;
+    min-width: 0;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+#ba-applications-view .emp-detail-grid:last-child {
+    margin-bottom: 0;
+}
+
+#ba-applications-view .emp-detail-grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+#ba-applications-view .emp-detail-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#ba-applications-view .emp-detail-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#ba-applications-view .emp-detail-grid .form-group,
+#ba-applications-view .emp-detail-section-body > .form-group {
+    min-width: 0;
+    margin: 0;
+}
+
+#ba-applications-view .emp-detail-section .form-group > label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+#ba-applications-view .detail-text {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-height: 38px;
+    padding: 0.52rem 0.65rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: 0.82rem;
+    font-weight: 550;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+/* ---------------------------------------------------------
+   APPLICATION CHILD RECORDS
+   --------------------------------------------------------- */
+
+#ba-applications-view .emp-record-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 0.75rem;
+}
+
+#ba-applications-view .emp-record-list:empty::before {
+    content: "No records available.";
+    grid-column: 1 / -1;
+    display: block;
+    padding: 0.9rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 5px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.78rem;
+    text-align: center;
+}
+
+#ba-applications-view .emp-record-card {
+    min-width: 0;
+    padding: 0.85rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.035);
+}
+
+#ba-applications-view .emp-record-card h4 {
+    margin: 0 0 0.65rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 750;
+}
+
+#ba-applications-view .emp-record-item {
+    display: grid;
+    grid-template-columns: minmax(90px, 0.75fr) minmax(0, 1.25fr);
+    gap: 0.55rem;
+    padding: 0.34rem 0;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+#ba-applications-view .emp-record-item:last-of-type {
+    border-bottom: 0;
+}
+
+#ba-applications-view .emp-record-label {
+    color: #64748b;
+    font-size: 0.71rem;
+    font-weight: 650;
+    line-height: 1.4;
+}
+
+#ba-applications-view .emp-record-value {
+    min-width: 0;
+    color: #1e293b;
+    font-size: 0.76rem;
+    font-weight: 650;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+/* ---------------------------------------------------------
+   APPLICATION DOCUMENT CARDS
+   --------------------------------------------------------- */
+
+#ba-applications-view .emp-document-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 0.75rem;
+}
+
+#ba-applications-view .emp-document-grid:empty::before {
+    content: "No application documents available.";
+    grid-column: 1 / -1;
+    padding: 0.9rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 5px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.78rem;
+    text-align: center;
+}
+
+#ba-applications-view .emp-document-card {
+    min-width: 0;
+    padding: 0.85rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+#ba-applications-view .emp-document-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+#ba-applications-view .emp-document-name {
+    color: #0f172a;
+    font-size: 0.84rem;
+    font-weight: 750;
+    overflow-wrap: anywhere;
+}
+
+#ba-applications-view .emp-document-type,
+#ba-applications-view .emp-document-meta {
+    color: #64748b;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+#ba-applications-view .emp-document-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: auto;
+}
+
+#ba-applications-view .emp-document-view-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    text-decoration: none;
+}
+
+/* ---------------------------------------------------------
+   APPLICATION PROFILE RESPONSIVE
+   --------------------------------------------------------- */
+
+@media (max-width: 1199.98px) {
+    #ba-applications-view .emp-profile-summary-grid,
+    #ba-applications-view .emp-detail-grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 991.98px) {
+    #ba-applications-view .emp-profile-layout,
+    #ba-applications-view .emp-profile-header {
+        grid-template-columns: 128px minmax(0, 1fr);
+        gap: 1rem;
+    }
+
+    #ba-applications-view .emp-profile-photo-panel {
+        padding-right: 0.8rem;
+    }
+
+    #ba-applications-view .emp-profile-photo-box {
+        width: 112px;
+        height: 136px;
+    }
+
+    #ba-applications-view .emp-detail-grid-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 767.98px) {
+    #ba-applications-view {
+        padding: 0.5rem;
+    }
+
+    #ba-applications-view .view-header,
+    #ba-applications-view .emp-detail-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #ba-applications-view .view-header > button,
+    #ba-applications-view .view-header .action-btn-group,
+    #ba-applications-view .emp-detail-actions {
+        width: 100%;
+    }
+
+    #ba-applications-view .emp-detail-actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ba-applications-view .emp-detail-actions button {
+        width: 100%;
+    }
+
+    #ba-applications-view .ba-pagination-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #ba-applications-view .ba-pagination-footer .ba-pagination-controls {
+        justify-content: center;
+    }
+
+    #ba-applications-view .emp-profile-layout,
+    #ba-applications-view .emp-profile-header {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .emp-profile-photo-panel {
+        padding-right: 0;
+        padding-bottom: 1rem;
+        border-right: 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    #ba-applications-view .emp-profile-photo-box {
+        width: 124px;
+        height: 150px;
+    }
+
+    #ba-applications-view .emp-profile-summary {
+        text-align: center;
+    }
+
+    #ba-applications-view .emp-profile-summary-grid > div {
+        text-align: left;
+    }
+
+    #ba-applications-view :is(
+        .emp-profile-summary-grid,
+        .emp-detail-grid-2,
+        .emp-detail-grid-3,
+        .emp-detail-grid-4
+    ) {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .emp-record-list,
+    #ba-applications-view .emp-document-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .emp-record-item {
+        grid-template-columns: 1fr;
+        gap: 0.15rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    #ba-applications-view .emp-profile-summary-card,
+    #ba-applications-view .emp-detail-section-body {
+        padding: 0.75rem;
+    }
+
+    #ba-applications-view .emp-detail-actions {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .emp-detail-toolbar {
+        padding: 0.75rem;
+    }
+
+    #ba-applications-view .emp-detail-section-header {
+        padding: 0.65rem 0.75rem;
+    }
+}
+
+
+/* =========================================================
+   APPLICATION — ADDITIONAL DOCUMENT REQUEST MODAL
+   Uses the existing Branch Admin modal system.
+   ========================================================= */
+
+body.erp-modal-open {
+    overflow: hidden;
+}
+
+#ba-applications-view .app-request-modal-box {
+    width: min(720px, 100%);
+    max-height: calc(100vh - 40px);
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#ba-applications-view .app-request-modal-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid #e2e8f0;
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #f8fafc 100%
+        );
+}
+
+#ba-applications-view .app-request-modal-heading {
+    min-width: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+}
+
+#ba-applications-view .app-request-modal-icon {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #fde68a;
+    border-radius: 10px;
+    color: #92400e;
+    background: #fffbeb;
+    font-size: 1.1rem;
+}
+
+#ba-applications-view .app-request-modal-header h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+#ba-applications-view .app-request-modal-header p {
+    margin: 0.25rem 0 0;
+    font-size: 0.77rem;
+    line-height: 1.45;
+}
+
+#ba-applications-view .app-request-modal-close {
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    color: #64748b;
+    background: #ffffff;
+    cursor: pointer;
+}
+
+#ba-applications-view .app-request-modal-close:hover {
+    border-color: #fca5a5;
+    color: #b91c1c;
+    background: #fef2f2;
+}
+
+#ba-applications-view .app-request-form {
+    min-height: 0;
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+}
+
+#ba-applications-view .app-request-modal-body {
+    min-height: 0;
+    flex: 1 1 auto;
+    display: grid;
+    gap: 0.9rem;
+    padding: 1rem 1.1rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+#ba-applications-view .app-request-info {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    padding: 0.7rem 0.8rem;
+    border: 1px solid #bfdbfe;
+    border-radius: 7px;
+    color: #1e40af;
+    background: #eff6ff;
+    font-size: 0.76rem;
+    line-height: 1.45;
+}
+
+#ba-applications-view .app-request-info i {
+    margin-top: 0.08rem;
+}
+
+#ba-applications-view .app-request-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+}
+
+#ba-applications-view .app-request-modal-body .form-group small {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.7rem;
+    line-height: 1.4;
+}
+
+#ba-applications-view .app-request-advanced {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+#ba-applications-view .app-request-advanced summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 0.85rem;
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+}
+
+#ba-applications-view .app-request-advanced summary::-webkit-details-marker {
+    display: none;
+}
+
+#ba-applications-view .app-request-advanced[open] summary {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#ba-applications-view .app-request-advanced-body {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+    padding: 0.85rem;
+}
+
+#ba-applications-view .app-request-error {
+    padding: 0.7rem 0.8rem;
+    border: 1px solid #fecaca;
+    border-radius: 7px;
+    color: #b91c1c;
+    background: #fef2f2;
+    font-size: 0.76rem;
+    line-height: 1.45;
+}
+
+#ba-applications-view .app-request-modal-actions {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0.85rem 1.1rem;
+    border-top: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+@media (max-width: 767.98px) {
+    #ba-applications-view .app-request-modal-box {
+        max-height: calc(100vh - 20px);
+    }
+
+    #ba-applications-view .app-request-grid,
+    #ba-applications-view .app-request-advanced-body {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .app-request-modal-header,
+    #ba-applications-view .app-request-modal-body,
+    #ba-applications-view .app-request-modal-actions {
+        padding-left: 0.85rem;
+        padding-right: 0.85rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    #ba-applications-view .app-request-modal-actions {
+        align-items: stretch;
+        flex-direction: column-reverse;
+    }
+
+    #ba-applications-view .app-request-modal-actions button {
+        width: 100%;
+    }
+}
+
+
+/* Application deadline calendar trigger.
+   The calendar itself remains the existing createErpCalendar() component. */
+#ba-applications-view .app-calendar-field {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+
+#ba-applications-view .app-calendar-field .detail-input {
+    padding-right: 2.8rem;
+}
+
+#ba-applications-view .app-calendar-button {
+    position: absolute;
+    top: 50%;
+    right: 0.4rem;
+    z-index: 3;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 6px;
+    color: #64748b;
+    background: transparent;
+    font-size: 0.95rem;
+    line-height: 1;
+    cursor: pointer;
+    transform: translateY(-50%);
+    transition:
+        color 0.18s ease,
+        background-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+#ba-applications-view .app-calendar-button:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+}
+
+#ba-applications-view .app-calendar-button:focus-visible {
+    outline: none;
+    color: #1d4ed8;
+    background: #eff6ff;
+    box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.16);
+}
+
+#ba-applications-view .app-calendar-field:focus-within
+.app-calendar-button {
+    color: #2563eb;
 }

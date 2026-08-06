@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Additional Document Required</title>
+    <th:block th:replace="~{email/email-theme :: styles}"></th:block>
+</head>
+<body>
+
+<table class="email-wrapper" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+        <td align="center">
+            <table class="email-container" border="0" cellspacing="0" cellpadding="0">
+
+                <tr>
+                    <td class="email-header" align="center">
+                        <table border="0" cellspacing="0" cellpadding="0" width="100%">
+                            <tr>
+                                <td width="100" align="center" valign="middle">
+                                    <img th:src="${schoolLogo}"
+                                         alt="School Logo"
+                                         class="email-header-logo">
+                                </td>
+
+                                <td align="left" valign="middle"
+                                    class="email-header-text-container">
+                                    <p class="email-header-supertitle">
+                                        Montfort Brothers of St. Gabriel, Uganda
+                                    </p>
+                                    <h1 class="email-header-title"
+                                        th:text="${schoolName}">
+                                        Montfort School
+                                    </h1>
+                                    <p class="email-header-subtitle">
+                                        Admissions Department
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="email-body">
+                        <p class="email-greeting">
+                            Dear Parent / Guardian,
+                        </p>
+
+                        <p class="email-text">
+                            During the review of the admission application for
+                            <strong class="email-text-strong"
+                                    th:text="${studentName}">
+                                Student Name
+                            </strong>,
+                            the school requires one additional document.
+                        </p>
+
+                        <table class="email-ref-box"
+                               border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%">
+                            <tr>
+                                <td align="center">
+                                    <p class="email-ref-label">
+                                        Application Reference
+                                    </p>
+                                    <h2 class="email-ref-value"
+                                        th:text="${applicationNo}">
+                                        U011-APP-26-0001
+                                    </h2>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p class="email-text">
+                            <strong class="email-text-strong">
+                                Required document:
+                            </strong>
+                            <span th:text="${requestedDocumentName}">
+                                Birth Certificate
+                            </span>
+                        </p>
+
+                        <p class="email-text">
+                            <strong class="email-text-strong">
+                                Reason:
+                            </strong>
+                            <span th:text="${requestReason}">
+                                The uploaded copy is unclear.
+                            </span>
+                        </p>
+
+                        <p class="email-text"
+                           th:if="${publicRemarks != null and !#strings.isEmpty(publicRemarks)}">
+                            <strong class="email-text-strong">
+                                School instructions:
+                            </strong>
+                            <span th:text="${publicRemarks}">
+                                Upload a clear PDF or image.
+                            </span>
+                        </p>
+
+                        <p class="email-text"
+                           th:if="${uploadDeadlineText != null and !#strings.isEmpty(uploadDeadlineText)}">
+                            <strong class="email-text-strong">
+                                Upload deadline:
+                            </strong>
+                            <span th:text="${uploadDeadlineText}">
+                                10 August 2026, 05:00 PM
+                            </span>
+                        </p>
+
+                        <table class="email-button-container"
+                               border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%">
+                            <tr>
+                                <td align="center">
+                                    <a th:href="${uploadUrl}"
+                                       class="email-button"
+                                       target="_blank">
+                                        Upload Requested Document
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p class="email-text">
+                            This link is private, time-limited, and intended only
+                            for this application. Please do not forward it.
+                        </p>
+
+                        <p class="email-text">
+                            After the document is uploaded, the school will review
+                            it and update the admission application.
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="email-footer" align="center">
+                        <p class="email-footer-text">
+                            This is an automated message from the ERP Admission
+                            System. For assistance, contact the school using its
+                            official contact details.
+                        </p>
+                        <p class="email-footer-copyright">
+                            &copy;
+                            <span th:text="${currentYear}">2026</span>
+                            <span th:text="${schoolName}">School Name</span>.
+                            All rights reserved.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

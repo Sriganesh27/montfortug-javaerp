@@ -1,23 +1,52 @@
-<div id="ba-applications-view">
-
-    <!-- 1. MAIN TABLE VIEW -->
-    <div id="ba-appTableComponent">
-        <div class="view-header">
+<div class="fade-in erp-record-module"
+     id="ba-applications-view">
+    <!-- ===================================================== -->
+    <!-- HEADER                                                -->
+    <!-- ===================================================== -->
+    <div class="view-header">
+        <div>
             <h2>Manage Applications</h2>
-            <div class="action-btn-group">
-                <button type="button" class="btn-primary" id="ba-exportAppsBtn"><i class="bi bi-cloud-download"></i> Export List</button>
-            </div>
+            <p class="text-muted">
+                Review admission applications submitted to this branch.
+            </p>
         </div>
 
+        <button type="button"
+                class="btn-primary"
+                id="ba-refreshAppsBtn">
+            <i class="bi bi-arrow-clockwise"></i>
+            Refresh Applications
+        </button>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- APPLICATION TABLE VIEW                                -->
+    <!-- ===================================================== -->
+    <div class="erp-record-list-view"
+         id="ba-appTableComponent">
+
+<!-- Filters -->
         <div class="card mb-3 p-3">
             <div class="ba-flex-panel">
                 <div class="form-group ba-flex-1">
-                    <label>Search Keyword</label>
-                    <input type="text" id="ba-appSearchKeyword" class="detail-input w-100" placeholder="App No or Student Name...">
+                    <label for="ba-appSearchKeyword">
+                        Search Applications
+                    </label>
+
+                    <input type="search"
+                           id="ba-appSearchKeyword"
+                           class="detail-input w-100"
+                           placeholder="Search by application number or student name"
+                           autocomplete="off">
                 </div>
+
                 <div class="form-group ba-flex-1">
-                    <label>Status</label>
-                    <select id="ba-appSearchStatus" class="detail-input w-100">
+                    <label for="ba-appSearchStatus">
+                        Application Status
+                    </label>
+
+                    <select id="ba-appSearchStatus"
+                            class="detail-input w-100">
                         <option value="">All Statuses</option>
                         <option value="SUBMITTED">Submitted</option>
                         <option value="UNDER_REVIEW">Under Review</option>
@@ -26,92 +55,1241 @@
                         <option value="REJECTED">Rejected</option>
                     </select>
                 </div>
+
                 <div class="form-group ba-pagination-controls">
-                    <button type="button" id="ba-appSearchBtn" class="btn-primary"><i class="bi bi-search"></i> Search</button>
-                    <button type="button" id="ba-appResetBtn" class="btn-secondary"><i class="bi bi-arrow-counterclockwise"></i> Reset</button>
+                    <button type="button"
+                            id="ba-appSearchBtn"
+                            class="btn-primary">
+                        <i class="bi bi-search"></i>
+                        Search
+                    </button>
+
+                    <button type="button"
+                            id="ba-appResetBtn"
+                            class="btn-secondary">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        Reset
+                    </button>
                 </div>
             </div>
         </div>
 
+        <!-- Application Table -->
         <div class="card">
             <div class="table-responsive">
-                <table class="data-table" id="ba-appTable">
+                <table class="data-table"
+                       id="ba-appTable">
                     <thead>
                     <tr>
-                        <th data-sort="applicationNo">App No. <i class="bi bi-arrow-down-up"></i></th>
-                        <th data-sort="studentName">Student Name <i class="bi bi-arrow-down-up"></i></th>
-                        <th data-sort="className">Class <i class="bi bi-arrow-down-up"></i></th>
-                        <th data-sort="submittedDate">Date Submitted <i class="bi bi-arrow-down-up"></i></th>
+                        <th data-sort="applicationNo">
+                            Application No.
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
+                        <th data-sort="studentName">
+                            Student
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
+                        <th data-sort="className">
+                            Class
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
+                        <th data-sort="submittedDate">
+                            Submitted
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
                         <th>Status</th>
-                        <th class="col-action align-center">Actions</th>
+
+                        <th class="col-action align-center">
+                            Actions
+                        </th>
                     </tr>
                     </thead>
+
                     <tbody id="ba-appTableBody"></tbody>
                 </table>
             </div>
 
-            <!-- Pagination Footer -->
             <div class="ba-pagination-footer">
                 <div class="ba-pagination-controls">
-                    <select id="ba-appPageSize" class="detail-input w-auto">
+                    <label for="ba-appPageSize">
+                        Rows
+                    </label>
+
+                    <select id="ba-appPageSize"
+                            class="detail-input w-auto">
+                        <option value="5">5</option>
                         <option value="10">10</option>
                         <option value="20" selected>20</option>
                         <option value="50">50</option>
                     </select>
-                    <span id="ba-appPageInfo" class="text-muted">Showing 0 of 0</span>
+
+                    <span id="ba-appPageInfo"
+                          class="text-muted">
+                        Showing page 1 of 1
+                    </span>
                 </div>
+
                 <div class="ba-pagination-controls">
-                    <button type="button" id="ba-appPrevPageBtn" class="btn-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i> Prev</button>
-                    <button type="button" id="ba-appNextPageBtn" class="btn-secondary btn-sm" disabled>Next <i class="bi bi-chevron-right"></i></button>
+                    <button type="button"
+                            id="ba-appPrevPageBtn"
+                            class="btn-secondary btn-sm"
+                            disabled>
+                        <i class="bi bi-chevron-left"></i>
+                        Previous
+                    </button>
+
+                    <button type="button"
+                            id="ba-appNextPageBtn"
+                            class="btn-secondary btn-sm"
+                            disabled>
+                        Next
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 2. INLINE DETAIL VIEW (Hidden by default) -->
-    <div id="ba-appDetailComponent" class="hidden">
-        <div class="view-header">
-            <h2>Application: <span id="view-appNoHeader"></span></h2>
-            <div class="action-btn-group">
-                <button type="button" id="ba-backToAppTableBtn" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back</button>
-                <button type="button" id="ba-printAppBtn" class="btn-primary"><i class="bi bi-printer"></i> Print</button>
-                <button type="button" id="ba-updateAppStatusBtn" class="btn-success"><i class="bi bi-check-circle"></i> Update Status</button>
+
+    <!-- ===================================================== -->
+    <!-- APPLICATION PROFILE VIEW                              -->
+    <!-- ===================================================== -->
+    <div id="ba-appDetailComponent"
+         class="hidden erp-record-detail-view"
+         data-mode="view">
+
+        <!-- Detail Header -->
+        <div class="view-header emp-detail-toolbar app-detail-toolbar">
+            <div>
+                <h2>Application Profile</h2>
+
+                <p class="text-muted">
+                    <span id="detail-appStudentNameHeader"></span>
+                    <span id="detail-appNoHeader"></span>
+                </p>
+            </div>
+
+            <div class="action-btn-group emp-detail-actions app-detail-actions">
+                <button type="button"
+                        id="ba-backToAppTableBtn"
+                        class="btn-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Back
+                </button>
+
+                <button type="button"
+                        id="ba-refreshAppDetailBtn"
+                        class="btn-secondary">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Refresh
+                </button>
+
+                <button type="button"
+                        id="ba-printAppBtn"
+                        class="btn-secondary">
+                    <i class="bi bi-printer"></i>
+                    Print
+                </button>
+
+                <button type="button"
+                        id="ba-requestAdditionalDocumentBtn"
+                        class="btn-primary">
+                    <i class="bi bi-file-earmark-plus"></i>
+                    Request Document
+                </button>
             </div>
         </div>
 
-        <div class="card">
-            <div class="detail-grid p-4">
-                <!-- We can expand this with all student fields later -->
-                <div class="form-group">
-                    <label>Student Full Name</label>
-                    <span class="detail-text text-strong" id="view-studentName"></span>
-                </div>
-                <div class="form-group">
-                    <label>Class Applied For</label>
-                    <span class="detail-text" id="view-className"></span>
-                </div>
-                <div class="form-group">
-                    <label>Current Status</label>
-                    <span class="detail-text" id="view-appStatus"></span>
-                </div>
-                <div class="form-group">
-                    <label>Date of Birth</label>
-                    <span class="detail-text" id="view-dob"></span>
+        <div id="ba-appDetailContent"
+             class="emp-record-edit-form">
+
+            <!-- ================================================= -->
+            <!-- PROFILE SUMMARY                                   -->
+            <!-- ================================================= -->
+            <div class="card emp-profile-summary-card emp-profile-card">
+                <div class="emp-profile-header emp-profile-layout">
+
+                    <!-- Applicant Photo -->
+                    <div class="emp-profile-photo-panel">
+                        <div class="emp-profile-photo-box">
+                            <img id="view-appProfilePhoto"
+                                 class="emp-profile-photo hidden"
+                                 alt="Applicant profile photo">
+
+                            <div id="view-appProfilePhotoPlaceholder"
+                                 class="emp-profile-photo-placeholder">
+                                <i class="bi bi-person-bounding-box"></i>
+                                <span>No photo available</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Summary -->
+                    <div class="emp-profile-summary">
+                        <h3 id="view-studentName"></h3>
+
+                        <div class="emp-profile-summary-grid emp-profile-facts">
+                            <div>
+                                <span class="text-muted">
+                                    Application Number
+                                </span>
+
+                                <strong id="view-appNo"
+                                        class="font-monospace">
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span class="text-muted">
+                                    Class Applied For
+                                </span>
+
+                                <strong id="summary-appClass"></strong>
+                            </div>
+
+                            <div>
+                                <span class="text-muted">
+                                    Admission Year / Term
+                                </span>
+
+                                <strong id="summary-appYearTerm"></strong>
+                            </div>
+
+                            <div>
+                                <span class="text-muted">
+                                    Application Status
+                                </span>
+
+                                <span id="summary-appStatus"
+                                      class="status-badge badge">
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+
+            <!-- ================================================= -->
+            <!-- APPLICATION AND ADMISSION                         -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Application and Admission
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Application Number</label>
+                            <span id="view-applicationNo"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Application Status</label>
+                            <span id="view-appStatus"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Admission Type</label>
+                            <span id="view-admissionType"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Date of Registration</label>
+                            <span id="view-registrationDate"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Academic Year</label>
+                            <span id="view-academicYear"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Admission Term</label>
+                            <span id="view-joiningTerm"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Class</label>
+                            <span id="view-className"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Scholarship Indicated</label>
+                            <span id="view-scholarshipStatus"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label>Additional Information</label>
+                            <span id="view-moreInfo"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Application Remarks</label>
+                            <span id="view-remarks"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- STUDENT PERSONAL DETAILS                          -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Student Personal Details
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <span id="view-firstName"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Middle Name</label>
+                            <span id="view-middleName"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <span id="view-lastName"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Gender</label>
+                            <span id="view-gender"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Date of Birth</label>
+                            <span id="view-dob"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Nationality</label>
+                            <span id="view-nationality"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Primary Mobile</label>
+                            <span id="view-primaryMobile"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Primary Email</label>
+                            <span id="view-primaryEmail"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- RESIDENTIAL ADDRESS                               -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Residential Address
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Region</label>
+                            <span id="view-addressRegion"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>District</label>
+                            <span id="view-addressDistrict"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Village</label>
+                            <span id="view-addressVillage"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Street</label>
+                            <span id="view-addressStreet"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label>House</label>
+                            <span id="view-addressHouse"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Postal Address</label>
+                            <span id="view-addressPostal"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- FATHER DETAILS                                    -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Father Details
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <span id="view-fatherName"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Age</label>
+                            <span id="view-fatherAge"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mobile</label>
+                            <span id="view-fatherContact"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <span id="view-fatherEmail"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Occupation</label>
+                            <span id="view-fatherOccupation"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Education</label>
+                            <span id="view-fatherEducation"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- MOTHER DETAILS                                    -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Mother Details
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <span id="view-motherName"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Age</label>
+                            <span id="view-motherAge"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mobile</label>
+                            <span id="view-motherContact"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <span id="view-motherEmail"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Occupation</label>
+                            <span id="view-motherOccupation"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Education</label>
+                            <span id="view-motherEducation"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- GUARDIAN DETAILS                                  -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Guardian Details
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Name</label>
+                            <span id="view-guardianName"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Age</label>
+                            <span id="view-guardianAge"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Relation</label>
+                            <span id="view-guardianRelation"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Mobile</label>
+                            <span id="view-guardianMobile"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <span id="view-guardianEmail"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Occupation</label>
+                            <span id="view-guardianOccupation"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Education</label>
+                            <span id="view-guardianEducation"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Location</label>
+                            <span id="view-guardianLocation"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- PREVIOUS SCHOOL AND RESULTS                       -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Previous School and Academic Results
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Previous School</label>
+                            <span id="view-previousSchool"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Former School</label>
+                            <span id="view-formerSchool"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Former School Code</label>
+                            <span id="view-formerSchoolCode"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Former School LIN</label>
+                            <span id="view-formerSchoolLin"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>PLE Reference</label>
+                            <span id="view-pleRef"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>PLE Score</label>
+                            <span id="view-pleScore"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>UCE Reference</label>
+                            <span id="view-uceRef"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>UCE Score</label>
+                            <span id="view-uceScore"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label>Subject Marks</label>
+                            <span id="view-subjectMarks"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Previous Marks Document</label>
+                            <span id="view-previousMarksDocument"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- ADMISSION WORKFLOW                                -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section">
+                <legend class="emp-detail-section-header">
+                    Admission Workflow
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Current Stage</label>
+                            <span id="view-currentStage"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Verification Status</label>
+                            <span id="view-verificationStatus"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Document Status</label>
+                            <span id="view-documentStatus"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Entrance Test Status</label>
+                            <span id="view-testStatus"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Fee Decision</label>
+                            <span id="view-feeStatus"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Scholarship Workflow</label>
+                            <span id="view-scholarshipWorkflowStatus"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Payment Status</label>
+                            <span id="view-paymentStatus"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Admission Status</label>
+                            <span id="view-admissionStatus"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label>School Visit</label>
+                            <span id="view-schoolVisitAt"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>School Visit Remarks</label>
+                            <span id="view-schoolVisitRemarks"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label>Verification Decision</label>
+                            <span id="view-verificationDecision"
+                                  class="detail-text"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Rejection Reason</label>
+                            <span id="view-rejectionReason"
+                                  class="detail-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- APPLICATION DOCUMENTS                             -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section"
+                      id="application-documents-section">
+                <legend class="emp-detail-section-header">
+                    Application Documents
+                    <span id="application-document-count"></span>
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="ba-flex-panel">
+                        <button type="button"
+                                id="ba-requestAdditionalDocumentInlineBtn"
+                                class="btn-primary btn-sm">
+                            <i class="bi bi-file-earmark-plus"></i>
+                            Request Additional Document
+                        </button>
+                    </div>
+
+                    <div id="application-documents-view-container"
+                         class="emp-document-grid">
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- ADDITIONAL DOCUMENT REQUESTS                       -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section"
+                      id="application-document-requests-section">
+                <legend class="emp-detail-section-header">
+                    Additional Document Requests
+                    <span id="application-document-request-count"></span>
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div id="application-document-requests-container"
+                         class="emp-record-list">
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- APPLICATION HISTORY                               -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section"
+                      id="application-history-section">
+                <legend class="emp-detail-section-header">
+                    Application History
+                    <span id="application-history-count"></span>
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div id="application-history-container"
+                         class="emp-record-list">
+                    </div>
+                </div>
+            </fieldset>
         </div>
     </div>
 
-    <!-- TEMPLATES -->
+
+    <!-- ===================================================== -->
+    <!-- DOCUMENT REVIEW MODAL                                 -->
+    <!-- ===================================================== -->
+    <div id="ba-documentReviewModal"
+         class="ba-modal-backdrop hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-hidden="true"
+         aria-labelledby="ba-documentReviewTitle">
+
+        <div class="ba-modal-box">
+            <h3 id="ba-documentReviewTitle">
+                Review Application Document
+            </h3>
+
+            <p id="ba-documentReviewSubtitle"
+               class="text-muted">
+            </p>
+
+            <form id="ba-documentReviewForm"
+                  novalidate>
+                <input type="hidden"
+                       id="ba-reviewDocumentId">
+
+                <div class="form-group">
+                    <label for="ba-reviewDecision">
+                        Decision
+                    </label>
+
+                    <select id="ba-reviewDecision"
+                            class="detail-input w-100"
+                            required>
+                        <option value="">-- Select --</option>
+                        <option value="VERIFY">Verify</option>
+                        <option value="REJECT">Reject</option>
+                        <option value="REQUEST_REUPLOAD">
+                            Request Re-upload
+                        </option>
+                    </select>
+                </div>
+
+                <div id="ba-rejectionReasonGroup"
+                     class="form-group hidden">
+                    <label for="ba-rejectionReason">
+                        Rejection Reason
+                    </label>
+
+                    <textarea id="ba-rejectionReason"
+                              class="detail-input w-100"
+                              rows="4"
+                              maxlength="1000"></textarea>
+                </div>
+
+                <div id="ba-reuploadReasonGroup"
+                     class="form-group hidden">
+                    <label for="ba-reuploadReason">
+                        Re-upload Reason
+                    </label>
+
+                    <textarea id="ba-reuploadReason"
+                              class="detail-input w-100"
+                              rows="4"
+                              maxlength="1000"></textarea>
+                </div>
+
+                <div id="ba-reuploadDeadlineGroup"
+                     class="form-group hidden">
+                    <label for="ba-reuploadDeadline">
+                        Upload Deadline
+                    </label>
+
+                    <div class="app-calendar-field">
+                        <input type="text"
+                               id="ba-reuploadDeadline"
+                               class="detail-input w-100"
+                               placeholder="Select re-upload deadline"
+                               autocomplete="off">
+
+                        <button type="button"
+                                class="app-calendar-button"
+                                data-calendar-target="ba-reuploadDeadline"
+                                aria-label="Open re-upload deadline calendar"
+                                title="Open calendar">
+                            <i class="bi bi-calendar3"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="ba-reviewPublicRemarks">
+                        Applicant-visible Remarks
+                    </label>
+
+                    <textarea id="ba-reviewPublicRemarks"
+                              class="detail-input w-100"
+                              rows="3"
+                              maxlength="1000"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="ba-reviewInternalRemarks">
+                        Internal Remarks
+                    </label>
+
+                    <textarea id="ba-reviewInternalRemarks"
+                              class="detail-input w-100"
+                              rows="3"
+                              maxlength="1000"></textarea>
+                </div>
+
+                <div id="ba-documentReviewError"
+                     class="text-danger hidden"
+                     role="alert"></div>
+
+                <div class="ba-modal-actions">
+                    <button type="button"
+                            id="ba-cancelDocumentReviewBtn"
+                            class="btn-secondary">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            id="ba-submitDocumentReviewBtn"
+                            class="btn-primary">
+                        Save Review
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- REQUEST ADDITIONAL DOCUMENT MODAL                     -->
+    <!-- ===================================================== -->
+    <div id="ba-additionalDocumentModal"
+         class="ba-modal-backdrop hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-hidden="true"
+         aria-labelledby="ba-additionalDocumentTitle">
+
+        <div class="ba-modal-box app-request-modal-box">
+            <div class="app-request-modal-header">
+                <div class="app-request-modal-heading">
+                    <span class="app-request-modal-icon"
+                          aria-hidden="true">
+                        <i class="bi bi-file-earmark-arrow-up"></i>
+                    </span>
+
+                    <div>
+                        <h3 id="ba-additionalDocumentTitle">
+                            Request Additional Document
+                        </h3>
+
+                        <p class="text-muted">
+                            Send the applicant a secure, time-limited upload link.
+                        </p>
+                    </div>
+                </div>
+
+                <button type="button"
+                        id="ba-closeAdditionalDocumentModalBtn"
+                        class="app-request-modal-close"
+                        aria-label="Close additional document request">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <form id="ba-additionalDocumentForm"
+                  class="app-request-form"
+                  novalidate>
+
+                <div class="app-request-modal-body">
+                    <div class="app-request-info">
+                        <i class="bi bi-info-circle"></i>
+
+                        <span>
+                            Only Document Type is required. Other fields are
+                            optional and can be added when needed.
+                        </span>
+                    </div>
+
+                    <div class="app-request-grid">
+                        <div class="form-group">
+                            <label for="ba-requestDocumentType">
+                                Document Type
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <select id="ba-requestDocumentType"
+                                    class="detail-input w-100"
+                                    required>
+                                <option value="">-- Select Document Type --</option>
+                                <option value="BIRTH_CERTIFICATE">
+                                    Birth Certificate
+                                </option>
+                                <option value="REPORT_CARD">
+                                    Previous Report Card
+                                </option>
+                                <option value="TRANSFER_LETTER">
+                                    Transfer Letter
+                                </option>
+                                <option value="NATIONAL_ID">
+                                    National ID
+                                </option>
+                                <option value="PASSPORT">
+                                    Passport
+                                </option>
+                                <option value="MEDICAL_RECORD">
+                                    Medical Record
+                                </option>
+                                <option value="OTHER">
+                                    Other Document
+                                </option>
+                            </select>
+
+                            <small class="text-muted">
+                                Select the document the applicant must upload.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ba-requestDocumentName">
+                                Custom Document Name
+                                <span class="text-muted">(Optional)</span>
+                            </label>
+
+                            <input type="text"
+                                   id="ba-requestDocumentName"
+                                   class="detail-input w-100"
+                                   maxlength="150"
+                                   placeholder="Automatically uses the selected type">
+
+                            <small class="text-muted">
+                                Change this only when a more specific name is needed.
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="app-request-grid">
+                        <div class="form-group">
+                            <label for="ba-requestReason">
+                                Request Reason
+                                <span class="text-muted">(Optional)</span>
+                            </label>
+
+                            <textarea id="ba-requestReason"
+                                      class="detail-input w-100"
+                                      rows="3"
+                                      maxlength="1000"
+                                      placeholder="Example: Required to verify the student's date of birth"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ba-requestPublicRemarks">
+                                Applicant Instructions
+                                <span class="text-muted">(Optional)</span>
+                            </label>
+
+                            <textarea id="ba-requestPublicRemarks"
+                                      class="detail-input w-100"
+                                      rows="3"
+                                      maxlength="1000"
+                                      placeholder="Example: Upload a clear colour scan of the original document"></textarea>
+                        </div>
+                    </div>
+
+                    <details class="app-request-advanced">
+                        <summary>
+                            <i class="bi bi-sliders"></i>
+                            Advanced Options
+                        </summary>
+
+                        <div class="app-request-advanced-body">
+                            <div class="form-group">
+                                <label for="ba-requestUploadDeadline">
+                                    Upload Deadline
+                                    <span class="text-muted">(Optional)</span>
+                                </label>
+
+                                <div class="app-calendar-field">
+                                    <input type="text"
+                                           id="ba-requestUploadDeadline"
+                                           class="detail-input w-100"
+                                           placeholder="Select upload deadline"
+                                           autocomplete="off">
+
+                                    <button type="button"
+                                            class="app-calendar-button"
+                                            data-calendar-target="ba-requestUploadDeadline"
+                                            aria-label="Open upload deadline calendar"
+                                            title="Open calendar">
+                                        <i class="bi bi-calendar3"></i>
+                                    </button>
+                                </div>
+
+                                <small class="text-muted">
+                                    Leave blank to use the system token-expiry period.
+                                </small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ba-requestInternalRemarks">
+                                    Internal School Remarks
+                                    <span class="text-muted">(Optional)</span>
+                                </label>
+
+                                <textarea id="ba-requestInternalRemarks"
+                                          class="detail-input w-100"
+                                          rows="3"
+                                          maxlength="1000"
+                                          placeholder="Visible only to authorized school staff"></textarea>
+                            </div>
+                        </div>
+                    </details>
+
+                    <div id="ba-additionalDocumentError"
+                         class="app-request-error hidden"
+                         role="alert"></div>
+                </div>
+
+                <div class="ba-modal-actions app-request-modal-actions">
+                    <button type="button"
+                            id="ba-cancelAdditionalDocumentBtn"
+                            class="btn-secondary">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            id="ba-submitAdditionalDocumentBtn"
+                            class="btn-primary">
+                        <i class="bi bi-send"></i>
+                        Create & Send Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- CANCEL DOCUMENT REQUEST MODAL                         -->
+    <!-- ===================================================== -->
+    <div id="ba-cancelDocumentRequestModal"
+         class="ba-modal-backdrop hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-hidden="true"
+         aria-labelledby="ba-cancelDocumentRequestTitle">
+
+        <div class="ba-modal-box">
+            <h3 id="ba-cancelDocumentRequestTitle">
+                Cancel Document Request
+            </h3>
+
+            <p id="ba-cancelDocumentRequestSubtitle"
+               class="text-muted">
+            </p>
+
+            <form id="ba-cancelDocumentRequestForm"
+                  novalidate>
+                <input type="hidden"
+                       id="ba-cancelDocumentRequestId">
+
+                <div class="form-group">
+                    <label for="ba-documentRequestCancellationReason">
+                        Cancellation Reason
+                    </label>
+
+                    <textarea id="ba-documentRequestCancellationReason"
+                              class="detail-input w-100"
+                              rows="4"
+                              maxlength="1000"
+                              required></textarea>
+                </div>
+
+                <div id="ba-cancelDocumentRequestError"
+                     class="text-danger hidden"
+                     role="alert"></div>
+
+                <div class="ba-modal-actions">
+                    <button type="button"
+                            id="ba-abortCancelDocumentRequestBtn"
+                            class="btn-secondary">
+                        Back
+                    </button>
+
+                    <button type="submit"
+                            id="ba-confirmCancelDocumentRequestBtn"
+                            class="btn-danger">
+                        Cancel Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- APPLICATION ROW TEMPLATE                             -->
+    <!-- ===================================================== -->
     <template id="tpl-app-row">
         <tr>
-            <td class="td-appno"><strong></strong></td>
+            <td class="td-appno">
+                <strong></strong>
+            </td>
+
             <td class="td-name"></td>
             <td class="td-class"></td>
             <td class="td-date"></td>
             <td class="td-status"></td>
+
             <td class="col-action align-center">
-                <button type="button" class="btn-icon btn-view" title="Review Application"><i class="bi bi-eye"></i> View File</button>
+                <button type="button"
+                        class="btn-primary btn-sm view-more-btn btn-view"
+                        title="View application profile">
+                    <i class="bi bi-eye"></i>
+                </button>
             </td>
         </tr>
     </template>
