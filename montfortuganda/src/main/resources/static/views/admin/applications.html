@@ -26,61 +26,183 @@
          id="ba-appTableComponent">
 
 <!-- Filters -->
-        <div class="card mb-3 p-3">
-            <div class="ba-flex-panel">
-                <div class="form-group ba-flex-1">
-                    <label for="ba-appSearchKeyword">
-                        Search Applications
-                    </label>
-
+        <div class="card mb-3 p-3 app-filter-card">
+            <div class="app-filter-primary">
+                <div class="form-group app-filter-search">
+                    <label for="ba-appSearchKeyword">Search Applications</label>
                     <input type="search"
                            id="ba-appSearchKeyword"
                            class="detail-input w-100"
-                           placeholder="Search by application number or student name"
+                           placeholder="Application no. or student name"
                            autocomplete="off">
                 </div>
 
-                <div class="form-group ba-flex-1">
-                    <label for="ba-appSearchStatus">
-                        Application Status
-                    </label>
+                <div class="form-group">
+                    <label for="ba-appSearchStage">Current Stage</label>
+                    <select id="ba-appSearchStage" class="detail-input w-100">
+                        <option value="">All Stages</option>
+                        <option value="APPLICATION_DRAFT">Application Draft</option>
+                        <option value="APPLICATION_VERIFICATION">Application Verification</option>
+                        <option value="SCHOOL_VISIT">School Visit</option>
+                        <option value="ENTRANCE_TEST">Entrance Test</option>
+                        <option value="PARENT_FEE_DISCUSSION">Parent Fee Discussion</option>
+                        <option value="SCHOLARSHIP">Scholarship</option>
+                        <option value="PAYMENT">Payment</option>
+                        <option value="FINAL_ADMISSION">Final Admission</option>
+                        <option value="ENROLLED">Enrolled</option>
+                        <option value="CLOSED">Closed</option>
+                    </select>
+                </div>
 
-                    <select id="ba-appSearchStatus"
-                            class="detail-input w-100">
+                <div class="form-group">
+                    <label for="ba-appSearchLevel">Level</label>
+                    <select id="ba-appSearchLevel" class="detail-input w-100">
+                        <option value="">All Levels</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="ba-appSearchClass">Class</label>
+                    <select id="ba-appSearchClass" class="detail-input w-100">
+                        <option value="">All Classes</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="ba-appSearchStatus">Application Status</label>
+                    <select id="ba-appSearchStatus" class="detail-input w-100">
                         <option value="">All Statuses</option>
+                        <option value="DRAFT">Draft</option>
                         <option value="SUBMITTED">Submitted</option>
                         <option value="UNDER_REVIEW">Under Review</option>
-                        <option value="WAITLISTED">Waitlisted</option>
                         <option value="APPROVED">Approved</option>
+                        <option value="REJECTED">Rejected</option>
+                        <option value="WAITLISTED">Waitlisted</option>
+                        <option value="ADMITTED">Admitted</option>
+                    </select>
+                </div>
+
+                <div class="form-group app-filter-more-wrap">
+                    <label>&nbsp;</label>
+                    <button type="button"
+                            id="ba-appMoreFiltersBtn"
+                            class="btn-secondary w-100"
+                            aria-expanded="false"
+                            aria-controls="ba-appAdvancedFilters">
+                        <i class="bi bi-sliders"></i>
+                        More Filters
+                        <span id="ba-appActiveFilterCount"
+                              class="app-filter-count hidden">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="ba-appAdvancedFilters"
+                 class="app-filter-advanced hidden">
+                <div class="form-group">
+                    <label for="ba-appSearchGender">Gender</label>
+                    <select id="ba-appSearchGender" class="detail-input w-100">
+                        <option value="">All Genders</option>
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="ba-appSearchDocumentStatus">Document Status</label>
+                    <select id="ba-appSearchDocumentStatus" class="detail-input w-100">
+                        <option value="">All Document Statuses</option>
+                        <option value="NOT_STARTED">Not Started</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="REUPLOAD_REQUIRED">Re-upload Required</option>
+                        <option value="VERIFIED">Verified</option>
                         <option value="REJECTED">Rejected</option>
                     </select>
                 </div>
 
-                <div class="form-group ba-pagination-controls">
-                    <button type="button"
-                            id="ba-appSearchBtn"
-                            class="btn-primary">
-                        <i class="bi bi-search"></i>
-                        Search
-                    </button>
-
-                    <button type="button"
-                            id="ba-appResetBtn"
-                            class="btn-secondary">
-                        <i class="bi bi-arrow-counterclockwise"></i>
-                        Reset
-                    </button>
+                <div class="form-group">
+                    <label for="ba-appSearchScholarship">Scholarship</label>
+                    <select id="ba-appSearchScholarship" class="detail-input w-100">
+                        <option value="">All Scholarship Statuses</option>
+                        <option value="NOT_APPLIED">Not Applied</option>
+                        <option value="REQUESTED">Requested</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="UNDER_REVIEW">Under Review</option>
+                        <option value="SHORTLISTED">Shortlisted</option>
+                        <option value="APPROVED">Approved</option>
+                        <option value="PARTIAL">Partial</option>
+                        <option value="REJECTED">Rejected</option>
+                        <option value="DECLINED">Declined</option>
+                        <option value="NOT_APPROVED">Not Approved</option>
+                        <option value="COMPLETED">Completed</option>
+                    </select>
                 </div>
+
+                <div class="form-group">
+                    <label for="ba-appSearchFromDate">Submitted From</label>
+                    <input type="date" id="ba-appSearchFromDate" class="detail-input w-100">
+                </div>
+
+                <div class="form-group">
+                    <label for="ba-appSearchToDate">Submitted To</label>
+                    <input type="date" id="ba-appSearchToDate" class="detail-input w-100">
+                </div>
+            </div>
+
+            <div class="app-filter-actions">
+                <button type="button" id="ba-appSearchBtn" class="btn-primary">
+                    <i class="bi bi-search"></i>
+                    Search
+                </button>
+                <button type="button" id="ba-appResetBtn" class="btn-secondary">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    Reset
+                </button>
             </div>
         </div>
 
         <!-- Application Table -->
         <div class="card">
+            <div class="ba-flex-panel" id="ba-appBulkActions">
+                <div class="ba-pagination-controls">
+                    <label for="ba-appSelectPage">
+                        <input type="checkbox" id="ba-appSelectPage">
+                        Select Page
+                    </label>
+
+                    <span id="ba-appSelectedCount" class="text-muted">
+                        0 selected
+                    </span>
+                </div>
+
+                <div class="ba-pagination-controls">
+                    <button type="button"
+                            id="ba-appBulkNextActionBtn"
+                            class="btn-primary btn-sm"
+                            disabled>
+                        <i class="bi bi-arrow-right-circle"></i>
+                        Move Selected to Next Stage
+                    </button>
+
+                    <button type="button"
+                            id="ba-appBulkClearBtn"
+                            class="btn-secondary btn-sm"
+                            disabled>
+                        Clear Selection
+                    </button>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="data-table"
                        id="ba-appTable">
                     <thead>
                     <tr>
+                        <th class="app-select-column align-center">
+                            <span class="visually-hidden">Select</span>
+                        </th>
+
                         <th data-sort="applicationNo">
                             Application No.
                             <i class="bi bi-arrow-down-up"></i>
@@ -92,7 +214,22 @@
                         </th>
 
                         <th data-sort="className">
-                            Class
+                            Class / Level
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
+                        <th data-sort="currentStage">
+                            Admission Workflow
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
+                        <th data-sort="scholarshipStatus">
+                            Scholarship
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
+                        <th data-sort="applicationStatus">
+                            Status
                             <i class="bi bi-arrow-down-up"></i>
                         </th>
 
@@ -100,8 +237,6 @@
                             Submitted
                             <i class="bi bi-arrow-down-up"></i>
                         </th>
-
-                        <th>Status</th>
 
                         <th class="col-action align-center">
                             Actions
@@ -267,6 +402,26 @@
                                 <span id="summary-appStatus"
                                       class="status-badge badge">
                                 </span>
+                            </div>
+
+                            <div>
+                                <span class="text-muted">
+                                    Current Stage
+                                </span>
+
+                                <strong id="summary-appCurrentStage">
+                                    -
+                                </strong>
+                            </div>
+
+                            <div>
+                                <span class="text-muted">
+                                    Scholarship
+                                </span>
+
+                                <strong id="summary-appScholarship">
+                                    -
+                                </strong>
                             </div>
                         </div>
                     </div>
@@ -746,6 +901,29 @@
                             <label>Entrance Test Status</label>
                             <span id="view-testStatus"
                                   class="detail-text"></span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label>Next Stage</label>
+                            <span id="view-nextStage"
+                                  class="detail-text">-</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Next Action</label>
+                            <div class="ba-pagination-controls">
+                                <span id="view-nextActionLabel"
+                                      class="detail-text">-</span>
+
+                                <button type="button"
+                                        id="ba-appNextStageBtn"
+                                        class="btn-primary btn-sm hidden">
+                                    <i class="bi bi-arrow-right-circle"></i>
+                                    Continue
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -1275,21 +1453,61 @@
     <!-- ===================================================== -->
     <template id="tpl-app-row">
         <tr>
-            <td class="td-appno">
-                <strong></strong>
+            <td class="app-select-column align-center">
+                <input type="checkbox"
+                       class="app-row-select"
+                       aria-label="Select application">
             </td>
 
-            <td class="td-name"></td>
-            <td class="td-class"></td>
+            <td class="td-appno col-code font-monospace text-muted">
+                <button type="button"
+                        class="app-profile-link app-profile-link-appno"
+                        title="Open application profile">
+                    <strong></strong>
+                </button>
+            </td>
+
+            <td class="td-name col-name text-primary cursor-pointer">
+                <button type="button"
+                        class="app-profile-link app-profile-link-name"
+                        title="Open application profile">
+                    <strong class="app-profile-student-name"></strong>
+                    <small class="app-gender-label text-muted"></small>
+                </button>
+            </td>
+
+            <td class="td-placement">
+                <span class="app-class-value"></span>
+                <small class="app-level-label text-muted"></small>
+            </td>
+
+            <td class="td-workflow">
+                <span class="app-stage-value"></span>
+                <small class="app-document-label text-muted"></small>
+            </td>
+
+            <td class="td-scholarship">
+                <span class="app-scholarship-value"></span>
+            </td>
+
+            <td class="td-status">
+                <span class="status-badge badge"></span>
+            </td>
+
             <td class="td-date"></td>
-            <td class="td-status"></td>
 
             <td class="col-action align-center">
                 <button type="button"
-                        class="btn-primary btn-sm view-more-btn btn-view"
-                        title="View application profile">
-                    <i class="bi bi-eye"></i>
+                        class="btn-primary btn-sm btn-next-action hidden"
+                        title="Run next admission action without opening the profile">
+                    <i class="bi bi-arrow-right-circle"></i>
+                    <span class="btn-next-action-label">Next</span>
                 </button>
+
+                <span class="app-no-next-action hidden"
+                      aria-label="No next workflow action">
+                    —
+                </span>
             </td>
         </tr>
     </template>

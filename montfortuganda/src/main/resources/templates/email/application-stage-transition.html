@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admission Application Update</title>
+    <th:block th:replace="~{email/email-theme :: styles}"></th:block>
+</head>
+<body>
+
+<table class="email-wrapper" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+        <td align="center">
+            <table class="email-container" border="0" cellspacing="0" cellpadding="0">
+
+                <tr>
+                    <td class="email-header" align="center">
+                        <table border="0" cellspacing="0" cellpadding="0" width="100%">
+                            <tr>
+                                <td width="100" align="center" valign="middle">
+                                    <img th:src="${schoolLogo}"
+                                         alt="School Logo"
+                                         class="email-header-logo">
+                                </td>
+
+                                <td align="left"
+                                    valign="middle"
+                                    class="email-header-text-container">
+                                    <p class="email-header-supertitle">
+                                        Montfort Brothers of St. Gabriel, Uganda
+                                    </p>
+
+                                    <h1 class="email-header-title"
+                                        th:text="${schoolName}">
+                                        Montfort School
+                                    </h1>
+
+                                    <p class="email-header-subtitle">
+                                        Admissions Department
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="email-body">
+                        <p class="email-greeting">
+                            Dear Parent / Guardian,
+                        </p>
+
+                        <p class="email-text">
+                            The admission application for
+                            <strong class="email-text-strong"
+                                    th:text="${studentName}">
+                                Student Name
+                            </strong>
+                            has been updated by the school.
+                        </p>
+
+                        <table class="email-ref-box"
+                               border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%">
+                            <tr>
+                                <td align="center">
+                                    <p class="email-ref-label">
+                                        Application Reference
+                                    </p>
+
+                                    <h2 class="email-ref-value"
+                                        th:text="${applicationNo}">
+                                        U011-APP-26-0001
+                                    </h2>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <h2 class="email-section-title"
+                            th:text="${stageTitle}">
+                            Admission Application Update
+                        </h2>
+
+                        <p class="email-text"
+                           th:text="${stageMessage}">
+                            The admission application status has been updated
+                            by the school.
+                        </p>
+
+                        <table class="email-info-table"
+                               border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%">
+                            <tr>
+                                <td class="email-info-label">
+                                    Previous stage
+                                </td>
+                                <td class="email-info-value"
+                                    th:text="${previousStage}">
+                                    Application Verification
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="email-info-label">
+                                    Current stage
+                                </td>
+                                <td class="email-info-value"
+                                    th:text="${currentStage}">
+                                    School Visit
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div th:if="${publicRemarks != null and !#strings.isEmpty(publicRemarks)}">
+                            <h3 class="email-section-title">
+                                School Remarks
+                            </h3>
+
+                            <p class="email-text"
+                               th:text="${publicRemarks}">
+                                Please contact the school for further details.
+                            </p>
+                        </div>
+
+                        <table class="email-button-container"
+                               border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%">
+                            <tr>
+                                <td align="center">
+                                    <a th:href="${trackingUrl}"
+                                       class="email-button"
+                                       target="_blank">
+                                        View Application Status
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p class="email-text">
+                            Please use the application reference and the
+                            applicant's date of birth when opening the status
+                            page.
+                        </p>
+
+                        <p class="email-text">
+                            Internal school remarks and administrative notes
+                            are never included in applicant emails.
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="email-footer" align="center">
+                        <p class="email-footer-text">
+                            This is an automated message from the ERP Admission
+                            System. For assistance, contact the school using its
+                            official contact details.
+                        </p>
+
+                        <p class="email-footer-copyright">
+                            &copy;
+                            <span th:text="${currentYear}">2026</span>
+                            <span th:text="${schoolName}">
+                                School Name
+                            </span>.
+                            All rights reserved.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

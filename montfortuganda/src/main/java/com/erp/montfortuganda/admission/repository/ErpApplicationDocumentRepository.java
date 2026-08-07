@@ -97,6 +97,34 @@ public interface ErpApplicationDocumentRepository
     );
 
     /**
+     * Locks one active branch-owned document before it is deactivated and its
+     * physical public-upload file is scheduled for after-commit deletion.
+     *
+     * <p>Both current and superseded active documents may be selected because
+     * duplicate, replaced, incorrect or no-longer-required files may need
+     * storage cleanup. The service remains responsible for workflow and
+     * linked-request safety checks.</p>
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select documentRecord
+            from ErpApplicationDocument documentRecord
+            join fetch documentRecord.application applicationRecord
+            join fetch applicationRecord.branch branchRecord
+            left join fetch documentRecord.documentRequest documentRequest
+            left join fetch documentRecord.replacementDocument replacementDocument
+            where documentRecord.documentId = :documentId
+              and applicationRecord.applicationId = :applicationId
+              and branchRecord.branchId = :branchId
+              and documentRecord.active = true
+            """)
+    Optional<ErpApplicationDocument> findActiveForDeletion(
+            @Param("documentId") Long documentId,
+            @Param("applicationId") Long applicationId,
+            @Param("branchId") Integer branchId
+    );
+
+    /**
      * Resolves the file uploaded for one additional-document request.
      */
     @EntityGraph(attributePaths = {

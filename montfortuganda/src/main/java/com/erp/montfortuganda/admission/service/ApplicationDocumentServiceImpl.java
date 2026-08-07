@@ -1,5 +1,6 @@
 package com.erp.montfortuganda.admission.service;
 
+import com.erp.montfortuganda.admission.dto.ApplicationDocumentDeleteRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationDocumentRequestCancelDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationDocumentRequestCreateDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationDocumentRequestResponseDTO;
@@ -138,8 +139,14 @@ public class ApplicationDocumentServiceImpl
                 branchId
         );
 
+        /*
+         * Return every active document version, including superseded uploads.
+         * This lets an authorized Branch Admin identify and delete duplicate,
+         * incorrect, replaced, or no-longer-required files to reclaim public
+         * upload storage. Inactive audit rows remain hidden.
+         */
         return documentRepository
-                .findAllByApplication_ApplicationIdAndApplication_Branch_BranchIdAndCurrentTrueAndActiveTrueOrderByUploadedAtAsc(
+                .findAllByApplication_ApplicationIdAndApplication_Branch_BranchIdAndActiveTrueOrderByUploadedAtDesc(
                         applicationId,
                         branchId
                 )
@@ -344,6 +351,143 @@ public class ApplicationDocumentServiceImpl
 
         return documentMapper.toDocumentResponse(
                 savedDocument
+        );
+    }
+
+    /**
+     * Deactivates one unnecessary application document while preserving both
+     * the application and document database records for audit.
+     *
+     * <p>The physical public-upload file is removed only by an AFTER_COMMIT
+     * listener. Secure Branch/Admin storage is never accessed by this flow.</p>
+     */
+    @Override
+    @Transactional
+    public void deleteDocument(
+            CurrentUserContext context,
+            Long applicationId,
+            Long documentId,
+            ApplicationDocumentDeleteRequestDTO request
+    ) {
+        requireRequest(
+                request,
+                "Document deletion details are required."
+        );
+
+        if (request.getDeletionReason() == null) {
+            throw new BadRequestException(
+                    "Document deletion reason is required."
+            );
+        }
+
+        String deletionDetails =
+                requireText(
+                        request.getDeletionDetails(),
+                        "Document deletion details"
+                );
+
+        Integer branchId =
+                requireBranchId(context);
+
+        Integer userId =
+                requireUserId(context);
+
+        ErpApplicationDocument document =
+                documentRepository
+                        .findActiveForDeletion(
+                                requirePositiveId(
+                                        documentId,
+                                        "Document ID"
+                                ),
+                                requirePositiveId(
+                                        applicationId,
+                                        "Application ID"
+                                ),
+                                branchId
+                        )
+                        .orElseThrow(
+                                () -> new ResourceNotFoundException(
+                                        "Active application document was not found."
+                                )
+                        );
+
+        ErpApplication application =
+                document.getApplication();
+
+        ensureWorkflowEditable(application);
+
+        ErpApplication.DocumentStatus previousApplicationStatus =
+                application.getDocumentStatus();
+
+        boolean wasCurrent =
+                Boolean.TRUE.equals(
+                        document.getCurrent()
+                );
+
+        LocalDateTime now =
+                LocalDateTime.now();
+
+        String deletionAuditRemarks =
+                buildDocumentDeletionInternalRemarks(
+                        document,
+                        request.getDeletionReason(),
+                        deletionDetails
+                );
+
+        document.setActive(false);
+        document.setCurrent(false);
+        document.setVerificationStatus(
+                ErpApplicationDocument
+                        .VerificationStatus.SUPERSEDED
+        );
+        document.setSupersededAt(now);
+        document.setSupersededByUserId(userId);
+        document.setInternalRemarks(
+                appendAuditRemark(
+                        document.getInternalRemarks(),
+                        deletionAuditRemarks
+                )
+        );
+
+        ErpApplicationDocument savedDocument =
+                documentRepository.saveAndFlush(
+                        document
+                );
+
+        clearApplicationPhotoReferenceWhenDeleted(
+                application,
+                savedDocument
+        );
+
+        ErpApplication.DocumentStatus recalculatedStatus =
+                recalculateApplicationDocumentStatus(
+                        application,
+                        branchId,
+                        userId
+                );
+
+        synchronizeWorkflowAfterDocumentDeletion(
+                application,
+                wasCurrent,
+                recalculatedStatus,
+                userId
+        );
+
+        saveHistory(
+                application,
+                previousApplicationStatus,
+                recalculatedStatus,
+                userId,
+                null,
+                deletionAuditRemarks,
+                false,
+                null
+        );
+
+        applicationEventPublisher.publishEvent(
+                new ApplicationDocumentFileDeleteRequestedEvent(
+                        savedDocument.getDocumentId()
+                )
         );
     }
 
@@ -1698,6 +1842,194 @@ public class ApplicationDocumentServiceImpl
         return StringUtils.hasText(preferred)
                 ? preferred.trim()
                 : trimToNull(fallback);
+    }
+
+    /**
+     * Clears the applicant-photo pointer only when it references the exact
+     * document file being deactivated. Deleting another duplicate PHOTO row
+     * therefore does not remove the current applicant photo.
+     */
+    private void clearApplicationPhotoReferenceWhenDeleted(
+            ErpApplication application,
+            ErpApplicationDocument document
+    ) {
+        if (application == null
+                || document == null
+                || document.getDocumentType()
+                != ErpApplicationDocument.DocumentType.PHOTO
+                || !sameStoredPublicPath(
+                application.getPhotoPath(),
+                document.getFilePath()
+        )) {
+            return;
+        }
+
+        application.setPhotoPath("");
+    }
+
+    /**
+     * When a current document is removed and the remaining active documents
+     * are no longer fully verified, the workflow returns to application
+     * verification rather than continuing with an invalid approved state.
+     */
+    private void synchronizeWorkflowAfterDocumentDeletion(
+            ErpApplication application,
+            boolean deletedDocumentWasCurrent,
+            ErpApplication.DocumentStatus recalculatedStatus,
+            Integer userId
+    ) {
+        if (!deletedDocumentWasCurrent
+                || recalculatedStatus
+                == ErpApplication.DocumentStatus.VERIFIED) {
+            return;
+        }
+
+        application.setCurrentStage(
+                ErpApplication.CurrentStage
+                        .APPLICATION_VERIFICATION
+        );
+
+        if (recalculatedStatus
+                != ErpApplication.DocumentStatus.REUPLOAD_REQUIRED) {
+            application.setVerificationStatus(
+                    ErpApplication.VerificationStatus.PENDING
+            );
+        }
+
+        application.setUpdatedBy(
+                userId.longValue()
+        );
+
+        applicationRepository.save(
+                application
+        );
+    }
+
+    private String buildDocumentDeletionInternalRemarks(
+            ErpApplicationDocument document,
+            ApplicationDocumentDeleteRequestDTO.DeletionReason reason,
+            String deletionDetails
+    ) {
+        StringBuilder remarks =
+                new StringBuilder();
+
+        remarks.append("Document ID: ")
+                .append(document.getDocumentId())
+                .append(". File: ")
+                .append(
+                        safeDownloadFileName(
+                                document.getOriginalFileName(),
+                                document.getDocumentId()
+                        )
+                )
+                .append(". Deletion reason: ")
+                .append(reason.name())
+                .append(". Details: ")
+                .append(deletionDetails.trim())
+                .append(
+                        ". Physical public-upload file deletion "
+                                + "requested after transaction commit."
+                );
+
+        return limitAuditText(
+                remarks.toString()
+        );
+    }
+
+    private String appendAuditRemark(
+            String existingRemarks,
+            String newAuditRemark
+    ) {
+        String existing =
+                trimToNull(existingRemarks);
+
+        String addition =
+                trimToNull(newAuditRemark);
+
+        if (existing == null) {
+            return limitAuditText(addition);
+        }
+
+        if (addition == null) {
+            return limitAuditText(existing);
+        }
+
+        return limitAuditText(
+                existing + " " + addition
+        );
+    }
+
+    /**
+     * Both document.internal_remarks and history.internal_remarks are limited
+     * to 1000 characters. The newest audit information is retained when an
+     * older remark makes the combined value exceed that limit.
+     */
+    private String limitAuditText(
+            String value
+    ) {
+        String normalized =
+                trimToNull(value);
+
+        if (normalized == null
+                || normalized.length() <= 1000) {
+            return normalized;
+        }
+
+        return normalized.substring(
+                normalized.length() - 1000
+        );
+    }
+
+    private boolean sameStoredPublicPath(
+            String firstPath,
+            String secondPath
+    ) {
+        String first =
+                normalizeStoredPublicPathKey(
+                        firstPath
+                );
+
+        String second =
+                normalizeStoredPublicPathKey(
+                        secondPath
+                );
+
+        return first != null
+                && first.equals(second);
+    }
+
+    private String normalizeStoredPublicPathKey(
+            String storedPath
+    ) {
+        if (!StringUtils.hasText(storedPath)) {
+            return null;
+        }
+
+        String normalized =
+                storedPath.trim()
+                        .replace('\\', '/');
+
+        while (normalized.startsWith("/")) {
+            normalized =
+                    normalized.substring(1);
+        }
+
+        if (normalized.regionMatches(
+                true,
+                0,
+                "uploads/",
+                0,
+                "uploads/".length()
+        )) {
+            normalized =
+                    normalized.substring(
+                            "uploads/".length()
+                    );
+        }
+
+        return StringUtils.hasText(normalized)
+                ? normalized
+                : null;
     }
 
     private String buildReviewInternalRemarks(

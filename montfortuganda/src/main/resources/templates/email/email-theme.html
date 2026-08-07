@@ -26,18 +26,23 @@
         }
 
         .email-header {
-            background-color: #000000;
+            background-color: #0f172a;
             padding: 40px 20px;
             border-bottom: 4px solid #d4af37;
         }
 
         .email-header-logo {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             display: block;
-            border: 0;
-            object-fit: contain;
             margin: 0;
+            padding: 4px;
+            box-sizing: border-box;
+            border: 2px solid #d4af37;
+            border-radius: 50%;
+            background-color: #ffffff;
+            object-fit: contain;
+            object-position: center;
         }
 
         .email-header-text-container {
@@ -191,8 +196,11 @@
             }
 
             .email-header-logo {
-                width: 64px !important;
-                height: 64px !important;
+                width: 76px !important;
+                height: 76px !important;
+                padding: 3px !important;
+                border-radius: 50% !important;
+                object-fit: contain;
             }
 
             .email-header-text-container {

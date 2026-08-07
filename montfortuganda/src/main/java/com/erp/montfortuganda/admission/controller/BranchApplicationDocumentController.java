@@ -1,5 +1,6 @@
 package com.erp.montfortuganda.admission.controller;
 
+import com.erp.montfortuganda.admission.dto.ApplicationDocumentDeleteRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationDocumentRequestCancelDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationDocumentRequestCreateDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationDocumentRequestResponseDTO;
@@ -10,6 +11,7 @@ import com.erp.montfortuganda.admission.service.ApplicationDocumentService.Appli
 import com.erp.montfortuganda.auth.service.CurrentUserContext;
 import com.erp.montfortuganda.auth.service.CurrentUserService;
 import com.erp.montfortuganda.dto.ApiResponse;
+import jakarta.validation.Valid;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.ContentDisposition;
@@ -19,15 +21,15 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
-import jakarta.validation.Valid;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -36,8 +38,8 @@ import java.util.List;
  * Secure branch-scoped access to public admission documents.
  *
  * <p>The browser never receives a physical storage path or stored file name.
- * Every request is validated against the authenticated user's branch before
- * document metadata or file content is returned.</p>
+ * Every operation validates the authenticated Branch Admin and application
+ * branch before metadata, review, request, file access, or deletion.</p>
  */
 @RestController
 @RequestMapping(
@@ -57,9 +59,6 @@ public class BranchApplicationDocumentController {
         this.currentUserService = currentUserService;
     }
 
-    /**
-     * Returns all current active documents for one branch-owned application.
-     */
     @GetMapping
     public ResponseEntity<
             ApiResponse<List<ApplicationDocumentResponseDTO>>>
@@ -86,9 +85,6 @@ public class BranchApplicationDocumentController {
         );
     }
 
-    /**
-     * Returns safe metadata for one application document.
-     */
     @GetMapping("/{documentId}")
     public ResponseEntity<
             ApiResponse<ApplicationDocumentResponseDTO>>
@@ -120,7 +116,13 @@ public class BranchApplicationDocumentController {
     /**
      * Verifies, rejects, or requests re-upload of one current document.
      */
-    @PatchMapping("/{documentId}/review")
+    @RequestMapping(
+            path = "/{documentId}/review",
+            method = {
+                    RequestMethod.PATCH,
+                    RequestMethod.POST
+            }
+    )
     public ResponseEntity<
             ApiResponse<ApplicationDocumentResponseDTO>>
     reviewApplicationDocument(
@@ -277,10 +279,6 @@ public class BranchApplicationDocumentController {
         );
     }
 
-    /**
-     * Opens an application document inline when the browser supports its
-     * content type. Authentication and branch ownership remain mandatory.
-     */
     @GetMapping("/{documentId}/view")
     public ResponseEntity<Resource> viewApplicationDocument(
             Authentication authentication,
@@ -305,10 +303,6 @@ public class BranchApplicationDocumentController {
         );
     }
 
-    /**
-     * Downloads an application document as an attachment after branch
-     * ownership validation.
-     */
     @GetMapping("/{documentId}/download")
     public ResponseEntity<Resource> downloadApplicationDocument(
             Authentication authentication,
@@ -330,6 +324,39 @@ public class BranchApplicationDocumentController {
         return buildFileResponse(
                 file,
                 false
+        );
+    }
+
+    /**
+     * Deactivates one unnecessary document. The application and document
+     * audit row remain; only the public-upload file is removed after commit.
+     */
+    @DeleteMapping("/{documentId}")
+    public ResponseEntity<ApiResponse<Boolean>>
+    deleteApplicationDocument(
+            Authentication authentication,
+            @PathVariable Long applicationId,
+            @PathVariable Long documentId,
+            @Valid @RequestBody
+            ApplicationDocumentDeleteRequestDTO request
+    ) {
+        CurrentUserContext context =
+                currentUserService.getCurrentUserContext(
+                        authentication
+                );
+
+        documentService.deleteDocument(
+                context,
+                applicationId,
+                documentId,
+                request
+        );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Application document deleted successfully",
+                        Boolean.TRUE
+                )
         );
     }
 

@@ -2,6 +2,7 @@ package com.erp.montfortuganda.notification.service;
 
 import com.erp.montfortuganda.admission.entity.ErpApplication;
 import com.erp.montfortuganda.admission.entity.ErpApplicationDocumentRequest;
+import com.erp.montfortuganda.admission.entity.ErpApplicationStatusHistory;
 import com.erp.montfortuganda.employee.entity.ErpEmployee;
 import com.erp.montfortuganda.notification.config.BranchMailSenderFactory;
 import com.erp.montfortuganda.school.entity.Branch;
@@ -25,6 +26,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Year;
 import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 @Service
 public class EmailService {
@@ -343,6 +345,167 @@ public class EmailService {
             throw new IllegalStateException(
                     "Additional-document request email "
                             + "could not be sent for application "
+                            + applicationNumber
+                            + ".",
+                    exception
+            );
+        }
+    }
+
+    /**
+     * Sends one branch-branded admission workflow update.
+     *
+     * <p>This method is intentionally synchronous. It is called by an
+     * AFTER_COMMIT listener that must know whether delivery succeeded so the
+     * committed history row can be marked SENT or FAILED.</p>
+     */
+    public void sendApplicationStageTransition(
+            ErpApplication application,
+            ErpApplicationStatusHistory history
+    ) {
+        validateApplicationStageTransitionEmail(
+                application,
+                history
+        );
+
+        String applicationNumber =
+                application.getApplicationNo().trim();
+
+        String recipientEmail =
+                application.getPrimaryEmail().trim();
+
+        String previousStage =
+                humanizeWorkflowStatus(
+                        history.getOldStatus()
+                );
+
+        String currentStage =
+                humanizeWorkflowStatus(
+                        history.getNewStatus()
+                );
+
+        try {
+            Branch branch = requireBranch(
+                    application.getBranch(),
+                    "Application"
+            );
+
+            String schoolName = resolveSchoolName(branch);
+            EmailLogo emailLogo = resolveBranchLogo(branch);
+
+            Context context = new Context();
+
+            context.setVariable(
+                    "schoolName",
+                    schoolName
+            );
+
+            context.setVariable(
+                    "schoolLogo",
+                    "cid:" + SCHOOL_LOGO_CONTENT_ID
+            );
+
+            context.setVariable(
+                    "studentName",
+                    buildFullName(
+                            application.getFirstName(),
+                            application.getLastName()
+                    )
+            );
+
+            context.setVariable(
+                    "applicationNo",
+                    applicationNumber
+            );
+
+            context.setVariable(
+                    "previousStage",
+                    previousStage
+            );
+
+            context.setVariable(
+                    "currentStage",
+                    currentStage
+            );
+
+            context.setVariable(
+                    "stageTitle",
+                    buildWorkflowEmailTitle(
+                            history.getNewStatus()
+                    )
+            );
+
+            context.setVariable(
+                    "stageMessage",
+                    buildWorkflowEmailMessage(
+                            history.getNewStatus()
+                    )
+            );
+
+            context.setVariable(
+                    "publicRemarks",
+                    trimToNull(
+                            history.getPublicRemarks()
+                    )
+            );
+
+            context.setVariable(
+                    "trackingUrl",
+                    buildTrackingUrl(applicationNumber)
+            );
+
+            context.setVariable(
+                    "currentYear",
+                    Year.now().getValue()
+            );
+
+            String htmlContent = templateEngine.process(
+                    "email/application-stage-transition",
+                    context
+            );
+
+            JavaMailSender branchMailSender =
+                    branchMailSenderFactory.getMailSender(branch);
+
+            MimeMessage message =
+                    branchMailSender.createMimeMessage();
+
+            MimeMessageHelper helper =
+                    createMessageHelper(message);
+
+            configureBranchSender(
+                    helper,
+                    branch,
+                    " Admissions"
+            );
+
+            helper.setTo(recipientEmail);
+
+            helper.setSubject(
+                    buildWorkflowEmailSubject(
+                            history.getNewStatus(),
+                            applicationNumber
+                    )
+            );
+
+            helper.setText(htmlContent, true);
+
+            addInlineLogo(helper, emailLogo);
+
+            branchMailSender.send(message);
+
+            LOGGER.info(
+                    "Application workflow email sent from branch {} "
+                            + "<{}> for application {} and history {}.",
+                    branch.getSchoolCode(),
+                    branch.getBranchEmail(),
+                    applicationNumber,
+                    history.getHistoryId()
+            );
+        } catch (Exception exception) {
+            throw new IllegalStateException(
+                    "Application workflow email could not be sent "
+                            + "for application "
                             + applicationNumber
                             + ".",
                     exception
@@ -775,6 +938,69 @@ public class EmailService {
         }
     }
 
+    private void validateApplicationStageTransitionEmail(
+            ErpApplication application,
+            ErpApplicationStatusHistory history
+    ) {
+        if (application == null) {
+            throw new IllegalArgumentException(
+                    "Application is required for workflow email delivery."
+            );
+        }
+
+        requireText(
+                application.getApplicationNo(),
+                "Application number"
+        );
+
+        requireText(
+                application.getPrimaryEmail(),
+                "Applicant email"
+        );
+
+        if (history == null) {
+            throw new IllegalArgumentException(
+                    "Application workflow history is required."
+            );
+        }
+
+        if (history.getHistoryId() == null
+                || history.getHistoryId() <= 0) {
+            throw new IllegalArgumentException(
+                    "Application workflow history ID is required."
+            );
+        }
+
+        requireText(
+                history.getStage(),
+                "Workflow history stage"
+        );
+
+        requireText(
+                history.getNewStatus(),
+                "Workflow target stage"
+        );
+
+        if (!Boolean.TRUE.equals(
+                history.getEmailRequired()
+        )) {
+            throw new IllegalArgumentException(
+                    "The workflow history does not require applicant email delivery."
+            );
+        }
+
+        if (history.getApplication() != null
+                && history.getApplication().getApplicationId() != null
+                && application.getApplicationId() != null
+                && !application.getApplicationId().equals(
+                history.getApplication().getApplicationId()
+        )) {
+            throw new IllegalArgumentException(
+                    "Workflow history does not belong to the application."
+            );
+        }
+    }
+
     private Branch requireBranch(
             Branch branch,
             String operationName
@@ -951,6 +1177,160 @@ public class EmailService {
                     "Document upload-token expiry is required."
             );
         }
+    }
+
+    private String buildWorkflowEmailSubject(
+            String targetStage,
+            String applicationNumber
+    ) {
+        String normalized =
+                normalizeWorkflowStatus(targetStage);
+
+        String subjectPrefix =
+                switch (normalized) {
+                    case "SCHOOL_VISIT" ->
+                            "School Visit Update";
+                    case "ENTRANCE_TEST" ->
+                            "Entrance Test Update";
+                    case "PARENT_FEE_DISCUSSION" ->
+                            "Fee Discussion Update";
+                    case "SCHOLARSHIP" ->
+                            "Scholarship Review Update";
+                    case "PAYMENT" ->
+                            "Admission Payment Update";
+                    case "FINAL_ADMISSION" ->
+                            "Admission Approved";
+                    case "ENROLLED" ->
+                            "Enrollment Confirmed";
+                    case "CLOSED" ->
+                            "Admission Application Decision";
+                    case "APPLICATION_VERIFICATION" ->
+                            "Application Review Update";
+                    default ->
+                            "Admission Application Update";
+                };
+
+        return subjectPrefix
+                + " - "
+                + applicationNumber;
+    }
+
+    private String buildWorkflowEmailTitle(
+            String targetStage
+    ) {
+        String normalized =
+                normalizeWorkflowStatus(targetStage);
+
+        return switch (normalized) {
+            case "APPLICATION_VERIFICATION" ->
+                    "Application Under Review";
+            case "SCHOOL_VISIT" ->
+                    "School Visit Stage";
+            case "ENTRANCE_TEST" ->
+                    "Entrance Test Stage";
+            case "PARENT_FEE_DISCUSSION" ->
+                    "Parent Fee Discussion";
+            case "SCHOLARSHIP" ->
+                    "Scholarship Review";
+            case "PAYMENT" ->
+                    "Admission Payment";
+            case "FINAL_ADMISSION" ->
+                    "Admission Approved";
+            case "ENROLLED" ->
+                    "Enrollment Confirmed";
+            case "CLOSED" ->
+                    "Application Closed";
+            case "APPLICATION_DRAFT" ->
+                    "Application Returned for Review";
+            default ->
+                    "Admission Application Update";
+        };
+    }
+
+    private String buildWorkflowEmailMessage(
+            String targetStage
+    ) {
+        String normalized =
+                normalizeWorkflowStatus(targetStage);
+
+        return switch (normalized) {
+            case "APPLICATION_VERIFICATION" ->
+                    "The school is reviewing the application and its supporting documents.";
+            case "SCHOOL_VISIT" ->
+                    "The application has progressed to the school visit stage. "
+                            + "The school will provide visit details when arranged.";
+            case "ENTRANCE_TEST" ->
+                    "The application has progressed to the entrance test stage. "
+                            + "The school will provide the assessment details.";
+            case "PARENT_FEE_DISCUSSION" ->
+                    "The application has progressed to the parent and school fee discussion stage.";
+            case "SCHOLARSHIP" ->
+                    "The application has been forwarded for scholarship review.";
+            case "PAYMENT" ->
+                    "The application has progressed to admission payment processing.";
+            case "FINAL_ADMISSION" ->
+                    "The admission application has been approved, subject to the school's final enrollment process.";
+            case "ENROLLED" ->
+                    "The admission process is complete and the learner has been enrolled.";
+            case "CLOSED" ->
+                    "The admission application has been closed. Please review the school remarks below, when provided.";
+            case "APPLICATION_DRAFT" ->
+                    "The application has been returned for further review or correction.";
+            default ->
+                    "The admission application status has been updated by the school.";
+        };
+    }
+
+    private String humanizeWorkflowStatus(
+            String status
+    ) {
+        if (!hasText(status)) {
+            return "Not Available";
+        }
+
+        String normalized =
+                status.trim()
+                        .toLowerCase(Locale.ROOT)
+                        .replace('_', ' ')
+                        .replaceAll("\\s+", " ");
+
+        StringBuilder result =
+                new StringBuilder(normalized.length());
+
+        boolean capitalizeNext = true;
+
+        for (int index = 0;
+             index < normalized.length();
+             index++) {
+
+            char character =
+                    normalized.charAt(index);
+
+            if (capitalizeNext
+                    && Character.isLetter(character)) {
+                result.append(
+                        Character.toUpperCase(character)
+                );
+                capitalizeNext = false;
+            } else {
+                result.append(character);
+            }
+
+            if (Character.isWhitespace(character)) {
+                capitalizeNext = true;
+            }
+        }
+
+        return result.toString();
+    }
+
+    private String normalizeWorkflowStatus(
+            String status
+    ) {
+        return hasText(status)
+                ? status.trim()
+                .toUpperCase(Locale.ROOT)
+                : "";
     }
 
     private String buildLoginUrl() {

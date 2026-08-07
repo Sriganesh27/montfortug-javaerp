@@ -7578,3 +7578,419 @@ body.erp-modal-open {
 .app-calendar-button {
     color: #2563eb;
 }
+
+/* =========================================================
+   APPLICATIONS — SAFE, SCOPED UI ADDITIONS
+   Append to the END of the existing deployed admin.css.
+   These rules do not override global Admin modal/layout styles.
+   ========================================================= */
+
+#ba-applications-view .app-filter-card {
+    padding: 14px 16px;
+}
+
+#ba-applications-view .app-filter-primary {
+    display: grid;
+    grid-template-columns: minmax(240px, 1.55fr) repeat(4, minmax(145px, 1fr)) minmax(130px, .72fr);
+    gap: 12px;
+    align-items: end;
+}
+
+#ba-applications-view .app-filter-primary .form-group,
+#ba-applications-view .app-filter-advanced .form-group {
+    margin-bottom: 0;
+    min-width: 0;
+}
+
+#ba-applications-view .app-filter-advanced {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(150px, 1fr));
+    gap: 12px;
+    align-items: end;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+#ba-applications-view .app-filter-advanced.hidden {
+    display: none !important;
+}
+
+#ba-applications-view .app-filter-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+#ba-applications-view .app-filter-actions .btn-primary,
+#ba-applications-view .app-filter-actions .btn-secondary {
+    min-width: 104px;
+}
+
+#ba-applications-view .app-filter-more-wrap .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+#ba-applications-view .app-filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    background: #0f172a;
+    color: #fff;
+}
+
+#ba-applications-view #ba-appBulkActions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 12px;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+
+#ba-applications-view #ba-appBulkActions label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    white-space: nowrap;
+}
+
+#ba-applications-view #ba-appTable {
+    min-width: 1480px;
+}
+
+#ba-applications-view #ba-appTable th,
+#ba-applications-view #ba-appTable td {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+#ba-applications-view #ba-appTable .td-name {
+    min-width: 185px;
+    max-width: 230px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#ba-applications-view #ba-appTable .td-appno {
+    min-width: 175px;
+}
+
+#ba-applications-view #ba-appTable .td-gender {
+    min-width: 86px;
+}
+
+#ba-applications-view #ba-appTable .td-level {
+    min-width: 110px;
+}
+
+#ba-applications-view #ba-appTable .td-class {
+    min-width: 115px;
+}
+
+#ba-applications-view #ba-appTable .td-stage {
+    min-width: 155px;
+}
+
+#ba-applications-view #ba-appTable .td-doc-status,
+#ba-applications-view #ba-appTable .td-scholarship,
+#ba-applications-view #ba-appTable .td-status {
+    min-width: 125px;
+}
+
+#ba-applications-view #ba-appTable .td-date {
+    min-width: 110px;
+}
+
+#ba-applications-view #ba-appTable .col-action {
+    min-width: 190px;
+}
+
+#ba-applications-view #ba-appTable .col-action .ba-pagination-controls {
+    flex-wrap: nowrap;
+    justify-content: center;
+    gap: 6px;
+}
+
+#ba-applications-view #ba-appTable .btn-view,
+#ba-applications-view #ba-appTable .btn-next-action {
+    white-space: nowrap;
+}
+
+/* Unique content inserted inside the existing global premium modal. */
+.app-workflow-confirm-content {
+    display: grid;
+    gap: 12px;
+}
+
+.app-workflow-confirm-content > p {
+    margin: 0;
+}
+
+.app-workflow-confirm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.app-workflow-confirm-item {
+    display: grid;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+    text-align: left;
+}
+
+.app-workflow-confirm-item span {
+    font-size: 12px;
+}
+
+.app-workflow-confirm-item strong {
+    font-size: 14px;
+    color: #0f172a;
+}
+
+@media (max-width: 1280px) {
+    #ba-applications-view .app-filter-primary {
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+    }
+
+    #ba-applications-view .app-filter-search {
+        grid-column: span 2;
+    }
+
+    #ba-applications-view .app-filter-advanced {
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    #ba-applications-view .app-filter-primary,
+    #ba-applications-view .app-filter-advanced {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .app-filter-search {
+        grid-column: auto;
+    }
+
+    #ba-applications-view .app-filter-actions,
+    #ba-applications-view #ba-appBulkActions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #ba-applications-view .app-filter-actions > *,
+    #ba-applications-view #ba-appBulkActions .ba-pagination-controls {
+        width: 100%;
+    }
+
+    .app-workflow-confirm-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* =========================================================
+   APPLICATIONS — CLICKABLE APPLICATION / STUDENT LINKS
+   Scoped to Applications only. No global UI rules changed.
+   ========================================================= */
+
+#ba-applications-view #ba-appTable .app-profile-link {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: left;
+    cursor: pointer;
+    max-width: 100%;
+}
+
+#ba-applications-view #ba-appTable .app-profile-link-appno {
+    color: #0f172a;
+    font-weight: 700;
+}
+
+#ba-applications-view #ba-appTable .app-profile-link-name {
+    color: #0f172a;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#ba-applications-view #ba-appTable .app-profile-link:hover,
+#ba-applications-view #ba-appTable .app-profile-link:focus-visible {
+    color: #1d4ed8;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+#ba-applications-view #ba-appTable .app-profile-link:focus-visible {
+    outline: 2px solid currentColor;
+    outline-offset: 3px;
+    border-radius: 2px;
+}
+
+#ba-applications-view #ba-appTable .col-action {
+    min-width: 145px;
+}
+
+#ba-applications-view #ba-appTable .app-no-next-action {
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+/* =========================================================
+   APPLICATIONS TABLE — MATCH STUDENT / EMPLOYEE LIST STYLE
+   Scoped only to #ba-applications-view.
+   No shared/global Admin styles are changed.
+   ========================================================= */
+
+#ba-applications-view #ba-appTable {
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+}
+
+#ba-applications-view #ba-appTable th,
+#ba-applications-view #ba-appTable td {
+    padding: 11px 12px;
+    white-space: normal;
+    vertical-align: middle;
+}
+
+#ba-applications-view #ba-appTable .app-select-column {
+    width: 42px;
+    min-width: 42px;
+    max-width: 42px;
+    text-align: center;
+}
+
+#ba-applications-view #ba-appTable .td-appno {
+    width: 165px;
+    min-width: 145px;
+}
+
+#ba-applications-view #ba-appTable .td-name {
+    width: 210px;
+    min-width: 180px;
+    max-width: 240px;
+}
+
+#ba-applications-view #ba-appTable .td-placement {
+    width: 150px;
+    min-width: 130px;
+}
+
+#ba-applications-view #ba-appTable .td-workflow {
+    width: 205px;
+    min-width: 175px;
+}
+
+#ba-applications-view #ba-appTable .td-scholarship {
+    width: 125px;
+    min-width: 110px;
+}
+
+#ba-applications-view #ba-appTable .td-status {
+    width: 120px;
+    min-width: 105px;
+}
+
+#ba-applications-view #ba-appTable .td-date {
+    width: 112px;
+    min-width: 100px;
+    white-space: nowrap;
+}
+
+#ba-applications-view #ba-appTable .col-action {
+    width: 145px;
+    min-width: 130px;
+    white-space: nowrap;
+}
+
+#ba-applications-view #ba-appTable .td-name small,
+#ba-applications-view #ba-appTable .td-placement small,
+#ba-applications-view #ba-appTable .td-workflow small {
+    display: block;
+    margin-top: 3px;
+    line-height: 1.35;
+}
+
+#ba-applications-view #ba-appTable .app-class-value,
+#ba-applications-view #ba-appTable .app-stage-value {
+    display: block;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+#ba-applications-view #ba-appTable .app-profile-link-name {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    color: var(--primary-color, #0b5cff);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+#ba-applications-view #ba-appTable .app-profile-link-appno {
+    color: #334155;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+#ba-applications-view #ba-appTable .app-profile-link-name:hover,
+#ba-applications-view #ba-appTable .app-profile-link-appno:hover {
+    color: var(--primary-color, #0b5cff);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+#ba-applications-view #ba-appTable .btn-next-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    max-width: 145px;
+    line-height: 1.15;
+}
+
+#ba-applications-view #ba-appTable .btn-next-action.hidden {
+    display: none !important;
+}
+
+#ba-applications-view #ba-appTable .app-no-next-action {
+    color: #94a3b8;
+}
+
+@media (max-width: 1180px) {
+    #ba-applications-view #ba-appTable {
+        min-width: 980px;
+    }
+}
+

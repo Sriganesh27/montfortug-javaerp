@@ -1,5 +1,6 @@
 package com.erp.montfortuganda.admission.service;
 
+import com.erp.montfortuganda.admission.dto.ApplicationDocumentDeleteRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationDocumentRequestCancelDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationDocumentRequestCreateDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationDocumentRequestResponseDTO;
@@ -60,6 +61,23 @@ public interface ApplicationDocumentService {
             Long applicationId,
             Long documentId,
             ApplicationDocumentReviewRequestDTO request
+    );
+
+    /**
+     * Deactivates one duplicate, incorrect, replaced or no-longer-required
+     * application document.
+     *
+     * <p>The application and database document audit row must never be
+     * deleted. The implementation must lock the branch-owned document,
+     * validate that deletion is allowed, record an auditable reason,
+     * recalculate the application document status and publish an after-commit
+     * request to remove only the physical public-upload file.</p>
+     */
+    void deleteDocument(
+            CurrentUserContext context,
+            Long applicationId,
+            Long documentId,
+            ApplicationDocumentDeleteRequestDTO request
     );
 
     /**

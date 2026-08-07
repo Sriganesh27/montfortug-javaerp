@@ -1,4 +1,4 @@
-/* global apiGet, apiPost, CrudTable, Toast, showLoader, hideLoader, erpWithButtonFeedback, showSuccessMessage, showErrorMessage, createErpCalendar */
+/* global apiGet, apiPost, CrudTable, Toast, showLoader, hideLoader, erpWithButtonFeedback, showPremiumModal, showSuccessMessage, showErrorMessage, createErpCalendar */
 
 const handleApplicationsLoad = event => {
     const detail =
@@ -73,6 +73,8 @@ const ApplicationsController = (() => {
         currentApplicationId: null,
         currentApplication: null,
         currentRows: [],
+        selectedApplications: new Map(),
+        profileTransitions: [],
         sortField: 'submittedDate',
         sortDirection: 'DESC',
         initializedRoot: null
@@ -103,6 +105,8 @@ const ApplicationsController = (() => {
         state.currentApplicationId = null;
         state.currentApplication = null;
         state.currentRows = [];
+        state.selectedApplications = new Map();
+        state.profileTransitions = [];
 
         view = cacheDom(root);
 
@@ -211,14 +215,45 @@ const ApplicationsController = (() => {
 
             searchKeyword:
                 byId('ba-appSearchKeyword'),
+            searchGender:
+                byId('ba-appSearchGender'),
+            searchLevel:
+                byId('ba-appSearchLevel'),
+            searchClass:
+                byId('ba-appSearchClass'),
+            searchStage:
+                byId('ba-appSearchStage'),
+            searchDocumentStatus:
+                byId('ba-appSearchDocumentStatus'),
+            searchScholarship:
+                byId('ba-appSearchScholarship'),
             searchStatus:
                 byId('ba-appSearchStatus'),
+            searchFromDate:
+                byId('ba-appSearchFromDate'),
+            searchToDate:
+                byId('ba-appSearchToDate'),
+            moreFiltersButton:
+                byId('ba-appMoreFiltersBtn'),
+            advancedFilters:
+                byId('ba-appAdvancedFilters'),
+            activeFilterCount:
+                byId('ba-appActiveFilterCount'),
             searchButton:
                 byId('ba-appSearchBtn'),
             resetButton:
                 byId('ba-appResetBtn'),
             refreshButton:
                 byId('ba-refreshAppsBtn'),
+
+            selectPage:
+                byId('ba-appSelectPage'),
+            selectedCount:
+                byId('ba-appSelectedCount'),
+            bulkNextActionButton:
+                byId('ba-appBulkNextActionBtn'),
+            bulkClearButton:
+                byId('ba-appBulkClearBtn'),
 
             pageSize:
                 byId('ba-appPageSize'),
@@ -241,6 +276,8 @@ const ApplicationsController = (() => {
                 byId(
                     'ba-requestAdditionalDocumentInlineBtn'
                 ),
+            profileNextStageButton:
+                byId('ba-appNextStageBtn'),
 
             profilePhoto:
                 byId('view-appProfilePhoto'),
@@ -512,9 +549,46 @@ const ApplicationsController = (() => {
             }
         );
 
-        view.searchStatus?.addEventListener(
+        [
+            view.searchGender,
+            view.searchLevel,
+            view.searchClass,
+            view.searchStage,
+            view.searchDocumentStatus,
+            view.searchScholarship,
+            view.searchStatus,
+            view.searchFromDate,
+            view.searchToDate
+        ].forEach(control => {
+            control?.addEventListener(
+                'change',
+                handleSearch
+            );
+        });
+
+        view.moreFiltersButton?.addEventListener(
+            'click',
+            toggleAdvancedFilters
+        );
+
+        view.selectPage?.addEventListener(
             'change',
-            handleSearch
+            handleSelectPage
+        );
+
+        view.bulkClearButton?.addEventListener(
+            'click',
+            clearBulkSelection
+        );
+
+        view.bulkNextActionButton?.addEventListener(
+            'click',
+            openBulkNextActionConfirmation
+        );
+
+        view.profileNextStageButton?.addEventListener(
+            'click',
+            openProfileNextActionConfirmation
         );
 
         view.refreshButton?.addEventListener(
@@ -654,6 +728,8 @@ const ApplicationsController = (() => {
                     ? page.content.slice()
                     : [];
 
+            populateDynamicFilterOptions();
+
             state.totalPages =
                 Number.isInteger(page.totalPages)
                     ? page.totalPages
@@ -696,6 +772,9 @@ const ApplicationsController = (() => {
             rows,
             renderApplicationRow
         );
+
+        updateBulkSelectionUI(rows);
+        updateActiveFilterCount();
     }
 
     /**
@@ -717,13 +796,45 @@ const ApplicationsController = (() => {
         );
 
         setNodeText(
-            node.querySelector('.td-name'),
+            node.querySelector(
+                '.app-profile-student-name'
+            ),
             displayValue(record.studentName)
         );
 
         setNodeText(
-            node.querySelector('.td-class'),
+            node.querySelector('.app-gender-label'),
+            formatEnum(record.gender)
+        );
+
+        setNodeText(
+            node.querySelector('.app-class-value'),
             displayValue(record.className)
+        );
+
+        setNodeText(
+            node.querySelector('.app-level-label'),
+            displayValue(record.levelName)
+        );
+
+        setNodeText(
+            node.querySelector('.app-stage-value'),
+            formatEnum(record.currentStage)
+        );
+
+        const documentLabel =
+            formatEnum(record.documentStatus);
+
+        setNodeText(
+            node.querySelector('.app-document-label'),
+            documentLabel === '-'
+                ? 'Documents: -'
+                : `Documents: ${documentLabel}`
+        );
+
+        setNodeText(
+            node.querySelector('.app-scholarship-value'),
+            formatEnum(record.scholarshipStatus)
         );
 
         setNodeText(
@@ -739,49 +850,144 @@ const ApplicationsController = (() => {
 
         if (statusCell) {
             statusCell.replaceChildren(
-                createStatusBadge(record.status)
+                createStatusBadge(
+                    record.applicationStatus
+                    || record.status
+                )
             );
         }
 
-        const viewButton =
-            node.querySelector('.btn-view');
+        const applicationId =
+            Number(record.applicationId);
 
-        viewButton?.addEventListener(
-            'click',
-            event => {
-                const applicationId =
-                    Number(record.applicationId);
+        const selectCheckbox =
+            node.querySelector('.app-row-select');
 
-                if (!Number.isInteger(applicationId)
-                        || applicationId <= 0) {
-                    notifyError(
-                        'The selected application is invalid.'
+        if (selectCheckbox) {
+            selectCheckbox.checked =
+                Number.isInteger(applicationId)
+                && state.selectedApplications
+                    .has(applicationId);
+
+            selectCheckbox.addEventListener(
+                'change',
+                event => {
+                    if (!Number.isInteger(applicationId)
+                            || applicationId <= 0) {
+                        event.currentTarget.checked = false;
+                        return;
+                    }
+
+                    if (event.currentTarget.checked) {
+                        state.selectedApplications.set(
+                            applicationId,
+                            record
+                        );
+                    } else {
+                        state.selectedApplications.delete(
+                            applicationId
+                        );
+                    }
+
+                    updateBulkSelectionUI(
+                        getFilteredRows()
                     );
-                    return;
                 }
+            );
+        }
 
-                const openProfile =
-                    () => openApplication(
-                        applicationId
-                    );
+        const profileLinks =
+            node.querySelectorAll(
+                '.app-profile-link'
+            );
 
-                /*
-                 * Match Employee/Student row actions: show button feedback
-                 * while openApplication uses the shared global detail loader.
-                 */
-                if (typeof window.erpWithButtonFeedback
-                        === 'function') {
-                    void window.erpWithButtonFeedback(
-                        event.currentTarget,
-                        'Opening...',
-                        openProfile
-                    );
-                    return;
-                }
+        profileLinks.forEach(
+            profileLink => {
+                profileLink.addEventListener(
+                    'click',
+                    () => {
+                        if (!Number.isInteger(applicationId)
+                                || applicationId <= 0) {
+                            notifyError(
+                                'The selected application is invalid.'
+                            );
+                            return;
+                        }
 
-                void openProfile();
+                        /*
+                         * Open the existing Application Profile directly.
+                         * Do not navigate, reload, or trigger the workflow
+                         * action. openApplication() already uses the existing
+                         * global loader and preserves all profile behavior.
+                         */
+                        void openApplication(
+                            applicationId
+                        );
+                    }
+                );
             }
         );
+
+        const nextActionButton =
+            node.querySelector(
+                '.btn-next-action'
+            );
+
+        const nextActionLabel =
+            node.querySelector(
+                '.btn-next-action-label'
+            );
+
+        const actionAvailable =
+            record.nextActionAvailable === true
+            && record.nextAction
+            && record.nextTargetStage
+            && !record.workflowLocked;
+
+        if (nextActionButton
+                && actionAvailable) {
+            nextActionButton.classList.remove(
+                'hidden'
+            );
+
+            nextActionButton.title =
+                record.nextActionLabel
+                    ? String(record.nextActionLabel)
+                    : 'Continue to next admission stage';
+
+            setNodeText(
+                nextActionLabel,
+                compactWorkflowActionLabel(
+                    record.nextActionLabel,
+                    record.nextTargetStage
+                )
+            );
+
+            nextActionButton.addEventListener(
+                'click',
+                () => {
+                    void openRowNextActionConfirmation(
+                        record
+                    );
+                }
+            );
+        } else if (nextActionButton) {
+            nextActionButton.classList.add(
+                'hidden'
+            );
+        }
+
+        const noNextAction =
+            node.querySelector(
+                '.app-no-next-action'
+            );
+
+        if (noNextAction) {
+            noNextAction.classList.toggle(
+                'hidden',
+                Boolean(actionAvailable)
+            );
+        }
 
         return node;
     }
@@ -848,6 +1054,9 @@ const ApplicationsController = (() => {
                 application;
 
             renderApplicationDetails(application);
+            await loadProfileTransitions(
+                validatedApplicationId
+            );
 
             hideElement(view.tableComponent);
             showElement(view.detailComponent);
@@ -934,6 +1143,19 @@ const ApplicationsController = (() => {
         renderBadgeInto(
             'summary-appStatus',
             application.applicationStatus
+        );
+
+        setText(
+            'summary-appCurrentStage',
+            formatEnum(application.currentStage)
+        );
+
+        setText(
+            'summary-appScholarship',
+            formatEnum(
+                application.scholarshipWorkflowStatus
+                || application.scholarshipStatus
+            )
         );
 
         setText(
@@ -2607,6 +2829,8 @@ const ApplicationsController = (() => {
 
         state.currentApplicationId = null;
         state.currentApplication = null;
+        state.profileTransitions = [];
+        renderProfileNextAction(null);
 
         window.scrollTo({
             top: 0,
@@ -2617,27 +2841,30 @@ const ApplicationsController = (() => {
     function handleSearch() {
         state.page = 0;
         renderApplicationRows();
-
-        if (table) {
-            table.renderPagination(
-                state.page,
-                state.totalPages,
-                state.totalElements
-            );
-        }
     }
 
     function resetSearch() {
-        if (view.searchKeyword) {
-            view.searchKeyword.value = '';
-        }
-
-        if (view.searchStatus) {
-            view.searchStatus.value = '';
-        }
+        [
+            view.searchKeyword,
+            view.searchGender,
+            view.searchLevel,
+            view.searchClass,
+            view.searchStage,
+            view.searchDocumentStatus,
+            view.searchScholarship,
+            view.searchStatus,
+            view.searchFromDate,
+            view.searchToDate
+        ].forEach(control => {
+            if (control) {
+                control.value = '';
+            }
+        });
 
         state.page = 0;
-        void loadApplications();
+        collapseAdvancedFilters();
+        clearBulkSelection();
+        renderApplicationRows();
     }
 
     function getFilteredRows() {
@@ -2645,9 +2872,39 @@ const ApplicationsController = (() => {
             trimValue(view.searchKeyword)
                 .toLowerCase();
 
+        const gender =
+            trimValue(view.searchGender)
+                .toUpperCase();
+
+        const level =
+            trimValue(view.searchLevel)
+                .toLowerCase();
+
+        const className =
+            trimValue(view.searchClass)
+                .toLowerCase();
+
+        const stage =
+            trimValue(view.searchStage)
+                .toUpperCase();
+
+        const documentStatus =
+            trimValue(view.searchDocumentStatus)
+                .toUpperCase();
+
+        const scholarship =
+            trimValue(view.searchScholarship)
+                .toUpperCase();
+
         const status =
             trimValue(view.searchStatus)
                 .toUpperCase();
+
+        const fromDate =
+            trimValue(view.searchFromDate);
+
+        const toDate =
+            trimValue(view.searchToDate);
 
         return state.currentRows.filter(record => {
             const matchesKeyword =
@@ -2655,7 +2912,8 @@ const ApplicationsController = (() => {
                 || [
                     record.applicationNo,
                     record.studentName,
-                    record.className
+                    record.className,
+                    record.levelName
                 ]
                     .some(value =>
                         String(value || '')
@@ -2663,14 +2921,944 @@ const ApplicationsController = (() => {
                             .includes(keyword)
                     );
 
+            const matchesGender =
+                !gender
+                || enumEquals(
+                    record.gender,
+                    gender
+                );
+
+            const matchesLevel =
+                !level
+                || String(record.levelName || '')
+                    .trim()
+                    .toLowerCase() === level;
+
+            const matchesClass =
+                !className
+                || String(record.className || '')
+                    .trim()
+                    .toLowerCase() === className;
+
+            const matchesStage =
+                !stage
+                || enumEquals(
+                    record.currentStage,
+                    stage
+                );
+
+            const matchesDocuments =
+                !documentStatus
+                || enumEquals(
+                    record.documentStatus,
+                    documentStatus
+                );
+
+            const matchesScholarship =
+                !scholarship
+                || enumEquals(
+                    record.scholarshipStatus,
+                    scholarship
+                );
+
             const matchesStatus =
                 !status
-                || String(record.status || '')
-                    .toUpperCase() === status;
+                || enumEquals(
+                    record.applicationStatus
+                    || record.status,
+                    status
+                );
+
+            const submittedDay =
+                isoDateOnly(record.submittedDate);
+
+            const matchesFromDate =
+                !fromDate
+                || (
+                    submittedDay
+                    && submittedDay >= fromDate
+                );
+
+            const matchesToDate =
+                !toDate
+                || (
+                    submittedDay
+                    && submittedDay <= toDate
+                );
 
             return matchesKeyword
-                && matchesStatus;
+                && matchesGender
+                && matchesLevel
+                && matchesClass
+                && matchesStage
+                && matchesDocuments
+                && matchesScholarship
+                && matchesStatus
+                && matchesFromDate
+                && matchesToDate;
         });
+    }
+
+    function populateDynamicFilterOptions() {
+        populateSelectFromRows(
+            view.searchLevel,
+            state.currentRows,
+            record => record.levelName,
+            'All Levels'
+        );
+
+        populateSelectFromRows(
+            view.searchClass,
+            state.currentRows,
+            record => record.className,
+            'All Classes'
+        );
+    }
+
+    function populateSelectFromRows(
+        select,
+        rows,
+        valueReader,
+        emptyLabel
+    ) {
+        if (!select) {
+            return;
+        }
+
+        const selectedValue =
+            select.value;
+
+        const values =
+            Array.from(
+                new Set(
+                    rows
+                        .map(valueReader)
+                        .map(value =>
+                            String(value || '').trim()
+                        )
+                        .filter(Boolean)
+                )
+            )
+                .sort((left, right) =>
+                    left.localeCompare(
+                        right,
+                        undefined,
+                        { numeric: true }
+                    )
+                );
+
+        select.replaceChildren();
+
+        const allOption =
+            document.createElement('option');
+        allOption.value = '';
+        allOption.textContent = emptyLabel;
+        select.appendChild(allOption);
+
+        values.forEach(value => {
+            const option =
+                document.createElement('option');
+            option.value = value;
+            option.textContent = value;
+            select.appendChild(option);
+        });
+
+        if (values.includes(selectedValue)) {
+            select.value = selectedValue;
+        }
+    }
+
+    function toggleAdvancedFilters() {
+        if (!view.advancedFilters
+                || !view.moreFiltersButton) {
+            return;
+        }
+
+        const willOpen =
+            view.advancedFilters
+                .classList
+                .contains('hidden');
+
+        view.advancedFilters.classList.toggle(
+            'hidden',
+            !willOpen
+        );
+
+        view.moreFiltersButton.setAttribute(
+            'aria-expanded',
+            String(willOpen)
+        );
+    }
+
+    function collapseAdvancedFilters() {
+        view.advancedFilters?.classList.add(
+            'hidden'
+        );
+        view.moreFiltersButton?.setAttribute(
+            'aria-expanded',
+            'false'
+        );
+    }
+
+    function updateActiveFilterCount() {
+        if (!view.activeFilterCount) {
+            return;
+        }
+
+        const advancedControls = [
+            view.searchGender,
+            view.searchDocumentStatus,
+            view.searchScholarship,
+            view.searchFromDate,
+            view.searchToDate
+        ];
+
+        const count =
+            advancedControls.reduce(
+                (total, control) =>
+                    total
+                    + (trimValue(control) ? 1 : 0),
+                0
+            );
+
+        view.activeFilterCount.textContent =
+            String(count);
+        view.activeFilterCount.classList.toggle(
+            'hidden',
+            count === 0
+        );
+    }
+
+    function handleSelectPage(event) {
+        const checked =
+            event.currentTarget.checked;
+
+        getFilteredRows().forEach(record => {
+            const applicationId =
+                Number(record.applicationId);
+
+            if (!Number.isInteger(applicationId)
+                    || applicationId <= 0) {
+                return;
+            }
+
+            if (checked) {
+                state.selectedApplications.set(
+                    applicationId,
+                    record
+                );
+            } else {
+                state.selectedApplications.delete(
+                    applicationId
+                );
+            }
+        });
+
+        renderApplicationRows();
+    }
+
+    function clearBulkSelection() {
+        state.selectedApplications.clear();
+        renderApplicationRows();
+    }
+
+    function updateBulkSelectionUI(
+        visibleRows = []
+    ) {
+        const selectedCount =
+            state.selectedApplications.size;
+
+        if (view.selectedCount) {
+            view.selectedCount.textContent =
+                `${selectedCount} selected`;
+        }
+
+        if (view.bulkNextActionButton) {
+            view.bulkNextActionButton.disabled =
+                selectedCount === 0;
+        }
+
+        if (view.bulkClearButton) {
+            view.bulkClearButton.disabled =
+                selectedCount === 0;
+        }
+
+        if (view.selectPage) {
+            const selectableIds =
+                visibleRows
+                    .map(record =>
+                        Number(record.applicationId)
+                    )
+                    .filter(id =>
+                        Number.isInteger(id)
+                        && id > 0
+                    );
+
+            const selectedOnPage =
+                selectableIds.filter(id =>
+                    state.selectedApplications.has(id)
+                ).length;
+
+            view.selectPage.checked =
+                selectableIds.length > 0
+                && selectedOnPage
+                    === selectableIds.length;
+
+            view.selectPage.indeterminate =
+                selectedOnPage > 0
+                && selectedOnPage
+                    < selectableIds.length;
+        }
+    }
+
+    function openBulkNextActionConfirmation() {
+        const selected =
+            Array.from(
+                state.selectedApplications.values()
+            );
+
+        if (selected.length === 0) {
+            notifyError(
+                'Select at least one application.'
+            );
+            return;
+        }
+
+        const first = selected[0];
+        const compatible =
+            selected.every(record =>
+                record.nextActionAvailable === true
+                && !record.workflowLocked
+                && enumEquals(
+                    record.currentStage,
+                    first.currentStage
+                )
+                && enumEquals(
+                    record.nextTargetStage,
+                    first.nextTargetStage
+                )
+                && enumEquals(
+                    record.nextAction,
+                    first.nextAction
+                )
+            );
+
+        if (!compatible) {
+            notifyError(
+                'Bulk next-stage action requires selected applications to have the same current stage and same available next action.'
+            );
+            return;
+        }
+
+        showWorkflowConfirmation({
+            title: 'Move Selected Applications',
+            currentStage: first.currentStage,
+            targetStage: first.nextTargetStage,
+            actionLabel:
+                first.nextActionLabel,
+            count: selected.length,
+            onConfirm: async () => {
+                await performBulkWorkflowTransition(
+                    selected
+                );
+            }
+        });
+    }
+
+    async function openRowNextActionConfirmation(
+        record
+    ) {
+        if (!record
+                || record.nextActionAvailable !== true) {
+            return;
+        }
+
+        const applicationId =
+            Number(record.applicationId);
+
+        if (!Number.isInteger(applicationId)
+                || applicationId <= 0) {
+            notifyError(
+                'The selected application is invalid.'
+            );
+            return;
+        }
+
+        let transition = null;
+        let loaderToken = null;
+
+        try {
+            if (typeof showLoader === 'function') {
+                loaderToken = showLoader(
+                    'Checking available admission action...'
+                );
+            }
+
+            const transitions =
+                await fetchAvailableTransitions(
+                    applicationId
+                );
+
+            transition =
+                transitions.find(item =>
+                    enumEquals(
+                        item.action,
+                        record.nextAction
+                    )
+                    && enumEquals(
+                        item.targetStage,
+                        record.nextTargetStage
+                    )
+                ) || null;
+        } catch (error) {
+            notifyError(
+                readErrorMessage(
+                    error,
+                    'The next admission action could not be checked.'
+                )
+            );
+            return;
+        } finally {
+            if (loaderToken
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+        }
+
+        if (!transition) {
+            notifyError(
+                'This action is no longer available. Refresh the applications list.'
+            );
+            return;
+        }
+
+        showWorkflowConfirmation({
+            title: 'Confirm Admission Action',
+            currentStage: record.currentStage,
+            targetStage: transition.targetStage,
+            actionLabel:
+                transition.label
+                || record.nextActionLabel,
+            count: 1,
+            onConfirm: async () => {
+                await performSingleWorkflowTransition(
+                    record,
+                    transition
+                );
+            }
+        });
+    }
+
+    function openProfileNextActionConfirmation() {
+        const transition =
+            state.profileTransitions[0];
+
+        if (!transition
+                || !state.currentApplicationId
+                || !state.currentApplication) {
+            return;
+        }
+
+        showWorkflowConfirmation({
+            title: 'Confirm Admission Action',
+            currentStage:
+                state.currentApplication.currentStage,
+            targetStage:
+                transition.targetStage,
+            actionLabel:
+                transition.label,
+            count: 1,
+            onConfirm: async () => {
+                const record = {
+                    applicationId:
+                        state.currentApplicationId,
+                    currentStage:
+                        state.currentApplication.currentStage,
+                    nextAction:
+                        transition.action,
+                    nextTargetStage:
+                        transition.targetStage,
+                    nextActionLabel:
+                        transition.label
+                };
+
+                await performSingleWorkflowTransition(
+                    record,
+                    transition,
+                    true
+                );
+            }
+        });
+    }
+
+    function showWorkflowConfirmation({
+        title,
+        currentStage,
+        targetStage,
+        actionLabel,
+        count,
+        onConfirm
+    }) {
+        if (typeof showPremiumModal
+                !== 'function') {
+            notifyError(
+                'Confirmation dialog is unavailable.'
+            );
+            return;
+        }
+
+        const content =
+            document.createElement('div');
+        content.className =
+            'app-workflow-confirm-content';
+
+        const summary =
+            document.createElement('p');
+        summary.className = 'text-muted';
+        summary.textContent =
+            count > 1
+                ? `${count} selected applications will be processed.`
+                : (actionLabel
+                    ? String(actionLabel)
+                    : 'Continue to the next admission stage.');
+        content.appendChild(summary);
+
+        const stageGrid =
+            document.createElement('div');
+        stageGrid.className =
+            'app-workflow-confirm-grid';
+
+        stageGrid.appendChild(
+            createWorkflowSummaryItem(
+                'Current Stage',
+                formatEnum(currentStage)
+            )
+        );
+        stageGrid.appendChild(
+            createWorkflowSummaryItem(
+                'Next Stage',
+                formatEnum(targetStage)
+            )
+        );
+        content.appendChild(stageGrid);
+
+        showPremiumModal({
+            title,
+            type: 'warning',
+            contentNode: content,
+            confirmText:
+                count > 1
+                    ? 'Move Selected'
+                    : 'Continue',
+            cancelText: 'Cancel',
+            onConfirm: async modal => {
+                await modal.close();
+                await onConfirm();
+            }
+        });
+    }
+
+    function createWorkflowSummaryItem(
+        label,
+        value
+    ) {
+        const item =
+            document.createElement('div');
+        item.className =
+            'app-workflow-confirm-item';
+
+        const labelNode =
+            document.createElement('span');
+        labelNode.className = 'text-muted';
+        labelNode.textContent = label;
+
+        const valueNode =
+            document.createElement('strong');
+        valueNode.textContent =
+            displayValue(value);
+
+        item.append(
+            labelNode,
+            valueNode
+        );
+
+        return item;
+    }
+
+    async function performSingleWorkflowTransition(
+        record,
+        transition,
+        keepProfileOpen = false
+    ) {
+        const applicationId =
+            Number(record.applicationId);
+
+        let loaderToken = null;
+        let errorMessage = null;
+        let transitionResponse = null;
+
+        try {
+            if (typeof showLoader === 'function') {
+                loaderToken = showLoader(
+                    'Updating admission workflow...'
+                );
+            }
+
+            transitionResponse =
+                await submitWorkflowTransition(
+                    applicationId,
+                    record.currentStage,
+                    transition
+                );
+
+            await loadApplications();
+
+            if (keepProfileOpen
+                    && transitionResponse) {
+                applyWorkflowResponseToProfile(
+                    transitionResponse
+                );
+                await loadProfileTransitions(
+                    applicationId
+                );
+            }
+        } catch (error) {
+            errorMessage =
+                readErrorMessage(
+                    error,
+                    'Admission workflow could not be updated.'
+                );
+        } finally {
+            if (loaderToken
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+        }
+
+        if (errorMessage) {
+            notifyError(errorMessage);
+            return;
+        }
+
+        if (!keepProfileOpen) {
+            showTableView();
+        }
+
+        notifySuccess(
+            'Application moved to the next admission stage successfully.'
+        );
+    }
+
+    async function performBulkWorkflowTransition(
+        records
+    ) {
+        let loaderToken = null;
+        let completed = 0;
+        const failures = [];
+
+        try {
+            if (typeof showLoader === 'function') {
+                loaderToken = showLoader(
+                    `Updating ${records.length} applications...`
+                );
+            }
+
+            for (const record of records) {
+                try {
+                    const transitions =
+                        await fetchAvailableTransitions(
+                            Number(record.applicationId)
+                        );
+
+                    const transition =
+                        transitions.find(item =>
+                            enumEquals(
+                                item.action,
+                                record.nextAction
+                            )
+                            && enumEquals(
+                                item.targetStage,
+                                record.nextTargetStage
+                            )
+                        );
+
+                    if (!transition) {
+                        throw new Error(
+                            'Next action is no longer available.'
+                        );
+                    }
+
+                    await submitWorkflowTransition(
+                        Number(record.applicationId),
+                        record.currentStage,
+                        transition
+                    );
+
+                    completed++;
+                } catch (error) {
+                    failures.push(
+                        `${displayValue(record.applicationNo)}: ${readErrorMessage(error, 'Failed')}`
+                    );
+                }
+            }
+
+            state.selectedApplications.clear();
+            await loadApplications();
+        } finally {
+            if (loaderToken
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+        }
+
+        if (failures.length > 0) {
+            notifyError(
+                `${completed} application(s) updated. ${failures.length} failed. ${failures.slice(0, 3).join(' | ')}`
+            );
+            return;
+        }
+
+        notifySuccess(
+            `${completed} application(s) moved to the next admission stage successfully.`
+        );
+    }
+
+    async function fetchAvailableTransitions(
+        applicationId
+    ) {
+        const response =
+            await apiGet(
+                `${API_ROOT}/${encodeURIComponent(applicationId)}/workflow/transitions`
+            );
+
+        const data =
+            unwrapResponseData(response);
+
+        return Array.isArray(data)
+            ? data
+            : [];
+    }
+
+    async function submitWorkflowTransition(
+        applicationId,
+        expectedCurrentStage,
+        transition
+    ) {
+        const response =
+            await apiPatchJson(
+                `${API_ROOT}/${encodeURIComponent(applicationId)}/workflow/transition`,
+                {
+                    expectedCurrentStage,
+                    targetStage:
+                        transition.targetStage,
+                    action:
+                        transition.action,
+                    publicRemarks: null,
+                    internalRemarks: null,
+                    notifyApplicant:
+                        transition.applicantNotificationRequired === true
+                        || transition.applicantNotificationSupported === true
+                }
+            );
+
+        return unwrapResponseData(response);
+    }
+
+    async function loadProfileTransitions(
+        applicationId
+    ) {
+        try {
+            state.profileTransitions =
+                await fetchAvailableTransitions(
+                    applicationId
+                );
+        } catch (error) {
+            console.error(
+                'Application workflow transitions could not be loaded.',
+                error
+            );
+            state.profileTransitions = [];
+        }
+
+        renderProfileNextAction(
+            state.profileTransitions[0] || null
+        );
+    }
+
+    function renderProfileNextAction(
+        transition
+    ) {
+        setText(
+            'view-nextStage',
+            transition
+                ? formatEnum(transition.targetStage)
+                : '-'
+        );
+
+        setText(
+            'view-nextActionLabel',
+            transition
+                ? displayValue(transition.label)
+                : '-'
+        );
+
+        if (!view.profileNextStageButton) {
+            return;
+        }
+
+        view.profileNextStageButton.classList.toggle(
+            'hidden',
+            !transition
+        );
+        view.profileNextStageButton.disabled =
+            !transition;
+    }
+
+    function applyWorkflowResponseToProfile(
+        response
+    ) {
+        if (!response) {
+            return;
+        }
+
+        if (state.currentApplication) {
+            Object.assign(
+                state.currentApplication,
+                {
+                    currentStage:
+                        response.currentStage,
+                    applicationStatus:
+                        response.applicationStatus,
+                    verificationStatus:
+                        response.verificationStatus,
+                    documentStatus:
+                        response.documentStatus,
+                    testStatus:
+                        response.testStatus,
+                    feeDecisionStatus:
+                        response.feeDecisionStatus,
+                    scholarshipWorkflowStatus:
+                        response.scholarshipWorkflowStatus,
+                    paymentStatus:
+                        response.paymentStatus,
+                    admissionStatus:
+                        response.admissionStatus,
+                    workflowLocked:
+                        response.workflowLocked
+                }
+            );
+        }
+
+        setText(
+            'summary-appCurrentStage',
+            formatEnum(response.currentStage)
+        );
+        renderBadgeInto(
+            'summary-appStatus',
+            response.applicationStatus
+        );
+        setText(
+            'view-appStatus',
+            formatEnum(response.applicationStatus)
+        );
+        setText(
+            'view-currentStage',
+            formatEnum(response.currentStage)
+        );
+        setText(
+            'view-verificationStatus',
+            formatEnum(response.verificationStatus)
+        );
+        setText(
+            'view-documentStatus',
+            formatEnum(response.documentStatus)
+        );
+        setText(
+            'view-testStatus',
+            formatEnum(response.testStatus)
+        );
+        setText(
+            'view-feeStatus',
+            formatEnum(response.feeDecisionStatus)
+        );
+        setText(
+            'view-scholarshipWorkflowStatus',
+            formatEnum(response.scholarshipWorkflowStatus)
+        );
+        setText(
+            'summary-appScholarship',
+            formatEnum(response.scholarshipWorkflowStatus)
+        );
+        setText(
+            'view-paymentStatus',
+            formatEnum(response.paymentStatus)
+        );
+        setText(
+            'view-admissionStatus',
+            formatEnum(response.admissionStatus)
+        );
+    }
+
+    function compactWorkflowActionLabel(
+        label,
+        targetStage
+    ) {
+        const normalized =
+            String(label || '')
+                .trim()
+                .toLowerCase();
+
+        const compact = new Map([
+            ['start verification', 'Verify'],
+            ['move to school visit', 'School Visit'],
+            ['move to entrance test', 'Entrance Test'],
+            ['start fee discussion', 'Fee Discussion'],
+            ['open scholarship review', 'Scholarship'],
+            ['move to payment', 'Payment'],
+            ['approve final admission', 'Final Admission'],
+            ['mark as enrolled', 'Enroll']
+        ]);
+
+        return compact.get(normalized)
+            || formatEnum(targetStage)
+            || 'Next';
+    }
+
+    function enumEquals(
+        left,
+        right
+    ) {
+        return String(left || '')
+            .trim()
+            .toUpperCase()
+            === String(right || '')
+                .trim()
+                .toUpperCase();
+    }
+
+    function isoDateOnly(
+        value
+    ) {
+        if (!value) {
+            return '';
+        }
+
+        const raw =
+            String(value).trim();
+
+        const match =
+            raw.match(/^\d{4}-\d{2}-\d{2}/);
+
+        if (match) {
+            return match[0];
+        }
+
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+
+        return date.toISOString().slice(0, 10);
     }
 
     function sortCurrentRows() {

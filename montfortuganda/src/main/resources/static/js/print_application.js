@@ -1,14 +1,9 @@
 /**
- * Secure Application Receipt Loader
+ * Public printable application receipt.
  *
- * Supports both:
- * 1. Current session-based backend:
- *      GET /api/public/applications/details
- * 2. Future short-lived print-token backend:
- *      GET /api/public/applications/details?token=...
+ * The receipt is session-protected. No application number or branch ID is
+ * accepted from the URL for data access.
  */
-
-'use strict';
 
 /**
  * @typedef {Object} ErpApplicationData
@@ -17,7 +12,18 @@
  * @property {string} [ref_number]
  * @property {string} [date_of_registration]
  * @property {string} [scholarship_status]
- * @property {string} [status]
+ * @property {string} [receipt_status]
+ * @property {string} [application_status]
+ * @property {string} [current_stage]
+ * @property {string} [verification_status]
+ * @property {string} [document_status]
+ * @property {string} [test_status]
+ * @property {string} [fee_decision_status]
+ * @property {string} [scholarship_workflow_status]
+ * @property {string} [payment_status]
+ * @property {string} [admission_status]
+ * @property {boolean} [workflow_locked]
+ * @property {boolean} [school_logo_available]
  * @property {string} [student_name]
  * @property {string} [middle_name]
  * @property {string} [student_surname]
@@ -69,143 +75,554 @@
  * @property {string} [more_info]
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-    bindReceiptActions();
-    setGeneratedTimestamp();
-    void loadApplicationReceipt();
-});
+document.addEventListener(
+    'DOMContentLoaded',
+    () => {
+        bindPrintButton();
+        bindLogoFallback();
+        setGeneratedTimestamp();
+        loadReceipt();
+    }
+);
 
-function bindReceiptActions() {
-    const printBtn = document.getElementById('triggerPrintBtn');
+function bindPrintButton() {
+    const printButton =
+        document.getElementById(
+            'triggerPrintBtn'
+        );
 
-    if (printBtn) {
-        printBtn.addEventListener('click', () => {
-            window.print();
-        });
+    if (!printButton) {
+        return;
     }
 
-    const schoolLogo = document.getElementById('schoolLogo');
+    printButton.addEventListener(
+        'click',
+        () => window.print()
+    );
+}
 
-    if (schoolLogo) {
-        schoolLogo.addEventListener('error', () => {
-            schoolLogo.classList.add('hidden-element');
-        });
+function bindLogoFallback() {
+    const schoolLogo =
+        document.getElementById(
+            'schoolLogo'
+        );
+
+    if (!schoolLogo) {
+        return;
     }
 
-    const studentPhoto = document.getElementById('student_photo');
+    /*
+     * Do not substitute the global Montfort logo when a Branch logo is
+     * unavailable. The receipt must represent the selected school.
+     */
+    schoolLogo.addEventListener(
+        'error',
+        () => {
+            schoolLogo.classList.add(
+                'hidden-element'
+            );
+        }
+    );
+}
 
-    if (studentPhoto) {
-        studentPhoto.addEventListener('error', () => {
-            studentPhoto.classList.add('hidden-element');
+function combineFields(
+    fields,
+    separator
+) {
+    const valid =
+        fields.filter(
+            value =>
+                value !== null
+                && value !== undefined
+                && String(value).trim() !== ''
+        );
 
-            const noPhoto = document.getElementById('no_photo');
+    return valid.length > 0
+        ? valid.join(separator)
+        : '-';
+}
 
-            if (noPhoto) {
-                noPhoto.classList.remove('hidden-element');
-                noPhoto.style.removeProperty('display');
-            }
-        });
+function displayField(
+    value
+) {
+    if (value === null
+            || value === undefined
+            || value === '') {
+        return '-';
+    }
+
+    const normalized =
+        String(value).trim();
+
+    return normalized !== ''
+        ? normalized
+        : '-';
+}
+
+function setElementText(
+    id,
+    text
+) {
+    const element =
+        document.getElementById(id);
+
+    if (element) {
+        element.textContent = text;
     }
 }
 
-async function loadApplicationReceipt() {
+function humanizeEnum(
+    value
+) {
+    const normalized =
+        String(value || '')
+            .trim();
+
+    if (!normalized) {
+        return '-';
+    }
+
+    return normalized
+        .toLowerCase()
+        .replace(/_/g, ' ')
+        .replace(
+            /\b\w/g,
+            character =>
+                character.toUpperCase()
+        );
+}
+
+function renderSubjectsSecurely(
+    containerId,
+    jsonValue
+) {
+    const container =
+        document.getElementById(
+            containerId
+        );
+
+    if (!container) {
+        return;
+    }
+
+    while (container.firstChild) {
+        container.removeChild(
+            container.firstChild
+        );
+    }
+
+    if (!jsonValue
+            || String(jsonValue).trim() === '') {
+        appendSubjectMessage(
+            container,
+            'No specific subjects declared.'
+        );
+        return;
+    }
+
     try {
-        const params = new URLSearchParams(window.location.search);
-        const printToken = params.get('token');
-        const studentName = params.get('student');
+        const parsed =
+            typeof jsonValue === 'string'
+                ? JSON.parse(jsonValue)
+                : jsonValue;
 
-        if (studentName) {
-            document.title =
-                `Application Receipt - ${studentName.replaceAll('-', ' ')}`;
+        if (!Array.isArray(parsed)
+                || parsed.length === 0) {
+            appendSubjectMessage(
+                container,
+                'No subjects declared.'
+            );
+            return;
         }
 
-        let detailsUrl = '/api/public/applications/details';
+        const table =
+            document.createElement(
+                'table'
+            );
 
-        if (printToken) {
-            detailsUrl += `?token=${encodeURIComponent(printToken)}`;
-        }
+        table.className =
+            'secure-marks-table';
 
-        const response = await fetch(detailsUrl, {
-            method: 'GET',
-            credentials: 'same-origin',
-            cache: 'no-store',
-            headers: {
-                Accept: 'application/json'
+        const thead =
+            document.createElement(
+                'thead'
+            );
+
+        const headingRow =
+            document.createElement(
+                'tr'
+            );
+
+        [
+            'Subject Name',
+            'Marks Submitted',
+            'Grade'
+        ].forEach(
+            heading => {
+                const cell =
+                    document.createElement(
+                        'th'
+                    );
+
+                cell.textContent =
+                    heading;
+
+                headingRow.appendChild(
+                    cell
+                );
             }
-        });
+        );
 
-        if (response.status === 401 || response.status === 403) {
-            throw new ReceiptLoadError(
-                'SESSION_EXPIRED',
-                'Your secure verification session has expired.'
+        thead.appendChild(
+            headingRow
+        );
+
+        table.appendChild(
+            thead
+        );
+
+        const tbody =
+            document.createElement(
+                'tbody'
+            );
+
+        parsed.forEach(
+            subject => {
+                const values =
+                    subject
+                    && typeof subject === 'object'
+                        ? Object.values(subject)
+                        : [];
+
+                const name =
+                    subject?.name
+                    || subject?.subject
+                    || values[0]
+                    || '-';
+
+                const mark =
+                    subject?.mark
+                    || subject?.marks
+                    || values[1]
+                    || '-';
+
+                const grade =
+                    subject?.grade
+                    || values[2]
+                    || '-';
+
+                const row =
+                    document.createElement(
+                        'tr'
+                    );
+
+                [
+                    name,
+                    mark,
+                    grade
+                ].forEach(
+                    value => {
+                        const cell =
+                            document.createElement(
+                                'td'
+                            );
+
+                        cell.textContent =
+                            displayField(value);
+
+                        row.appendChild(
+                            cell
+                        );
+                    }
+                );
+
+                tbody.appendChild(
+                    row
+                );
+            }
+        );
+
+        table.appendChild(
+            tbody
+        );
+
+        container.appendChild(
+            table
+        );
+    } catch (error) {
+        appendSubjectMessage(
+            container,
+            displayField(jsonValue)
+        );
+    }
+}
+
+function appendSubjectMessage(
+    container,
+    message
+) {
+    const span =
+        document.createElement(
+            'span'
+        );
+
+    span.className = 'value';
+    span.textContent = message;
+
+    container.appendChild(span);
+}
+
+async function loadReceipt() {
+    const urlParams =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    const cosmeticStudentName =
+        urlParams.get('student')
+        || 'Student';
+
+    document.title =
+        `Application Receipt - ${cosmeticStudentName}`;
+
+    try {
+        const response =
+            await fetch(
+                '/api/public/applications/receipt',
+                {
+                    method: 'GET',
+                    credentials: 'same-origin',
+                    cache: 'no-store',
+                    headers: {
+                        'Accept':
+                            'application/json'
+                    }
+                }
+            );
+
+        if (response.status === 403) {
+            throw new Error(
+                'SESSION_EXPIRED'
             );
         }
 
         if (!response.ok) {
-            throw new ReceiptLoadError(
-                'HTTP_ERROR',
-                `Application details request failed with status ${response.status}.`
+            throw new Error(
+                `Receipt request failed with status ${response.status}.`
             );
         }
 
-        const result = await readJsonResponse(response);
+        const payload =
+            await response.json();
 
-        if (!result || result.success !== true || !result.data) {
-            throw new ReceiptLoadError(
-                'INVALID_RESPONSE',
-                result?.message || 'The application details response is invalid.'
+        if (!payload
+                || payload.success !== true
+                || !payload.data) {
+            throw new Error(
+                payload?.message
+                || 'Could not load application receipt.'
             );
         }
 
-        renderApplicationReceipt(result.data);
+        renderReceipt(
+            payload.data
+        );
     } catch (error) {
-        console.error('Failed to load application receipt:', error);
+        console.error(error);
 
-        const message =
-            error instanceof ReceiptLoadError
-                ? error.message
-                : 'A secure network error occurred while loading the receipt.';
+        if (error.message
+                === 'SESSION_EXPIRED') {
+            showReceiptError(
+                'Session Expired',
+                'Your secure session has expired. Please verify your application again.'
+            );
+            return;
+        }
 
-        showReceiptError(message);
-    }
-}
-
-async function readJsonResponse(response) {
-    const contentType = response.headers.get('content-type') || '';
-
-    if (!contentType.toLowerCase().includes('application/json')) {
-        throw new ReceiptLoadError(
-            'INVALID_CONTENT_TYPE',
-            'The server did not return a valid application response.'
+        showReceiptError(
+            'Application Error',
+            error.message
+            || 'Secure network error loading application receipt.'
         );
     }
-
-    return response.json();
 }
 
 /**
  * @param {ErpApplicationData} app
  */
-function renderApplicationReceipt(app) {
+function renderReceipt(
+    app
+) {
     setElementText(
         'branch_name',
-        displayField(app.branch_name || 'General Campus')
+        displayField(
+            app.branch_name
+            || 'School'
+        )
     );
 
     setElementText(
         'branch_location',
-        displayField(app.branch_location || 'Kampala')
+        displayField(
+            app.branch_location
+            || 'Uganda'
+        )
     );
 
-    setElementText('ref_number', displayField(app.ref_number));
+    setElementText(
+        'ref_number',
+        displayField(
+            app.ref_number
+        )
+    );
+
     setElementText(
         'date_of_registration',
-        displayField(app.date_of_registration)
+        displayField(
+            app.date_of_registration
+        )
     );
 
-    renderScholarshipStatus(app.scholarship_status);
-    renderAdmissionStatus(app.status);
+    renderScholarshipStatus(app);
+    renderWorkflowStatus(app);
+    renderSchoolLogo(app);
+    renderStudentDetails(app);
+    renderPhoto(app);
+    renderContacts(app);
+    renderParentGuardianDetails(app);
+    renderAddress(app);
+    renderAcademicHistory(app);
+}
 
+function renderScholarshipStatus(
+    app
+) {
+    const scholarship =
+        String(
+            app.scholarship_status
+            || app.scholarship_workflow_status
+            || ''
+        ).trim();
+
+    const container =
+        document.getElementById(
+            'schol_container'
+        );
+
+    if (!container) {
+        return;
+    }
+
+    const normalized =
+        scholarship.toLowerCase();
+
+    if (!scholarship
+            || normalized === 'none'
+            || normalized === 'not_applied'
+            || normalized === 'not applied') {
+        container.classList.add(
+            'hidden-element'
+        );
+        return;
+    }
+
+    setElementText(
+        'schol_val',
+        humanizeEnum(
+            scholarship
+        )
+    );
+
+    container.classList.remove(
+        'hidden-element'
+    );
+}
+
+function renderWorkflowStatus(
+    app
+) {
+    const rawStatus =
+        app.receipt_status
+        || app.current_stage
+        || app.application_status
+        || app.status
+        || 'PENDING';
+
+    const status =
+        humanizeEnum(
+            rawStatus
+        );
+
+    const statusElement =
+        document.getElementById(
+            'status_val'
+        );
+
+    if (!statusElement) {
+        return;
+    }
+
+    const normalized =
+        String(rawStatus)
+            .trim()
+            .toUpperCase();
+
+    let statusClass =
+        'status-pending';
+
+    if (normalized === 'ENROLLED'
+            || normalized === 'ADMITTED'
+            || normalized === 'FINAL_ADMISSION'
+            || normalized === 'APPROVED') {
+        statusClass =
+            'status-admitted';
+    } else if (normalized === 'REJECTED'
+            || normalized === 'CLOSED') {
+        statusClass =
+            'status-rejected';
+    }
+
+    statusElement.textContent =
+        status;
+
+    statusElement.className =
+        `meta-value ${statusClass}`;
+}
+
+function renderSchoolLogo(
+    app
+) {
+    const schoolLogo =
+        document.getElementById(
+            'schoolLogo'
+        );
+
+    if (!schoolLogo) {
+        return;
+    }
+
+    if (app.school_logo_available === false) {
+        schoolLogo.classList.add(
+            'hidden-element'
+        );
+        return;
+    }
+
+    schoolLogo.classList.remove(
+        'hidden-element'
+    );
+
+    /*
+     * Assign after the verified receipt response is available. The timestamp
+     * prevents a stale image from surviving a Branch logo change.
+     */
+    schoolLogo.src =
+        `/api/public/applications/receipt/logo?v=${Date.now()}`;
+}
+
+function renderStudentDetails(
+    app
+) {
     setElementText(
         'full_name',
         combineFields(
@@ -218,74 +635,238 @@ function renderApplicationReceipt(app) {
         )
     );
 
-    setElementText('gender', displayField(app.gender));
-    setElementText('dob', displayField(app.dob));
-    setElementText('nationality', displayField(app.nationality));
-    setElementText('acad_year', displayField(app.academic_year));
-    setElementText('acad_term_only', displayField(app.term));
+    setElementText(
+        'gender',
+        displayField(app.gender)
+    );
 
-    const classCode = app.class_code
-        ? `[${app.class_code}]`
-        : null;
+    setElementText(
+        'dob',
+        displayField(app.dob)
+    );
+
+    setElementText(
+        'nationality',
+        displayField(app.nationality)
+    );
+
+    setElementText(
+        'acad_year',
+        displayField(app.academic_year)
+    );
+
+    setElementText(
+        'acad_term_only',
+        displayField(app.term)
+    );
+
+    const classCode =
+        app.class_code
+            ? `[${app.class_code}]`
+            : '';
 
     setElementText(
         'applied_class',
         combineFields(
-            [app.applied_class, classCode],
+            [
+                app.applied_class,
+                classCode
+            ],
             ' '
         )
     );
 
-    setElementText('level', displayField(app.level));
+    setElementText(
+        'level',
+        displayField(app.level)
+    );
+}
 
-    renderStudentPhoto(app.photo_path);
+function renderPhoto(
+    app
+) {
+    if (!app.photo_path) {
+        return;
+    }
 
-    setElementText('primary_email', displayField(app.primary_email));
-    setElementText('primary_mobile', displayField(app.primary_mobile));
+    let finalPhotoPath =
+        String(app.photo_path);
 
-    setElementText('father_name', displayField(app.father_name));
-    setElementText('father_contact', displayField(app.father_contact));
-    setElementText('father_email', displayField(app.father_email));
+    if (finalPhotoPath.includes(
+        '/assets/uploads/'
+    )) {
+        finalPhotoPath =
+            finalPhotoPath.substring(
+                finalPhotoPath.indexOf(
+                    '/assets/uploads/'
+                )
+            );
+    }
+
+    const photoElement =
+        document.getElementById(
+            'student_photo'
+        );
+
+    const noPhotoElement =
+        document.getElementById(
+            'no_photo'
+        );
+
+    if (!photoElement
+            || !noPhotoElement) {
+        return;
+    }
+
+    photoElement.addEventListener(
+        'error',
+        () => {
+            photoElement.classList.add(
+                'hidden-element'
+            );
+
+            noPhotoElement.classList.remove(
+                'hidden-element'
+            );
+
+            noPhotoElement.style.display =
+                '';
+        },
+        {
+            once: true
+        }
+    );
+
+    photoElement.src =
+        finalPhotoPath;
+
+    photoElement.classList.remove(
+        'hidden-element'
+    );
+
+    noPhotoElement.classList.add(
+        'hidden-element'
+    );
+
+    noPhotoElement.style.display =
+        'none';
+}
+
+function renderContacts(
+    app
+) {
+    setElementText(
+        'primary_email',
+        displayField(
+            app.primary_email
+        )
+    );
+
+    setElementText(
+        'primary_mobile',
+        displayField(
+            app.primary_mobile
+        )
+    );
+}
+
+function renderParentGuardianDetails(
+    app
+) {
+    setElementText(
+        'father_name',
+        displayField(app.father_name)
+    );
+
+    setElementText(
+        'father_contact',
+        displayField(app.father_contact)
+    );
+
+    setElementText(
+        'father_email',
+        displayField(app.father_email)
+    );
+
     setElementText(
         'father_occupation',
         displayField(app.father_occupation)
     );
+
     setElementText(
         'father_education',
         displayField(app.father_education)
     );
-    setElementText('father_age', displayField(app.father_age));
 
-    setElementText('mother_name', displayField(app.mother_name));
-    setElementText('mother_contact', displayField(app.mother_contact));
-    setElementText('mother_email', displayField(app.mother_email));
+    setElementText(
+        'father_age',
+        displayField(app.father_age)
+    );
+
+    setElementText(
+        'mother_name',
+        displayField(app.mother_name)
+    );
+
+    setElementText(
+        'mother_contact',
+        displayField(app.mother_contact)
+    );
+
+    setElementText(
+        'mother_email',
+        displayField(app.mother_email)
+    );
+
     setElementText(
         'mother_occupation',
         displayField(app.mother_occupation)
     );
+
     setElementText(
         'mother_education',
         displayField(app.mother_education)
     );
-    setElementText('mother_age', displayField(app.mother_age));
 
-    setElementText('guardian_name', displayField(app.guardian_name));
+    setElementText(
+        'mother_age',
+        displayField(app.mother_age)
+    );
+
+    setElementText(
+        'guardian_name',
+        displayField(app.guardian_name)
+    );
+
     setElementText(
         'guardian_relation',
-        displayField(app.guardian_relation)
-    );
-    setElementText(
-        'guardian_contact',
-        displayField(app.guardian_contact)
-    );
-    setElementText('guardian_email', displayField(app.guardian_email));
-    setElementText(
-        'guardian_occupation',
-        displayField(app.guardian_occupation)
+        displayField(
+            app.guardian_relation
+        )
     );
 
     setElementText(
-        'guardian_edu_age',
+        'guardian_contact',
+        displayField(
+            app.guardian_contact
+        )
+    );
+
+    setElementText(
+        'guardian_email',
+        displayField(
+            app.guardian_email
+        )
+    );
+
+    setElementText(
+        'guardian_occupation',
+        displayField(
+            app.guardian_occupation
+        )
+    );
+
+    const educationAge =
         combineFields(
             [
                 app.guardian_education,
@@ -294,18 +875,31 @@ function renderApplicationReceipt(app) {
                     : null
             ],
             ' | '
-        )
+        );
+
+    setElementText(
+        'guardian_edu_age',
+        educationAge
     );
 
     setElementText(
         'guardian_location',
-        displayField(app.guardian_location)
+        displayField(
+            app.guardian_location
+        )
     );
+}
 
+function renderAddress(
+    app
+) {
     setElementText(
         'address_house_street',
         combineFields(
-            [app.address_house, app.address_street],
+            [
+                app.address_house,
+                app.address_street
+            ],
             ' / '
         )
     );
@@ -313,7 +907,10 @@ function renderApplicationReceipt(app) {
     setElementText(
         'address_village_district',
         combineFields(
-            [app.address_village, app.address_district],
+            [
+                app.address_village,
+                app.address_district
+            ],
             ' / '
         )
     );
@@ -321,29 +918,59 @@ function renderApplicationReceipt(app) {
     setElementText(
         'address_region_postal',
         combineFields(
-            [app.address_state, app.address_postal],
+            [
+                app.address_state,
+                app.address_postal
+            ],
             ' / '
         )
     );
+}
 
-    setElementText('former_school', displayField(app.former_school));
+function renderAcademicHistory(
+    app
+) {
+    setElementText(
+        'former_school',
+        displayField(
+            app.former_school
+        )
+    );
+
     setElementText(
         'former_school_code',
-        displayField(app.former_school_code)
+        displayField(
+            app.former_school_code
+        )
     );
+
     setElementText(
         'former_school_lin',
-        displayField(app.former_school_lin)
+        displayField(
+            app.former_school_lin
+        )
     );
 
     setElementText(
         'ple_ref_score',
-        combineFields([app.ple_ref, app.ple_score], ' / ')
+        combineFields(
+            [
+                app.ple_ref,
+                app.ple_score
+            ],
+            ' / '
+        )
     );
 
     setElementText(
         'uce_ref_score',
-        combineFields([app.uce_ref, app.uce_score], ' / ')
+        combineFields(
+            [
+                app.uce_ref,
+                app.uce_score
+            ],
+            ' / '
+        )
     );
 
     renderSubjectsSecurely(
@@ -353,297 +980,71 @@ function renderApplicationReceipt(app) {
 
     setElementText(
         'more_info',
-        displayField(app.more_info || 'None declared.')
+        displayField(
+            app.more_info
+            || 'None declared.'
+        )
     );
 
-    const moreInfo = document.getElementById('more_info');
-
-    if (moreInfo) {
-        moreInfo.classList.add('value');
-    }
-}
-
-function renderScholarshipStatus(value) {
-    const scholarship = String(value || '').trim();
-    const container = document.getElementById('schol_container');
-
-    if (!container) {
-        return;
-    }
-
-    const shouldDisplay =
-        scholarship.length > 0 &&
-        scholarship.toLowerCase() !== 'none';
-
-    container.classList.toggle(
-        'hidden-element',
-        !shouldDisplay
-    );
-
-    if (shouldDisplay) {
-        setElementText('schol_val', scholarship);
-    }
-}
-
-function renderAdmissionStatus(value) {
-    const status = String(value || 'Pending').trim();
-    const normalized = status.toLowerCase();
-
-    let statusClass = 'status-pending';
-
-    if (
-        normalized === 'admitted' ||
-        normalized === 'selected'
-    ) {
-        statusClass = 'status-admitted';
-    } else if (normalized === 'rejected') {
-        statusClass = 'status-rejected';
-    }
-
-    const statusElement =
-        document.getElementById('status_val');
-
-    if (!statusElement) {
-        return;
-    }
-
-    statusElement.textContent = status;
-    statusElement.className =
-        `meta-value ${statusClass}`;
-}
-
-function renderStudentPhoto(photoPath) {
-    const photo = document.getElementById('student_photo');
-    const noPhoto = document.getElementById('no_photo');
-
-    if (!photo || !noPhoto) {
-        return;
-    }
-
-    if (!photoPath) {
-        photo.classList.add('hidden-element');
-        noPhoto.classList.remove('hidden-element');
-        noPhoto.style.removeProperty('display');
-        return;
-    }
-
-    let finalPath = String(photoPath).trim();
-
-    const uploadMarker = '/assets/uploads/';
-    const markerIndex = finalPath.indexOf(uploadMarker);
-
-    if (markerIndex >= 0) {
-        finalPath = finalPath.substring(markerIndex);
-    }
-
-    photo.src = finalPath;
-    photo.classList.remove('hidden-element');
-    noPhoto.classList.add('hidden-element');
-    noPhoto.style.display = 'none';
-}
-
-function renderSubjectsSecurely(containerId, rawValue) {
-    const container = document.getElementById(containerId);
-
-    if (!container) {
-        return;
-    }
-
-    container.replaceChildren();
-
-    if (!rawValue || String(rawValue).trim() === '') {
-        appendSubjectMessage(
-            container,
-            'No specific subjects declared.'
-        );
-        return;
-    }
-
-    try {
-        const values =
-            typeof rawValue === 'string'
-                ? JSON.parse(rawValue)
-                : rawValue;
-
-        if (!Array.isArray(values) || values.length === 0) {
-            appendSubjectMessage(
-                container,
-                'No subjects declared.'
-            );
-            return;
-        }
-
-        const table = document.createElement('table');
-        table.className = 'secure-marks-table';
-
-        const header = document.createElement('thead');
-        const headerRow = document.createElement('tr');
-
-        ['Subject Name', 'Marks Submitted', 'Grade']
-            .forEach(label => {
-                const cell = document.createElement('th');
-                cell.textContent = label;
-                headerRow.appendChild(cell);
-            });
-
-        header.appendChild(headerRow);
-        table.appendChild(header);
-
-        const body = document.createElement('tbody');
-
-        values.forEach(subject => {
-            const row = document.createElement('tr');
-
-            const objectValues =
-                subject && typeof subject === 'object'
-                    ? Object.values(subject)
-                    : [];
-
-            const subjectName =
-                subject?.name ||
-                subject?.subject ||
-                objectValues[0] ||
-                '-';
-
-            const marks =
-                subject?.mark ||
-                subject?.marks ||
-                objectValues[1] ||
-                '-';
-
-            const grade =
-                subject?.grade ||
-                objectValues[2] ||
-                '-';
-
-            [subjectName, marks, grade].forEach(value => {
-                const cell = document.createElement('td');
-                cell.textContent = displayField(value);
-                row.appendChild(cell);
-            });
-
-            body.appendChild(row);
-        });
-
-        table.appendChild(body);
-        container.appendChild(table);
-    } catch (error) {
-        console.warn(
-            'Subject marks could not be parsed as JSON:',
-            error
+    const moreInfoElement =
+        document.getElementById(
+            'more_info'
         );
 
-        appendSubjectMessage(
-            container,
-            displayField(rawValue)
+    if (moreInfoElement) {
+        moreInfoElement.classList.add(
+            'value'
         );
     }
 }
 
-function appendSubjectMessage(container, message) {
-    const span = document.createElement('span');
-    span.className = 'value';
-    span.textContent = message;
-    container.appendChild(span);
+function showReceiptError(
+    title,
+    message
+) {
+    if (typeof window.showSessionTimeoutModal
+            === 'function') {
+        window.showSessionTimeoutModal(
+            {
+                title,
+                message,
+                buttonText: 'Return',
+                redirectUrl:
+                    '/apply/status'
+            }
+        );
+        return;
+    }
+
+    window.location.href =
+        '/apply/status';
 }
 
 function setGeneratedTimestamp() {
-    const element =
-        document.getElementById('generated_timestamp');
+    const timestampElement =
+        document.getElementById(
+            'generated_timestamp'
+        );
 
-    if (!element) {
+    if (!timestampElement) {
         return;
     }
 
-    element.textContent =
-        new Date().toLocaleString('en-UG', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit'
-        });
-}
+    const now =
+        new Date();
 
-function showReceiptError(message) {
-    if (
-        typeof window.showSessionTimeoutModal ===
-        'function'
-    ) {
-        window.showSessionTimeoutModal({
-            title: 'Application Receipt',
-            message,
-            buttonText: 'Return to Status Page',
-            redirectUrl: '/apply/status'
-        });
+    const options = {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    };
 
-        return;
-    }
-
-    const printableArea =
-        document.getElementById('printableArea');
-
-    if (printableArea) {
-        printableArea.replaceChildren();
-
-        const errorBox = document.createElement('div');
-        errorBox.setAttribute('role', 'alert');
-        errorBox.style.padding = '2rem';
-        errorBox.style.textAlign = 'center';
-
-        const heading = document.createElement('h2');
-        heading.textContent =
-            'Unable to load application receipt';
-
-        const paragraph = document.createElement('p');
-        paragraph.textContent = message;
-
-        const link = document.createElement('a');
-        link.href = '/apply/status';
-        link.textContent = 'Return to Application Status';
-
-        errorBox.append(heading, paragraph, link);
-        printableArea.appendChild(errorBox);
-    }
-}
-
-function combineFields(fields, separator) {
-    const validValues = fields
-        .filter(value =>
-            value !== null &&
-            value !== undefined &&
-            String(value).trim() !== ''
-        )
-        .map(value => String(value).trim());
-
-    return validValues.length > 0
-        ? validValues.join(separator)
-        : '-';
-}
-
-function displayField(value) {
-    if (value === null || value === undefined) {
-        return '-';
-    }
-
-    const text = String(value).trim();
-
-    return text || '-';
-}
-
-function setElementText(id, text) {
-    const element = document.getElementById(id);
-
-    if (element) {
-        element.textContent = text;
-    }
-}
-
-class ReceiptLoadError extends Error {
-    constructor(code, message) {
-        super(message);
-        this.name = 'ReceiptLoadError';
-        this.code = code;
-    }
+    timestampElement.textContent =
+        now.toLocaleDateString(
+            'en-US',
+            options
+        );
 }
