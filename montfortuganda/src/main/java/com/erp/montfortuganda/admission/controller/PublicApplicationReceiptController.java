@@ -3,6 +3,7 @@ package com.erp.montfortuganda.admission.controller;
 import com.erp.montfortuganda.admission.dto.VerifiedApplicationSession;
 import com.erp.montfortuganda.admission.service.PublicApplicationReceiptService;
 import com.erp.montfortuganda.admission.service.PublicApplicationReceiptService.PublicReceiptLogoResource;
+import com.erp.montfortuganda.admission.service.PublicApplicationReceiptService.PublicReceiptPhotoResource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.core.io.Resource;
@@ -105,6 +106,52 @@ public class PublicApplicationReceiptController {
                                 .mustRevalidate()
                 )
                 .body(logo.resource());
+    }
+
+    /**
+     * Streams the selected applicant's photo from configured application
+     * storage without exposing the stored path.
+     */
+    @GetMapping("/photo")
+    public ResponseEntity<Resource> getReceiptApplicantPhoto(
+            HttpServletRequest request
+    ) {
+        VerifiedApplicationSession verifiedSession =
+                requireVerifiedApplicationSession(request);
+
+        PublicReceiptPhotoResource photo =
+                receiptService.loadApplicantPhoto(
+                        verifiedSession.getApplicationId()
+                );
+
+        ContentDisposition disposition =
+                ContentDisposition.inline()
+                        .filename(
+                                photo.fileName(),
+                                StandardCharsets.UTF_8
+                        )
+                        .build();
+
+        return ResponseEntity.ok()
+                .headers(noStoreHeaders())
+                .contentType(
+                        MediaType.parseMediaType(
+                                photo.contentType()
+                        )
+                )
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        disposition.toString()
+                )
+                .header(
+                        "X-Content-Type-Options",
+                        "nosniff"
+                )
+                .cacheControl(
+                        CacheControl.noStore()
+                                .mustRevalidate()
+                )
+                .body(photo.resource());
     }
 
     private VerifiedApplicationSession

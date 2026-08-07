@@ -5,11 +5,14 @@ import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
 import com.erp.montfortuganda.exception.ResourceNotFoundException;
 import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.service.FileStorageService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -29,15 +32,22 @@ public class PublicApplicationReceiptService {
     private final PublicApplicationService publicApplicationService;
     private final ErpApplicationRepository applicationRepository;
     private final FileStorageService fileStorageService;
+    private final Path publicStorageRoot;
 
     public PublicApplicationReceiptService(
             PublicApplicationService publicApplicationService,
             ErpApplicationRepository applicationRepository,
-            FileStorageService fileStorageService
+            FileStorageService fileStorageService,
+            @Value("${erp.storage.location:uploads}")
+            String publicStorageLocation
     ) {
         this.publicApplicationService = publicApplicationService;
         this.applicationRepository = applicationRepository;
         this.fileStorageService = fileStorageService;
+        this.publicStorageRoot =
+                Path.of(publicStorageLocation)
+                        .toAbsolutePath()
+                        .normalize();
     }
 
     /**
@@ -130,6 +140,13 @@ public class PublicApplicationReceiptService {
                 )
         );
 
+        receiptData.put(
+                "applicant_photo_available",
+                StringUtils.hasText(
+                        application.getPhotoPath()
+                )
+        );
+
         Map<String, Object> response =
                 new LinkedHashMap<>();
 
@@ -204,6 +221,115 @@ public class PublicApplicationReceiptService {
         );
     }
 
+    /**
+     * Loads the selected applicant's passport/photo from the configured
+     * public application storage without exposing the stored filesystem path.
+     */
+    public PublicReceiptPhotoResource loadApplicantPhoto(
+            Long applicationId
+    ) {
+        ErpApplication application =
+                findApplication(applicationId);
+
+        String storedPhotoPath =
+                application.getPhotoPath();
+
+        if (!StringUtils.hasText(storedPhotoPath)) {
+            throw new ResourceNotFoundException(
+                    "Applicant photo is not available."
+            );
+        }
+
+        String relativePath =
+                storedPhotoPath.trim()
+                        .replace('\\', '/');
+
+        while (relativePath.startsWith("/")) {
+            relativePath =
+                    relativePath.substring(1);
+        }
+
+        /*
+         * Existing DB values are stored as:
+         * /uploads/applications/<branch>/<application>/<file>
+         *
+         * erp.storage.location already points at the physical uploads root,
+         * so strip only the logical "uploads/" prefix before resolving.
+         */
+        if (relativePath.startsWith("uploads/")) {
+            relativePath =
+                    relativePath.substring(
+                            "uploads/".length()
+                    );
+        }
+
+        if (!StringUtils.hasText(relativePath)) {
+            throw new ResourceNotFoundException(
+                    "Applicant photo is not available."
+            );
+        }
+
+        Path photoPath =
+                publicStorageRoot
+                        .resolve(relativePath)
+                        .normalize();
+
+        if (!photoPath.startsWith(publicStorageRoot)) {
+            throw new ResourceNotFoundException(
+                    "Applicant photo is not available."
+            );
+        }
+
+        try {
+            if (!Files.exists(photoPath)
+                    || !Files.isRegularFile(photoPath)
+                    || !Files.isReadable(photoPath)) {
+                throw new ResourceNotFoundException(
+                        "Applicant photo is not available."
+                );
+            }
+
+            String contentType =
+                    Files.probeContentType(photoPath);
+
+            if (!StringUtils.hasText(contentType)
+                    || !contentType
+                    .toLowerCase(Locale.ROOT)
+                    .startsWith("image/")) {
+                throw new ResourceNotFoundException(
+                        "Applicant photo is not a valid image."
+                );
+            }
+
+            Resource resource =
+                    new UrlResource(
+                            photoPath.toUri()
+                    );
+
+            if (!resource.exists()
+                    || !resource.isReadable()) {
+                throw new ResourceNotFoundException(
+                        "Applicant photo is not available."
+                );
+            }
+
+            return new PublicReceiptPhotoResource(
+                    resource,
+                    contentType,
+                    photoPath
+                            .getFileName()
+                            .toString()
+            );
+
+        } catch (ResourceNotFoundException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new ResourceNotFoundException(
+                    "Applicant photo is not available."
+            );
+        }
+    }
+
     private ErpApplication findApplication(
             Long applicationId
     ) {
@@ -258,6 +384,13 @@ public class PublicApplicationReceiptService {
     }
 
     public record PublicReceiptLogoResource(
+            Resource resource,
+            String contentType,
+            String fileName
+    ) {
+    }
+
+    public record PublicReceiptPhotoResource(
             Resource resource,
             String contentType,
             String fileName

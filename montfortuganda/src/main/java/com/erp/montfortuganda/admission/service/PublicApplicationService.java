@@ -20,6 +20,7 @@ import com.erp.montfortuganda.school.repository.SchoolClassRepository;
 import com.erp.montfortuganda.notification.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +42,9 @@ public class PublicApplicationService {
     private final AcademicTermRepository academicTermRepository;
     private final SchoolClassRepository classRepository;
     private final LevelRepository levelRepository;
+
+    @Value("${erp.storage.location:uploads}")
+    private String publicStorageLocation;
 
     @Autowired
     private EmailService emailService;
@@ -287,86 +291,230 @@ public class PublicApplicationService {
     }
 
     @Transactional
-    public void uploadApplicationFiles(String refNumber, org.springframework.web.multipart.MultipartFile photo, java.util.List<org.springframework.web.multipart.MultipartFile> documents) {
+    public void uploadApplicationFiles(
+            String refNumber,
+            org.springframework.web.multipart.MultipartFile photo,
+            java.util.List<org.springframework.web.multipart.MultipartFile> documents
+    ) {
 
         // SECURITY GUARD: Reject path traversal characters in the input
-        if (refNumber == null || refNumber.contains("..") || refNumber.contains("/") || refNumber.contains("\\")) {
-            throw new SecurityException("Invalid reference number: Path traversal detected");
+        if (refNumber == null
+                || refNumber.contains("..")
+                || refNumber.contains("/")
+                || refNumber.contains("\\")) {
+            throw new SecurityException(
+                    "Invalid reference number: Path traversal detected"
+            );
         }
 
-        ErpApplication app = applicationRepository.findByApplicationNo(refNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Application not found"));
+        ErpApplication app =
+                applicationRepository.findByApplicationNo(refNumber)
+                        .orElseThrow(
+                                () -> new IllegalArgumentException(
+                                        "Application not found"
+                                )
+                        );
 
-        String uploadDir = generateUploadDirectory(app, app.getApplicationNo());
+        /*
+         * Keep the logical/database path in the existing compatible format:
+         * uploads/applications/<branch>/<application>/
+         *
+         * The physical storage root comes only from erp.storage.location.
+         */
+        String uploadDir =
+                generateUploadDirectory(
+                        app,
+                        app.getApplicationNo()
+                );
 
         try {
-            // Use java.io.File to match the Security Scanner's expected pattern
-            java.io.File baseDirFile = new java.io.File(uploadDir).getCanonicalFile();
-            if (!baseDirFile.exists() && !baseDirFile.mkdirs()) {
-                throw new java.io.IOException("Failed to create directory for uploads. Check folder permissions.");
+            java.io.File storageRoot =
+                    new java.io.File(
+                            publicStorageLocation
+                    ).getCanonicalFile();
+
+            if (!storageRoot.exists()
+                    && !storageRoot.mkdirs()) {
+                throw new java.io.IOException(
+                        "Failed to initialize application upload storage."
+                );
             }
 
-            if (photo != null && !photo.isEmpty()) {
-                String photoName = sanitizeFileName("photo", photo.getOriginalFilename());
+            /*
+             * uploadDir starts with "uploads/" for existing DB compatibility.
+             * Strip only that logical prefix before resolving it against the
+             * configured physical storage root.
+             */
+            String relativeUploadDir =
+                    uploadDir.startsWith("uploads/")
+                            ? uploadDir.substring(
+                            "uploads/".length()
+                    )
+                            : uploadDir;
 
-                // EXACT SCANNER MATCH: Secure Path Traversal Guard using Canonical Paths
-                java.io.File targetFile = new java.io.File(baseDirFile, photoName).getCanonicalFile();
-                if (!targetFile.getPath().startsWith(baseDirFile.getCanonicalPath())) {
-                    throw new SecurityException("Invalid file path: Path Traversal detected");
+            java.io.File baseDirFile =
+                    new java.io.File(
+                            storageRoot,
+                            relativeUploadDir
+                    ).getCanonicalFile();
+
+            String storageRootPath =
+                    storageRoot.getCanonicalPath();
+
+            String baseDirPath =
+                    baseDirFile.getCanonicalPath();
+
+            if (!baseDirPath.equals(storageRootPath)
+                    && !baseDirPath.startsWith(
+                    storageRootPath
+                            + java.io.File.separator
+            )) {
+                throw new SecurityException(
+                        "Invalid application upload directory"
+                );
+            }
+
+            if (!baseDirFile.exists()
+                    && !baseDirFile.mkdirs()) {
+                throw new java.io.IOException(
+                        "Failed to create directory for uploads. "
+                                + "Check folder permissions."
+                );
+            }
+
+            // -------------------------------------------------------------
+            // APPLICANT PHOTO
+            // -------------------------------------------------------------
+            if (photo != null
+                    && !photo.isEmpty()) {
+
+                String photoName =
+                        sanitizeFileName(
+                                "photo",
+                                photo.getOriginalFilename()
+                        );
+
+                java.io.File targetFile =
+                        new java.io.File(
+                                baseDirFile,
+                                photoName
+                        ).getCanonicalFile();
+
+                String targetPath =
+                        targetFile.getCanonicalPath();
+
+                if (!targetPath.startsWith(
+                        baseDirPath
+                                + java.io.File.separator
+                )) {
+                    throw new SecurityException(
+                            "Invalid file path: Path Traversal detected"
+                    );
                 }
 
-                // Safely transfer the file
                 photo.transferTo(targetFile);
 
-                ErpApplicationDocument doc = new ErpApplicationDocument();
-                doc.setApplication(app);
+                ErpApplicationDocument doc =
+                        new ErpApplicationDocument();
 
-                // FIXED: Use the strict Enum and store metadata!
-                doc.setDocumentType(ErpApplicationDocument.DocumentType.PHOTO);
+                doc.setApplication(app);
+                doc.setDocumentType(
+                        ErpApplicationDocument.DocumentType.PHOTO
+                );
                 doc.setFileSize(photo.getSize());
                 doc.setContentType(photo.getContentType());
-
-                doc.setOriginalFileName(photo.getOriginalFilename());
+                doc.setOriginalFileName(
+                        photo.getOriginalFilename()
+                );
                 doc.setStoredFileName(photoName);
-                doc.setFilePath("/" + uploadDir + photoName);
+
+                String photoDatabasePath =
+                        "/" + uploadDir + photoName;
+
+                doc.setFilePath(photoDatabasePath);
                 app.addDocument(doc);
-                app.setPhotoPath("/" + uploadDir + photoName);
+                app.setPhotoPath(photoDatabasePath);
             }
 
+            // -------------------------------------------------------------
+            // APPLICATION DOCUMENTS
+            // -------------------------------------------------------------
             if (documents != null) {
-                for (org.springframework.web.multipart.MultipartFile file : documents) {
-                    if (file != null && !file.isEmpty()) {
-                        String docName = sanitizeFileName("doc", file.getOriginalFilename());
+                for (org.springframework.web.multipart.MultipartFile file
+                        : documents) {
 
-                        // EXACT SCANNER MATCH: Secure Path Traversal Guard using Canonical Paths
-                        java.io.File targetFile = new java.io.File(baseDirFile, docName).getCanonicalFile();
-                        if (!targetFile.getPath().startsWith(baseDirFile.getCanonicalPath())) {
-                            throw new SecurityException("Invalid file path: Path Traversal detected");
-                        }
-
-                        // Safely transfer the file
-                        file.transferTo(targetFile);
-
-                        ErpApplicationDocument doc = new ErpApplicationDocument();
-                        doc.setApplication(app);
-
-                        // FIXED: Use the strict Enum and store metadata!
-                        doc.setDocumentType(ErpApplicationDocument.DocumentType.OTHER);
-                        doc.setFileSize(file.getSize());
-                        doc.setContentType(file.getContentType());
-
-                        doc.setOriginalFileName(file.getOriginalFilename());
-                        doc.setStoredFileName(docName);
-                        doc.setFilePath("/" + uploadDir + docName);
-                        app.addDocument(doc);
-                        app.setPrevMarksDoc(app.getPrevMarksDoc() + "/" + uploadDir + docName + ";");
+                    if (file == null
+                            || file.isEmpty()) {
+                        continue;
                     }
+
+                    String docName =
+                            sanitizeFileName(
+                                    "doc",
+                                    file.getOriginalFilename()
+                            );
+
+                    java.io.File targetFile =
+                            new java.io.File(
+                                    baseDirFile,
+                                    docName
+                            ).getCanonicalFile();
+
+                    String targetPath =
+                            targetFile.getCanonicalPath();
+
+                    if (!targetPath.startsWith(
+                            baseDirPath
+                                    + java.io.File.separator
+                    )) {
+                        throw new SecurityException(
+                                "Invalid file path: Path Traversal detected"
+                        );
+                    }
+
+                    file.transferTo(targetFile);
+
+                    ErpApplicationDocument doc =
+                            new ErpApplicationDocument();
+
+                    doc.setApplication(app);
+                    doc.setDocumentType(
+                            ErpApplicationDocument.DocumentType.OTHER
+                    );
+                    doc.setFileSize(file.getSize());
+                    doc.setContentType(file.getContentType());
+                    doc.setOriginalFileName(
+                            file.getOriginalFilename()
+                    );
+                    doc.setStoredFileName(docName);
+
+                    String documentDatabasePath =
+                            "/" + uploadDir + docName;
+
+                    doc.setFilePath(documentDatabasePath);
+                    app.addDocument(doc);
+
+                    String previousMarks =
+                            app.getPrevMarksDoc() == null
+                                    ? ""
+                                    : app.getPrevMarksDoc();
+
+                    app.setPrevMarksDoc(
+                            previousMarks
+                                    + documentDatabasePath
+                                    + ";"
+                    );
                 }
             }
 
             applicationRepository.save(app);
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to upload files: " + e.getMessage(), e);
+            throw new RuntimeException(
+                    "Failed to upload files: "
+                            + e.getMessage(),
+                    e
+            );
         }
     }
 
