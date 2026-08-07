@@ -24,6 +24,7 @@
  * @property {string} [admission_status]
  * @property {boolean} [workflow_locked]
  * @property {boolean} [school_logo_available]
+ * @property {boolean} [applicant_photo_available]
  * @property {string} [student_name]
  * @property {string} [middle_name]
  * @property {string} [student_surname]
@@ -685,24 +686,6 @@ function renderStudentDetails(
 function renderPhoto(
     app
 ) {
-    if (!app.photo_path) {
-        return;
-    }
-
-    let finalPhotoPath =
-        String(app.photo_path);
-
-    if (finalPhotoPath.includes(
-        '/assets/uploads/'
-    )) {
-        finalPhotoPath =
-            finalPhotoPath.substring(
-                finalPhotoPath.indexOf(
-                    '/assets/uploads/'
-                )
-            );
-    }
-
     const photoElement =
         document.getElementById(
             'student_photo'
@@ -714,7 +697,24 @@ function renderPhoto(
         );
 
     if (!photoElement
-            || !noPhotoElement) {
+        || !noPhotoElement) {
+        return;
+    }
+
+    if (app.applicant_photo_available === false
+        || !app.photo_path) {
+
+        photoElement.classList.add(
+            'hidden-element'
+        );
+
+        noPhotoElement.classList.remove(
+            'hidden-element'
+        );
+
+        noPhotoElement.style.display =
+            '';
+
         return;
     }
 
@@ -738,7 +738,7 @@ function renderPhoto(
     );
 
     photoElement.src =
-        finalPhotoPath;
+        `/api/public/applications/receipt/photo?v=${Date.now()}`;
 
     photoElement.classList.remove(
         'hidden-element'
