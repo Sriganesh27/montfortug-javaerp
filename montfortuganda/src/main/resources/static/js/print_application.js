@@ -1043,8 +1043,10 @@ function setGeneratedTimestamp() {
     };
 
     timestampElement.textContent =
-        now.toLocaleDateString(
-            'en-US',
-            options
-        );
+        window.erpDate
+            ? window.erpDate.formatDateTime(
+                now.toISOString(),
+                ''
+            )
+            : now.toLocaleString();
 }

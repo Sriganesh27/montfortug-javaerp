@@ -4813,6 +4813,10 @@
             return '-';
         }
 
+        if (window.erpDate) {
+            return window.erpDate.formatDate(value, '-');
+        }
+
         return String(value).slice(0, 10);
     }
 

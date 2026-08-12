@@ -223,6 +223,11 @@
                             <i class="bi bi-arrow-down-up"></i>
                         </th>
 
+                        <th data-sort="schoolVisitScheduledAt">
+                            School Visit
+                            <i class="bi bi-arrow-down-up"></i>
+                        </th>
+
                         <th data-sort="scholarshipStatus">
                             Scholarship
                             <i class="bi bi-arrow-down-up"></i>
@@ -464,7 +469,7 @@
                         </div>
                     </div>
 
-                    <div class="emp-detail-grid emp-detail-grid-4">
+                    <div class="emp-detail-grid emp-detail-grid-4 app-school-visit-grid">
                         <div class="form-group">
                             <label>Academic Year</label>
                             <span id="view-academicYear"
@@ -955,20 +960,6 @@
 
                     <div class="emp-detail-grid emp-detail-grid-2">
                         <div class="form-group">
-                            <label>School Visit</label>
-                            <span id="view-schoolVisitAt"
-                                  class="detail-text"></span>
-                        </div>
-
-                        <div class="form-group">
-                            <label>School Visit Remarks</label>
-                            <span id="view-schoolVisitRemarks"
-                                  class="detail-text"></span>
-                        </div>
-                    </div>
-
-                    <div class="emp-detail-grid emp-detail-grid-2">
-                        <div class="form-group">
                             <label>Verification Decision</label>
                             <span id="view-verificationDecision"
                                   class="detail-text"></span>
@@ -978,6 +969,87 @@
                             <label>Rejection Reason</label>
                             <span id="view-rejectionReason"
                                   class="detail-text"></span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- SCHOOL VISIT                                       -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section"
+                      id="application-school-visit-section">
+                <legend class="emp-detail-section-header">
+                    School Visit
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="ba-flex-panel app-school-visit-toolbar">
+                        <div class="ba-pagination-controls app-school-visit-actions">
+                            <button type="button" id="ba-schoolVisitScheduleBtn"
+                                    class="btn-primary btn-sm hidden">
+                                <i class="bi bi-calendar2-plus"></i> Schedule Visit
+                            </button>
+
+                            <button type="button" id="ba-schoolVisitRescheduleBtn"
+                                    class="btn-secondary btn-sm hidden">
+                                <i class="bi bi-calendar2-week"></i> Reschedule
+                            </button>
+
+                            <button type="button" id="ba-schoolVisitCompleteBtn"
+                                    class="btn-primary btn-sm hidden">
+                                <i class="bi bi-arrow-right-circle"></i> Proceed to Entrance Test
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Visit Status</label>
+                            <span id="view-schoolVisitStatus" class="detail-text">Not Scheduled</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Assigned Employee</label>
+                            <span id="view-schoolVisitEmployee" class="detail-text">—</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Employee Number</label>
+                            <span id="view-schoolVisitEmployeeNo" class="detail-text">—</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Scheduled Date & Time</label>
+                            <span id="view-schoolVisitScheduledAt" class="detail-text">—</span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Actual Visit Date & Time</label>
+                            <span id="view-schoolVisitAt" class="detail-text">—</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Student Attendance</label>
+                            <span id="view-schoolVisitStudentAttendance" class="detail-text">—</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Parent / Guardian Attendance</label>
+                            <span id="view-schoolVisitParentAttendance" class="detail-text">—</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Entrance Test Readiness</label>
+                            <span id="view-schoolVisitEntranceReadiness" class="detail-text">Not Ready</span>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-2">
+                        <div class="form-group">
+                            <label>Completed At</label>
+                            <span id="view-schoolVisitCompletedAt" class="detail-text">—</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Remarks</label>
+                            <span id="view-schoolVisitRemarks" class="detail-text">—</span>
                         </div>
                     </div>
                 </div>
@@ -1045,6 +1117,176 @@
                     </div>
                 </div>
             </fieldset>
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- SCHOOL VISIT SCHEDULE / RESCHEDULE MODAL             -->
+    <!-- ===================================================== -->
+    <div id="ba-schoolVisitScheduleModal"
+         class="ba-modal-backdrop hidden"
+         role="dialog" aria-modal="true" aria-hidden="true"
+         aria-labelledby="ba-schoolVisitScheduleTitle">
+        <div class="ba-modal-box app-request-modal-box">
+            <div class="app-request-modal-header">
+                <div class="app-request-modal-heading">
+                    <span class="app-request-modal-icon"><i class="bi bi-calendar2-check"></i></span>
+                    <div>
+                        <h3 id="ba-schoolVisitScheduleTitle">Schedule School Visit</h3>
+                        <p id="ba-schoolVisitScheduleSubtitle" class="text-muted">
+                            Select the date and time for the parent / student School Visit.
+                        </p>
+                    </div>
+                </div>
+                <button type="button" id="ba-closeSchoolVisitScheduleBtn"
+                        class="app-request-modal-close" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <form id="ba-schoolVisitScheduleForm" class="app-request-form" novalidate>
+                <div class="app-request-modal-body">
+                    <div class="app-request-info">
+                        <i class="bi bi-info-circle"></i>
+                        <span>After saving, the parent / guardian will receive the scheduled visit date and time by email.</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-schoolVisitScheduledAtInput">Visit Date & Time <span class="text-danger">*</span></label>
+                        <div class="app-calendar-field">
+                            <input type="text" id="ba-schoolVisitScheduledAtInput"
+                                   class="detail-input w-100"
+                                   placeholder="Select visit date and time"
+                                   autocomplete="off" required>
+                            <button type="button" class="app-calendar-button"
+                                    data-calendar-target="ba-schoolVisitScheduledAtInput"
+                                    aria-label="Open School Visit calendar">
+                                <i class="bi bi-calendar3"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-schoolVisitScheduleRemarks">Remarks <span class="text-muted">(Optional)</span></label>
+                        <textarea id="ba-schoolVisitScheduleRemarks" class="detail-input w-100"
+                                  rows="4" maxlength="1000"
+                                  placeholder="Scheduling notes"></textarea>
+                    </div>
+
+                    <div id="ba-schoolVisitScheduleError" class="app-request-error hidden" role="alert"></div>
+                </div>
+
+                <div class="ba-modal-actions app-request-modal-actions">
+                    <button type="button" id="ba-cancelSchoolVisitScheduleBtn" class="btn-secondary">Cancel</button>
+                    <button type="submit" id="ba-saveSchoolVisitScheduleBtn" class="btn-primary">
+                        <i class="bi bi-calendar2-check"></i> Save Schedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+    <!-- ===================================================== -->
+    <!-- PROCEED TO ENTRANCE TEST MODAL                       -->
+    <!-- ===================================================== -->
+    <div id="ba-schoolVisitCompleteModal"
+         class="ba-modal-backdrop hidden"
+         role="dialog" aria-modal="true" aria-hidden="true"
+         aria-labelledby="ba-schoolVisitCompleteTitle">
+        <div class="ba-modal-box app-request-modal-box">
+            <div class="app-request-modal-header">
+                <div class="app-request-modal-heading">
+                    <span class="app-request-modal-icon"><i class="bi bi-building-check"></i></span>
+                    <div>
+                        <h3 id="ba-schoolVisitCompleteTitle">Proceed to Entrance Test</h3>
+                        <p class="text-muted">Assign the responsible employee and record attendance before starting the Entrance Test process.</p>
+                    </div>
+                </div>
+                <button type="button" id="ba-closeSchoolVisitCompleteBtn"
+                        class="app-request-modal-close" aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <form id="ba-schoolVisitCompleteForm" class="app-request-form" novalidate>
+                <div class="app-request-modal-body">
+                    <div class="app-request-info">
+                        <i class="bi bi-info-circle"></i>
+                        <span>
+                            Select the employee handling the visit/test, record attendance, and continue to the Entrance Test.
+                            No parent email is sent for this action.
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-schoolVisitCompleteEmployeeId">
+                            Responsible Employee
+                            <span class="text-danger">*</span>
+                        </label>
+                        <select id="ba-schoolVisitCompleteEmployeeId"
+                                class="detail-input w-100"
+                                required>
+                            <option value="">-- Select Employee --</option>
+                        </select>
+                    </div>
+
+                    <div class="app-request-grid">
+                        <div class="form-group">
+                            <label for="ba-schoolVisitVisitedAtInput">Actual Visit Date & Time <span class="text-muted">(Optional)</span></label>
+                            <div class="app-calendar-field">
+                                <input type="text" id="ba-schoolVisitVisitedAtInput"
+                                       class="detail-input w-100"
+                                       placeholder="Leave blank to use server time"
+                                       autocomplete="off">
+                                <button type="button" class="app-calendar-button"
+                                        data-calendar-target="ba-schoolVisitVisitedAtInput"
+                                        aria-label="Open actual visit calendar">
+                                    <i class="bi bi-calendar3"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ba-schoolVisitStudentAttended">Student Attendance <span class="text-danger">*</span></label>
+                            <select id="ba-schoolVisitStudentAttended" class="detail-input w-100" required>
+                                <option value="">-- Select --</option>
+                                <option value="true">Attended</option>
+                                <option value="false">Not Attended</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="app-request-grid">
+                        <div class="form-group">
+                            <label for="ba-schoolVisitParentAttended">Parent / Guardian Attendance <span class="text-danger">*</span></label>
+                            <select id="ba-schoolVisitParentAttended" class="detail-input w-100" required>
+                                <option value="">-- Select --</option>
+                                <option value="true">Attended</option>
+                                <option value="false">Not Attended</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ba-schoolVisitCompleteRemarks">Visit Remarks <span class="text-muted">(Optional)</span></label>
+                            <textarea id="ba-schoolVisitCompleteRemarks" class="detail-input w-100"
+                                      rows="3" maxlength="1000"
+                                      placeholder="Visit observations before Entrance Test"></textarea>
+                        </div>
+                    </div>
+
+                    <div id="ba-schoolVisitCompleteError" class="app-request-error hidden" role="alert"></div>
+                </div>
+
+                <div class="ba-modal-actions app-request-modal-actions">
+                    <button type="button" id="ba-cancelSchoolVisitCompleteBtn" class="btn-secondary">Cancel</button>
+                    <button type="submit" id="ba-confirmSchoolVisitCompleteBtn" class="btn-primary">
+                        <i class="bi bi-arrow-right-circle"></i> Proceed to Entrance Test
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1484,6 +1726,11 @@
             <td class="td-workflow">
                 <span class="app-stage-value"></span>
                 <small class="app-document-label text-muted"></small>
+            </td>
+
+            <td class="td-school-visit">
+                <span class="app-school-visit-date">—</span>
+                <small class="app-school-visit-status text-muted"></small>
             </td>
 
             <td class="td-scholarship">

@@ -902,10 +902,8 @@
             return '-';
         }
 
-        const parts = String(value).split('-');
-
-        if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        if (window.erpDate) {
+            return window.erpDate.formatDate(value, '-');
         }
 
         return String(value);

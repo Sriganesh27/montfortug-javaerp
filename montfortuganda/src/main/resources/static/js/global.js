@@ -743,6 +743,195 @@
     window.updateSidebarSelection = updateSidebarSelection;
 })();
 
+
+// ========================================================
+// GLOBAL ERP DATE / DATE-TIME FORMAT
+// ========================================================
+
+(function initializeErpDateUtility() {
+    const DATE_ONLY_PATTERN =
+        /^(\d{4})-(\d{2})-(\d{2})$/;
+
+    const DATE_TIME_PATTERN =
+        /^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?$/;
+
+    const DISPLAY_DATE_PATTERN =
+        /^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/;
+
+    function pad2(value) {
+        return String(value).padStart(2, '0');
+    }
+
+    function formatDate(value, fallback = '-') {
+        if (value === null || value === undefined || value === '') {
+            return fallback;
+        }
+
+        const raw =
+            String(value).trim();
+
+        const isoDate =
+            raw.match(DATE_ONLY_PATTERN);
+
+        if (isoDate) {
+            return `${isoDate[3]}-${isoDate[2]}-${isoDate[1]}`;
+        }
+
+        const isoDateTime =
+            raw.match(DATE_TIME_PATTERN);
+
+        if (isoDateTime) {
+            return `${isoDateTime[3]}-${isoDateTime[2]}-${isoDateTime[1]}`;
+        }
+
+        const alreadyDisplay =
+            raw.match(DISPLAY_DATE_PATTERN);
+
+        if (alreadyDisplay) {
+            return `${pad2(alreadyDisplay[1])}-${pad2(alreadyDisplay[2])}-${alreadyDisplay[3]}`;
+        }
+
+        const parsed =
+            new Date(raw);
+
+        if (Number.isNaN(parsed.getTime())) {
+            return raw || fallback;
+        }
+
+        return `${pad2(parsed.getDate())}-${pad2(parsed.getMonth() + 1)}-${parsed.getFullYear()}`;
+    }
+
+    function formatDateTime(value, fallback = '-') {
+        if (value === null || value === undefined || value === '') {
+            return fallback;
+        }
+
+        const raw =
+            String(value).trim();
+
+        /*
+         * Parse ISO local date-time manually when there is no timezone
+         * information. This prevents the browser from shifting a school-local
+         * date/time because of UTC conversion.
+         */
+        const localMatch =
+            raw.match(DATE_TIME_PATTERN);
+
+        let year;
+        let month;
+        let day;
+        let hours;
+        let minutes;
+
+        if (localMatch) {
+            year = Number(localMatch[1]);
+            month = Number(localMatch[2]);
+            day = Number(localMatch[3]);
+            hours = Number(localMatch[4]);
+            minutes = Number(localMatch[5]);
+        } else {
+            const dateOnly =
+                raw.match(DATE_ONLY_PATTERN);
+
+            if (dateOnly) {
+                return `${dateOnly[3]}-${dateOnly[2]}-${dateOnly[1]}`;
+            }
+
+            const parsed =
+                new Date(raw);
+
+            if (Number.isNaN(parsed.getTime())) {
+                return raw || fallback;
+            }
+
+            year = parsed.getFullYear();
+            month = parsed.getMonth() + 1;
+            day = parsed.getDate();
+            hours = parsed.getHours();
+            minutes = parsed.getMinutes();
+        }
+
+        const meridiem =
+            hours >= 12
+                ? 'PM'
+                : 'AM';
+
+        let displayHour =
+            hours % 12;
+
+        if (displayHour === 0) {
+            displayHour = 12;
+        }
+
+        return `${pad2(day)}-${pad2(month)}-${year} ${pad2(displayHour)}:${pad2(minutes)} ${meridiem}`;
+    }
+
+    function toApiDate(value) {
+        if (value === null || value === undefined || value === '') {
+            return '';
+        }
+
+        const raw =
+            String(value).trim();
+
+        if (DATE_ONLY_PATTERN.test(raw)) {
+            return raw;
+        }
+
+        const match =
+            raw.match(DISPLAY_DATE_PATTERN);
+
+        if (!match) {
+            return raw;
+        }
+
+        const day =
+            Number(match[1]);
+
+        const month =
+            Number(match[2]);
+
+        const year =
+            Number(match[3]);
+
+        const date =
+            new Date(year, month - 1, day);
+
+        const valid =
+            date.getFullYear() === year
+            && date.getMonth() === month - 1
+            && date.getDate() === day;
+
+        if (!valid) {
+            return '';
+        }
+
+        return `${year}-${pad2(month)}-${pad2(day)}`;
+    }
+
+    function toDisplayDate(value) {
+        return formatDate(value, '');
+    }
+
+    window.erpDate = Object.freeze({
+        formatDate,
+        formatDateTime,
+        toApiDate,
+        toDisplayDate,
+        displayDateFormat: 'dd-MM-yyyy',
+        displayDateTimeFormat: 'dd-MM-yyyy hh:mm AM/PM',
+        apiDateFormat: 'yyyy-MM-dd'
+    });
+
+    /*
+     * Backward-compatible aliases for simple modules. New code should prefer
+     * window.erpDate.* so the source of formatting is obvious.
+     */
+    window.erpFormatDate = formatDate;
+    window.erpFormatDateTime = formatDateTime;
+    window.erpToApiDate = toApiDate;
+})();
+
 // ========================================================
 // GLOBAL ERP CALENDAR COMPONENT
 // ========================================================
@@ -752,60 +941,315 @@
  * @param {string} selector - The CSS selector for the input field.
  * @param {Object} customConfig - Field-specific Flatpickr configurations.
  */
-function createErpCalendar(selector, customConfig = {}) {
-    if (typeof flatpickr === "undefined") return;
-    // -------------------------------------------------------------
-    // NEW LOGIC: Inject missing placeholders BEFORE flatpickr initializes
-    // -------------------------------------------------------------
-    const inputs = document.querySelectorAll(selector);
-    inputs.forEach(input => {
-        if (!input.hasAttribute('placeholder') || input.getAttribute('placeholder').trim() === '') {
-            input.setAttribute('placeholder', 'YYYY-MM-DD');
+
+function normalizeErpCalendarInput(input, instance) {
+    if (
+        !(input instanceof HTMLInputElement) ||
+        !instance
+    ) {
+        return;
+    }
+
+    const activeAlt =
+        instance.altInput || null;
+
+    /*
+     * With altInput enabled the original element is the API/ISO field and
+     * must never remain visible. Enforce that explicitly so browser/module
+     * CSS cannot expose it as a second date box.
+     */
+    if (activeAlt && activeAlt !== input) {
+        input.type = "hidden";
+        input.hidden = true;
+        input.setAttribute(
+            "aria-hidden",
+            "true"
+        );
+
+        activeAlt.hidden = false;
+        activeAlt.removeAttribute(
+            "aria-hidden"
+        );
+        activeAlt.dataset.erpCalendarFor =
+            input.id ||
+            input.name ||
+            "erp-date";
+    }
+
+    /*
+     * Remove stale Flatpickr alt inputs generated by earlier SPA/view
+     * initializations. We only inspect siblings in the same form field and
+     * preserve the currently active altInput.
+     */
+    const parent =
+        input.parentElement;
+
+    if (!parent) {
+        return;
+    }
+
+    const originalClassNames =
+        Array.from(input.classList)
+            .filter(name =>
+                name !== "flatpickr-input"
+            );
+
+    Array.from(
+        parent.querySelectorAll("input")
+    ).forEach(candidate => {
+        if (
+            candidate === input ||
+            candidate === activeAlt
+        ) {
+            return;
+        }
+
+        const looksLikeFlatpickrAlt =
+            candidate.dataset.erpCalendarFor ===
+                (input.id || input.name || "erp-date")
+            ||
+            (
+                candidate.classList.contains("flatpickr-input")
+                &&
+                originalClassNames.some(
+                    className =>
+                        candidate.classList.contains(
+                            className
+                        )
+                )
+            );
+
+        if (looksLikeFlatpickrAlt) {
+            candidate.remove();
         }
     });
+}
 
-    const defaultERPConfig = {
-        dateFormat: "Y-m-d",
-        disableMobile: true, // Force consistent desktop UI
-        allowInput: true,    // Allow manual keyboard typing
+function createErpCalendar(selector, customConfig = {}) {
+    if (typeof flatpickr === "undefined") {
+        return null;
+    }
 
-        // Custom Configuration Properties
-        footerActions: ['today', 'clear', 'close'],
-        minYear: 1950,
-        maxYear: new Date().getFullYear() + 10,
+    const inputs =
+        Array.from(
+            document.querySelectorAll(selector)
+        ).filter(
+            input =>
+                input instanceof HTMLInputElement
+        );
 
-        onReady: function(selectedDates, dateStr, instance) {
-            if (instance.calendarContainer) {
-                instance.calendarContainer.classList.add('erp-calendar-theme');
+    if (inputs.length === 0) {
+        return null;
+    }
+
+    const instances = [];
+
+    inputs.forEach(input => {
+        /*
+         * PROJECT-WIDE DUPLICATE FIX
+         * -----------------------------------------
+         * Many ERP modules call createErpCalendar()
+         * again after global/page initialization.
+         *
+         * If Flatpickr is already attached, REUSE it.
+         * Never destroy/recreate the same field here,
+         * because altInput=true can otherwise leave
+         * multiple visible date inputs.
+         */
+        if (input._flatpickr) {
+            const existing =
+                input._flatpickr;
+
+            const visibleInput =
+                existing.altInput ||
+                existing.input;
+
+            if (visibleInput) {
+                visibleInput.setAttribute(
+                    "placeholder",
+                    customConfig.enableTime
+                        ? "DD-MM-YYYY HH:MM AM/PM"
+                        : "DD-MM-YYYY"
+                );
             }
 
-            const defaultYearWrapper = instance.currentYearElement.parentNode;
-            if (defaultYearWrapper) {
-                defaultYearWrapper.style.display = "none";
-            }
+            normalizeErpCalendarInput(
+                input,
+                existing
+            );
 
-            buildYearDropdown(instance, this.config.minYear, this.config.maxYear);
-
-            if (this.config.footerActions && this.config.footerActions.length > 0) {
-                buildActionFooter(instance, this.config.footerActions);
-            }
-
-            attachBlurParser(instance);
-        },
-        onYearChange: function(selectedDates, dateStr, instance) {
-            if (instance.customYearSelect) {
-                instance.customYearSelect.value = instance.currentYear.toString();
-            }
-        },
-        onMonthChange: function(selectedDates, dateStr, instance) {
-            if (instance.customYearSelect) {
-                instance.customYearSelect.value = instance.currentYear.toString();
-            }
+            instances.push(existing);
+            return;
         }
-    };
 
-    const finalConfig = Object.assign({}, defaultERPConfig, customConfig);
-    return flatpickr(selector, finalConfig);
+        const dateTimeEnabled =
+            Boolean(customConfig.enableTime);
+
+        if (
+            !input.hasAttribute("placeholder") ||
+            input.getAttribute("placeholder").trim() === ""
+        ) {
+            input.setAttribute(
+                "placeholder",
+                dateTimeEnabled
+                    ? "DD-MM-YYYY HH:MM AM/PM"
+                    : "DD-MM-YYYY"
+            );
+        }
+
+        const defaultERPConfig = {
+            /*
+             * Original input keeps API/backend-friendly ISO value.
+             * altInput is the only user-visible friendly field.
+             */
+            dateFormat:
+                dateTimeEnabled
+                    ? "Y-m-d\\TH:i"
+                    : "Y-m-d",
+
+            altInput: true,
+
+            altFormat:
+                dateTimeEnabled
+                    ? "d-m-Y h:i K"
+                    : "d-m-Y",
+
+            disableMobile: true,
+            allowInput: true,
+
+            footerActions: [
+                "today",
+                "clear",
+                "close"
+            ],
+
+            minYear: 1950,
+            maxYear:
+                new Date().getFullYear() + 10,
+
+            onReady: function(
+                selectedDates,
+                dateStr,
+                instance
+            ) {
+                if (instance.calendarContainer) {
+                    instance.calendarContainer.classList.add(
+                        "erp-calendar-theme"
+                    );
+                }
+
+                const defaultYearWrapper =
+                    instance.currentYearElement
+                        ?.parentNode;
+
+                if (defaultYearWrapper) {
+                    defaultYearWrapper.style.display =
+                        "none";
+                }
+
+                buildYearDropdown(
+                    instance,
+                    this.config.minYear,
+                    this.config.maxYear
+                );
+
+                if (
+                    this.config.footerActions &&
+                    this.config.footerActions.length > 0
+                ) {
+                    buildActionFooter(
+                        instance,
+                        this.config.footerActions
+                    );
+                }
+
+                const visibleInput =
+                    instance.altInput ||
+                    instance.input;
+
+                if (visibleInput) {
+                    visibleInput.setAttribute(
+                        "placeholder",
+                        dateTimeEnabled
+                            ? "DD-MM-YYYY HH:MM AM/PM"
+                            : "DD-MM-YYYY"
+                    );
+                }
+
+                normalizeErpCalendarInput(
+                    input,
+                    instance
+                );
+
+                attachBlurParser(instance);
+            },
+
+            onYearChange: function(
+                selectedDates,
+                dateStr,
+                instance
+            ) {
+                if (instance.customYearSelect) {
+                    instance.customYearSelect.value =
+                        instance.currentYear.toString();
+                }
+            },
+
+            onMonthChange: function(
+                selectedDates,
+                dateStr,
+                instance
+            ) {
+                if (instance.customYearSelect) {
+                    instance.customYearSelect.value =
+                        instance.currentYear.toString();
+                }
+            }
+        };
+
+        /*
+         * Keep module-specific constraints such as
+         * minDate/maxDate/defaultDate/enableTime, while
+         * enforcing one ERP-wide display/API format.
+         */
+        const finalConfig =
+            Object.assign(
+                {},
+                defaultERPConfig,
+                customConfig
+            );
+
+        finalConfig.dateFormat =
+            dateTimeEnabled
+                ? "Y-m-d\\TH:i"
+                : "Y-m-d";
+
+        finalConfig.altInput = true;
+
+        finalConfig.altFormat =
+            dateTimeEnabled
+                ? "d-m-Y h:i K"
+                : "d-m-Y";
+
+        const instance =
+            flatpickr(
+                input,
+                finalConfig
+            );
+
+        normalizeErpCalendarInput(
+            input,
+            instance
+        );
+
+        instances.push(instance);
+    });
+
+    if (instances.length === 1) {
+        return instances[0];
+    }
+
+    return instances;
 }
 
 function buildYearDropdown(instance, minYear, maxYear) {
@@ -900,7 +1344,12 @@ function buildActionFooter(instance, actions) {
 }
 
 function attachBlurParser(instance) {
-    instance.input.addEventListener("blur", function(e) {
+    const visibleInput =
+        instance.altInput || instance.input;
+
+    if (!visibleInput) return;
+
+    visibleInput.addEventListener("blur", function(e) {
         const typedVal = e.target.value.trim();
         if (!typedVal) return;
         const euDateMatch = typedVal.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);

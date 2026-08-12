@@ -228,7 +228,12 @@
     const text = (p,s,v) => { const n=p.querySelector(s); if(n) n.textContent=String(v ?? '-'); };
     const badge = (n,t,c) => { if(n){ n.textContent=t || '-'; n.className=`status-badge badge ${c}`; } };
     const statusClass = s => s === 'ACTIVE' ? 'active' : (s === 'PLANNED' ? 'pending' : 'inactive');
-    const formatDate = v => { const p=String(v||'').split('-'); return p.length===3 ? `${p[2]}/${p[1]}/${p[0]}` : (v||'-'); };
+    const formatDate = v => {
+        if (!v) return '-';
+        return window.erpDate
+            ? window.erpDate.formatDate(v, '-')
+            : String(v);
+    };
     const range = (a,b) => a || b ? `${formatDate(a)} - ${formatDate(b)}` : '-';
     const readError = (e,f) => e?.data?.message || e?.message || f;
     const successNotify = m => typeof showSuccessMessage === 'function' ? showSuccessMessage(m) : console.log(m);

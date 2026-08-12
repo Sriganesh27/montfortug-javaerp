@@ -401,7 +401,14 @@ function buildReviewSummary() {
     appendSectionBreak("Student Info");
     appendItem("Full Name", `${getVal('studentName')} ${getVal('middleName')} ${getVal('studentSurname')}`);
     appendItem("Gender", getRadio('gender'));
-    appendItem("DOB & Nationality", `${getVal('dob') || 'N/A'} | ${getVal('nationality')}`);
+    appendItem(
+        "DOB & Nationality",
+        `${getVal('dob')
+            ? (window.erpDate
+                ? window.erpDate.formatDate(getVal('dob'), 'N/A')
+                : getVal('dob'))
+            : 'N/A'} | ${getVal('nationality')}`
+    );
 
     appendSectionBreak("Residential Address");
     appendItem("Full Address", addressString || 'Not Provided', true);

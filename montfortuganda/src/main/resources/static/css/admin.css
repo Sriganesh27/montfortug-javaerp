@@ -7994,3 +7994,122 @@ body.erp-modal-open {
     }
 }
 
+
+
+/* ========================================================= */
+/* APPLICATIONS — SCHOOL VISIT WORKFLOW                      */
+/* Strictly scoped to the Branch Admin Applications view.    */
+/* ========================================================= */
+
+#ba-applications-view #application-school-visit-section {
+    border-left: 4px solid #d4af37;
+}
+
+#ba-applications-view #application-school-visit-section .emp-detail-section-header {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    color: #0f172a;
+    background: #f8fafc;
+}
+
+#ba-applications-view .app-school-visit-toolbar {
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 0.9rem;
+    padding-bottom: 0.8rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#ba-applications-view .app-school-visit-actions {
+    margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+#ba-applications-view #application-school-visit-section .detail-text {
+    min-height: 42px;
+    background: #f8fafc;
+}
+
+#ba-applications-view #view-schoolVisitStatus,
+#ba-applications-view #view-schoolVisitEntranceReadiness {
+    font-weight: 700;
+}
+
+#ba-applications-view :is(
+    #ba-schoolVisitScheduleModal,
+    #ba-schoolVisitCompleteModal
+) .app-request-modal-box {
+    width: min(720px, 100%);
+}
+
+#ba-applications-view :is(
+    #ba-schoolVisitScheduleModal,
+    #ba-schoolVisitCompleteModal
+) .app-request-modal-body {
+    padding-bottom: 0.25rem;
+}
+
+#ba-applications-view :is(
+    #ba-schoolVisitScheduleModal,
+    #ba-schoolVisitCompleteModal
+) .app-request-grid {
+    align-items: start;
+}
+
+#ba-applications-view :is(
+    #ba-schoolVisitScheduleModal,
+    #ba-schoolVisitCompleteModal
+) .form-group {
+    min-width: 0;
+}
+
+#ba-applications-view :is(
+    #ba-schoolVisitScheduleModal,
+    #ba-schoolVisitCompleteModal
+) .detail-input {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+#ba-applications-view :is(
+    #ba-schoolVisitScheduleModal,
+    #ba-schoolVisitCompleteModal
+) textarea.detail-input {
+    resize: vertical;
+}
+
+#ba-applications-view :is(
+    #ba-schoolVisitScheduleBtn,
+    #ba-schoolVisitRescheduleBtn,
+    #ba-schoolVisitCompleteBtn,
+    #ba-saveSchoolVisitScheduleBtn,
+    #ba-confirmSchoolVisitCompleteBtn
+):disabled {
+    cursor: wait;
+    opacity: 0.72;
+}
+
+@media (max-width: 767.98px) {
+    #ba-applications-view .app-school-visit-toolbar,
+    #ba-applications-view .app-school-visit-actions {
+        width: 100%;
+    }
+
+    #ba-applications-view .app-school-visit-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .app-school-visit-actions button {
+        width: 100%;
+    }
+
+    #ba-applications-view :is(
+        #ba-schoolVisitScheduleModal,
+        #ba-schoolVisitCompleteModal
+    ) .app-request-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -6,8 +6,12 @@ import com.erp.montfortuganda.admission.dto.ApplicationStageTransitionResponseDT
 import com.erp.montfortuganda.admission.dto.ApplicationStageTransitionResponseDTO.AvailableTransition;
 import com.erp.montfortuganda.admission.entity.ErpApplication;
 import com.erp.montfortuganda.admission.entity.ErpApplicationStatusHistory;
+import com.erp.montfortuganda.admission.entity.ErpApplicationDocument;
+import com.erp.montfortuganda.admission.entity.ErpApplicationDocumentRequest;
 import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
 import com.erp.montfortuganda.admission.repository.ErpApplicationStatusHistoryRepository;
+import com.erp.montfortuganda.admission.repository.ErpApplicationDocumentRepository;
+import com.erp.montfortuganda.admission.repository.ErpApplicationDocumentRequestRepository;
 import com.erp.montfortuganda.auth.service.BranchAccessService;
 import com.erp.montfortuganda.auth.service.CurrentUserContext;
 import com.erp.montfortuganda.exception.BadRequestException;
@@ -48,6 +52,8 @@ public class ApplicationStageTransitionServiceImpl
 
     private final ErpApplicationRepository applicationRepository;
     private final ErpApplicationStatusHistoryRepository historyRepository;
+    private final ErpApplicationDocumentRepository documentRepository;
+    private final ErpApplicationDocumentRequestRepository documentRequestRepository;
     private final BranchAccessService branchAccessService;
     private final ApplicationStageTransitionValidator transitionValidator;
     private final ApplicationEventPublisher eventPublisher;
@@ -55,12 +61,16 @@ public class ApplicationStageTransitionServiceImpl
     public ApplicationStageTransitionServiceImpl(
             ErpApplicationRepository applicationRepository,
             ErpApplicationStatusHistoryRepository historyRepository,
+            ErpApplicationDocumentRepository documentRepository,
+            ErpApplicationDocumentRequestRepository documentRequestRepository,
             BranchAccessService branchAccessService,
             ApplicationStageTransitionValidator transitionValidator,
             ApplicationEventPublisher eventPublisher
     ) {
         this.applicationRepository = applicationRepository;
         this.historyRepository = historyRepository;
+        this.documentRepository = documentRepository;
+        this.documentRequestRepository = documentRequestRepository;
         this.branchAccessService = branchAccessService;
         this.transitionValidator = transitionValidator;
         this.eventPublisher = eventPublisher;
@@ -239,16 +249,80 @@ public class ApplicationStageTransitionServiceImpl
         ErpApplication.CurrentStage target =
                 request.getTargetStage();
 
+        /*
+         * Document verification is a parallel gate, not a workflow stage.
+         * Any unresolved current document/request blocks every forward
+         * transition while leaving currentStage untouched.
+         */
+        if (!areVerificationDocumentsResolved(application)) {
+            throw new BadRequestException(
+                    "Resolve all pending application documents and document "
+                            + "requests before continuing to the next stage."
+            );
+        }
+
         if (current
                 == ErpApplication.CurrentStage.APPLICATION_VERIFICATION
                 && target
                 == ErpApplication.CurrentStage.SCHOOL_VISIT) {
 
-            if (application.getDocumentStatus()
-                    != ErpApplication.DocumentStatus.VERIFIED) {
+            if (!areVerificationDocumentsResolved(application)) {
                 throw new BadRequestException(
-                        "All current application documents must be verified "
+                        "All existing application documents must be verified, "
+                                + "and all document requests must be resolved, "
                                 + "before moving to the school-visit stage."
+                );
+            }
+
+            LocalDateTime scheduledAt =
+                    request.getSchoolVisitScheduledAt();
+
+            if (scheduledAt == null) {
+                throw new BadRequestException(
+                        "School visit date and time are required before continuing."
+                );
+            }
+
+            if (scheduledAt.isBefore(LocalDateTime.now())) {
+                throw new BadRequestException(
+                        "School visit date and time cannot be in the past."
+                );
+            }
+        }
+
+        if (current
+                == ErpApplication.CurrentStage.SCHOOL_VISIT
+                && target
+                == ErpApplication.CurrentStage.ENTRANCE_TEST) {
+
+            if (application.getSchoolVisitStatus()
+                    != ErpApplication.SchoolVisitStatus.ATTENDED) {
+                throw new BadRequestException(
+                        "The parent/student attendance must be recorded "
+                                + "before moving to the entrance-test stage."
+                );
+            }
+
+            if (application.getSchoolVisitEmployeeId() == null
+                    || application.getSchoolVisitEmployeeId() <= 0) {
+                throw new BadRequestException(
+                        "A responsible employee must be assigned "
+                                + "before moving to the entrance-test stage."
+                );
+            }
+
+            if (application.getSchoolVisitAt() == null) {
+                throw new BadRequestException(
+                        "The actual school visit date and time are required "
+                                + "before moving to the entrance-test stage."
+                );
+            }
+
+            if (application.getSchoolVisitStudentAttended() == null
+                    || application.getSchoolVisitParentAttended() == null) {
+                throw new BadRequestException(
+                        "Student and parent/guardian attendance must be recorded "
+                                + "before moving to the entrance-test stage."
                 );
             }
         }
@@ -399,6 +473,32 @@ public class ApplicationStageTransitionServiceImpl
                 request.getAction(),
                 userId
         );
+
+        /*
+         * Document Verification -> School Visit is an atomic operation:
+         * the stage and planned visit time are persisted together.
+         * Employee assignment intentionally remains null until the
+         * parent/student actually attends the school visit.
+         */
+        if (request.getAction() == TransitionAction.ADVANCE
+                && previousStage
+                == ErpApplication.CurrentStage.APPLICATION_VERIFICATION
+                && target
+                == ErpApplication.CurrentStage.SCHOOL_VISIT) {
+
+            application.setSchoolVisitStatus(
+                    ErpApplication.SchoolVisitStatus.SCHEDULED
+            );
+            application.setSchoolVisitScheduledAt(
+                    request.getSchoolVisitScheduledAt()
+            );
+            application.setSchoolVisitEmployeeId(null);
+            application.setSchoolVisitAt(null);
+            application.setSchoolVisitStudentAttended(false);
+            application.setSchoolVisitParentAttended(false);
+            application.setSchoolVisitCompletedBy(null);
+            application.setSchoolVisitCompletedAt(null);
+        }
     }
 
     private void applyTargetState(
@@ -444,11 +544,21 @@ public class ApplicationStageTransitionServiceImpl
                         LocalDateTime.now()
                 );
 
-                if (application.getSchoolVisitAt() == null) {
-                    application.setSchoolVisitAt(
-                            LocalDateTime.now()
-                    );
-                }
+                /*
+                 * Entering the SCHOOL_VISIT stage does not mean the visit has
+                 * happened. A dedicated School Visit service owns scheduling,
+                 * attendance and completion timestamps.
+                 */
+                application.setSchoolVisitStatus(
+                        ErpApplication.SchoolVisitStatus.NOT_SCHEDULED
+                );
+                application.setSchoolVisitEmployeeId(null);
+                application.setSchoolVisitScheduledAt(null);
+                application.setSchoolVisitAt(null);
+                application.setSchoolVisitStudentAttended(false);
+                application.setSchoolVisitParentAttended(false);
+                application.setSchoolVisitCompletedBy(null);
+                application.setSchoolVisitCompletedAt(null);
             }
 
             case ENTRANCE_TEST -> {
@@ -456,12 +566,14 @@ public class ApplicationStageTransitionServiceImpl
                         ErpApplication.ApplicationStatus.UNDER_REVIEW
                 );
 
-                if (application.getTestStatus()
-                        == ErpApplication.TestStatus.NOT_SCHEDULED) {
-                    application.setTestStatus(
-                            ErpApplication.TestStatus.SCHEDULED
-                    );
-                }
+                /*
+                 * Entering the stage alone must not pretend the test has been
+                 * scheduled. The Entrance Test service will create/schedule
+                 * the interview record and synchronize testStatus.
+                 */
+                application.setTestStatus(
+                        ErpApplication.TestStatus.NOT_SCHEDULED
+                );
             }
 
             case PARENT_FEE_DISCUSSION -> {
@@ -811,6 +923,15 @@ public class ApplicationStageTransitionServiceImpl
 
             for (ErpApplication.CurrentStage target
                     : targets) {
+
+                if (!isTransitionReady(
+                        application,
+                        action,
+                        target
+                )) {
+                    continue;
+                }
+
                 transitions.add(
                         buildAvailableTransition(
                                 application,
@@ -822,6 +943,144 @@ public class ApplicationStageTransitionServiceImpl
         }
 
         return transitions;
+    }
+
+    private boolean isTransitionReady(
+            ErpApplication application,
+            TransitionAction action,
+            ErpApplication.CurrentStage target
+    ) {
+        if (action != TransitionAction.ADVANCE) {
+            return true;
+        }
+
+        ErpApplication.CurrentStage current =
+                application.getCurrentStage();
+
+        if (!areVerificationDocumentsResolved(application)) {
+            return false;
+        }
+
+        if (current
+                == ErpApplication.CurrentStage.APPLICATION_VERIFICATION
+                && target
+                == ErpApplication.CurrentStage.SCHOOL_VISIT) {
+            return areVerificationDocumentsResolved(application);
+        }
+
+        if (current
+                == ErpApplication.CurrentStage.SCHOOL_VISIT
+                && target
+                == ErpApplication.CurrentStage.ENTRANCE_TEST) {
+            return application.getSchoolVisitStatus()
+                    == ErpApplication.SchoolVisitStatus.ATTENDED
+                    && application.getSchoolVisitEmployeeId() != null
+                    && application.getSchoolVisitEmployeeId() > 0
+                    && application.getSchoolVisitAt() != null
+                    && application.getSchoolVisitStudentAttended() != null
+                    && application.getSchoolVisitParentAttended() != null;
+        }
+
+        if (current
+                == ErpApplication.CurrentStage.ENTRANCE_TEST
+                && target
+                == ErpApplication.CurrentStage.PARENT_FEE_DISCUSSION) {
+            ErpApplication.TestStatus status =
+                    application.getTestStatus();
+
+            return status == ErpApplication.TestStatus.PASSED
+                    || status == ErpApplication.TestStatus.COMPLETED;
+        }
+
+        if (current
+                == ErpApplication.CurrentStage.PAYMENT
+                && target
+                == ErpApplication.CurrentStage.FINAL_ADMISSION) {
+            ErpApplication.PaymentStatus status =
+                    application.getPaymentStatus();
+
+            return status == ErpApplication.PaymentStatus.PAID
+                    || status == ErpApplication.PaymentStatus.COMPLETED;
+        }
+
+        if (current
+                == ErpApplication.CurrentStage.FINAL_ADMISSION
+                && target
+                == ErpApplication.CurrentStage.ENROLLED) {
+            return application.getAdmissionStatus()
+                    == ErpApplication.AdmissionStatus.APPROVED
+                    && Boolean.TRUE.equals(
+                    application.getStudentCreated()
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Document Verification readiness rule:
+     *
+     * <ul>
+     *     <li>No current documents and no unresolved requests -> allowed.</li>
+     *     <li>If documents exist, every current active document must be VERIFIED.</li>
+     *     <li>PENDING or UPLOADED document requests block Continue.</li>
+     * </ul>
+     *
+     * <p>This method is authoritative for both transition execution and
+     * transition availability, so the UI cannot bypass the rule.</p>
+     */
+    private boolean areVerificationDocumentsResolved(
+            ErpApplication application
+    ) {
+        if (application == null
+                || application.getApplicationId() == null
+                || application.getBranch() == null
+                || application.getBranch().getBranchId() == null) {
+            return false;
+        }
+
+        Long applicationId =
+                application.getApplicationId();
+
+        Integer branchId =
+                application.getBranch().getBranchId();
+
+        List<ErpApplicationDocumentRequest> requests =
+                documentRequestRepository
+                        .findAllByApplication_ApplicationIdAndApplication_Branch_BranchIdAndActiveTrueOrderByRequestedAtDesc(
+                                applicationId,
+                                branchId
+                        );
+
+        boolean unresolvedRequest =
+                requests.stream()
+                        .anyMatch(request ->
+                                request.getRequestStatus()
+                                        == ErpApplicationDocumentRequest.RequestStatus.PENDING
+                                        || request.getRequestStatus()
+                                        == ErpApplicationDocumentRequest.RequestStatus.UPLOADED
+                        );
+
+        if (unresolvedRequest) {
+            return false;
+        }
+
+        List<ErpApplicationDocument> documents =
+                documentRepository
+                        .findAllByApplication_ApplicationIdAndApplication_Branch_BranchIdAndCurrentTrueAndActiveTrueOrderByUploadedAtAsc(
+                                applicationId,
+                                branchId
+                        );
+
+        if (documents.isEmpty()) {
+            return true;
+        }
+
+        return documents.stream()
+                .allMatch(document ->
+                        document.getVerificationStatus()
+                                == ErpApplicationDocument.VerificationStatus.VERIFIED
+                );
     }
 
     private boolean isActionAvailableForLockState(

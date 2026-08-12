@@ -72,6 +72,19 @@ public class ApplicationMapper {
                 application.getWorkflowLocked()
         );
 
+        // School Visit state is included directly in the list response so the
+        // frontend can show/update the scheduled date and time without opening
+        // the full application profile or issuing an extra School Visit request.
+        response.setSchoolVisitStatus(
+                application.getSchoolVisitStatus()
+        );
+        response.setSchoolVisitScheduledAt(
+                application.getSchoolVisitScheduledAt()
+        );
+        response.setSchoolVisitEmployeeId(
+                application.getSchoolVisitEmployeeId()
+        );
+
         response.setSubmittedDate(
                 application.getCreatedAt()
         );
@@ -161,12 +174,32 @@ public class ApplicationMapper {
                 }
             }
 
-            case SCHOOL_VISIT ->
+            case SCHOOL_VISIT -> {
+                ErpApplication.SchoolVisitStatus schoolVisitStatus =
+                        application.getSchoolVisitStatus();
+
+                if (schoolVisitStatus
+                        == ErpApplication.SchoolVisitStatus.COMPLETED) {
                     setAdvanceAction(
                             response,
                             ErpApplication.CurrentStage.ENTRANCE_TEST,
                             "Move to entrance test"
                     );
+                } else if (schoolVisitStatus
+                        == ErpApplication.SchoolVisitStatus.SCHEDULED
+                        || schoolVisitStatus
+                        == ErpApplication.SchoolVisitStatus.RESCHEDULED) {
+                    response.setNextActionLabel(
+                            application.getSchoolVisitEmployeeId() == null
+                                    ? "Manage school visit"
+                                    : "Complete school visit"
+                    );
+                } else {
+                    response.setNextActionLabel(
+                            "Schedule school visit"
+                    );
+                }
+            }
 
             case ENTRANCE_TEST -> {
                 ErpApplication.TestStatus testStatus =

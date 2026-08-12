@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Visit Schedule</title>
+    <th:block th:replace="~{email/email-theme :: styles}"></th:block>
+</head>
+<body>
+
+<table class="email-wrapper" border="0" cellspacing="0" cellpadding="0">
+    <tr>
+        <td align="center">
+            <table class="email-container" border="0" cellspacing="0" cellpadding="0">
+
+                <tr>
+                    <td class="email-header" align="center">
+                        <table border="0" cellspacing="0" cellpadding="0" width="100%">
+                            <tr>
+                                <td width="100" align="center" valign="middle">
+                                    <img th:src="${schoolLogo}"
+                                         alt="School Logo"
+                                         class="email-header-logo">
+                                </td>
+
+                                <td align="left"
+                                    valign="middle"
+                                    class="email-header-text-container">
+                                    <p class="email-header-supertitle">
+                                        Montfort Brothers of St. Gabriel, Uganda
+                                    </p>
+
+                                    <h1 class="email-header-title"
+                                        th:text="${schoolName}">
+                                        Montfort School
+                                    </h1>
+
+                                    <p class="email-header-subtitle">
+                                        Admissions Department
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="email-body">
+
+                        <p class="email-greeting">
+                            Dear Parent / Guardian,
+                        </p>
+
+                        <p class="email-text"
+                           th:if="${!rescheduled}">
+                            The school visit for the admission application of
+                            <strong class="email-text-strong"
+                                    th:text="${studentName}">
+                                Student Name
+                            </strong>
+                            has been scheduled.
+                        </p>
+
+                        <p class="email-text"
+                           th:if="${rescheduled}">
+                            The school visit for the admission application of
+                            <strong class="email-text-strong"
+                                    th:text="${studentName}">
+                                Student Name
+                            </strong>
+                            has been rescheduled.
+                        </p>
+
+                        <!-- Application Reference Highlight -->
+                        <table border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%"
+                               style="margin:24px 0;
+                                      background:#f8fafc;
+                                      border:1px solid #d6deea;
+                                      border-left:5px solid #d7a91e;
+                                      border-radius:10px;">
+                            <tr>
+                                <td align="center"
+                                    style="padding:18px 20px;">
+                                    <p style="margin:0 0 6px;
+                                              color:#64748b;
+                                              font-size:12px;
+                                              font-weight:700;
+                                              text-transform:uppercase;
+                                              letter-spacing:1px;">
+                                        Application Reference
+                                    </p>
+
+                                    <div th:text="${applicationNo}"
+                                         style="font-size:24px;
+                                                line-height:1.25;
+                                                font-weight:800;
+                                                color:#0f1f3d;
+                                                letter-spacing:1.2px;">
+                                        U011-APP-26-0001
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Status Highlight -->
+                        <table border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%"
+                               style="margin:0 0 18px;">
+                            <tr>
+                                <td align="center">
+                                    <span th:text="${rescheduled}
+                                                ? 'SCHOOL VISIT RESCHEDULED'
+                                                : 'SCHOOL VISIT SCHEDULED'"
+                                          style="display:inline-block;
+                                                 padding:8px 16px;
+                                                 border-radius:999px;
+                                                 background:#fff7d6;
+                                                 border:1px solid #e8c95c;
+                                                 color:#735500;
+                                                 font-size:12px;
+                                                 font-weight:800;
+                                                 letter-spacing:.7px;">
+                                        SCHOOL VISIT SCHEDULED
+                                    </span>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Main Visit Details Highlight -->
+                        <table border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%"
+                               style="margin:0 0 24px;
+                                      border:1px solid #dbe3ee;
+                                      border-radius:12px;
+                                      overflow:hidden;
+                                      background:#ffffff;">
+                            <tr>
+                                <td style="padding:15px 18px;
+                                           width:35%;
+                                           color:#64748b;
+                                           font-size:13px;
+                                           font-weight:700;
+                                           background:#f8fafc;
+                                           border-bottom:1px solid #e5eaf1;">
+                                    Student
+                                </td>
+                                <td th:text="${studentName}"
+                                    style="padding:15px 18px;
+                                           color:#0f172a;
+                                           font-size:15px;
+                                           font-weight:700;
+                                           border-bottom:1px solid #e5eaf1;">
+                                    Student Name
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td style="padding:18px;
+                                           color:#735500;
+                                           font-size:13px;
+                                           font-weight:800;
+                                           background:#fff8dc;">
+                                    Visit Date &amp; Time
+                                </td>
+                                <td style="padding:18px;
+                                           background:#fff8dc;">
+                                    <div th:text="${visitDateTime}"
+                                         style="font-size:20px;
+                                                line-height:1.35;
+                                                font-weight:900;
+                                                color:#8a6100;">
+                                        14 Aug 2026, 10:30 AM
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Important Reminder -->
+                        <table border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%"
+                               style="margin:0 0 24px;
+                                      background:#f2f7ff;
+                                      border-left:4px solid #315b9c;
+                                      border-radius:8px;">
+                            <tr>
+                                <td style="padding:14px 16px;
+                                           color:#23395d;
+                                           font-size:14px;
+                                           line-height:1.6;">
+                                    <strong>Please arrive at the school on the scheduled date and time</strong>
+                                    with the parent or guardian and the student.
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p class="email-text">
+                            The school will assign the responsible staff member
+                            when you attend the visit. No action is required from
+                            you regarding staff assignment.
+                        </p>
+
+                        <table class="email-button-container"
+                               border="0"
+                               cellspacing="0"
+                               cellpadding="0"
+                               width="100%">
+                            <tr>
+                                <td align="center">
+                                    <a th:href="${trackingUrl}"
+                                       class="email-button"
+                                       target="_blank">
+                                        View Application Status
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <p class="email-text">
+                            Please use the application reference and the
+                            applicant's date of birth when opening the status
+                            page.
+                        </p>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td class="email-footer" align="center">
+                        <p class="email-footer-text">
+                            This is an automated message from the ERP Admission
+                            System. For assistance, contact the school using its
+                            official contact details.
+                        </p>
+
+                        <p class="email-footer-copyright">
+                            &copy;
+                            <span th:text="${currentYear}">2026</span>
+                            <span th:text="${schoolName}">
+                                School Name
+                            </span>.
+                            All rights reserved.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

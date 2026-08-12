@@ -1,17 +1,25 @@
 package com.erp.montfortuganda.admission.dto;
 
 import com.erp.montfortuganda.admission.entity.ErpApplication;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+
+import java.time.LocalDateTime;
 
 /**
  * Branch-admin request for moving an admission application between workflow
  * stages.
  *
- * <p>The service must validate the requested action and target stage against
- * the application state loaded under a pessimistic database lock. The client
+ * <p>The service validates the requested action and target stage against the
+ * application state loaded under a pessimistic database lock. The client
  * cannot use this DTO to bypass, skip, or reorder admission stages.</p>
+ *
+ * <p>For the specific transition from APPLICATION_VERIFICATION to SCHOOL_VISIT,
+ * the browser must also submit the planned School Visit date/time. This allows
+ * the stage transition and visit scheduling to be committed atomically in one
+ * transaction.</p>
  */
 @Data
 public class ApplicationStageTransitionRequestDTO {
@@ -36,6 +44,19 @@ public class ApplicationStageTransitionRequestDTO {
      */
     @NotNull(message = "Workflow action is required")
     private TransitionAction action;
+
+    /**
+     * Required only when advancing from APPLICATION_VERIFICATION to
+     * SCHOOL_VISIT.
+     *
+     * <p>Employee assignment is intentionally not part of this request.
+     * The responsible employee is assigned later when the parent/student
+     * actually attends the visit.</p>
+     */
+    @FutureOrPresent(
+            message = "School visit date and time cannot be in the past"
+    )
+    private LocalDateTime schoolVisitScheduledAt;
 
     /**
      * Applicant-visible explanation. This value may be included in email or

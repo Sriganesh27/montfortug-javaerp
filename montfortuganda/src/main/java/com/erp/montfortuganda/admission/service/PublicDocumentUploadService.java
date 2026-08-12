@@ -938,7 +938,11 @@ public class PublicDocumentUploadService {
             status =
                     ErpApplication.DocumentStatus.VERIFIED;
 
-            if (application.getVerificationStatus()
+            if (isAfterApplicationVerificationStage(application)) {
+                application.setVerificationStatus(
+                        ErpApplication.VerificationStatus.APPROVED
+                );
+            } else if (application.getVerificationStatus()
                     == ErpApplication.VerificationStatus
                     .ADDITIONAL_DOCUMENTS_REQUIRED) {
                 application.setVerificationStatus(
@@ -958,17 +962,72 @@ public class PublicDocumentUploadService {
             }
         }
 
-        application.setDocumentStatus(status);
-        application.setCurrentStage(
-                ErpApplication.CurrentStage
-                        .APPLICATION_VERIFICATION
-        );
+        recoverPreviouslyScheduledSchoolVisitStage(application);
 
+        application.setDocumentStatus(status);
+
+        /*
+         * A requested-document upload must not rewind the main admission
+         * workflow. If the application is already in SCHOOL_VISIT or later,
+         * keep that stage and let the pending document state temporarily block
+         * the next action until Branch Admin review is completed.
+         */
         applicationRepository.saveAndFlush(
                 application
         );
 
         return status;
+    }
+
+    /**
+     * Self-heals applications that were rolled back to verification by the
+     * older requested-document implementation. Existing School Visit schedule
+     * data is preserved and the main workflow stage is restored.
+     */
+    private void recoverPreviouslyScheduledSchoolVisitStage(
+            ErpApplication application
+    ) {
+        if (application == null
+                || application.getCurrentStage()
+                != ErpApplication.CurrentStage.APPLICATION_VERIFICATION
+                || application.getSchoolVisitScheduledAt() == null
+                || application.getSchoolVisitStatus() == null) {
+            return;
+        }
+
+        ErpApplication.SchoolVisitStatus visitStatus =
+                application.getSchoolVisitStatus();
+
+        if (visitStatus == ErpApplication.SchoolVisitStatus.SCHEDULED
+                || visitStatus == ErpApplication.SchoolVisitStatus.RESCHEDULED
+                || visitStatus == ErpApplication.SchoolVisitStatus.ATTENDED
+                || visitStatus == ErpApplication.SchoolVisitStatus.COMPLETED) {
+            application.setCurrentStage(
+                    ErpApplication.CurrentStage.SCHOOL_VISIT
+            );
+        }
+    }
+
+    private boolean isAfterApplicationVerificationStage(
+            ErpApplication application
+    ) {
+        if (application == null
+                || application.getCurrentStage() == null) {
+            return false;
+        }
+
+        return switch (application.getCurrentStage()) {
+            case SCHOOL_VISIT,
+                 ENTRANCE_TEST,
+                 PARENT_FEE_DISCUSSION,
+                 PAYMENT,
+                 SCHOLARSHIP,
+                 FINAL_ADMISSION,
+                 ENROLLED,
+                 CLOSED -> true;
+            case APPLICATION_DRAFT,
+                 APPLICATION_VERIFICATION -> false;
+        };
     }
 
     private void saveUploadHistory(

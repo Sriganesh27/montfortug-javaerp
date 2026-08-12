@@ -270,13 +270,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return String(expiryValue);
         }
 
-        return expiryDate.toLocaleString(
-            undefined,
-            {
-                dateStyle: 'medium',
-                timeStyle: 'short'
-            }
-        );
+        if (window.erpDate) {
+            return window.erpDate.formatDateTime(
+                expiryValue,
+                String(expiryValue)
+            );
+        }
+
+        return expiryDate.toLocaleString();
     }
 
     function showPasswordChangePanel(

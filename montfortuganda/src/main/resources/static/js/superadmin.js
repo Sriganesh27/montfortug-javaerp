@@ -760,7 +760,12 @@ function initBranchesView() {
                     ? branch.levels.map(level => level.levelName).filter(Boolean).join(', ')
                     : 'N/A'
             );
-            setText('#view-foundationDate', branch.foundationDate);
+            setText(
+            '#view-foundationDate',
+            branch.foundationDate && window.erpDate
+                ? window.erpDate.formatDate(branch.foundationDate, '-')
+                : (branch.foundationDate || '-')
+        );
 
             setText('#view-branchLocation', branch.branchLocation);
             setText('#view-addressLine1', branch.addressLine1);
@@ -975,7 +980,7 @@ function initBranchesView() {
                     } else {
                         logs.forEach(log => {
                             const clone = logTemplate.content.cloneNode(true);
-                            clone.querySelector('.log-date').textContent = displayValue(log.date);
+                            clone.querySelector('.log-date').textContent = log.date && window.erpDate ? window.erpDate.formatDateTime(log.date, displayValue(log.date)) : displayValue(log.date);
                             clone.querySelector('.log-user').textContent = displayValue(log.user);
                             clone.querySelector('.log-action').textContent = displayValue(log.action);
                             logBody.appendChild(clone);
@@ -2002,7 +2007,7 @@ async function initAuditLogsView() {
         tbody.textContent = '';
         logs.forEach(log => {
             const clone = template.content.cloneNode(true);
-            clone.querySelector('.log-date').textContent = log.date;
+            clone.querySelector('.log-date').textContent = log.date && window.erpDate ? window.erpDate.formatDateTime(log.date, log.date) : log.date;
             clone.querySelector('.log-branch').textContent = log.branch;
             clone.querySelector('.log-user').textContent = log.user;
             clone.querySelector('.log-action').textContent = log.action;
@@ -2039,7 +2044,7 @@ function initSystemBackupsView() {
         backups.forEach(bkp => {
             const clone = template.content.cloneNode(true);
             clone.querySelector('.bkp-id').textContent = bkp.id;
-            clone.querySelector('.bkp-date').textContent = bkp.date;
+            clone.querySelector('.bkp-date').textContent = bkp.date && window.erpDate ? window.erpDate.formatDateTime(bkp.date, bkp.date) : bkp.date;
             clone.querySelector('.bkp-size').textContent = bkp.size;
             clone.querySelector('.bkp-user').textContent = bkp.user;
             tbody.appendChild(clone);
@@ -2467,7 +2472,7 @@ function initBulkDistributionView() {
         let totalAllocated = 0;
         dataArray.forEach(tx => {
             const clone = template.content.cloneNode(true);
-            clone.querySelector('.tx-date').textContent = tx.date;
+            clone.querySelector('.tx-date').textContent = tx.date && window.erpDate ? window.erpDate.formatDateTime(tx.date, tx.date) : tx.date;
             clone.querySelector('.tx-id').textContent = tx.id.toString();
             clone.querySelector('.tx-amount').textContent = formatUGX(tx.amount);
 
@@ -2526,7 +2531,7 @@ function initBulkDistributionView() {
 
                 currentHistoryData = historyRaw.map(tx => ({
                     id: 'TX-' + tx.id,
-                    date: tx.createdAt ? new Date(tx.createdAt).toLocaleDateString() : 'Just now',
+                    date: tx.createdAt && window.erpDate ? window.erpDate.formatDate(tx.createdAt, 'Just now') : (tx.createdAt || 'Just now'),
                     amount: tx.allocatedAmountUgx,
                     status: 'Completed'
                 }));

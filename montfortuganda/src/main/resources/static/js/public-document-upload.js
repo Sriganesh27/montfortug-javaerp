@@ -602,20 +602,11 @@
             return '';
         }
 
-        const date =
-            new Date(value);
-
-        if (Number.isNaN(date.getTime())) {
-            return value;
+        if (window.erpDate) {
+            return window.erpDate.formatDateTime(value, '');
         }
 
-        return new Intl.DateTimeFormat(
-            undefined,
-            {
-                dateStyle: 'medium',
-                timeStyle: 'short'
-            }
-        ).format(date);
+        return String(value);
     }
 
     function getFileExtension(fileName) {

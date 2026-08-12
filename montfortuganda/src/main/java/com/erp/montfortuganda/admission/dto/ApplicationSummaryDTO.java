@@ -66,6 +66,27 @@ public class ApplicationSummaryDTO {
     private Boolean workflowLocked;
 
     // ---------------------------------------------------------------------
+    // School Visit list state
+    // ---------------------------------------------------------------------
+
+    /**
+     * Current School Visit workflow status.
+     */
+    private ErpApplication.SchoolVisitStatus schoolVisitStatus;
+
+    /**
+     * Planned School Visit date and time shown directly in the Applications
+     * list after scheduling/rescheduling.
+     */
+    private LocalDateTime schoolVisitScheduledAt;
+
+    /**
+     * Employee is intentionally null while the visit is only scheduled.
+     * It is populated later when the parent/student actually attends.
+     */
+    private Long schoolVisitEmployeeId;
+
+    // ---------------------------------------------------------------------
     // Primary list action
     // ---------------------------------------------------------------------
 

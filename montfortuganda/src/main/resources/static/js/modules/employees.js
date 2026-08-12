@@ -1626,6 +1626,11 @@ function initEmployeesView(routeInfo = {}) {
 
     const formatDate = value => {
         if (!value) return '-';
+
+        if (window.erpDate) {
+            return window.erpDate.formatDate(value, '-');
+        }
+
         return String(value).split('T')[0];
     };
 

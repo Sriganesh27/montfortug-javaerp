@@ -65,6 +65,9 @@ const ApplicationsController = (() => {
     const API_ROOT =
         '/admission/branch/applications';
 
+    const EMPLOYEE_OPTIONS_API =
+        '/admission/branch/employee-options';
+
     const state = {
         page: 0,
         size: 20,
@@ -75,6 +78,13 @@ const ApplicationsController = (() => {
         currentRows: [],
         selectedApplications: new Map(),
         profileTransitions: [],
+        schoolVisit: null,
+        schoolVisitEmployees: [],
+        schoolVisitScheduleMode: 'schedule',
+        pendingSchoolVisitTransition: null,
+        documentSyncTimer: null,
+        documentSyncBusy: false,
+        documentSyncSignature: null,
         sortField: 'submittedDate',
         sortDirection: 'DESC',
         initializedRoot: null
@@ -107,6 +117,12 @@ const ApplicationsController = (() => {
         state.currentRows = [];
         state.selectedApplications = new Map();
         state.profileTransitions = [];
+        state.schoolVisit = null;
+        state.schoolVisitEmployees = [];
+        state.schoolVisitScheduleMode = 'schedule';
+        state.pendingSchoolVisitTransition = null;
+        stopDocumentAutoSync();
+        state.documentSyncSignature = null;
 
         view = cacheDom(root);
 
@@ -307,6 +323,83 @@ const ApplicationsController = (() => {
             historyCount:
                 byId('application-history-count'),
 
+            schoolVisitSection:
+                byId('application-school-visit-section'),
+            schoolVisitStatusCaption:
+                byId('school-visit-status-caption'),
+            schoolVisitStageMessage:
+                byId('school-visit-stage-message'),
+            schoolVisitStatus:
+                byId('view-schoolVisitStatus'),
+            schoolVisitEmployee:
+                byId('view-schoolVisitEmployee'),
+            schoolVisitEmployeeNo:
+                byId('view-schoolVisitEmployeeNo'),
+            schoolVisitScheduledAt:
+                byId('view-schoolVisitScheduledAt'),
+            schoolVisitVisitedAt:
+                byId('view-schoolVisitAt'),
+            schoolVisitStudentAttendance:
+                byId('view-schoolVisitStudentAttendance'),
+            schoolVisitParentAttendance:
+                byId('view-schoolVisitParentAttendance'),
+            schoolVisitEntranceReadiness:
+                byId('view-schoolVisitEntranceReadiness'),
+            schoolVisitCompletedAt:
+                byId('view-schoolVisitCompletedAt'),
+            schoolVisitRemarks:
+                byId('view-schoolVisitRemarks'),
+            schoolVisitScheduleButton:
+                byId('ba-schoolVisitScheduleBtn'),
+            schoolVisitRescheduleButton:
+                byId('ba-schoolVisitRescheduleBtn'),
+            schoolVisitCompleteButton:
+                byId('ba-schoolVisitCompleteBtn'),
+
+            schoolVisitScheduleModal:
+                byId('ba-schoolVisitScheduleModal'),
+            schoolVisitScheduleForm:
+                byId('ba-schoolVisitScheduleForm'),
+            schoolVisitScheduleTitle:
+                byId('ba-schoolVisitScheduleTitle'),
+            schoolVisitScheduleSubtitle:
+                byId('ba-schoolVisitScheduleSubtitle'),
+            schoolVisitScheduledAtInput:
+                byId('ba-schoolVisitScheduledAtInput'),
+            schoolVisitScheduleRemarks:
+                byId('ba-schoolVisitScheduleRemarks'),
+            schoolVisitScheduleError:
+                byId('ba-schoolVisitScheduleError'),
+            schoolVisitCancelScheduleButton:
+                byId('ba-cancelSchoolVisitScheduleBtn'),
+            schoolVisitCloseScheduleButton:
+                byId('ba-closeSchoolVisitScheduleBtn'),
+            schoolVisitSaveScheduleButton:
+                byId('ba-saveSchoolVisitScheduleBtn'),
+
+            schoolVisitCompleteModal:
+                byId('ba-schoolVisitCompleteModal'),
+            schoolVisitCompleteForm:
+                byId('ba-schoolVisitCompleteForm'),
+            schoolVisitCompleteEmployeeSelect:
+                byId('ba-schoolVisitCompleteEmployeeId'),
+            schoolVisitVisitedAtInput:
+                byId('ba-schoolVisitVisitedAtInput'),
+            schoolVisitStudentAttended:
+                byId('ba-schoolVisitStudentAttended'),
+            schoolVisitParentAttended:
+                byId('ba-schoolVisitParentAttended'),
+            schoolVisitCompleteRemarks:
+                byId('ba-schoolVisitCompleteRemarks'),
+            schoolVisitCompleteError:
+                byId('ba-schoolVisitCompleteError'),
+            schoolVisitCancelCompleteButton:
+                byId('ba-cancelSchoolVisitCompleteBtn'),
+            schoolVisitCloseCompleteButton:
+                byId('ba-closeSchoolVisitCompleteBtn'),
+            schoolVisitConfirmCompleteButton:
+                byId('ba-confirmSchoolVisitCompleteBtn'),
+
             reviewModal:
                 byId('ba-documentReviewModal'),
             reviewForm:
@@ -402,6 +495,9 @@ const ApplicationsController = (() => {
             return;
         }
 
+        const currentYear =
+            new Date().getFullYear();
+
         const commonDeadlineConfig = {
             enableTime: true,
             time_24hr: false,
@@ -415,8 +511,8 @@ const ApplicationsController = (() => {
                 'clear',
                 'close'
             ],
-            minYear: new Date().getFullYear(),
-            maxYear: new Date().getFullYear() + 3
+            minYear: currentYear,
+            maxYear: currentYear + 3
         };
 
         createErpCalendar(
@@ -430,6 +526,33 @@ const ApplicationsController = (() => {
             '#ba-reuploadDeadline',
             {
                 ...commonDeadlineConfig
+            }
+        );
+
+        createErpCalendar(
+            '#ba-schoolVisitScheduledAtInput',
+            {
+                ...commonDeadlineConfig,
+                defaultHour: 9,
+                defaultMinute: 0
+            }
+        );
+
+        createErpCalendar(
+            '#ba-schoolVisitVisitedAtInput',
+            {
+                enableTime: true,
+                time_24hr: false,
+                minuteIncrement: 5,
+                maxDate: 'today',
+                dateFormat: 'Y-m-d\\TH:i',
+                footerActions: [
+                    'today',
+                    'clear',
+                    'close'
+                ],
+                minYear: currentYear - 1,
+                maxYear: currentYear
             }
         );
 
@@ -526,6 +649,46 @@ const ApplicationsController = (() => {
     }
 
     /**
+     * Sets both the underlying LocalDateTime value and the global calendar's
+     * visible alternate input when Flatpickr is active.
+     *
+     * @param {HTMLInputElement|null|undefined} input
+     * @param {string|Date|null|undefined} value
+     */
+    function setCalendarDateTimeValue(
+        input,
+        value
+    ) {
+        if (!input) {
+            return;
+        }
+
+        const normalized =
+            toDateTimeLocalValue(value);
+
+        const calendar =
+            input._flatpickr;
+
+        if (calendar
+                && typeof calendar.setDate === 'function') {
+            if (normalized) {
+                calendar.setDate(
+                    normalized,
+                    true,
+                    'Y-m-d\\TH:i'
+                );
+            } else if (typeof calendar.clear === 'function') {
+                calendar.clear();
+            }
+
+            return;
+        }
+
+        input.value =
+            normalized;
+    }
+
+    /**
      * Connects all table, detail and modal actions.
      */
     function bindEvents() {
@@ -594,7 +757,7 @@ const ApplicationsController = (() => {
         view.refreshButton?.addEventListener(
             'click',
             () => {
-                void loadApplications();
+                void refreshApplicationsWithLoader();
             }
         );
 
@@ -684,6 +847,73 @@ const ApplicationsController = (() => {
             }
         );
 
+        view.schoolVisitScheduleButton?.addEventListener(
+            'click',
+            () => {
+                void openSchoolVisitScheduleModal(false);
+            }
+        );
+
+        view.schoolVisitRescheduleButton?.addEventListener(
+            'click',
+            () => {
+                void openSchoolVisitScheduleModal(true);
+            }
+        );
+
+        view.schoolVisitCompleteButton?.addEventListener(
+            'click',
+            () => {
+                void openSchoolVisitCompleteModal();
+            }
+        );
+
+        view.schoolVisitCancelScheduleButton?.addEventListener(
+            'click',
+            closeSchoolVisitScheduleModal
+        );
+
+        view.schoolVisitCloseScheduleButton?.addEventListener(
+            'click',
+            closeSchoolVisitScheduleModal
+        );
+
+        view.schoolVisitScheduleForm?.addEventListener(
+            'submit',
+            event => {
+                event.preventDefault();
+                void submitSchoolVisitSchedule();
+            }
+        );
+
+        view.schoolVisitCancelCompleteButton?.addEventListener(
+            'click',
+            closeSchoolVisitCompleteModal
+        );
+
+        view.schoolVisitCloseCompleteButton?.addEventListener(
+            'click',
+            closeSchoolVisitCompleteModal
+        );
+
+        view.schoolVisitCompleteForm?.addEventListener(
+            'submit',
+            event => {
+                event.preventDefault();
+                void submitSchoolVisitCompletion();
+            }
+        );
+
+        bindBackdropClose(
+            view.schoolVisitScheduleModal,
+            closeSchoolVisitScheduleModal
+        );
+
+        bindBackdropClose(
+            view.schoolVisitCompleteModal,
+            closeSchoolVisitCompleteModal
+        );
+
         bindBackdropClose(
             view.reviewModal,
             closeDocumentReviewModal
@@ -700,15 +930,39 @@ const ApplicationsController = (() => {
         );
     }
 
+    async function refreshApplicationsWithLoader() {
+        let loaderToken = null;
+
+        try {
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader(
+                        'Refreshing Applications...'
+                    );
+            }
+
+            await loadApplications();
+        } finally {
+            if (loaderToken
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+        }
+    }
+
     /**
      * Loads one server page of branch-scoped applications.
      */
-    async function loadApplications() {
+    async function loadApplications(
+        silent = false
+    ) {
         if (!table) {
             return;
         }
 
-        table.showLoading();
+        if (!silent) {
+            table.showLoading();
+        }
 
         try {
             const response =
@@ -830,6 +1084,34 @@ const ApplicationsController = (() => {
             documentLabel === '-'
                 ? 'Documents: -'
                 : `Documents: ${documentLabel}`
+        );
+
+        const schoolVisitDate =
+            node.querySelector(
+                '.app-school-visit-date'
+            );
+
+        const schoolVisitStatus =
+            node.querySelector(
+                '.app-school-visit-status'
+            );
+
+        setNodeText(
+            schoolVisitDate,
+            record.schoolVisitScheduledAt
+                ? formatDateTime(
+                    record.schoolVisitScheduledAt
+                )
+                : '—'
+        );
+
+        setNodeText(
+            schoolVisitStatus,
+            record.schoolVisitStatus
+                ? formatEnum(
+                    record.schoolVisitStatus
+                )
+                : ''
         );
 
         setNodeText(
@@ -1054,12 +1336,21 @@ const ApplicationsController = (() => {
                 application;
 
             renderApplicationDetails(application);
+
+            await loadSchoolVisit(
+                validatedApplicationId
+            );
+
             await loadProfileTransitions(
                 validatedApplicationId
             );
 
             hideElement(view.tableComponent);
             showElement(view.detailComponent);
+
+            startDocumentAutoSync(
+                validatedApplicationId
+            );
 
             window.scrollTo({
                 top: 0,
@@ -1176,6 +1467,11 @@ const ApplicationsController = (() => {
         setText(
             'view-registrationDate',
             application.dateOfRegistration
+                ? formatDateTime(
+                    application.dateOfRegistration,
+                    false
+                )
+                : '-'
         );
 
         setText(
@@ -1478,15 +1774,7 @@ const ApplicationsController = (() => {
             formatEnum(application.admissionStatus)
         );
 
-        setText(
-            'view-schoolVisitAt',
-            formatDateTime(application.schoolVisitAt)
-        );
-
-        setText(
-            'view-schoolVisitRemarks',
-            application.schoolVisitRemarks
-        );
+        resetSchoolVisitDisplay(application);
 
         setText(
             'view-verificationDecision',
@@ -1518,6 +1806,1167 @@ const ApplicationsController = (() => {
         );
 
         setActionAvailability(application);
+    }
+
+    /**
+     * Resets the School Visit panel while its authoritative state is loaded.
+     *
+     * @param {Object} application
+     */
+    function resetSchoolVisitDisplay(
+        application
+    ) {
+        state.schoolVisit = null;
+
+        const isSchoolVisitStage =
+            enumEquals(
+                application?.currentStage,
+                'SCHOOL_VISIT'
+            );
+
+        toggleElement(
+            view.schoolVisitSection,
+            isSchoolVisitStage
+        );
+
+        setNodeText(
+            view.schoolVisitStatusCaption,
+            'Not Scheduled'
+        );
+        setNodeText(
+            view.schoolVisitStatus,
+            'Not Scheduled'
+        );
+        setNodeText(
+            view.schoolVisitEmployee,
+            '—'
+        );
+        setNodeText(
+            view.schoolVisitEmployeeNo,
+            '—'
+        );
+        setNodeText(
+            view.schoolVisitScheduledAt,
+            '—'
+        );
+        setNodeText(
+            view.schoolVisitVisitedAt,
+            '—'
+        );
+        setNodeText(
+            view.schoolVisitStudentAttendance,
+            '—'
+        );
+        setNodeText(
+            view.schoolVisitParentAttendance,
+            '—'
+        );
+        setNodeText(
+            view.schoolVisitEntranceReadiness,
+            'Not Ready'
+        );
+        setNodeText(
+            view.schoolVisitCompletedAt,
+            '—'
+        );
+        setNodeText(
+            view.schoolVisitRemarks,
+            '—'
+        );
+
+        [
+            view.schoolVisitScheduleButton,
+            view.schoolVisitRescheduleButton,
+            view.schoolVisitCompleteButton
+        ].forEach(button => {
+            button?.classList.add('hidden');
+        });
+    }
+
+    /**
+     * Loads the authoritative School Visit state for the open application.
+     *
+     * @param {number} applicationId
+     */
+    async function loadSchoolVisit(
+        applicationId
+    ) {
+        const id =
+            Number(applicationId);
+
+        if (!Number.isInteger(id)
+                || id <= 0) {
+            return;
+        }
+
+        try {
+            const response =
+                await apiGet(
+                    `${API_ROOT}/${encodeURIComponent(id)}/school-visit`
+                );
+
+            if (Number(state.currentApplicationId) !== id) {
+                return;
+            }
+
+            const schoolVisit =
+                unwrapResponseData(response);
+
+            state.schoolVisit =
+                schoolVisit || null;
+
+            renderSchoolVisit(
+                schoolVisit
+            );
+        } catch (error) {
+            console.error(
+                'School Visit details could not be loaded.',
+                error
+            );
+
+            if (enumEquals(
+                state.currentApplication?.currentStage,
+                'SCHOOL_VISIT'
+            )) {
+                showElement(
+                    view.schoolVisitSection
+                );
+
+                setNodeText(
+                    view.schoolVisitStageMessage,
+                    'School Visit details could not be loaded. Refresh the application and try again.'
+                );
+            }
+        }
+    }
+
+    /**
+     * Renders the School Visit panel and backend-approved actions.
+     *
+     * @param {Object|null} schoolVisit
+     */
+    function renderSchoolVisit(
+        schoolVisit
+    ) {
+        if (!schoolVisit) {
+            return;
+        }
+
+        const currentStage =
+            schoolVisit.currentStage
+            || state.currentApplication?.currentStage;
+
+        const visitStatus =
+            String(
+                schoolVisit.schoolVisitStatus
+                || 'NOT_SCHEDULED'
+            ).toUpperCase();
+
+        const shouldShow =
+            enumEquals(
+                currentStage,
+                'SCHOOL_VISIT'
+            )
+            || visitStatus !== 'NOT_SCHEDULED'
+            || Boolean(schoolVisit.scheduledAt)
+            || Boolean(schoolVisit.visitedAt);
+
+        toggleElement(
+            view.schoolVisitSection,
+            shouldShow
+        );
+
+        setNodeText(
+            view.schoolVisitStatusCaption,
+            formatEnum(visitStatus)
+            || 'Not Scheduled'
+        );
+
+        setNodeText(
+            view.schoolVisitStatus,
+            formatEnum(visitStatus)
+            || 'Not Scheduled'
+        );
+
+        setNodeText(
+            view.schoolVisitEmployee,
+            displayValue(
+                schoolVisit.employeeName
+            )
+        );
+
+        setNodeText(
+            view.schoolVisitEmployeeNo,
+            displayValue(
+                schoolVisit.employeeNo
+            )
+        );
+
+        setNodeText(
+            view.schoolVisitScheduledAt,
+            displayValue(
+                formatDateTime(
+                    schoolVisit.scheduledAt
+                )
+            )
+        );
+
+        setNodeText(
+            view.schoolVisitVisitedAt,
+            displayValue(
+                formatDateTime(
+                    schoolVisit.visitedAt
+                )
+            )
+        );
+
+        setNodeText(
+            view.schoolVisitStudentAttendance,
+            formatAttendance(
+                schoolVisit.studentAttended,
+                visitStatus
+            )
+        );
+
+        setNodeText(
+            view.schoolVisitParentAttendance,
+            formatAttendance(
+                schoolVisit.parentAttended,
+                visitStatus
+            )
+        );
+
+        setNodeText(
+            view.schoolVisitCompletedAt,
+            displayValue(
+                formatDateTime(
+                    schoolVisit.completedAt
+                )
+            )
+        );
+
+        setNodeText(
+            view.schoolVisitRemarks,
+            displayValue(
+                schoolVisit.remarks
+            )
+        );
+
+        setNodeText(
+            view.schoolVisitEntranceReadiness,
+            schoolVisit.canProceedToEntranceTest === true
+                ? 'Ready'
+                : 'Not Ready'
+        );
+
+        if (view.schoolVisitStageMessage) {
+            view.schoolVisitStageMessage.textContent =
+                schoolVisit.canProceedToEntranceTest === true
+                    ? 'Attendance is recorded. The application is ready for the Entrance Test.'
+                    : buildSchoolVisitStageMessage(
+                        visitStatus
+                    );
+        }
+
+        const inSchoolVisitStage =
+            enumEquals(
+                currentStage,
+                'SCHOOL_VISIT'
+            );
+
+        /*
+         * Historical School Visit information may remain visible after the
+         * application advances, but School Visit action buttons must never
+         * remain clickable outside the SCHOOL_VISIT stage.
+         */
+        toggleElement(
+            view.schoolVisitScheduleButton,
+            inSchoolVisitStage
+                && schoolVisit.canSchedule === true
+        );
+
+        toggleElement(
+            view.schoolVisitRescheduleButton,
+            inSchoolVisitStage
+                && schoolVisit.canReschedule === true
+        );
+
+        toggleElement(
+            view.schoolVisitCompleteButton,
+            inSchoolVisitStage
+                && schoolVisit.canComplete === true
+        );
+
+        if (state.currentApplication) {
+            Object.assign(
+                state.currentApplication,
+                {
+                    schoolVisitStatus:
+                        schoolVisit.schoolVisitStatus,
+                    schoolVisitEmployeeId:
+                        schoolVisit.employeeId,
+                    schoolVisitScheduledAt:
+                        schoolVisit.scheduledAt,
+                    schoolVisitAt:
+                        schoolVisit.visitedAt,
+                    schoolVisitStudentAttended:
+                        schoolVisit.studentAttended,
+                    schoolVisitParentAttended:
+                        schoolVisit.parentAttended,
+                    schoolVisitRemarks:
+                        schoolVisit.remarks,
+                    schoolVisitCompletedBy:
+                        schoolVisit.completedBy,
+                    schoolVisitCompletedAt:
+                        schoolVisit.completedAt
+                }
+            );
+        }
+    }
+
+    function buildSchoolVisitStageMessage(
+        visitStatus
+    ) {
+        if (visitStatus === 'SCHEDULED') {
+            return 'The School Visit is scheduled. When the parent / student arrives, use Proceed to Entrance Test to select the responsible employee and record attendance.';
+        }
+
+        if (visitStatus === 'RESCHEDULED') {
+            return 'The School Visit has been rescheduled. When the parent / student arrives, use Proceed to Entrance Test to select the responsible employee and record attendance.';
+        }
+
+        if (visitStatus === 'ATTENDED') {
+            return 'Attendance and the responsible employee are recorded. The Entrance Test process can begin.';
+        }
+
+        if (visitStatus === 'CANCELLED') {
+            return 'The previous School Visit was cancelled. Schedule a new visit to continue.';
+        }
+
+        if (visitStatus === 'NO_SHOW') {
+            return 'The previous School Visit was marked as no-show. Schedule another visit to continue.';
+        }
+
+        if (visitStatus === 'COMPLETED') {
+            return 'School Visit processing is complete.';
+        }
+
+        return 'Schedule the School Visit before proceeding to the Entrance Test.';
+    }
+
+    function formatAttendance(
+        value,
+        visitStatus
+    ) {
+        if (visitStatus !== 'ATTENDED'
+                && visitStatus !== 'COMPLETED') {
+            return '—';
+        }
+
+        return value === true
+            ? 'Attended'
+            : value === false
+                ? 'Not Attended'
+                : '—';
+    }
+
+    /**
+     * Loads eligible Branch employees once per Applications view.
+     */
+    async function loadSchoolVisitEmployees() {
+        if (state.schoolVisitEmployees.length > 0) {
+            populateSchoolVisitEmployeeOptions();
+            return;
+        }
+
+        const response =
+            await apiGet(
+                EMPLOYEE_OPTIONS_API
+            );
+
+        const employees =
+            unwrapResponseData(response);
+
+        state.schoolVisitEmployees =
+            Array.isArray(employees)
+                ? employees
+                : [];
+
+        populateSchoolVisitEmployeeOptions();
+    }
+
+    function populateSchoolVisitEmployeeOptions() {
+        const select =
+            view.schoolVisitCompleteEmployeeSelect;
+
+        if (!select) {
+            return;
+        }
+
+        const currentValue =
+            select.value;
+
+        select.replaceChildren();
+
+        const placeholder =
+            document.createElement('option');
+
+        placeholder.value = '';
+        placeholder.textContent =
+            '-- Select Employee --';
+
+        select.appendChild(placeholder);
+
+        state.schoolVisitEmployees
+            .forEach(employee => {
+                const option =
+                    document.createElement('option');
+
+                option.value =
+                    String(employee.employeeId);
+
+                const details =
+                    [
+                        employee.employeeNo,
+                        employee.designationName,
+                        employee.departmentName
+                    ]
+                        .filter(Boolean)
+                        .join(' • ');
+
+                option.textContent =
+                    details
+                        ? `${displayValue(employee.fullName)} — ${details}`
+                        : displayValue(employee.fullName);
+
+                select.appendChild(option);
+            });
+
+        if (currentValue) {
+            select.value =
+                currentValue;
+        }
+    }
+
+    async function openSchoolVisitScheduleModal(
+        reschedule,
+        transitionContext = null
+    ) {
+        if (!view.schoolVisitScheduleModal) {
+            return;
+        }
+
+        const isInitialTransition =
+            transitionContext
+            && enumEquals(
+                transitionContext?.record?.currentStage,
+                'APPLICATION_VERIFICATION'
+            )
+            && enumEquals(
+                transitionContext?.transition?.targetStage,
+                'SCHOOL_VISIT'
+            );
+
+        if (isInitialTransition) {
+            state.currentApplicationId =
+                Number(
+                    transitionContext.record.applicationId
+                );
+
+            state.pendingSchoolVisitTransition =
+                transitionContext;
+
+            state.schoolVisitScheduleMode =
+                'advance';
+        } else {
+            if (!state.currentApplicationId) {
+                return;
+            }
+
+            state.pendingSchoolVisitTransition =
+                null;
+
+            state.schoolVisitScheduleMode =
+                reschedule
+                    ? 'reschedule'
+                    : 'schedule';
+        }
+
+        const triggerButton =
+            reschedule
+                ? view.schoolVisitRescheduleButton
+                : view.schoolVisitScheduleButton;
+
+        const idleButtonText =
+            reschedule
+                ? 'Reschedule'
+                : 'Schedule Visit';
+
+        clearInlineError(
+            view.schoolVisitScheduleError
+        );
+
+        view.schoolVisitScheduleForm?.reset();
+
+        if (view.schoolVisitScheduleTitle) {
+            view.schoolVisitScheduleTitle.textContent =
+                reschedule
+                    ? 'Reschedule School Visit'
+                    : 'Schedule School Visit';
+        }
+
+        if (view.schoolVisitScheduleSubtitle) {
+            view.schoolVisitScheduleSubtitle.textContent =
+                isInitialTransition
+                    ? 'Select the School Visit date and time before continuing from Document Verification.'
+                    : reschedule
+                        ? 'Choose the new School Visit date and time.'
+                        : 'Select the School Visit date and time.';
+        }
+
+        if (view.schoolVisitSaveScheduleButton) {
+            view.schoolVisitSaveScheduleButton.innerHTML =
+                reschedule
+                    ? '<i class="bi bi-calendar2-check"></i> Save New Schedule'
+                    : isInitialTransition
+                        ? '<i class="bi bi-arrow-right-circle"></i> Continue'
+                        : '<i class="bi bi-calendar2-check"></i> Save Schedule';
+        }
+
+        if (reschedule
+                && state.schoolVisit) {
+            setCalendarDateTimeValue(
+                view.schoolVisitScheduledAtInput,
+                state.schoolVisit.scheduledAt
+            );
+
+            if (view.schoolVisitScheduleRemarks) {
+                view.schoolVisitScheduleRemarks.value =
+                    state.schoolVisit.remarks || '';
+            }
+        }
+
+        openModal(
+            view.schoolVisitScheduleModal
+        );
+
+        if (triggerButton) {
+            setButtonBusy(
+                triggerButton,
+                false,
+                idleButtonText
+            );
+        }
+    }
+
+    function closeSchoolVisitScheduleModal() {
+        closeModal(
+            view.schoolVisitScheduleModal
+        );
+
+        view.schoolVisitScheduleForm?.reset();
+
+        clearCalendarInput(
+            view.schoolVisitScheduledAtInput
+        );
+
+        clearInlineError(
+            view.schoolVisitScheduleError
+        );
+
+        state.schoolVisitScheduleMode =
+            'schedule';
+
+        state.pendingSchoolVisitTransition =
+            null;
+    }
+
+    async function submitSchoolVisitSchedule() {
+        clearInlineError(
+            view.schoolVisitScheduleError
+        );
+
+        const scheduledAt =
+            trimValue(
+                view.schoolVisitScheduledAtInput
+            );
+
+        if (!scheduledAt) {
+            showInlineError(
+                view.schoolVisitScheduleError,
+                'Select the School Visit date and time.'
+            );
+            return;
+        }
+
+        const remarks =
+            nullIfBlank(
+                trimValue(
+                    view.schoolVisitScheduleRemarks
+                )
+            );
+
+        const mode =
+            state.schoolVisitScheduleMode;
+
+        const initialTransition =
+            mode === 'advance'
+                ? state.pendingSchoolVisitTransition
+                : null;
+
+        const reschedule =
+            mode === 'reschedule';
+
+        setButtonBusy(
+            view.schoolVisitSaveScheduleButton,
+            true,
+            initialTransition
+                ? 'Continuing...'
+                : reschedule
+                    ? 'Rescheduling...'
+                    : 'Scheduling...'
+        );
+
+        let loaderToken = null;
+
+        try {
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader(
+                        initialTransition
+                            ? 'Scheduling School Visit and updating admission workflow...'
+                            : reschedule
+                                ? 'Rescheduling School Visit...'
+                                : 'Scheduling School Visit...'
+                    );
+            }
+
+            if (initialTransition) {
+                const record =
+                    initialTransition.record;
+
+                const transition =
+                    initialTransition.transition;
+
+                const transitionResponse =
+                    await submitWorkflowTransition(
+                        Number(record.applicationId),
+                        record.currentStage,
+                        transition,
+                        scheduledAt,
+                        remarks
+                    );
+
+                closeSchoolVisitScheduleModal();
+
+                await loadApplications(true);
+
+                if (Number(state.currentApplicationId)
+                        === Number(record.applicationId)
+                        && state.currentApplication) {
+                    applyWorkflowResponseToProfile(
+                        transitionResponse
+                    );
+
+                    await loadSchoolVisit(
+                        Number(record.applicationId)
+                    );
+
+                    await loadProfileTransitions(
+                        Number(record.applicationId)
+                    );
+                }
+
+                notifySuccess(
+                    'School Visit scheduled and application moved to School Visit successfully.'
+                );
+
+                return;
+            }
+
+            const payload = {
+                scheduledAt,
+                remarks
+            };
+
+            const endpoint =
+                `${API_ROOT}/${encodeURIComponent(
+                    state.currentApplicationId
+                )}/school-visit/schedule`;
+
+            const response =
+                reschedule
+                    ? await apiPatchJson(
+                        endpoint,
+                        payload
+                    )
+                    : await apiPost(
+                        endpoint,
+                        payload
+                    );
+
+            const schoolVisit =
+                unwrapResponseData(response);
+
+            state.schoolVisit =
+                schoolVisit || null;
+
+            renderSchoolVisit(
+                schoolVisit
+            );
+
+            closeSchoolVisitScheduleModal();
+
+            await loadApplications(true);
+
+            await loadProfileTransitions(
+                state.currentApplicationId
+            );
+
+            notifySuccess(
+                reschedule
+                    ? 'School Visit rescheduled successfully.'
+                    : 'School Visit scheduled successfully.'
+            );
+        } catch (error) {
+            showInlineError(
+                view.schoolVisitScheduleError,
+                readErrorMessage(
+                    error,
+                    initialTransition
+                        ? 'The application could not be moved to School Visit.'
+                        : reschedule
+                            ? 'School Visit could not be rescheduled.'
+                            : 'School Visit could not be scheduled.'
+                )
+            );
+        } finally {
+            if (loaderToken
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+
+            setButtonBusy(
+                view.schoolVisitSaveScheduleButton,
+                false,
+                initialTransition
+                    ? 'Continue'
+                    : reschedule
+                        ? 'Save New Schedule'
+                        : 'Save Schedule'
+            );
+        }
+    }
+
+
+    async function openSchoolVisitCompleteModal() {
+        if (!state.currentApplicationId
+                || !state.schoolVisit
+                || !view.schoolVisitCompleteModal) {
+            return;
+        }
+
+        let loaderToken = null;
+
+        setButtonBusy(
+            view.schoolVisitCompleteButton,
+            true,
+            'Loading...'
+        );
+
+        try {
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader(
+                        'Loading Entrance Test preparation...'
+                    );
+            }
+
+            /*
+             * Re-check the current application/stage immediately before
+             * opening the modal. This prevents a stale School Visit button
+             * from submitting after another action has already advanced the
+             * application.
+             */
+            const [
+                latestApplicationResponse,
+                latestSchoolVisitResponse
+            ] = await Promise.all([
+                apiGet(
+                    `${API_ROOT}/${encodeURIComponent(
+                        state.currentApplicationId
+                    )}`
+                ),
+                apiGet(
+                    `${API_ROOT}/${encodeURIComponent(
+                        state.currentApplicationId
+                    )}/school-visit`
+                )
+            ]);
+
+            const latestApplication =
+                unwrapResponseData(
+                    latestApplicationResponse
+                ) || {};
+
+            const latestSchoolVisit =
+                unwrapResponseData(
+                    latestSchoolVisitResponse
+                ) || null;
+
+            state.currentApplication = {
+                ...state.currentApplication,
+                ...latestApplication
+            };
+
+            state.schoolVisit =
+                latestSchoolVisit;
+
+            renderSchoolVisit(
+                latestSchoolVisit
+            );
+
+            if (!enumEquals(
+                    latestApplication.currentStage,
+                    'SCHOOL_VISIT'
+            )) {
+                closeSchoolVisitCompleteModal();
+
+                await loadApplications(true);
+
+                await loadProfileTransitions(
+                    state.currentApplicationId
+                );
+
+                notifyError(
+                    'This application has already moved out of the School Visit stage. The page has been updated.'
+                );
+
+                return;
+            }
+
+            if (latestSchoolVisit?.canComplete !== true) {
+                notifyError(
+                    'Proceed to Entrance Test is not currently available for this application.'
+                );
+                return;
+            }
+
+            view.schoolVisitCompleteForm?.reset();
+
+            clearCalendarInput(
+                view.schoolVisitVisitedAtInput
+            );
+
+            clearInlineError(
+                view.schoolVisitCompleteError
+            );
+
+            await loadSchoolVisitEmployees();
+
+            if (view.schoolVisitVisitedAtInput) {
+                setCalendarDateTimeValue(
+                    view.schoolVisitVisitedAtInput,
+                    new Date()
+                );
+            }
+
+            if (view.schoolVisitCompleteRemarks) {
+                view.schoolVisitCompleteRemarks.value =
+                    state.schoolVisit.remarks || '';
+            }
+
+            openModal(
+                view.schoolVisitCompleteModal
+            );
+        } catch (error) {
+            notifyError(
+                readErrorMessage(
+                    error,
+                    'Eligible employees could not be loaded.'
+                )
+            );
+        } finally {
+            if (loaderToken
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+
+            setButtonBusy(
+                view.schoolVisitCompleteButton,
+                false,
+                'Proceed to Entrance Test'
+            );
+        }
+    }
+
+    function closeSchoolVisitCompleteModal() {
+        closeModal(
+            view.schoolVisitCompleteModal
+        );
+
+        view.schoolVisitCompleteForm?.reset();
+
+        clearInlineError(
+            view.schoolVisitCompleteError
+        );
+    }
+
+    async function submitSchoolVisitCompletion() {
+        clearInlineError(
+            view.schoolVisitCompleteError
+        );
+
+        const employeeId =
+            Number(
+                view.schoolVisitCompleteEmployeeSelect?.value
+            );
+
+        const studentAttendance =
+            view.schoolVisitStudentAttended?.value
+            || '';
+
+        const parentAttendance =
+            view.schoolVisitParentAttended?.value
+            || '';
+
+        if (!Number.isInteger(employeeId)
+                || employeeId <= 0) {
+            showInlineError(
+                view.schoolVisitCompleteError,
+                'Select the responsible employee.'
+            );
+            return;
+        }
+
+        if (!studentAttendance) {
+            showInlineError(
+                view.schoolVisitCompleteError,
+                'Select the student attendance.'
+            );
+            return;
+        }
+
+        if (!parentAttendance) {
+            showInlineError(
+                view.schoolVisitCompleteError,
+                'Select the parent or guardian attendance.'
+            );
+            return;
+        }
+
+        const payload = {
+            employeeId,
+            visitedAt:
+                nullIfBlank(
+                    trimValue(
+                        view.schoolVisitVisitedAtInput
+                    )
+                ),
+            studentAttended:
+                studentAttendance === 'true',
+            parentAttended:
+                parentAttendance === 'true',
+            remarks:
+                nullIfBlank(
+                    trimValue(
+                        view.schoolVisitCompleteRemarks
+                    )
+                )
+        };
+
+        setButtonBusy(
+            view.schoolVisitConfirmCompleteButton,
+            true,
+            'Proceeding...'
+        );
+
+        let loaderToken = null;
+
+        try {
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader(
+                        'Recording School Visit attendance and starting Entrance Test...'
+                    );
+            }
+
+            /*
+             * Reuse the existing School Visit endpoint.
+             * It now records employee + attendance and sets the School Visit
+             * status to ATTENDED. It does not mark the visit COMPLETED.
+             */
+            const attendanceResponse =
+                await apiPatchJson(
+                    `${API_ROOT}/${encodeURIComponent(
+                        state.currentApplicationId
+                    )}/school-visit/complete`,
+                    payload
+                );
+
+            const schoolVisit =
+                unwrapResponseData(
+                    attendanceResponse
+                );
+
+            state.schoolVisit =
+                schoolVisit || null;
+
+            renderSchoolVisit(
+                schoolVisit
+            );
+
+            /*
+             * The visit-day action is one user operation:
+             * after attendance is recorded, immediately advance the workflow
+             * from SCHOOL_VISIT to ENTRANCE_TEST.
+             */
+            const transitions =
+                await fetchAvailableTransitions(
+                    state.currentApplicationId
+                );
+
+            const entranceTestTransition =
+                transitions.find(
+                    transition =>
+                        enumEquals(
+                            transition?.action,
+                            'ADVANCE'
+                        )
+                        && enumEquals(
+                            transition?.targetStage,
+                            'ENTRANCE_TEST'
+                        )
+                );
+
+            if (!entranceTestTransition) {
+                throw new Error(
+                    'Attendance was recorded, but the Entrance Test transition is not currently available.'
+                );
+            }
+
+            const transitionResponse =
+                await submitWorkflowTransition(
+                    state.currentApplicationId,
+                    'SCHOOL_VISIT',
+                    entranceTestTransition
+                );
+
+            closeSchoolVisitCompleteModal();
+
+            applyWorkflowResponseToProfile(
+                transitionResponse
+            );
+
+            await loadApplications(true);
+
+            await Promise.all([
+                loadSchoolVisit(
+                    state.currentApplicationId
+                ),
+                loadProfileTransitions(
+                    state.currentApplicationId
+                )
+            ]);
+
+            notifySuccess(
+                'Attendance recorded and application moved to Entrance Test successfully.'
+            );
+        } catch (error) {
+            /*
+             * The attendance request may already have committed before a
+             * transition failure. Synchronize the UI silently so the browser
+             * always reflects the real backend state without manual refresh.
+             */
+            await loadApplications(true);
+
+            if (state.currentApplicationId) {
+                await Promise.allSettled([
+                    loadSchoolVisit(
+                        state.currentApplicationId
+                    ),
+                    loadProfileTransitions(
+                        state.currentApplicationId
+                    )
+                ]);
+            }
+
+            showInlineError(
+                view.schoolVisitCompleteError,
+                readErrorMessage(
+                    error,
+                    'The application could not proceed to Entrance Test.'
+                )
+            );
+        } finally {
+            if (loaderToken
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+
+            setButtonBusy(
+                view.schoolVisitConfirmCompleteButton,
+                false,
+                'Proceed to Entrance Test'
+            );
+        }
+    }
+
+    function setMinimumFutureDateTime(
+        input
+    ) {
+        if (!input) {
+            return;
+        }
+
+        const minimum =
+            new Date(
+                Date.now()
+                + (5 * 60 * 1000)
+            );
+
+        input.min =
+            toDateTimeLocalValue(
+                minimum
+            );
+    }
+
+    function toDateTimeLocalValue(
+        value
+    ) {
+        if (!value) {
+            return '';
+        }
+
+        const date =
+            value instanceof Date
+                ? value
+                : new Date(value);
+
+        if (Number.isNaN(date.getTime())) {
+            const raw =
+                String(value);
+
+            return raw.length >= 16
+                ? raw.slice(0, 16)
+                : raw;
+        }
+
+        const pad =
+            number =>
+                String(number).padStart(2, '0');
+
+        return `${
+            date.getFullYear()
+        }-${
+            pad(date.getMonth() + 1)
+        }-${
+            pad(date.getDate())
+        }T${
+            pad(date.getHours())
+        }:${
+            pad(date.getMinutes())
+        }`;
     }
 
     /**
@@ -2141,7 +3590,15 @@ const ApplicationsController = (() => {
             'Saving...'
         );
 
+        let loaderToken = null;
+
         try {
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader(
+                        'Saving Document Review...'
+                    );
+            }
             const response =
                 await apiPatchJson(
                     `${API_ROOT}/${
@@ -2163,6 +3620,10 @@ const ApplicationsController = (() => {
 
             closeDocumentReviewModal();
 
+            await refreshAfterDocumentMutation(
+                state.currentApplicationId
+            );
+
             notifySuccess(
                 decision === 'VERIFY'
                     ? 'Document verified successfully.'
@@ -2183,6 +3644,11 @@ const ApplicationsController = (() => {
                 )
             );
         } finally {
+            if (loaderToken
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+
             setButtonBusy(
                 view.submitReviewButton,
                 false,
@@ -2290,7 +3756,15 @@ const ApplicationsController = (() => {
             'Creating...'
         );
 
+        let loaderToken = null;
+
         try {
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader(
+                        'Creating Document Request...'
+                    );
+            }
             const response =
                 await apiPost(
                     `${API_ROOT}/${
@@ -2314,6 +3788,10 @@ const ApplicationsController = (() => {
 
             closeAdditionalDocumentModal();
 
+            await refreshAfterDocumentMutation(
+                state.currentApplicationId
+            );
+
             notifySuccess(
                 'Document request created. Email status will update '
                 + 'automatically without reloading the profile.'
@@ -2329,6 +3807,11 @@ const ApplicationsController = (() => {
                 )
             );
         } finally {
+            if (loaderToken
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+
             setButtonBusy(
                 view.submitRequestButton,
                 false,
@@ -2401,7 +3884,15 @@ const ApplicationsController = (() => {
             'Cancelling...'
         );
 
+        let loaderToken = null;
+
         try {
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader(
+                        'Cancelling Document Request...'
+                    );
+            }
             const response =
                 await apiPatchJson(
                     `${API_ROOT}/${
@@ -2425,6 +3916,10 @@ const ApplicationsController = (() => {
 
             closeCancelRequestModal();
 
+            await refreshAfterDocumentMutation(
+                state.currentApplicationId
+            );
+
             notifySuccess(
                 'Document request cancelled successfully.'
             );
@@ -2437,6 +3932,11 @@ const ApplicationsController = (() => {
                 )
             );
         } finally {
+            if (loaderToken
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+
             setButtonBusy(
                 view.confirmCancellationButton,
                 false,
@@ -2560,6 +4060,383 @@ const ApplicationsController = (() => {
             requests;
 
         renderDocumentRequests(requests);
+    }
+
+    async function refreshAfterDocumentMutation(
+        applicationId
+    ) {
+        const validApplicationId =
+            Number(applicationId);
+
+        if (!Number.isInteger(validApplicationId)
+                || validApplicationId <= 0) {
+            return;
+        }
+
+        await synchronizeApplicationDocumentState(
+            validApplicationId,
+            true
+        );
+
+        /*
+         * Keep the list row synchronized too. This is silent and does not
+         * reset the currently open profile or scroll position.
+         */
+        await loadApplications(true);
+    }
+
+    /**
+     * Builds a stable signature so background polling redraws the profile only
+     * when document/request/workflow state actually changed.
+     */
+    function buildDocumentSyncSignature(
+        application,
+        documents,
+        requests,
+        transitions
+    ) {
+        const documentPart =
+            (Array.isArray(documents)
+                ? documents
+                : [])
+                .map(document => [
+                    document?.documentId,
+                    document?.verificationStatus,
+                    document?.current,
+                    document?.active,
+                    document?.uploadedAt
+                ].join(':'))
+                .join('|');
+
+        const requestPart =
+            (Array.isArray(requests)
+                ? requests
+                : [])
+                .map(request => [
+                    request?.requestId,
+                    request?.requestStatus,
+                    request?.emailStatus,
+                    request?.uploadedAt
+                ].join(':'))
+                .join('|');
+
+        const transitionPart =
+            (Array.isArray(transitions)
+                ? transitions
+                : [])
+                .map(transition => [
+                    transition?.action,
+                    transition?.targetStage
+                ].join(':'))
+                .join('|');
+
+        return [
+            application?.documentStatus,
+            application?.verificationStatus,
+            documentPart,
+            requestPart,
+            transitionPart
+        ].join('||');
+    }
+
+    /**
+     * Reloads the authoritative document-related application state without
+     * reopening the profile or changing the user's scroll position.
+     *
+     * Parent uploads are independent browser actions, therefore the profile
+     * also calls this method periodically while it remains open. The
+     * background interval is intentionally conservative because document
+     * endpoints may involve database/storage work.
+     */
+    async function synchronizeApplicationDocumentState(
+        applicationId,
+        force = false
+    ) {
+        const expectedApplicationId =
+            Number(applicationId);
+
+        if (!Number.isInteger(expectedApplicationId)
+                || expectedApplicationId <= 0
+                || state.documentSyncBusy) {
+            return;
+        }
+
+        if (Number(state.currentApplicationId)
+                !== expectedApplicationId
+                || !state.currentApplication) {
+            return;
+        }
+
+        state.documentSyncBusy = true;
+
+        try {
+            /*
+             * Normal background checks fetch only documents + requests.
+             * The application/details/transitions endpoints are much heavier
+             * and are fetched only when those document states actually change.
+             */
+            const [
+                documentsResponse,
+                requestsResponse
+            ] = await Promise.all([
+                apiGet(
+                    `${API_ROOT}/${encodeURIComponent(
+                        expectedApplicationId
+                    )}/documents`
+                ),
+                apiGet(
+                    `${API_ROOT}/${encodeURIComponent(
+                        expectedApplicationId
+                    )}/documents/requests`
+                )
+            ]);
+
+            if (Number(state.currentApplicationId)
+                    !== expectedApplicationId
+                    || !state.currentApplication) {
+                return;
+            }
+
+            const documents =
+                unwrapResponseData(
+                    documentsResponse
+                );
+
+            const requests =
+                unwrapResponseData(
+                    requestsResponse
+                );
+
+            const normalizedDocuments =
+                Array.isArray(documents)
+                    ? documents
+                    : [];
+
+            const normalizedRequests =
+                Array.isArray(requests)
+                    ? requests
+                    : [];
+
+            const lightweightSignature = [
+                normalizedDocuments
+                    .map(document => [
+                        document?.documentId,
+                        document?.verificationStatus,
+                        document?.current,
+                        document?.active,
+                        document?.uploadedAt
+                    ].join(':'))
+                    .join('|'),
+                normalizedRequests
+                    .map(request => [
+                        request?.requestId,
+                        request?.requestStatus,
+                        request?.emailStatus,
+                        request?.uploadedAt
+                    ].join(':'))
+                    .join('|')
+            ].join('||');
+
+            if (!force
+                    && lightweightSignature
+                    === state.documentSyncSignature) {
+                return;
+            }
+
+            state.documentSyncSignature =
+                lightweightSignature;
+
+            /*
+             * Something changed (or an admin action forced synchronization).
+             * Now fetch the authoritative application state and transitions.
+             */
+            const [
+                applicationResponse,
+                transitions
+            ] = await Promise.all([
+                apiGet(
+                    `${API_ROOT}/${encodeURIComponent(
+                        expectedApplicationId
+                    )}`
+                ),
+                fetchAvailableTransitions(
+                    expectedApplicationId
+                )
+            ]);
+
+            if (Number(state.currentApplicationId)
+                    !== expectedApplicationId
+                    || !state.currentApplication) {
+                return;
+            }
+
+            const latestApplication =
+                unwrapResponseData(
+                    applicationResponse
+                ) || {};
+
+            /*
+             * Always trust the backend for the workflow stage/status.
+             * Document actions must never infer or rewrite currentStage in JS.
+             */
+            state.currentApplication = {
+                ...state.currentApplication,
+                ...latestApplication,
+                documents:
+                    normalizedDocuments,
+                documentRequests:
+                    normalizedRequests
+            };
+
+            renderDocuments(
+                normalizedDocuments
+            );
+
+            renderDocumentRequests(
+                normalizedRequests
+            );
+
+            renderApplicationPhoto(
+                state.currentApplication
+            );
+
+            updateVisibleDocumentStatus(
+                latestApplication.documentStatus
+                || 'PENDING'
+            );
+
+            setText(
+                'view-verificationStatus',
+                formatEnum(
+                    latestApplication.verificationStatus
+                )
+            );
+
+            setText(
+                'view-currentStage',
+                formatEnum(
+                    latestApplication.currentStage
+                )
+            );
+
+            setText(
+                'view-documentStatus',
+                formatEnum(
+                    latestApplication.documentStatus
+                )
+            );
+
+            /*
+             * Do not derive next stage/action locally. They come exclusively
+             * from the backend transition endpoint below.
+             */
+            state.profileTransitions =
+                Array.isArray(transitions)
+                    ? transitions
+                    : [];
+
+            const primaryTransition =
+                state.profileTransitions.find(
+                    transition =>
+                        enumEquals(
+                            transition?.action,
+                            'ADVANCE'
+                        )
+                ) || null;
+
+            renderProfileNextAction(
+                primaryTransition
+            );
+
+            /*
+             * If the current workflow stage changed, refresh stage-specific
+             * panels too so stale School Visit actions disappear immediately.
+             */
+            if (!enumEquals(
+                    latestApplication.currentStage,
+                    'SCHOOL_VISIT'
+            )) {
+                if (view.schoolVisitCompleteModal
+                        && !view.schoolVisitCompleteModal.hidden) {
+                    closeSchoolVisitCompleteModal();
+                }
+
+                if (state.schoolVisit) {
+                    state.schoolVisit.currentStage =
+                        latestApplication.currentStage;
+
+                    renderSchoolVisit(
+                        state.schoolVisit
+                    );
+                }
+            }
+
+            await loadApplications(true);
+        } catch (error) {
+            console.warn(
+                'Automatic document/workflow synchronization failed.',
+                error
+            );
+        } finally {
+            state.documentSyncBusy = false;
+        }
+    }
+
+    /**
+     * While an application profile is open, poll quietly for parent uploads
+     * and backend verification/request-state changes.
+     */
+    function startDocumentAutoSync(
+        applicationId
+    ) {
+        stopDocumentAutoSync();
+
+        const expectedApplicationId =
+            Number(applicationId);
+
+        if (!Number.isInteger(expectedApplicationId)
+                || expectedApplicationId <= 0) {
+            return;
+        }
+
+        state.documentSyncSignature = null;
+
+        void synchronizeApplicationDocumentState(
+            expectedApplicationId,
+            true
+        );
+
+        state.documentSyncTimer =
+            window.setInterval(
+                () => {
+                    if (document.hidden) {
+                        return;
+                    }
+
+                    if (Number(state.currentApplicationId)
+                            !== expectedApplicationId) {
+                        stopDocumentAutoSync();
+                        return;
+                    }
+
+                    void synchronizeApplicationDocumentState(
+                        expectedApplicationId,
+                        false
+                    );
+                },
+                10000
+            );
+    }
+
+    function stopDocumentAutoSync() {
+        if (state.documentSyncTimer) {
+            window.clearInterval(
+                state.documentSyncTimer
+            );
+        }
+
+        state.documentSyncTimer = null;
+        state.documentSyncBusy = false;
     }
 
     /**
@@ -2688,7 +4565,10 @@ const ApplicationsController = (() => {
                 ).toUpperCase()
             );
 
-        let aggregateStatus = 'PENDING';
+        let aggregateStatus =
+            statuses.length === 0
+                ? 'PENDING'
+                : 'PENDING';
 
         if (statuses.some(status =>
             status === 'REUPLOAD_REQUIRED'
@@ -2824,12 +4704,15 @@ const ApplicationsController = (() => {
      * Shows the table and hides the profile.
      */
     function showTableView() {
+        stopDocumentAutoSync();
+
         showElement(view.tableComponent);
         hideElement(view.detailComponent);
 
         state.currentApplicationId = null;
         state.currentApplication = null;
         state.profileTransitions = [];
+        state.schoolVisit = null;
         renderProfileNextAction(null);
 
         window.scrollTo({
@@ -3327,7 +5210,33 @@ const ApplicationsController = (() => {
 
         if (!transition) {
             notifyError(
-                'This action is no longer available. Refresh the applications list.'
+                'This action is no longer available. The applications list will now be synchronized.'
+            );
+
+            await loadApplications(true);
+            return;
+        }
+
+        if (
+            enumEquals(
+                record.currentStage,
+                'APPLICATION_VERIFICATION'
+            )
+            && enumEquals(
+                transition.action,
+                'ADVANCE'
+            )
+            && enumEquals(
+                transition.targetStage,
+                'SCHOOL_VISIT'
+            )
+        ) {
+            await openSchoolVisitScheduleModal(
+                false,
+                {
+                    record,
+                    transition
+                }
             );
             return;
         }
@@ -3351,11 +5260,52 @@ const ApplicationsController = (() => {
 
     function openProfileNextActionConfirmation() {
         const transition =
-            state.profileTransitions[0];
+            state.profileTransitions.find(
+                item =>
+                    enumEquals(
+                        item?.action,
+                        'ADVANCE'
+                    )
+            ) || null;
 
         if (!transition
                 || !state.currentApplicationId
                 || !state.currentApplication) {
+            return;
+        }
+
+        if (
+            enumEquals(
+                state.currentApplication.currentStage,
+                'APPLICATION_VERIFICATION'
+            )
+            && enumEquals(
+                transition.action,
+                'ADVANCE'
+            )
+            && enumEquals(
+                transition.targetStage,
+                'SCHOOL_VISIT'
+            )
+        ) {
+            void openSchoolVisitScheduleModal(
+                false,
+                {
+                    record: {
+                        applicationId:
+                            state.currentApplicationId,
+                        currentStage:
+                            state.currentApplication.currentStage,
+                        nextAction:
+                            transition.action,
+                        nextTargetStage:
+                            transition.targetStage,
+                        nextActionLabel:
+                            transition.label
+                    },
+                    transition
+                }
+            );
             return;
         }
 
@@ -3511,13 +5461,17 @@ const ApplicationsController = (() => {
                     transition
                 );
 
-            await loadApplications();
+            await loadApplications(true);
 
             if (keepProfileOpen
                     && transitionResponse) {
                 applyWorkflowResponseToProfile(
                     transitionResponse
                 );
+                await loadSchoolVisit(
+                    applicationId
+                );
+
                 await loadProfileTransitions(
                     applicationId
                 );
@@ -3603,7 +5557,7 @@ const ApplicationsController = (() => {
             }
 
             state.selectedApplications.clear();
-            await loadApplications();
+            await loadApplications(true);
         } finally {
             if (loaderToken
                     && typeof hideLoader === 'function') {
@@ -3642,7 +5596,9 @@ const ApplicationsController = (() => {
     async function submitWorkflowTransition(
         applicationId,
         expectedCurrentStage,
-        transition
+        transition,
+        schoolVisitScheduledAt = null,
+        internalRemarks = null
     ) {
         const response =
             await apiPatchJson(
@@ -3653,8 +5609,14 @@ const ApplicationsController = (() => {
                         transition.targetStage,
                     action:
                         transition.action,
+                    schoolVisitScheduledAt,
                     publicRemarks: null,
-                    internalRemarks: null,
+                    internalRemarks,
+                    /*
+                     * APPLICATION_VERIFICATION -> SCHOOL_VISIT uses the
+                     * dedicated School Visit scheduling email. The backend
+                     * suppresses the generic transition email for that route.
+                     */
                     notifyApplicant:
                         transition.applicantNotificationRequired === true
                         || transition.applicantNotificationSupported === true
@@ -3680,14 +5642,37 @@ const ApplicationsController = (() => {
             state.profileTransitions = [];
         }
 
+        const primaryTransition =
+            state.profileTransitions.find(
+                transition =>
+                    enumEquals(
+                        transition?.action,
+                        'ADVANCE'
+                    )
+            ) || null;
+
         renderProfileNextAction(
-            state.profileTransitions[0] || null
+            primaryTransition
         );
     }
 
     function renderProfileNextAction(
         transition
     ) {
+
+        if (state.currentApplication
+                && enumEquals(
+                    state.currentApplication.currentStage,
+                    'SCHOOL_VISIT'
+                )
+                && transition
+                && enumEquals(
+                    transition.targetStage,
+                    'SCHOOL_VISIT'
+                )) {
+            transition = null;
+        }
+
         setText(
             'view-nextStage',
             transition
@@ -4365,27 +6350,13 @@ const ApplicationsController = (() => {
             return '';
         }
 
-        const date =
-            new Date(value);
-
-        if (Number.isNaN(date.getTime())) {
-            return String(value);
+        if (window.erpDate) {
+            return includeTime
+                ? window.erpDate.formatDateTime(value, '')
+                : window.erpDate.formatDate(value, '');
         }
 
-        const options =
-            includeTime
-                ? {
-                    dateStyle: 'medium',
-                    timeStyle: 'short'
-                }
-                : {
-                    dateStyle: 'medium'
-                };
-
-        return new Intl.DateTimeFormat(
-            undefined,
-            options
-        ).format(date);
+        return String(value);
     }
 
     function formatFileSize(

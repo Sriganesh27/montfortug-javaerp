@@ -413,14 +413,11 @@ function formatApplicationDate(dateValue) {
         return '-';
     }
 
-    const date =
-        new Date(dateValue);
-
-    if (Number.isNaN(date.getTime())) {
-        return '-';
+    if (window.erpDate) {
+        return window.erpDate.formatDate(dateValue, '-');
     }
 
-    return date.toLocaleDateString();
+    return String(dateValue);
 }
 
 function formatEnum(value) {

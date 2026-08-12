@@ -579,10 +579,14 @@ public class ApplicationDocumentServiceImpl
                 ErpApplication.VerificationStatus
                         .ADDITIONAL_DOCUMENTS_REQUIRED
         );
-        application.setCurrentStage(
-                ErpApplication.CurrentStage
-                        .APPLICATION_VERIFICATION
-        );
+
+        /*
+         * Additional-document requests are orthogonal to the main admission
+         * stage. If the application is already in SCHOOL_VISIT or a later
+         * stage, do not rewind it to APPLICATION_VERIFICATION. The unresolved
+         * document state itself blocks stage-specific progression until the
+         * document is resolved.
+         */
         application.setUpdatedBy(
                 userId.longValue()
         );
@@ -1217,10 +1221,6 @@ public class ApplicationDocumentServiceImpl
                     ErpApplication.VerificationStatus
                             .ADDITIONAL_DOCUMENTS_REQUIRED
             );
-            application.setCurrentStage(
-                    ErpApplication.CurrentStage
-                            .APPLICATION_VERIFICATION
-            );
         } else if (rejected > 0) {
             status =
                     ErpApplication.DocumentStatus.REJECTED;
@@ -1229,7 +1229,11 @@ public class ApplicationDocumentServiceImpl
             status =
                     ErpApplication.DocumentStatus.VERIFIED;
 
-            if (application.getVerificationStatus()
+            if (isAfterApplicationVerificationStage(application)) {
+                application.setVerificationStatus(
+                        ErpApplication.VerificationStatus.APPROVED
+                );
+            } else if (application.getVerificationStatus()
                     == ErpApplication.VerificationStatus
                     .ADDITIONAL_DOCUMENTS_REQUIRED) {
                 application.setVerificationStatus(
@@ -1248,6 +1252,8 @@ public class ApplicationDocumentServiceImpl
                 );
             }
         }
+
+        recoverPreviouslyScheduledSchoolVisitStage(application);
 
         application.setDocumentStatus(status);
         application.setUpdatedBy(
@@ -1330,6 +1336,58 @@ public class ApplicationDocumentServiceImpl
                         requestRecord,
                         uploadedDocument
                 );
+    }
+
+    /**
+     * Repairs records that were rolled back by the older document workflow.
+     * A persisted School Visit schedule proves the application had already
+     * progressed beyond APPLICATION_VERIFICATION, so document operations must
+     * not force the user through School Visit scheduling a second time.
+     */
+    private void recoverPreviouslyScheduledSchoolVisitStage(
+            ErpApplication application
+    ) {
+        if (application == null
+                || application.getCurrentStage()
+                != ErpApplication.CurrentStage.APPLICATION_VERIFICATION
+                || application.getSchoolVisitScheduledAt() == null
+                || application.getSchoolVisitStatus() == null) {
+            return;
+        }
+
+        ErpApplication.SchoolVisitStatus visitStatus =
+                application.getSchoolVisitStatus();
+
+        if (visitStatus == ErpApplication.SchoolVisitStatus.SCHEDULED
+                || visitStatus == ErpApplication.SchoolVisitStatus.RESCHEDULED
+                || visitStatus == ErpApplication.SchoolVisitStatus.ATTENDED
+                || visitStatus == ErpApplication.SchoolVisitStatus.COMPLETED) {
+            application.setCurrentStage(
+                    ErpApplication.CurrentStage.SCHOOL_VISIT
+            );
+        }
+    }
+
+    private boolean isAfterApplicationVerificationStage(
+            ErpApplication application
+    ) {
+        if (application == null
+                || application.getCurrentStage() == null) {
+            return false;
+        }
+
+        return switch (application.getCurrentStage()) {
+            case SCHOOL_VISIT,
+                 ENTRANCE_TEST,
+                 PARENT_FEE_DISCUSSION,
+                 PAYMENT,
+                 SCHOLARSHIP,
+                 FINAL_ADMISSION,
+                 ENROLLED,
+                 CLOSED -> true;
+            case APPLICATION_DRAFT,
+                 APPLICATION_VERIFICATION -> false;
+        };
     }
 
     private ErpApplication requireAccessibleApplication(
@@ -1884,11 +1942,12 @@ public class ApplicationDocumentServiceImpl
             return;
         }
 
-        application.setCurrentStage(
-                ErpApplication.CurrentStage
-                        .APPLICATION_VERIFICATION
-        );
-
+        /*
+         * Removing a current document can make document verification
+         * incomplete, but it must not rewind an application that already
+         * reached School Visit or a later workflow stage. The document state
+         * will block progression until resolved.
+         */
         if (recalculatedStatus
                 != ErpApplication.DocumentStatus.REUPLOAD_REQUIRED) {
             application.setVerificationStatus(

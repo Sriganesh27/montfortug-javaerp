@@ -161,25 +161,67 @@ public class PublicApplicationService {
             );
         }
 
+        /*
+         * Public application number format:
+         *
+         *   SCHOOL_CODE-YEAR-SEQUENCE
+         *   Example: U021-2026-0001
+         *
+         * Sequence is branch + academic-year scoped and zero padded
+         * to four digits.
+         */
         String yearString =
-                academicYear
-                        .getStartDate()
-                        .getYear()
-                        + "";
+                String.valueOf(
+                        academicYear
+                                .getStartDate()
+                                .getYear()
+                );
+
         long currentCount =
                 applicationRepository
                         .countApplicationsByBranchAndAcademicYear(
                                 branch.getBranchId(),
                                 academicYear.getAcademicYearId()
                         );
-        String sequence = String.format("%03d", currentCount + 1); // 3 digits as requested
-        String applicationNo = "APP-" + yearString + "-" + branch.getSchoolCode() + "-" + sequence;
 
-        // Guarantee uniqueness even if the database count is mismatched
-        while (applicationRepository.findByApplicationNo(applicationNo).isPresent()) {
+        String sequence =
+                String.format(
+                        "%04d",
+                        currentCount + 1
+                );
+
+        String applicationNo =
+                branch.getSchoolCode()
+                        + "-"
+                        + yearString
+                        + "-"
+                        + sequence;
+
+        /*
+         * Defensive uniqueness check in case imported/historic rows make
+         * the branch/year count differ from the highest existing sequence.
+         */
+        while (
+                applicationRepository
+                        .findByApplicationNo(
+                                applicationNo
+                        )
+                        .isPresent()
+        ) {
             currentCount++;
-            sequence = String.format("%03d", currentCount + 1);
-            applicationNo = "APP-" + yearString + "-" + branch.getSchoolCode() + "-" + sequence;
+
+            sequence =
+                    String.format(
+                            "%04d",
+                            currentCount + 1
+                    );
+
+            applicationNo =
+                    branch.getSchoolCode()
+                            + "-"
+                            + yearString
+                            + "-"
+                            + sequence;
         }
 
         ErpApplication app = new ErpApplication();

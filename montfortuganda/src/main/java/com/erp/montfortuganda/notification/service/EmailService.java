@@ -54,6 +54,12 @@ public class EmailService {
                     "dd MMM yyyy, hh:mm a"
             );
 
+    private static final DateTimeFormatter
+            SCHOOL_VISIT_DATE_TIME_FORMATTER =
+            DateTimeFormatter.ofPattern(
+                    "dd MMM yyyy, hh:mm a"
+            );
+
     private final JavaMailSender centralMailSender;
     private final BranchMailSenderFactory branchMailSenderFactory;
     private final TemplateEngine templateEngine;
@@ -506,6 +512,196 @@ public class EmailService {
             throw new IllegalStateException(
                     "Application workflow email could not be sent "
                             + "for application "
+                            + applicationNumber
+                            + ".",
+                    exception
+            );
+        }
+    }
+
+    /**
+     * Sends the actual School Visit scheduled/rescheduled date and time to the
+     * applicant/parent.
+     *
+     * <p>This method is intentionally synchronous. It is invoked by an
+     * AFTER_COMMIT event listener so failures can be logged reliably without
+     * affecting the already committed admission workflow transaction.</p>
+     *
+     * <p>Employee assignment is intentionally not part of this email. The
+     * responsible employee is assigned later only when the parent/student
+     * attends the visit.</p>
+     */
+    public void sendSchoolVisitSchedule(
+            ErpApplication application,
+            boolean rescheduled
+    ) {
+        if (application == null) {
+            throw new IllegalArgumentException(
+                    "Application is required for School Visit email delivery."
+            );
+        }
+
+        requireText(
+                application.getApplicationNo(),
+                "Application number"
+        );
+
+        requireText(
+                application.getPrimaryEmail(),
+                "Applicant email"
+        );
+
+        if (application.getSchoolVisitScheduledAt() == null) {
+            throw new IllegalArgumentException(
+                    "School Visit scheduled date and time are required."
+            );
+        }
+
+        if (application.getCurrentStage()
+                != ErpApplication.CurrentStage.SCHOOL_VISIT) {
+            throw new IllegalArgumentException(
+                    "Application must be in SCHOOL_VISIT stage before sending the School Visit schedule email."
+            );
+        }
+
+        ErpApplication.SchoolVisitStatus visitStatus =
+                application.getSchoolVisitStatus();
+
+        if (visitStatus != ErpApplication.SchoolVisitStatus.SCHEDULED
+                && visitStatus != ErpApplication.SchoolVisitStatus.RESCHEDULED) {
+            throw new IllegalArgumentException(
+                    "School Visit must be scheduled or rescheduled before email delivery."
+            );
+        }
+
+        String applicationNumber =
+                application.getApplicationNo().trim();
+
+        String recipientEmail =
+                application.getPrimaryEmail().trim();
+
+        try {
+            Branch branch = requireBranch(
+                    application.getBranch(),
+                    "Application"
+            );
+
+            String schoolName =
+                    resolveSchoolName(branch);
+
+            EmailLogo emailLogo =
+                    resolveBranchLogo(branch);
+
+            Context context =
+                    new Context();
+
+            context.setVariable(
+                    "schoolName",
+                    schoolName
+            );
+
+            context.setVariable(
+                    "schoolLogo",
+                    "cid:" + SCHOOL_LOGO_CONTENT_ID
+            );
+
+            context.setVariable(
+                    "studentName",
+                    buildFullName(
+                            application.getFirstName(),
+                            application.getLastName()
+                    )
+            );
+
+            context.setVariable(
+                    "applicationNo",
+                    applicationNumber
+            );
+
+            context.setVariable(
+                    "visitDateTime",
+                    SCHOOL_VISIT_DATE_TIME_FORMATTER.format(
+                            application.getSchoolVisitScheduledAt()
+                    )
+            );
+
+            context.setVariable(
+                    "rescheduled",
+                    rescheduled
+            );
+
+            context.setVariable(
+                    "trackingUrl",
+                    buildTrackingUrl(
+                            applicationNumber
+                    )
+            );
+
+            context.setVariable(
+                    "currentYear",
+                    Year.now().getValue()
+            );
+
+            String htmlContent =
+                    templateEngine.process(
+                            "email/application-school-visit-schedule",
+                            context
+                    );
+
+            JavaMailSender branchMailSender =
+                    branchMailSenderFactory.getMailSender(
+                            branch
+                    );
+
+            MimeMessage message =
+                    branchMailSender.createMimeMessage();
+
+            MimeMessageHelper helper =
+                    createMessageHelper(message);
+
+            configureBranchSender(
+                    helper,
+                    branch,
+                    " Admissions"
+            );
+
+            helper.setTo(
+                    recipientEmail
+            );
+
+            helper.setSubject(
+                    (rescheduled
+                            ? "School Visit Rescheduled - "
+                            : "School Visit Scheduled - ")
+                            + applicationNumber
+            );
+
+            helper.setText(
+                    htmlContent,
+                    true
+            );
+
+            addInlineLogo(
+                    helper,
+                    emailLogo
+            );
+
+            branchMailSender.send(
+                    message
+            );
+
+            LOGGER.info(
+                    "School Visit {} email sent from branch {} <{}> for application {}.",
+                    rescheduled
+                            ? "reschedule"
+                            : "schedule",
+                    branch.getSchoolCode(),
+                    branch.getBranchEmail(),
+                    applicationNumber
+            );
+        } catch (Exception exception) {
+            throw new IllegalStateException(
+                    "School Visit schedule email could not be sent for application "
                             + applicationNumber
                             + ".",
                     exception

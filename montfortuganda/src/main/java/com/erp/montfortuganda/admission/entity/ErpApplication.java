@@ -60,7 +60,7 @@ public class ErpApplication {
     }
 
     /**
-     * Detailed stage of the admission workflow.
+     * Detailed admission workflow stage introduced by V1.
      */
     public enum CurrentStage {
         APPLICATION_DRAFT,
@@ -89,6 +89,24 @@ public class ErpApplication {
         REUPLOAD_REQUIRED,
         VERIFIED,
         REJECTED
+    }
+
+    public enum SchoolVisitStatus {
+        NOT_SCHEDULED,
+        SCHEDULED,
+        RESCHEDULED,
+
+        /**
+         * Parent/student attended the School Visit and the responsible
+         * employee/attendance details were recorded. The admission workflow
+         * may now proceed to the Entrance Test, but the School Visit process
+         * is not yet treated as fully completed.
+         */
+        ATTENDED,
+
+        COMPLETED,
+        CANCELLED,
+        NO_SHOW
     }
 
     public enum TestStatus {
@@ -150,16 +168,9 @@ public class ErpApplication {
     @Column(name = "academic_year_id", nullable = false)
     private Long academicYearId;
 
-    /**
-     * References erp_classes.class_id, whose database type is INT.
-     */
     @Column(name = "branch_class_id", nullable = false)
     private Integer branchClassId;
 
-    /**
-     * Legacy public-portal term value retained during the transition to the
-     * branch-scoped academic-term foreign key.
-     */
     @Column(name = "term", nullable = false, length = 20)
     private String term = "";
 
@@ -231,17 +242,9 @@ public class ErpApplication {
     // 4. ACADEMIC AND PREVIOUS-SCHOOL DETAILS
     // =====================================================================
 
-    /**
-     * Kept as VARCHAR because the existing public form and database column
-     * currently store this value as text.
-     */
     @Column(name = "date_of_registration", nullable = false, length = 20)
     private String dateOfRegistration = "";
 
-    /**
-     * Kept as String until the scholarship workflow is aligned because the
-     * existing database may contain legacy status values.
-     */
     @Column(name = "scholarship_status", nullable = false, length = 50)
     private String scholarshipStatus = "NOT_APPLIED";
 
@@ -326,10 +329,6 @@ public class ErpApplication {
     @Column(name = "guardian_name", nullable = false, length = 50)
     private String guardianName = "";
 
-    /**
-     * Legacy field retained because the current public application DTO and
-     * service still populate guardian_mobile.
-     */
     @Column(name = "guardian_mobile", length = 20)
     private String guardianMobile;
 
@@ -418,6 +417,28 @@ public class ErpApplication {
     @Column(name = "school_visit_remarks", length = 1000)
     private String schoolVisitRemarks;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "school_visit_status", nullable = false, length = 30)
+    private SchoolVisitStatus schoolVisitStatus = SchoolVisitStatus.NOT_SCHEDULED;
+
+    @Column(name = "school_visit_employee_id")
+    private Long schoolVisitEmployeeId;
+
+    @Column(name = "school_visit_scheduled_at")
+    private LocalDateTime schoolVisitScheduledAt;
+
+    @Column(name = "school_visit_student_attended", nullable = false)
+    private Boolean schoolVisitStudentAttended = false;
+
+    @Column(name = "school_visit_parent_attended", nullable = false)
+    private Boolean schoolVisitParentAttended = false;
+
+    @Column(name = "school_visit_completed_by")
+    private Long schoolVisitCompletedBy;
+
+    @Column(name = "school_visit_completed_at")
+    private LocalDateTime schoolVisitCompletedAt;
+
     @Column(name = "verification_decision_by")
     private Long verificationDecisionBy;
 
@@ -485,6 +506,15 @@ public class ErpApplication {
         if (scholarshipStatus == null || scholarshipStatus.isBlank()) {
             scholarshipStatus = "NOT_APPLIED";
         }
+        if (schoolVisitStatus == null) {
+            schoolVisitStatus = SchoolVisitStatus.NOT_SCHEDULED;
+        }
+        if (schoolVisitStudentAttended == null) {
+            schoolVisitStudentAttended = false;
+        }
+        if (schoolVisitParentAttended == null) {
+            schoolVisitParentAttended = false;
+        }
     }
 
     @PreUpdate
@@ -492,10 +522,6 @@ public class ErpApplication {
         updatedAt = LocalDateTime.now();
     }
 
-    /**
-     * Compatibility overload for the existing ApplicationCreateDTO, which
-     * currently exposes branchClassId as Long.
-     */
     public void setBranchClassId(Long branchClassId) {
         this.branchClassId = branchClassId == null
                 ? null
