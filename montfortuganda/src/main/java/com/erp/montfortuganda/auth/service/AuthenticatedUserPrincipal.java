@@ -8,10 +8,13 @@ import java.io.Serial;
 import java.util.Collection;
 
 /**
- * Authenticated Spring Security principal containing the ERP user ID.
+ * Authenticated Spring Security principal containing the ERP user and branch
+ * identifiers required by normal request processing.
  *
- * This allows JPA auditing to obtain the authenticated user's ID directly
- * without executing another database query during Hibernate flush.
+ * <p>Keeping these immutable values in the authenticated principal avoids
+ * executing a second user/branch database lookup in every protected API
+ * request. Authentication itself remains DB-backed in UserDetailsServiceImpl,
+ * so account status and roles are still validated when the JWT is accepted.</p>
  */
 @Getter
 public final class AuthenticatedUserPrincipal extends User {
@@ -20,13 +23,19 @@ public final class AuthenticatedUserPrincipal extends User {
     private static final long serialVersionUID = 1L;
 
     private final Integer userId;
+    private final Integer branchId;
+    private final String branchName;
+    private final String schoolCode;
 
     public AuthenticatedUserPrincipal(
             Integer userId,
             String username,
             String password,
             boolean enabled,
-            Collection<? extends GrantedAuthority> authorities
+            Collection<? extends GrantedAuthority> authorities,
+            Integer branchId,
+            String branchName,
+            String schoolCode
     ) {
         super(
                 username,
@@ -45,6 +54,8 @@ public final class AuthenticatedUserPrincipal extends User {
         }
 
         this.userId = userId;
+        this.branchId = branchId;
+        this.branchName = branchName;
+        this.schoolCode = schoolCode;
     }
-
 }

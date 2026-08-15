@@ -3,6 +3,7 @@ package com.erp.montfortuganda.auth.service;
 import com.erp.montfortuganda.auth.entity.ErpUserRole;
 import com.erp.montfortuganda.auth.entity.User;
 import com.erp.montfortuganda.auth.repository.UserRepository;
+import com.erp.montfortuganda.school.entity.Branch;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -55,12 +56,24 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         boolean enabled =
                 Integer.valueOf(1).equals(user.getIsActive());
 
+        Branch branch =
+                user.getAssignedBranch();
+
         return new AuthenticatedUserPrincipal(
                 user.getId(),
                 user.getUsername(),
                 user.getPassword(),
                 enabled,
-                authorities
+                authorities,
+                branch == null
+                        ? null
+                        : branch.getBranchId(),
+                branch == null
+                        ? null
+                        : branch.getBranchName(),
+                branch == null
+                        ? null
+                        : branch.getSchoolCode()
         );
     }
 

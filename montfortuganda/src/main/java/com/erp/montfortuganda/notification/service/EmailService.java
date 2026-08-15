@@ -45,19 +45,19 @@ public class EmailService {
 
     private static final DateTimeFormatter EXPIRY_FORMATTER =
             DateTimeFormatter.ofPattern(
-                    "dd MMM yyyy, hh:mm a 'UTC'"
+                    "dd-MM-yyyy hh:mm a 'UTC'"
             );
 
     private static final DateTimeFormatter
             DOCUMENT_DEADLINE_FORMATTER =
             DateTimeFormatter.ofPattern(
-                    "dd MMM yyyy, hh:mm a"
+                    "dd-MM-yyyy hh:mm a"
             );
 
     private static final DateTimeFormatter
             SCHOOL_VISIT_DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern(
-                    "dd MMM yyyy, hh:mm a"
+                    "dd-MM-yyyy hh:mm a"
             );
 
     private final JavaMailSender centralMailSender;

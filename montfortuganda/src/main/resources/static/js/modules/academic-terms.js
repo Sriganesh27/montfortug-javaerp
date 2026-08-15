@@ -41,6 +41,18 @@
 
         bind();
         resetForm();
+        if (typeof window.erpRegisterModuleSync === 'function') {
+            window.erpRegisterModuleSync(
+                'academic-terms',
+                async () => {
+                    if (!document.querySelector('#ba-academic-terms-view')) return false;
+                    await loadYears();
+                    await loadTerms();
+                    return true;
+                }
+            );
+        }
+
         await loadYears();
         await loadTerms();
 
@@ -159,6 +171,7 @@
                 const res = state.editingId
                     ? await apiPut(`/academic-terms/${state.editingId}`, payload)
                     : await apiPost('/academic-terms', payload);
+                cancelQueuedGlobalSync();
                 successNotify(res?.message || 'Academic Term saved successfully.');
                 el.yearFilter.value = String(payload.academicYearId); showTable(); await loadTerms();
             } catch (e) { const m = readError(e, 'Unable to save Academic Term.'); showError(m); errorNotify(m); }
@@ -168,7 +181,12 @@
         async function makeCurrent(r) {
             if (!confirm(`Make "${r.termName}" the current Term?`)) return;
             showOverlay('Updating Current Term', 'Please wait while the current Term is updated.');
-            try { const res = await patch(`/academic-terms/${r.termId}/current`); successNotify(res?.message || 'Current Term updated.'); await loadTerms(); }
+            try {
+                const res = await patch(`/academic-terms/${r.termId}/current`);
+                cancelQueuedGlobalSync();
+                successNotify(res?.message || 'Current Term updated.');
+                await loadTerms();
+            }
             catch (e) { errorNotify(readError(e, 'Unable to update current Term.')); } finally { hideOverlay(); }
         }
 
@@ -178,7 +196,9 @@
             try {
                 const qs = new URLSearchParams({ active: String(next), version: String(r.version ?? 0) });
                 const res = await patch(`/academic-terms/${r.termId}/active-status?${qs}`);
-                successNotify(res?.message || 'Academic Term state updated.'); await loadTerms();
+                cancelQueuedGlobalSync();
+                successNotify(res?.message || 'Academic Term state updated.');
+                await loadTerms();
             } catch (e) { errorNotify(readError(e, 'Unable to change Academic Term state.')); } finally { hideOverlay(); }
         }
 
@@ -217,10 +237,23 @@
         function clearError(){ el.errorText.textContent=''; el.error.classList.add('hidden'); }
     }
 
+
+    function cancelQueuedGlobalSync() {
+        if (
+            typeof window.erpCancelPendingDataSync
+            === 'function'
+        ) {
+            window.erpCancelPendingDataSync();
+        }
+    }
+
     async function patch(path) {
         const response = await fetch(`/api${path}`, { method:'PATCH', credentials:'include', cache:'no-store', headers:{'Content-Type':'application/json'} });
         const text = await response.text(); let body; try { body = text ? JSON.parse(text) : null; } catch { body = text; }
         if (!response.ok) { const e = new Error(body?.message || `HTTP Error: ${response.status}`); e.data = body; throw e; }
+        document.dispatchEvent(new CustomEvent('erp:data-mutated', {
+            detail: { method: 'PATCH', endpoint: path, responseData: body, occurredAt: Date.now() }
+        }));
         return body;
     }
     const arrayOf = v => Array.isArray(v) ? v : (Array.isArray(v?.content) ? v.content : []);

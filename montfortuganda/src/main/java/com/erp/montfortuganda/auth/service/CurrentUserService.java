@@ -36,18 +36,72 @@ public class CurrentUserService {
     public CurrentUserContext getCurrentUserContext(
             Authentication authentication
     ) {
+        requireAuthentication(authentication);
+
+        /*
+         * Normal JWT-authenticated request path.
+         *
+         * UserDetailsServiceImpl has already loaded the user, active roles,
+         * and assigned branch while authenticating this request. Reuse those
+         * immutable principal values instead of immediately repeating the
+         * same user/branch query.
+         */
         if (
-                authentication == null ||
-                        !authentication.isAuthenticated() ||
-                        "anonymousUser".equals(
-                                authentication.getPrincipal()
-                        )
+                authentication.getPrincipal()
+                        instanceof AuthenticatedUserPrincipal principal
         ) {
-            throw new AuthenticationCredentialsNotFoundException(
-                    "No authenticated user found"
+            return fromAuthenticatedPrincipal(
+                    authentication,
+                    principal
             );
         }
 
+        /*
+         * Compatibility fallback for any non-JWT/legacy authentication
+         * provider that still supplies a standard Spring principal.
+         */
+        return loadLegacyContext(
+                authentication
+        );
+    }
+
+    private CurrentUserContext fromAuthenticatedPrincipal(
+            Authentication authentication,
+            AuthenticatedUserPrincipal principal
+    ) {
+        CurrentUserContext context =
+                new CurrentUserContext();
+
+        context.setUserId(
+                principal.getUserId()
+        );
+
+        context.setUsername(
+                principal.getUsername()
+        );
+
+        context.setRoles(
+                resolveRoles(authentication)
+        );
+
+        context.setBranchId(
+                principal.getBranchId()
+        );
+
+        context.setBranchName(
+                principal.getBranchName()
+        );
+
+        context.setSchoolCode(
+                principal.getSchoolCode()
+        );
+
+        return context;
+    }
+
+    private CurrentUserContext loadLegacyContext(
+            Authentication authentication
+    ) {
         String username =
                 authentication.getName();
 
@@ -56,30 +110,28 @@ public class CurrentUserService {
                         .findByUsernameWithAssignedBranch(
                                 username
                         )
-                        .orElseThrow(() ->
-                                new AuthenticationCredentialsNotFoundException(
-                                        "Authenticated user not found: " +
-                                                username
-                                )
+                        .orElseThrow(
+                                () ->
+                                        new AuthenticationCredentialsNotFoundException(
+                                                "Authenticated user not found: "
+                                                        + username
+                                        )
                         );
 
         CurrentUserContext context =
                 new CurrentUserContext();
 
-        context.setUserId(user.getId());
-        context.setUsername(user.getUsername());
+        context.setUserId(
+                user.getId()
+        );
 
-        List<String> roles =
-                authentication
-                        .getAuthorities()
-                        .stream()
-                        .map(
-                                GrantedAuthority::getAuthority
-                        )
-                        .distinct()
-                        .toList();
+        context.setUsername(
+                user.getUsername()
+        );
 
-        context.setRoles(roles);
+        context.setRoles(
+                resolveRoles(authentication)
+        );
 
         Branch branch =
                 user.getAssignedBranch();
@@ -103,5 +155,34 @@ public class CurrentUserService {
         }
 
         return context;
+    }
+
+    private List<String> resolveRoles(
+            Authentication authentication
+    ) {
+        return authentication
+                .getAuthorities()
+                .stream()
+                .map(
+                        GrantedAuthority::getAuthority
+                )
+                .distinct()
+                .toList();
+    }
+
+    private void requireAuthentication(
+            Authentication authentication
+    ) {
+        if (
+                authentication == null
+                        || !authentication.isAuthenticated()
+                        || "anonymousUser".equals(
+                        authentication.getPrincipal()
+                )
+        ) {
+            throw new AuthenticationCredentialsNotFoundException(
+                    "No authenticated user found"
+            );
+        }
     }
 }

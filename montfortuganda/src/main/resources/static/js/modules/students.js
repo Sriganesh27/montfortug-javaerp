@@ -3951,16 +3951,6 @@
         ].filter(Boolean).join(' ');
     }
 
-    function replaceSelectOptions(select, placeholder) {
-        const option = new Option(
-            placeholder,
-            ''
-        );
-
-        select.replaceChildren(option);
-        select.value = '';
-    }
-
     function selectedOption(select) {
         if (!(select instanceof HTMLSelectElement)) {
             return null;
@@ -4564,6 +4554,24 @@
         bindManageStudentDialogs(context);
         bindManageStudentActions(context);
         initializeManageStudentTable(context);
+
+        if (typeof window.erpRegisterModuleSync === 'function') {
+            window.erpRegisterModuleSync(
+                'students',
+                async () => {
+                    if (!document.querySelector('#ba-students-view')) return false;
+                    if (context.currentMode === 'edit') return true;
+
+                    if (context.currentStudentId && !context.detailView.classList.contains('hidden')) {
+                        await refreshCurrentStudentProfile(context);
+                    } else {
+                        await loadStudents(context);
+                    }
+
+                    return true;
+                }
+            );
+        }
 
         const routeParams = Array.isArray(
             read(routeInfo, 'routeParams')
@@ -5241,7 +5249,7 @@
     function replaceSelectOptions(
         select,
         placeholder,
-        options,
+        options = [],
         selectedValue = ''
     ) {
         if (!(select instanceof HTMLSelectElement)) {
@@ -5640,6 +5648,16 @@
         }
 
         return Promise.resolve(fn(endpoint));
+    }
+
+
+    function cancelQueuedGlobalSync() {
+        if (
+            typeof window.erpCancelPendingDataSync
+            === 'function'
+        ) {
+            window.erpCancelPendingDataSync();
+        }
     }
 
     function requestManagePost(endpoint, payload) {
@@ -7714,6 +7732,7 @@
                 )
             );
 
+            cancelQueuedGlobalSync();
             await refreshCurrentStudentProfile(context);
             notifySuccess('Student document verified successfully.');
         } catch (error) {
@@ -7774,6 +7793,7 @@
                 )
             );
 
+            cancelQueuedGlobalSync();
             await refreshCurrentStudentProfile(context);
             notifySuccess('Student document removed successfully.');
         } catch (error) {
@@ -8427,6 +8447,8 @@
                 }
             }
 
+            cancelQueuedGlobalSync();
+
             context.currentProfile = profile;
             renderStudentProfile(context, profile);
             leaveStudentEditMode(context, false);
@@ -8957,6 +8979,7 @@
                 )
             );
 
+            cancelQueuedGlobalSync();
             closeManageModal(
                 context,
                 '#student-enrollment-modal'
@@ -9152,6 +9175,7 @@
                 )
             );
 
+            cancelQueuedGlobalSync();
             closeManageModal(
                 context,
                 '#student-status-modal'
@@ -9300,6 +9324,7 @@
                 )
             );
 
+            cancelQueuedGlobalSync();
             closeManageModal(
                 context,
                 '#student-document-modal'

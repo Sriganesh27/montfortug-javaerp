@@ -95,15 +95,7 @@ public class ErpApplication {
         NOT_SCHEDULED,
         SCHEDULED,
         RESCHEDULED,
-
-        /**
-         * Parent/student attended the School Visit and the responsible
-         * employee/attendance details were recorded. The admission workflow
-         * may now proceed to the Entrance Test, but the School Visit process
-         * is not yet treated as fully completed.
-         */
         ATTENDED,
-
         COMPLETED,
         CANCELLED,
         NO_SHOW
@@ -115,6 +107,7 @@ public class ErpApplication {
         CONDUCTED,
         PASSED,
         FAILED,
+        WAITLISTED,
         ABSENT,
         RETEST_REQUIRED,
         COMPLETED

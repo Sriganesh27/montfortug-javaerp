@@ -336,10 +336,13 @@
                 </button>
 
                 <button type="button"
-                        id="ba-requestAdditionalDocumentBtn"
-                        class="btn-primary">
-                    <i class="bi bi-file-earmark-plus"></i>
-                    Request Document
+                        id="ba-appNextStageBtn"
+                        class="btn-primary app-profile-continue-btn"
+                        disabled
+                        aria-disabled="true"
+                        title="Continue is unavailable until all pending requirements are completed.">
+                    <i class="bi bi-arrow-right-circle"></i>
+                    Continue
                 </button>
             </div>
         </div>
@@ -922,12 +925,6 @@
                                 <span id="view-nextActionLabel"
                                       class="detail-text">-</span>
 
-                                <button type="button"
-                                        id="ba-appNextStageBtn"
-                                        class="btn-primary btn-sm hidden">
-                                    <i class="bi bi-arrow-right-circle"></i>
-                                    Continue
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -1007,53 +1004,167 @@
                     <div class="emp-detail-grid emp-detail-grid-4">
                         <div class="form-group">
                             <label>Visit Status</label>
-                            <span id="view-schoolVisitStatus" class="detail-text">Not Scheduled</span>
+                            <span id="view-schoolVisitStatus"
+                                  class="detail-text">Not Scheduled</span>
                         </div>
+
                         <div class="form-group">
-                            <label>Assigned Employee</label>
-                            <span id="view-schoolVisitEmployee" class="detail-text">—</span>
+                            <label>Responsible Employee</label>
+                            <span id="view-schoolVisitEmployee"
+                                  class="detail-text">—</span>
                         </div>
+
                         <div class="form-group">
-                            <label>Employee Number</label>
-                            <span id="view-schoolVisitEmployeeNo" class="detail-text">—</span>
+                            <label>Employee ID</label>
+                            <span id="view-schoolVisitEmployeeNo"
+                                  class="detail-text">—</span>
                         </div>
+
                         <div class="form-group">
                             <label>Scheduled Date & Time</label>
-                            <span id="view-schoolVisitScheduledAt" class="detail-text">—</span>
+                            <span id="view-schoolVisitScheduledAt"
+                                  class="detail-text">—</span>
                         </div>
                     </div>
 
                     <div class="emp-detail-grid emp-detail-grid-4">
                         <div class="form-group">
                             <label>Actual Visit Date & Time</label>
-                            <span id="view-schoolVisitAt" class="detail-text">—</span>
+                            <span id="view-schoolVisitAt"
+                                  class="detail-text">—</span>
                         </div>
+
                         <div class="form-group">
                             <label>Student Attendance</label>
-                            <span id="view-schoolVisitStudentAttendance" class="detail-text">—</span>
+                            <span id="view-schoolVisitStudentAttendance"
+                                  class="detail-text">—</span>
                         </div>
+
                         <div class="form-group">
                             <label>Parent / Guardian Attendance</label>
-                            <span id="view-schoolVisitParentAttendance" class="detail-text">—</span>
+                            <span id="view-schoolVisitParentAttendance"
+                                  class="detail-text">—</span>
                         </div>
-                        <div class="form-group">
-                            <label>Entrance Test Readiness</label>
-                            <span id="view-schoolVisitEntranceReadiness" class="detail-text">Not Ready</span>
-                        </div>
-                    </div>
 
-                    <div class="emp-detail-grid emp-detail-grid-2">
-                        <div class="form-group">
-                            <label>Completed At</label>
-                            <span id="view-schoolVisitCompletedAt" class="detail-text">—</span>
-                        </div>
                         <div class="form-group">
                             <label>Remarks</label>
-                            <span id="view-schoolVisitRemarks" class="detail-text">—</span>
+                            <span id="view-schoolVisitRemarks"
+                                  class="detail-text">—</span>
                         </div>
                     </div>
                 </div>
             </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- ENTRANCE TEST                                     -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section"
+                      id="application-entrance-test-section">
+                <legend class="emp-detail-section-header">
+                    Entrance Test
+                </legend>
+
+                <div class="emp-detail-section-body">
+                    <div class="ba-flex-panel app-entrance-test-toolbar">
+                        <div class="ba-pagination-controls">
+                            <button type="button"
+                                    id="ba-entranceTestEnterMarksBtn"
+                                    class="btn-primary btn-sm hidden">
+                                <i class="bi bi-pencil-square"></i>
+                                Enter Marks
+                            </button>
+
+                            <button type="button"
+                                    id="ba-entranceTestUpdateResultBtn"
+                                    class="btn-primary btn-sm hidden">
+                                <i class="bi bi-arrow-repeat"></i>
+                                Update Result
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-4">
+                        <div class="form-group">
+                            <label>Test Status</label>
+                            <span id="view-entranceTestStatus"
+                                  class="detail-text">—</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Result</label>
+                            <span id="view-entranceTestResult"
+                                  class="detail-text">—</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Responsible Employee</label>
+                            <span id="view-entranceTestEmployee"
+                                  class="detail-text">—</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Completed At</label>
+                            <span id="view-entranceTestCompletedAt"
+                                  class="detail-text">—</span>
+                        </div>
+                    </div>
+
+                    <div id="view-entranceTestMarksBlock"
+                         class="app-entrance-test-marks-block hidden">
+                        <div class="app-entrance-test-marks-header">
+                            <div>
+                                <h4>Subject-wise Marks</h4>
+                                <p class="text-muted">
+                                    Recorded marks for the current Entrance Test attempt.
+                                </p>
+                            </div>
+
+                            <div class="app-entrance-test-total-summary">
+                                <span>
+                                    Total:
+                                    <strong id="view-entranceTestMarksTotal">—</strong>
+                                </span>
+                                <span>
+                                    Percentage:
+                                    <strong id="view-entranceTestMarksPercentage">—</strong>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table app-entrance-test-marks-table">
+                                <thead>
+                                <tr>
+                                    <th>S.No.</th>
+                                    <th>Subject</th>
+                                    <th>Maximum Marks</th>
+                                    <th>Obtained Marks</th>
+                                    <th>Percentage</th>
+                                </tr>
+                                </thead>
+                                <tbody id="view-entranceTestMarksBody">
+                                <tr>
+                                    <td colspan="5"
+                                        class="text-center text-muted">
+                                        No subject marks recorded.
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="emp-detail-grid emp-detail-grid-1">
+                        <div class="form-group">
+                            <label>Remarks</label>
+                            <span id="view-entranceTestRemarks"
+                                  class="detail-text">—</span>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
 
 
             <!-- ================================================= -->
@@ -1683,6 +1794,306 @@
                             id="ba-confirmCancelDocumentRequestBtn"
                             class="btn-danger">
                         Cancel Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- ENTRANCE TEST MARKS / RESULT MODAL                    -->
+    <!-- ===================================================== -->
+    <div id="ba-entranceTestMarksModal"
+         class="ba-modal-backdrop hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-hidden="true"
+         aria-labelledby="ba-entranceTestMarksTitle">
+
+        <div class="ba-modal-box app-request-modal-box app-entrance-test-marks-modal">
+            <div class="app-request-modal-header">
+                <div class="app-request-modal-heading">
+                    <span class="app-request-modal-icon">
+                        <i class="bi bi-clipboard2-check"></i>
+                    </span>
+
+                    <div>
+                        <h3 id="ba-entranceTestMarksTitle">
+                            Entrance Test Marks
+                        </h3>
+                        <p class="text-muted">
+                            Record subject-wise marks and the final school decision.
+                        </p>
+                    </div>
+                </div>
+
+                <button type="button"
+                        id="ba-closeEntranceTestMarksBtn"
+                        class="app-request-modal-close"
+                        aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <form id="ba-entranceTestMarksForm" novalidate>
+                <div class="app-request-modal-body">
+
+                    <section class="app-entrance-test-entry-section">
+                        <div class="app-entrance-test-entry-heading">
+                            <div>
+                                <h4>Subject Marks</h4>
+                                <p class="text-muted">
+                                    Add each tested subject and enter the marks obtained.
+                                </p>
+                            </div>
+
+                            <button type="button"
+                                    id="ba-addEntranceTestSubjectBtn"
+                                    class="btn-secondary btn-sm">
+                                <i class="bi bi-plus-circle"></i>
+                                Add Subject
+                            </button>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table app-entrance-test-entry-table">
+                                <thead>
+                                <tr>
+                                    <th>Subject</th>
+                                    <th>Maximum Marks</th>
+                                    <th>Obtained Marks</th>
+                                    <th>Percentage</th>
+                                    <th class="col-action align-center">Action</th>
+                                </tr>
+                                </thead>
+                                <tbody id="ba-entranceTestMarksRows"></tbody>
+                            </table>
+                        </div>
+
+                        <div class="app-entrance-test-entry-summary">
+                            <div>
+                                <span class="text-muted">Total Maximum</span>
+                                <strong id="ba-entranceTestLiveMaximum">0</strong>
+                            </div>
+                            <div>
+                                <span class="text-muted">Total Obtained</span>
+                                <strong id="ba-entranceTestLiveObtained">0</strong>
+                            </div>
+                            <div>
+                                <span class="text-muted">Overall Percentage</span>
+                                <strong id="ba-entranceTestLivePercentage">0%</strong>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="app-entrance-test-entry-section">
+                        <div class="app-entrance-test-entry-heading">
+                            <div>
+                                <h4>Result</h4>
+                                <p class="text-muted">
+                                    Record the school decision for this attempt.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="emp-detail-grid emp-detail-grid-2">
+                            <div class="form-group">
+                                <label for="ba-entranceTestResult">
+                                    Result
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <select id="ba-entranceTestResult"
+                                        class="detail-input w-100"
+                                        required>
+                                    <option value="">-- Select Result --</option>
+                                    <option value="PASSED">Pass</option>
+                                    <option value="FAILED">Fail</option>
+                                    <option value="WAITLIST">Waitlist</option>
+                                    <option value="RETEST_REQUIRED">Retest Required</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ba-entranceTestCompletedAt">
+                                    Marks Entry Date & Time
+                                </label>
+
+                                <input type="datetime-local"
+                                       id="ba-entranceTestCompletedAt"
+                                       class="detail-input w-100">
+                            </div>
+                        </div>
+
+                        <div class="emp-detail-grid emp-detail-grid-2">
+                            <div class="form-group">
+                                <label for="ba-entranceTestEmployeeRemarks">
+                                    Result Remarks
+                                </label>
+
+                                <textarea id="ba-entranceTestEmployeeRemarks"
+                                          class="detail-input w-100"
+                                          rows="3"
+                                          maxlength="5000"
+                                          placeholder="Test observations / result remarks"></textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ba-entranceTestInternalRemarks">
+                                    Internal Remarks
+                                </label>
+
+                                <textarea id="ba-entranceTestInternalRemarks"
+                                          class="detail-input w-100"
+                                          rows="3"
+                                          maxlength="5000"
+                                          placeholder="Internal school remarks"></textarea>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div id="ba-entranceTestMarksError"
+                         class="app-request-error hidden"
+                         role="alert"></div>
+                </div>
+
+                <div class="ba-modal-actions app-request-modal-actions">
+                    <button type="button"
+                            id="ba-cancelEntranceTestMarksBtn"
+                            class="btn-secondary">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            id="ba-saveEntranceTestMarksBtn"
+                            class="btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        Save Result
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- ===================================================== -->
+    <!-- WAITLIST FINAL DECISION MODAL                         -->
+    <!-- ===================================================== -->
+    <div id="ba-waitlistResultModal"
+         class="ba-modal-backdrop hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-hidden="true"
+         aria-labelledby="ba-waitlistResultTitle">
+
+        <div class="ba-modal-box app-request-modal-box app-waitlist-result-modal">
+            <div class="app-request-modal-header">
+                <div class="app-request-modal-heading">
+                    <span class="app-request-modal-icon">
+                        <i class="bi bi-check2-circle"></i>
+                    </span>
+
+                    <div>
+                        <h3 id="ba-waitlistResultTitle">
+                            Update Waitlist Result
+                        </h3>
+                        <p class="text-muted">
+                            Finalize this completed Entrance Test as Pass or Fail.
+                        </p>
+                    </div>
+                </div>
+
+                <button type="button"
+                        id="ba-closeWaitlistResultBtn"
+                        class="app-request-modal-close"
+                        aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <form id="ba-waitlistResultForm" novalidate>
+                <div class="app-request-modal-body">
+                    <section class="app-waitlist-result-summary">
+                        <div class="app-waitlist-result-summary-header">
+                            <h4>Existing Subject Marks</h4>
+                            <p class="text-muted">
+                                Marks remain unchanged. Only the final decision will be updated.
+                            </p>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="data-table app-waitlist-result-marks-table">
+                                <thead>
+                                <tr>
+                                    <th>S.No.</th>
+                                    <th>Subject</th>
+                                    <th>Maximum</th>
+                                    <th>Obtained</th>
+                                    <th>Percentage</th>
+                                </tr>
+                                </thead>
+                                <tbody id="ba-waitlistResultMarksBody"></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <div class="emp-detail-grid emp-detail-grid-2 app-waitlist-result-fields">
+                        <div class="form-group">
+                            <label for="ba-waitlistFinalResult">
+                                Final Decision
+                                <span class="text-danger">*</span>
+                            </label>
+
+                            <select id="ba-waitlistFinalResult"
+                                    class="detail-input w-100"
+                                    required>
+                                <option value="">-- Select Decision --</option>
+                                <option value="PASSED">Pass</option>
+                                <option value="FAILED">Fail</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Current Result</label>
+                            <input type="text"
+                                   class="detail-input w-100"
+                                   value="Waitlist"
+                                   readonly>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-waitlistResultRemarks">
+                            Decision Remarks
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <textarea id="ba-waitlistResultRemarks"
+                                  class="detail-input w-100"
+                                  rows="3"
+                                  maxlength="2000"
+                                  placeholder="Enter reason for the final decision..."
+                                  required></textarea>
+                    </div>
+
+                    <div id="ba-waitlistResultError"
+                         class="app-request-error hidden"
+                         role="alert"></div>
+                </div>
+
+                <div class="ba-modal-actions app-request-modal-actions">
+                    <button type="button"
+                            id="ba-cancelWaitlistResultBtn"
+                            class="btn-secondary">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            id="ba-saveWaitlistResultBtn"
+                            class="btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        Save Final Result
                     </button>
                 </div>
             </form>

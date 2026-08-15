@@ -18,8 +18,11 @@ import java.time.LocalDateTime;
         name = "erp_subjects",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "uk_subject_code",
-                        columnNames = {"subject_code"}
+                        name = "uk_subject_branch_code",
+                        columnNames = {
+                                "branch_id",
+                                "subject_code"
+                        }
                 )
         }
 )
@@ -36,9 +39,24 @@ public class ErpSubject implements Serializable {
     @Column(name = "subject_id")
     private Long subjectId;
 
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "branch_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_subject_branch"
+            )
+    )
+    private Branch branch;
+
     @NotBlank
     @Size(max = 20)
-    @Column(name = "subject_code", nullable = false, unique = true, length = 20)
+    @Column(
+            name = "subject_code",
+            nullable = false,
+            length = 20
+    )
     private String subjectCode;
 
     @NotBlank

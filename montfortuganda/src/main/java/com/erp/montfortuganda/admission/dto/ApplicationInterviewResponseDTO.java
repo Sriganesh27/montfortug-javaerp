@@ -32,6 +32,7 @@ public record ApplicationInterviewResponseDTO(
         LocalDateTime startedAt,
         LocalDateTime completedAt,
 
+        List<SubjectOption> availableSubjects,
         List<SubjectMark> marks,
 
         BigDecimal maximumMarks,
@@ -50,8 +51,20 @@ public record ApplicationInterviewResponseDTO(
         boolean canReschedule,
         boolean canStart,
         boolean canComplete,
-        boolean canProceedToFeeDiscussion
+        boolean canProceedToFeeDiscussion,
+        boolean canUpdateWaitlistResult
 ) {
+
+    /**
+     * One active subject option available for Entrance Test mark entry.
+     */
+    public record SubjectOption(
+            Long subjectId,
+            String subjectCode,
+            String subjectName,
+            String subjectShortName
+    ) {
+    }
 
     /**
      * One subject-wise mark row shown in the Entrance Test UI.

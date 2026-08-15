@@ -8,10 +8,12 @@ import com.erp.montfortuganda.admission.entity.ErpApplication;
 import com.erp.montfortuganda.admission.entity.ErpApplicationStatusHistory;
 import com.erp.montfortuganda.admission.entity.ErpApplicationDocument;
 import com.erp.montfortuganda.admission.entity.ErpApplicationDocumentRequest;
+import com.erp.montfortuganda.admission.entity.ErpApplicationInterview;
 import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
 import com.erp.montfortuganda.admission.repository.ErpApplicationStatusHistoryRepository;
 import com.erp.montfortuganda.admission.repository.ErpApplicationDocumentRepository;
 import com.erp.montfortuganda.admission.repository.ErpApplicationDocumentRequestRepository;
+import com.erp.montfortuganda.admission.repository.ErpApplicationInterviewRepository;
 import com.erp.montfortuganda.auth.service.BranchAccessService;
 import com.erp.montfortuganda.auth.service.CurrentUserContext;
 import com.erp.montfortuganda.exception.BadRequestException;
@@ -54,6 +56,7 @@ public class ApplicationStageTransitionServiceImpl
     private final ErpApplicationStatusHistoryRepository historyRepository;
     private final ErpApplicationDocumentRepository documentRepository;
     private final ErpApplicationDocumentRequestRepository documentRequestRepository;
+    private final ErpApplicationInterviewRepository interviewRepository;
     private final BranchAccessService branchAccessService;
     private final ApplicationStageTransitionValidator transitionValidator;
     private final ApplicationEventPublisher eventPublisher;
@@ -63,6 +66,7 @@ public class ApplicationStageTransitionServiceImpl
             ErpApplicationStatusHistoryRepository historyRepository,
             ErpApplicationDocumentRepository documentRepository,
             ErpApplicationDocumentRequestRepository documentRequestRepository,
+            ErpApplicationInterviewRepository interviewRepository,
             BranchAccessService branchAccessService,
             ApplicationStageTransitionValidator transitionValidator,
             ApplicationEventPublisher eventPublisher
@@ -71,6 +75,7 @@ public class ApplicationStageTransitionServiceImpl
         this.historyRepository = historyRepository;
         this.documentRepository = documentRepository;
         this.documentRequestRepository = documentRequestRepository;
+        this.interviewRepository = interviewRepository;
         this.branchAccessService = branchAccessService;
         this.transitionValidator = transitionValidator;
         this.eventPublisher = eventPublisher;
@@ -335,15 +340,16 @@ public class ApplicationStageTransitionServiceImpl
             ErpApplication.TestStatus testStatus =
                     application.getTestStatus();
 
-            boolean completed =
-                    testStatus == ErpApplication.TestStatus.PASSED
-                            || testStatus
-                            == ErpApplication.TestStatus.COMPLETED;
-
-            if (!completed) {
+            /*
+             * A completed test is not automatically eligible for the fee
+             * discussion. FAILED and RETEST_REQUIRED results must remain in
+             * the Entrance Test stage. Only a PASSED result can advance.
+             */
+            if (testStatus
+                    != ErpApplication.TestStatus.PASSED) {
                 throw new BadRequestException(
-                        "The entrance test must be passed or completed "
-                                + "before starting the parent fee discussion."
+                        "The Entrance Test must be passed before starting "
+                                + "the parent fee discussion."
                 );
             }
         }
@@ -567,12 +573,21 @@ public class ApplicationStageTransitionServiceImpl
                 );
 
                 /*
-                 * Entering the stage alone must not pretend the test has been
-                 * scheduled. The Entrance Test service will create/schedule
-                 * the interview record and synchronize testStatus.
+                 * The responsible employee is already assigned during the
+                 * School Visit attendance action. Entrance Test is conducted
+                 * internally at school, so no second scheduling/assignment
+                 * step is required before marks entry.
+                 *
+                 * Create the existing interview record here and make it ready
+                 * for direct marks/result entry.
                  */
+                ensureEntranceTestRecord(
+                        application,
+                        userId
+                );
+
                 application.setTestStatus(
-                        ErpApplication.TestStatus.NOT_SCHEDULED
+                        ErpApplication.TestStatus.SCHEDULED
                 );
             }
 
@@ -988,8 +1003,12 @@ public class ApplicationStageTransitionServiceImpl
             ErpApplication.TestStatus status =
                     application.getTestStatus();
 
-            return status == ErpApplication.TestStatus.PASSED
-                    || status == ErpApplication.TestStatus.COMPLETED;
+            /*
+             * Keep transition availability identical to execution security:
+             * only PASSED can expose Parent Fee Discussion.
+             */
+            return status
+                    == ErpApplication.TestStatus.PASSED;
         }
 
         if (current
@@ -1190,10 +1209,94 @@ public class ApplicationStageTransitionServiceImpl
         ) + normalized.substring(1);
     }
 
+    private void ensureEntranceTestRecord(
+            ErpApplication application,
+            Long userId
+    ) {
+        if (application == null
+                || application.getApplicationId() == null) {
+            throw new BadRequestException(
+                    "Application is unavailable for Entrance Test setup."
+            );
+        }
+
+        Long employeeId =
+                application.getSchoolVisitEmployeeId();
+
+        if (employeeId == null
+                || employeeId <= 0) {
+            throw new BadRequestException(
+                    "A responsible employee must be assigned "
+                            + "before starting the Entrance Test."
+            );
+        }
+
+        Integer branchId =
+                application.getBranch() == null
+                        ? null
+                        : application.getBranch().getBranchId();
+
+        if (branchId == null
+                || branchId <= 0) {
+            throw new BadRequestException(
+                    "Application branch is unavailable."
+            );
+        }
+
+        ErpApplicationInterview interview =
+                interviewRepository
+                        .findActiveByApplicationAndBranchForUpdate(
+                                application.getApplicationId(),
+                                branchId
+                        )
+                        .orElse(null);
+
+        if (interview == null) {
+            interview =
+                    new ErpApplicationInterview();
+
+            interview.setApplication(application);
+            interview.setCreatedBy(userId);
+            interview.setActive(true);
+        }
+
+        interview.setEmployeeId(employeeId);
+        interview.setScheduledAt(null);
+        interview.setStartedAt(null);
+        interview.setCompletedAt(null);
+        interview.setStatus(
+                ErpApplicationInterview.Status.SCHEDULED
+        );
+        interview.setResult(
+                ErpApplicationInterview.Result.PENDING
+        );
+        interview.setUpdatedBy(userId);
+
+        interviewRepository.saveAndFlush(
+                interview
+        );
+    }
+
     private boolean shouldNotifyApplicant(
             ErpApplication application,
             ApplicationStageTransitionRequestDTO request
     ) {
+        /*
+         * SCHOOL_VISIT -> ENTRANCE_TEST is an internal school workflow step.
+         * The parent/student is already at school and the responsible
+         * employee/attendance has already been recorded. Never send the
+         * generic stage-transition email for this transition, even if an old
+         * frontend payload still sends notifyApplicant=true.
+         */
+        if (application != null
+                && application.getCurrentStage()
+                == ErpApplication.CurrentStage.SCHOOL_VISIT
+                && request != null
+                && request.getTargetStage()
+                == ErpApplication.CurrentStage.ENTRANCE_TEST) {
+            return false;
+        }
+
         if (!Boolean.TRUE.equals(
                 request.getNotifyApplicant()
         )) {

@@ -41,7 +41,7 @@ public class ErpApplicationInterviewMark implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "interview_mark_id")
+    @Column(name = "subject_mark_id")
     private Long interviewMarkId;
 
     @NotNull

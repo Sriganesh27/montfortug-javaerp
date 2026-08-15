@@ -17,7 +17,8 @@ public interface UserRepository
     @EntityGraph(
             attributePaths = {
                     "userRoles",
-                    "userRoles.role"
+                    "userRoles.role",
+                    "assignedBranch"
             }
     )
     @Query("""

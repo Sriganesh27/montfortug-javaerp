@@ -4,12 +4,15 @@ import com.erp.montfortuganda.admission.dto.ApplicationInterviewCompleteRequestD
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewMarkRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewScheduleRequestDTO;
+import com.erp.montfortuganda.admission.dto.ApplicationInterviewWaitlistResultRequestDTO;
 import com.erp.montfortuganda.admission.entity.ErpApplication;
 import com.erp.montfortuganda.admission.entity.ErpApplicationInterview;
 import com.erp.montfortuganda.admission.entity.ErpApplicationInterviewMark;
+import com.erp.montfortuganda.admission.entity.ErpApplicationStatusHistory;
 import com.erp.montfortuganda.admission.repository.ErpApplicationInterviewMarkRepository;
 import com.erp.montfortuganda.admission.repository.ErpApplicationInterviewRepository;
 import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
+import com.erp.montfortuganda.admission.repository.ErpApplicationStatusHistoryRepository;
 import com.erp.montfortuganda.auth.service.BranchAccessService;
 import com.erp.montfortuganda.auth.service.CurrentUserContext;
 import com.erp.montfortuganda.employee.entity.ErpEmployee;
@@ -17,8 +20,8 @@ import com.erp.montfortuganda.employee.enums.EmploymentStatus;
 import com.erp.montfortuganda.employee.repository.ErpEmployeeRepository;
 import com.erp.montfortuganda.exception.BadRequestException;
 import com.erp.montfortuganda.exception.ResourceNotFoundException;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import com.erp.montfortuganda.school.entity.ErpSubject;
+import com.erp.montfortuganda.school.repository.ErpSubjectRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,24 +48,13 @@ import java.util.Set;
 public class ApplicationInterviewServiceImpl
         implements ApplicationInterviewService {
 
-    private static final String SUBJECT_SQL = """
-            SELECT
-                subject_id,
-                subject_code,
-                subject_name,
-                subject_short_name
-            FROM erp_subjects
-            WHERE subject_id IN (:subjectIds)
-              AND active = 1
-              AND UPPER(status) = 'ACTIVE'
-            """;
-
     private final ErpApplicationRepository applicationRepository;
     private final ErpApplicationInterviewRepository interviewRepository;
     private final ErpApplicationInterviewMarkRepository markRepository;
     private final ErpEmployeeRepository employeeRepository;
     private final BranchAccessService branchAccessService;
-    private final NamedParameterJdbcTemplate jdbcTemplate;
+    private final ErpSubjectRepository subjectRepository;
+    private final ErpApplicationStatusHistoryRepository historyRepository;
 
     public ApplicationInterviewServiceImpl(
             ErpApplicationRepository applicationRepository,
@@ -70,23 +62,29 @@ public class ApplicationInterviewServiceImpl
             ErpApplicationInterviewMarkRepository markRepository,
             ErpEmployeeRepository employeeRepository,
             BranchAccessService branchAccessService,
-            NamedParameterJdbcTemplate jdbcTemplate
+            ErpSubjectRepository subjectRepository,
+            ErpApplicationStatusHistoryRepository historyRepository
     ) {
         this.applicationRepository = applicationRepository;
         this.interviewRepository = interviewRepository;
         this.markRepository = markRepository;
         this.employeeRepository = employeeRepository;
         this.branchAccessService = branchAccessService;
-        this.jdbcTemplate = jdbcTemplate;
+        this.subjectRepository = subjectRepository;
+        this.historyRepository = historyRepository;
     }
 
     @Override
+    @Transactional
     public ApplicationInterviewResponseDTO getInterview(
             CurrentUserContext context,
             Long applicationId
     ) {
         Integer branchId =
                 requireBranchId(context);
+
+        Long userId =
+                requireUserId(context);
 
         Long validApplicationId =
                 requirePositiveId(
@@ -95,18 +93,101 @@ public class ApplicationInterviewServiceImpl
                 );
 
         ErpApplication application =
-                loadApplication(
+                loadApplicationForUpdate(
                         validApplicationId,
                         branchId
                 );
 
         ErpApplicationInterview interview =
                 interviewRepository
-                        .findActiveByApplicationAndBranch(
+                        .findActiveByApplicationAndBranchForUpdate(
                                 validApplicationId,
                                 branchId
                         )
                         .orElse(null);
+
+        /*
+         * Backward-compatible repair for applications that were moved to
+         * ENTRANCE_TEST before the direct-marks linkage was added.
+         *
+         * Two legacy states are supported:
+         * 1) no interview row exists;
+         * 2) an interview row exists but is still NOT_SCHEDULED.
+         *
+         * The responsible employee is already assigned during School Visit,
+         * so reuse that employee instead of asking for another assignment.
+         */
+        boolean entranceTestStage =
+                application.getCurrentStage()
+                        == ErpApplication.CurrentStage.ENTRANCE_TEST;
+
+        Long schoolVisitEmployeeId =
+                application.getSchoolVisitEmployeeId();
+
+        boolean hasSchoolVisitEmployee =
+                schoolVisitEmployeeId != null
+                        && schoolVisitEmployeeId > 0;
+
+        boolean needsDirectMarksRepair =
+                entranceTestStage
+                        && hasSchoolVisitEmployee
+                        && (
+                        interview == null
+                                || interview.getStatus()
+                                == ErpApplicationInterview.Status.NOT_SCHEDULED
+                        );
+
+        if (needsDirectMarksRepair) {
+
+            requireActiveBranchEmployee(
+                    schoolVisitEmployeeId,
+                    branchId
+            );
+
+            if (interview == null) {
+                interview =
+                        new ErpApplicationInterview();
+
+                interview.setApplication(application);
+                interview.setCreatedBy(userId);
+                interview.setActive(true);
+            }
+
+            interview.setEmployeeId(
+                    schoolVisitEmployeeId
+            );
+
+            /*
+             * There is no second Entrance Test scheduling step.
+             * SCHEDULED is used here as the existing backend state meaning
+             * "ready for marks". The UI displays this as Ready for Marks.
+             */
+            interview.setStatus(
+                    ErpApplicationInterview.Status.SCHEDULED
+            );
+
+            if (interview.getResult() == null) {
+                interview.setResult(
+                        ErpApplicationInterview.Result.PENDING
+                );
+            }
+
+            interview.setUpdatedBy(userId);
+
+            interview =
+                    interviewRepository.saveAndFlush(
+                            interview
+                    );
+
+            application.setTestStatus(
+                    ErpApplication.TestStatus.SCHEDULED
+            );
+            application.setUpdatedBy(userId);
+
+            applicationRepository.saveAndFlush(
+                    application
+            );
+        }
 
         return toResponse(
                 application,
@@ -156,7 +237,19 @@ public class ApplicationInterviewServiceImpl
                         )
                         .orElse(null);
 
+        boolean schedulingRetest =
+                interview != null
+                        && interview.getStatus()
+                        == ErpApplicationInterview.Status.COMPLETED
+                        && (
+                        interview.getResult()
+                                == ErpApplicationInterview.Result.FAILED
+                                || interview.getResult()
+                                == ErpApplicationInterview.Result.RETEST_REQUIRED
+                );
+
         if (interview != null
+                && !schedulingRetest
                 && interview.getStatus()
                 != ErpApplicationInterview.Status.NOT_SCHEDULED
                 && interview.getStatus()
@@ -166,6 +259,30 @@ public class ApplicationInterviewServiceImpl
             throw new BadRequestException(
                     "The Entrance Test is already scheduled. "
                             + "Use the reschedule action instead."
+            );
+        }
+
+        if (schedulingRetest) {
+            long previousAttemptMarks =
+                    markRepository
+                            .countByInterview_InterviewIdAndActiveFalse(
+                                    interview.getInterviewId()
+                            );
+
+            if (previousAttemptMarks > 0) {
+                throw new BadRequestException(
+                        "The maximum of two Entrance Test attempts "
+                                + "has already been used."
+                );
+            }
+
+            /*
+             * Preserve first-attempt marks for audit/history, but remove them
+             * from the active/current attempt before scheduling the retest.
+             */
+            markRepository.deactivateAllByInterviewId(
+                    interview.getInterviewId(),
+                    userId
             );
         }
 
@@ -439,6 +556,11 @@ public class ApplicationInterviewServiceImpl
                         branchId
                 );
 
+        /*
+         * The test itself happens offline at the school. Marks may be entered
+         * directly after a scheduled test; a separate Start Test action is
+         * optional and is not required for completion.
+         */
         if (interview.getStatus()
                 != ErpApplicationInterview.Status.IN_PROGRESS
                 && interview.getStatus()
@@ -454,13 +576,33 @@ public class ApplicationInterviewServiceImpl
                 branchId
         );
 
+        long previousAttemptMarks =
+                markRepository
+                        .countByInterview_InterviewIdAndActiveFalse(
+                                interview.getInterviewId()
+                        );
+
+        boolean secondAttempt =
+                previousAttemptMarks > 0;
+
+        if (secondAttempt
+                && request.result()
+                == ErpApplicationInterview.Result.RETEST_REQUIRED) {
+            throw new BadRequestException(
+                    "A third Entrance Test attempt is not allowed. "
+                            + "This retest must be completed as PASSED, "
+                            + "FAILED or WAITLIST."
+            );
+        }
+
         validateSubjectMarks(
                 request.marks()
         );
 
         Map<Long, SubjectInfo> subjectInfoById =
                 loadActiveSubjects(
-                        request.marks()
+                        request.marks(),
+                        branchId
                 );
 
         List<ErpApplicationInterviewMark> existingMarks =
@@ -580,6 +722,194 @@ public class ApplicationInterviewServiceImpl
 
         applicationRepository.saveAndFlush(
                 application
+        );
+
+        return toResponse(
+                application,
+                saved,
+                branchId
+        );
+    }
+
+    @Override
+    @Transactional
+    public ApplicationInterviewResponseDTO updateWaitlistResult(
+            CurrentUserContext context,
+            Long applicationId,
+            ApplicationInterviewWaitlistResultRequestDTO request
+    ) {
+        Integer branchId =
+                requireBranchId(context);
+
+        Long userId =
+                requireUserId(context);
+
+        if (request == null) {
+            throw new BadRequestException(
+                    "Waitlist final decision details are required."
+            );
+        }
+
+        ErpApplicationInterview.Result newResult =
+                request.result();
+
+        if (newResult
+                != ErpApplicationInterview.Result.PASSED
+                && newResult
+                != ErpApplicationInterview.Result.FAILED) {
+            throw new BadRequestException(
+                    "A waitlisted Entrance Test can only be changed "
+                            + "to PASSED or FAILED."
+            );
+        }
+
+        String decisionRemarks =
+                trimToNull(
+                        request.remarks()
+                );
+
+        if (decisionRemarks == null) {
+            throw new BadRequestException(
+                    "Decision remarks are required."
+            );
+        }
+
+        ErpApplication application =
+                loadApplicationForUpdate(
+                        requirePositiveId(
+                                applicationId,
+                                "Application ID"
+                        ),
+                        branchId
+                );
+
+        requireEntranceTestStage(
+                application
+        );
+
+        requireWorkflowEditable(
+                application
+        );
+
+        ErpApplicationInterview interview =
+                requireInterviewForUpdate(
+                        application.getApplicationId(),
+                        branchId
+                );
+
+        if (interview.getStatus()
+                != ErpApplicationInterview.Status.COMPLETED) {
+            throw new BadRequestException(
+                    "Only a completed Entrance Test can have "
+                            + "its waitlist result updated."
+            );
+        }
+
+        if (interview.getResult()
+                != ErpApplicationInterview.Result.WAITLIST) {
+            throw new BadRequestException(
+                    "Only an Entrance Test currently on WAITLIST "
+                            + "can use this action."
+            );
+        }
+
+        List<ErpApplicationInterviewMark> activeMarks =
+                markRepository
+                        .findAllActiveByInterviewAndBranchForUpdate(
+                                interview.getInterviewId(),
+                                branchId
+                        );
+
+        if (activeMarks.isEmpty()) {
+            throw new BadRequestException(
+                    "The waitlisted Entrance Test has no recorded marks."
+            );
+        }
+
+        ErpApplicationInterview.Result oldResult =
+                interview.getResult();
+
+        /*
+         * Important: do not alter marks, responsible employee,
+         * startedAt or completedAt. This action changes only the
+         * management decision on the already-completed test.
+         */
+        interview.setResult(
+                newResult
+        );
+
+        interview.setUpdatedBy(
+                userId
+        );
+
+        ErpApplicationInterview saved =
+                interviewRepository.saveAndFlush(
+                        interview
+                );
+
+        application.setTestStatus(
+                mapApplicationTestStatus(
+                        newResult
+                )
+        );
+
+        application.setUpdatedBy(
+                userId
+        );
+
+        applicationRepository.saveAndFlush(
+                application
+        );
+
+        ErpApplicationStatusHistory history =
+                new ErpApplicationStatusHistory();
+
+        history.setApplication(
+                application
+        );
+
+        history.setStage(
+                "ENTRANCE_TEST"
+        );
+
+        history.setOldStatus(
+                oldResult
+        );
+
+        history.setNewStatus(
+                newResult
+        );
+
+        history.setChangedBy(
+                userId
+        );
+
+        history.setRemarks(
+                decisionRemarks
+        );
+
+        history.setInternalRemarks(
+                decisionRemarks
+        );
+
+        history.setTransitionSource(
+                "ERP"
+        );
+
+        history.setEmailRequired(
+                false
+        );
+
+        history.setEmailStatus(
+                ErpApplicationStatusHistory.EMAIL_NOT_REQUIRED
+        );
+
+        history.setActive(
+                true
+        );
+
+        historyRepository.save(
+                history
         );
 
         return toResponse(
@@ -767,59 +1097,42 @@ public class ApplicationInterviewServiceImpl
     }
 
     private Map<Long, SubjectInfo> loadActiveSubjects(
-            List<ApplicationInterviewMarkRequestDTO> marks
+            List<ApplicationInterviewMarkRequestDTO> marks,
+            Integer branchId
     ) {
-        Set<Long> subjectIds =
+        Set<Long> requestedSubjectIds =
                 new HashSet<>();
 
         for (ApplicationInterviewMarkRequestDTO mark
                 : marks) {
-            subjectIds.add(
+            requestedSubjectIds.add(
                     mark.subjectId()
             );
         }
 
-        MapSqlParameterSource parameters =
-                new MapSqlParameterSource(
-                        "subjectIds",
-                        subjectIds
+        Map<Long, SubjectInfo> activeSubjectById =
+                loadActiveSubjectInfoById(
+                        branchId
                 );
-
-        List<SubjectInfo> subjects =
-                jdbcTemplate.query(
-                        SUBJECT_SQL,
-                        parameters,
-                        (rs, rowNum) ->
-                                new SubjectInfo(
-                                        rs.getLong(
-                                                "subject_id"
-                                        ),
-                                        rs.getString(
-                                                "subject_code"
-                                        ),
-                                        rs.getString(
-                                                "subject_name"
-                                        ),
-                                        rs.getString(
-                                                "subject_short_name"
-                                        )
-                                )
-                );
-
-        if (subjects.size()
-                != subjectIds.size()) {
-            throw new BadRequestException(
-                    "One or more selected subjects are inactive "
-                            + "or do not exist."
-            );
-        }
 
         Map<Long, SubjectInfo> result =
                 new HashMap<>();
 
-        for (SubjectInfo subject : subjects) {
+        for (Long subjectId : requestedSubjectIds) {
+            SubjectInfo subject =
+                    activeSubjectById.get(
+                            subjectId
+                    );
+
+            if (subject == null) {
+                throw new BadRequestException(
+                        "One or more selected subjects are inactive, "
+                                + "do not exist, or do not belong to this branch."
+                );
+            }
+
             result.put(
-                    subject.subjectId(),
+                    subjectId,
                     subject
             );
         }
@@ -855,6 +1168,7 @@ public class ApplicationInterviewServiceImpl
                     null,
                     null,
                     null,
+                    loadAvailableSubjects(branchId),
                     List.of(),
                     BigDecimal.ZERO,
                     BigDecimal.ZERO,
@@ -872,6 +1186,7 @@ public class ApplicationInterviewServiceImpl
                     false,
                     false,
                     false,
+                    false,
                     false
             );
         }
@@ -884,7 +1199,8 @@ public class ApplicationInterviewServiceImpl
 
         Map<Long, SubjectInfo> subjects =
                 loadSubjectInfoForExistingMarks(
-                        marks
+                        marks,
+                        branchId
                 );
 
         List<ApplicationInterviewResponseDTO.SubjectMark>
@@ -980,6 +1296,25 @@ public class ApplicationInterviewServiceImpl
                         ? ErpApplicationInterview.Status.NOT_SCHEDULED
                         : interview.getStatus();
 
+        long previousAttemptMarks =
+                interview.getInterviewId() == null
+                        ? 0
+                        : markRepository
+                        .countByInterview_InterviewIdAndActiveFalse(
+                                interview.getInterviewId()
+                        );
+
+        boolean firstRetestAvailable =
+                previousAttemptMarks == 0
+                        && status
+                        == ErpApplicationInterview.Status.COMPLETED
+                        && (
+                        interview.getResult()
+                                == ErpApplicationInterview.Result.FAILED
+                                || interview.getResult()
+                                == ErpApplicationInterview.Result.RETEST_REQUIRED
+                );
+
         boolean canSchedule =
                 editable
                         && (
@@ -989,6 +1324,7 @@ public class ApplicationInterviewServiceImpl
                                 == ErpApplicationInterview.Status.CANCELLED
                                 || status
                                 == ErpApplicationInterview.Status.NO_SHOW
+                                || firstRetestAvailable
                 );
 
         boolean canReschedule =
@@ -1010,12 +1346,25 @@ public class ApplicationInterviewServiceImpl
                                 == ErpApplicationInterview.Status.IN_PROGRESS
                 );
 
+        List<ApplicationInterviewResponseDTO.SubjectOption>
+                availableSubjects =
+                loadAvailableSubjects(branchId);
+
         boolean canProceed =
                 editable
                         && status
                         == ErpApplicationInterview.Status.COMPLETED
                         && interview.getResult()
                         == ErpApplicationInterview.Result.PASSED;
+
+        boolean canUpdateWaitlistResult =
+                editable
+                        && application.getCurrentStage()
+                        == ErpApplication.CurrentStage.ENTRANCE_TEST
+                        && status
+                        == ErpApplicationInterview.Status.COMPLETED
+                        && interview.getResult()
+                        == ErpApplicationInterview.Result.WAITLIST;
 
         return new ApplicationInterviewResponseDTO(
                 application.getApplicationId(),
@@ -1032,6 +1381,7 @@ public class ApplicationInterviewServiceImpl
                 interview.getScheduledAt(),
                 interview.getStartedAt(),
                 interview.getCompletedAt(),
+                availableSubjects,
                 responseMarks,
                 maximumTotal,
                 obtainedTotal,
@@ -1046,68 +1396,99 @@ public class ApplicationInterviewServiceImpl
                 canReschedule,
                 canStart,
                 canComplete,
-                canProceed
+                canProceed,
+                canUpdateWaitlistResult
         );
     }
 
+    private List<ApplicationInterviewResponseDTO.SubjectOption>
+    loadAvailableSubjects(
+            Integer branchId
+    ) {
+        return subjectRepository
+                .findAllByBranch_BranchIdAndActiveTrueAndStatusOrderByDisplayOrderAscSubjectNameAsc(
+                        branchId,
+                        ErpSubject.Status.ACTIVE
+                )
+                .stream()
+                .map(
+                        subject ->
+                                new ApplicationInterviewResponseDTO.SubjectOption(
+                                        subject.getSubjectId(),
+                                        subject.getSubjectCode(),
+                                        subject.getSubjectName(),
+                                        subject.getSubjectShortName()
+                                )
+                )
+                .toList();
+    }
+
     private Map<Long, SubjectInfo> loadSubjectInfoForExistingMarks(
-            List<ErpApplicationInterviewMark> marks
+            List<ErpApplicationInterviewMark> marks,
+            Integer branchId
     ) {
         if (marks == null
                 || marks.isEmpty()) {
             return Map.of();
         }
 
-        Set<Long> subjectIds =
-                new HashSet<>();
-
-        for (ErpApplicationInterviewMark mark
-                : marks) {
-            if (mark.getSubjectId() != null) {
-                subjectIds.add(
-                        mark.getSubjectId()
-                );
-            }
-        }
-
-        if (subjectIds.isEmpty()) {
-            return Map.of();
-        }
-
-        MapSqlParameterSource parameters =
-                new MapSqlParameterSource(
-                        "subjectIds",
-                        subjectIds
-                );
-
-        List<SubjectInfo> subjects =
-                jdbcTemplate.query(
-                        SUBJECT_SQL,
-                        parameters,
-                        (rs, rowNum) ->
-                                new SubjectInfo(
-                                        rs.getLong(
-                                                "subject_id"
-                                        ),
-                                        rs.getString(
-                                                "subject_code"
-                                        ),
-                                        rs.getString(
-                                                "subject_name"
-                                        ),
-                                        rs.getString(
-                                                "subject_short_name"
-                                        )
-                                )
+        Map<Long, SubjectInfo> activeSubjectById =
+                loadActiveSubjectInfoById(
+                        branchId
                 );
 
         Map<Long, SubjectInfo> result =
                 new HashMap<>();
 
-        for (SubjectInfo subject : subjects) {
+        for (ErpApplicationInterviewMark mark
+                : marks) {
+            if (mark.getSubjectId() == null) {
+                continue;
+            }
+
+            SubjectInfo subject =
+                    activeSubjectById.get(
+                            mark.getSubjectId()
+                    );
+
+            if (subject != null) {
+                result.put(
+                        subject.subjectId(),
+                        subject
+                );
+            }
+        }
+
+        return result;
+    }
+
+    private Map<Long, SubjectInfo> loadActiveSubjectInfoById(
+            Integer branchId
+    ) {
+        List<ErpSubject> subjects =
+                subjectRepository
+                        .findAllByBranch_BranchIdAndActiveTrueAndStatusOrderByDisplayOrderAscSubjectNameAsc(
+                                branchId,
+                                ErpSubject.Status.ACTIVE
+                        );
+
+        Map<Long, SubjectInfo> result =
+                new HashMap<>(
+                        Math.max(
+                                16,
+                                subjects.size() * 2
+                        )
+                );
+
+        for (ErpSubject subject : subjects) {
             result.put(
-                    subject.subjectId(),
-                    subject
+                    subject.getSubjectId(),
+                    new SubjectInfo(
+                            subject.getSubjectId(),
+                            subject.getSubjectCode(),
+                            subject.getSubjectName(),
+                            subject.getSubjectShortName()
+                    )
             );
         }
 
@@ -1123,6 +1504,8 @@ public class ApplicationInterviewServiceImpl
             case FAILED ->
                     ErpApplication.TestStatus.FAILED;
             case WAITLIST ->
+                    ErpApplication.TestStatus.WAITLISTED;
+            case RETEST_REQUIRED ->
                     ErpApplication.TestStatus.RETEST_REQUIRED;
             case PENDING ->
                     ErpApplication.TestStatus.CONDUCTED;

@@ -49,6 +49,17 @@
         resetForm(elements, state);
         hideOperationOverlay(elements);
 
+        if (typeof window.erpRegisterModuleSync === 'function') {
+            window.erpRegisterModuleSync(
+                'academic-years',
+                async () => {
+                    if (!document.querySelector('#ba-academic-years-view')) return false;
+                    await loadAcademicYears(elements, state);
+                    return true;
+                }
+            );
+        }
+
         return loadAcademicYears(elements, state);
     }
 
@@ -439,6 +450,16 @@
         syncDateLimits(elements);
     }
 
+
+    function cancelQueuedGlobalSync() {
+        if (
+            typeof window.erpCancelPendingDataSync
+            === 'function'
+        ) {
+            window.erpCancelPendingDataSync();
+        }
+    }
+
     async function saveAcademicYear(elements, state) {
         clearFormError(elements);
 
@@ -464,6 +485,8 @@
             const response = editing
                 ? await apiPut(`${API_PATH}/${state.editingId}`, payload)
                 : await apiPost(API_PATH, payload);
+
+            cancelQueuedGlobalSync();
 
             notifySuccess(
                 response?.message
@@ -534,6 +557,8 @@
                 `${API_PATH}/${record.academicYearId}/current`
             );
 
+            cancelQueuedGlobalSync();
+
             notifySuccess(
                 response?.message
                 || 'Current Academic Year updated successfully.'
@@ -593,6 +618,8 @@
                 `${API_PATH}/${record.academicYearId}/active-status?${query}`
             );
 
+            cancelQueuedGlobalSync();
+
             notifySuccess(
                 response?.message
                 || (
@@ -646,6 +673,10 @@
             error.data = body;
             throw error;
         }
+
+        document.dispatchEvent(new CustomEvent('erp:data-mutated', {
+            detail: { method: 'PATCH', endpoint, responseData: body, occurredAt: Date.now() }
+        }));
 
         return body;
     }

@@ -108,6 +108,16 @@ function initDesignationsView() {
         });
     }
 
+
+    function cancelQueuedGlobalSync() {
+        if (
+            typeof window.erpCancelPendingDataSync
+            === 'function'
+        ) {
+            window.erpCancelPendingDataSync();
+        }
+    }
+
     async function openDesigDetail(id) {
         currentDetailDesigId = id;
         showLoader();
@@ -142,8 +152,9 @@ function initDesignationsView() {
                 showLoader();
                 try {
                     await apiDelete(`/designations/${id}`);
+                    cancelQueuedGlobalSync();
                     showSuccessMessage('Designation deleted successfully.');
-                    loadDesignations();
+                    await loadDesignations();
                 } catch (e) {
                     showErrorMessage('Failed to delete designation.');
                 } finally {
@@ -198,8 +209,9 @@ function initDesignationsView() {
             showLoader();
             try {
                 await apiPut(`/designations/${currentDetailDesigId}`, payload);
+                cancelQueuedGlobalSync();
                 showSuccessMessage('Designation updated successfully.');
-                openDesigDetail(currentDetailDesigId);
+                await openDesigDetail(currentDetailDesigId);
             } catch (e) {
                 showErrorMessage('Failed to update designation.');
             } finally {
@@ -214,6 +226,24 @@ function initDesignationsView() {
         if (editBtn) editBtn.classList.remove('hidden');
         if (saveBtn) saveBtn.classList.add('hidden');
         if (cancelEditBtn) cancelEditBtn.classList.add('hidden');
+    }
+
+    // Reuse the global ERP sync layer without replacing existing module logic.
+    if (typeof window.erpRegisterModuleSync === 'function') {
+        window.erpRegisterModuleSync(
+            'designations',
+            async () => {
+                if (!document.querySelector('#ba-designations-view')) return false;
+
+                if (detailView && !detailView.classList.contains('hidden') && currentDetailDesigId) {
+                    await openDesigDetail(currentDetailDesigId);
+                } else {
+                    await loadDesignations();
+                }
+
+                return true;
+            }
+        );
     }
 
     // Initial load

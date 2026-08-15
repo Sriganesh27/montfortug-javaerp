@@ -82,9 +82,16 @@ const ApplicationsController = (() => {
         schoolVisitEmployees: [],
         schoolVisitScheduleMode: 'schedule',
         pendingSchoolVisitTransition: null,
+        entranceTest: null,
         documentSyncTimer: null,
         documentSyncBusy: false,
         documentSyncSignature: null,
+        documentSyncApplicationId: null,
+        failedDocumentViewUrls: new Set(),
+        applicationListSyncTimer: null,
+        applicationListSyncBusy: false,
+        applicationListSignature: null,
+        initialApplicationListLoaded: false,
         sortField: 'submittedDate',
         sortDirection: 'DESC',
         initializedRoot: null
@@ -119,10 +126,15 @@ const ApplicationsController = (() => {
         state.profileTransitions = [];
         state.schoolVisit = null;
         state.schoolVisitEmployees = [];
+        state.entranceTest = null;
         state.schoolVisitScheduleMode = 'schedule';
         state.pendingSchoolVisitTransition = null;
         stopDocumentAutoSync();
+        stopApplicationListAutoSync();
         state.documentSyncSignature = null;
+        state.applicationListSignature = null;
+        state.applicationListSyncBusy = false;
+        state.initialApplicationListLoaded = false;
 
         view = cacheDom(root);
 
@@ -193,6 +205,16 @@ const ApplicationsController = (() => {
 
         bindEvents();
         initializeApplicationCalendars();
+
+        document.removeEventListener(
+            'visibilitychange',
+            handleApplicationsVisibilityChange
+        );
+        document.addEventListener(
+            'visibilitychange',
+            handleApplicationsVisibilityChange
+        );
+
         showTableView();
 
         /*
@@ -200,6 +222,8 @@ const ApplicationsController = (() => {
          * existing dashboard global loader active until the table is ready.
          */
         await loadApplications();
+        state.initialApplicationListLoaded = true;
+        startApplicationListAutoSync();
     }
 
     /**
@@ -286,8 +310,6 @@ const ApplicationsController = (() => {
                 byId('ba-refreshAppDetailBtn'),
             printButton:
                 byId('ba-printAppBtn'),
-            requestDocumentButton:
-                byId('ba-requestAdditionalDocumentBtn'),
             requestDocumentInlineButton:
                 byId(
                     'ba-requestAdditionalDocumentInlineBtn'
@@ -343,10 +365,6 @@ const ApplicationsController = (() => {
                 byId('view-schoolVisitStudentAttendance'),
             schoolVisitParentAttendance:
                 byId('view-schoolVisitParentAttendance'),
-            schoolVisitEntranceReadiness:
-                byId('view-schoolVisitEntranceReadiness'),
-            schoolVisitCompletedAt:
-                byId('view-schoolVisitCompletedAt'),
             schoolVisitRemarks:
                 byId('view-schoolVisitRemarks'),
             schoolVisitScheduleButton:
@@ -399,6 +417,81 @@ const ApplicationsController = (() => {
                 byId('ba-closeSchoolVisitCompleteBtn'),
             schoolVisitConfirmCompleteButton:
                 byId('ba-confirmSchoolVisitCompleteBtn'),
+
+            entranceTestSection:
+                byId('application-entrance-test-section'),
+            entranceTestEnterMarksButton:
+                byId('ba-entranceTestEnterMarksBtn'),
+            entranceTestUpdateResultButton:
+                byId('ba-entranceTestUpdateResultBtn'),
+            entranceTestStatus:
+                byId('view-entranceTestStatus'),
+            entranceTestResult:
+                byId('view-entranceTestResult'),
+            entranceTestEmployee:
+                byId('view-entranceTestEmployee'),
+            entranceTestCompletedAt:
+                byId('view-entranceTestCompletedAt'),
+            entranceTestRemarks:
+                byId('view-entranceTestRemarks'),
+            entranceTestMarksBlock:
+                byId('view-entranceTestMarksBlock'),
+            entranceTestMarksBody:
+                byId('view-entranceTestMarksBody'),
+            entranceTestMarksTotal:
+                byId('view-entranceTestMarksTotal'),
+            entranceTestMarksPercentage:
+                byId('view-entranceTestMarksPercentage'),
+
+            entranceTestMarksModal:
+                byId('ba-entranceTestMarksModal'),
+            entranceTestMarksForm:
+                byId('ba-entranceTestMarksForm'),
+            entranceTestMarksRows:
+                byId('ba-entranceTestMarksRows'),
+            entranceTestAddSubjectButton:
+                byId('ba-addEntranceTestSubjectBtn'),
+            entranceTestResultSelect:
+                byId('ba-entranceTestResult'),
+            entranceTestCompletedAtInput:
+                byId('ba-entranceTestCompletedAt'),
+            entranceTestEmployeeRemarks:
+                byId('ba-entranceTestEmployeeRemarks'),
+            entranceTestInternalRemarks:
+                byId('ba-entranceTestInternalRemarks'),
+            entranceTestMarksError:
+                byId('ba-entranceTestMarksError'),
+            entranceTestLiveMaximum:
+                byId('ba-entranceTestLiveMaximum'),
+            entranceTestLiveObtained:
+                byId('ba-entranceTestLiveObtained'),
+            entranceTestLivePercentage:
+                byId('ba-entranceTestLivePercentage'),
+            entranceTestCloseMarksButton:
+                byId('ba-closeEntranceTestMarksBtn'),
+            entranceTestCancelMarksButton:
+                byId('ba-cancelEntranceTestMarksBtn'),
+
+            waitlistResultModal:
+                byId('ba-waitlistResultModal'),
+            waitlistResultForm:
+                byId('ba-waitlistResultForm'),
+            waitlistResultMarksBody:
+                byId('ba-waitlistResultMarksBody'),
+            waitlistFinalResultSelect:
+                byId('ba-waitlistFinalResult'),
+            waitlistResultRemarks:
+                byId('ba-waitlistResultRemarks'),
+            waitlistResultError:
+                byId('ba-waitlistResultError'),
+            waitlistResultCloseButton:
+                byId('ba-closeWaitlistResultBtn'),
+            waitlistResultCancelButton:
+                byId('ba-cancelWaitlistResultBtn'),
+            waitlistResultSaveButton:
+                byId('ba-saveWaitlistResultBtn'),
+            entranceTestSaveMarksButton:
+                byId('ba-saveEntranceTestMarksBtn'),
 
             reviewModal:
                 byId('ba-documentReviewModal'),
@@ -540,6 +633,24 @@ const ApplicationsController = (() => {
 
         createErpCalendar(
             '#ba-schoolVisitVisitedAtInput',
+            {
+                enableTime: true,
+                time_24hr: false,
+                minuteIncrement: 5,
+                maxDate: 'today',
+                dateFormat: 'Y-m-d\\TH:i',
+                footerActions: [
+                    'today',
+                    'clear',
+                    'close'
+                ],
+                minYear: currentYear - 1,
+                maxYear: currentYear
+            }
+        );
+
+        createErpCalendar(
+            '#ba-entranceTestCompletedAt',
             {
                 enableTime: true,
                 time_24hr: false,
@@ -782,11 +893,6 @@ const ApplicationsController = (() => {
             () => window.print()
         );
 
-        view.requestDocumentButton?.addEventListener(
-            'click',
-            openAdditionalDocumentModal
-        );
-
         view.requestDocumentInlineButton
             ?.addEventListener(
                 'click',
@@ -914,6 +1020,67 @@ const ApplicationsController = (() => {
             closeSchoolVisitCompleteModal
         );
 
+        view.entranceTestEnterMarksButton?.addEventListener(
+            'click',
+            openEntranceTestMarksModal
+        );
+
+        view.entranceTestAddSubjectButton?.addEventListener(
+            'click',
+            () => addEntranceTestMarkRow()
+        );
+
+        view.entranceTestCloseMarksButton?.addEventListener(
+            'click',
+            closeEntranceTestMarksModal
+        );
+
+        view.entranceTestCancelMarksButton?.addEventListener(
+            'click',
+            closeEntranceTestMarksModal
+        );
+
+        view.entranceTestMarksForm?.addEventListener(
+            'submit',
+            event => {
+                event.preventDefault();
+                void submitEntranceTestMarks();
+            }
+        );
+
+        view.entranceTestUpdateResultButton?.addEventListener(
+            'click',
+            openWaitlistResultModal
+        );
+
+        view.waitlistResultCloseButton?.addEventListener(
+            'click',
+            closeWaitlistResultModal
+        );
+
+        view.waitlistResultCancelButton?.addEventListener(
+            'click',
+            closeWaitlistResultModal
+        );
+
+        view.waitlistResultForm?.addEventListener(
+            'submit',
+            event => {
+                event.preventDefault();
+                void submitWaitlistResult();
+            }
+        );
+
+        bindBackdropClose(
+            view.waitlistResultModal,
+            closeWaitlistResultModal
+        );
+
+        bindBackdropClose(
+            view.entranceTestMarksModal,
+            closeEntranceTestMarksModal
+        );
+
         bindBackdropClose(
             view.reviewModal,
             closeDocumentReviewModal
@@ -947,14 +1114,48 @@ const ApplicationsController = (() => {
                     && typeof hideLoader === 'function') {
                 hideLoader(loaderToken);
             }
+
         }
+    }
+
+    function buildApplicationListSignature(page) {
+        const rows =
+            Array.isArray(page?.content)
+                ? page.content
+                : [];
+
+        return JSON.stringify({
+            totalElements:
+                Number(page?.totalElements || 0),
+            totalPages:
+                Number(page?.totalPages || 0),
+            rows: rows.map(record => [
+                record?.applicationId,
+                record?.applicationNo,
+                record?.applicationStatus,
+                record?.currentStage,
+                record?.documentStatus,
+                record?.schoolVisitStatus,
+                record?.schoolVisitScheduledAt,
+                record?.scholarshipStatus,
+                record?.nextActionAvailable,
+                record?.nextAction,
+                record?.nextTargetStage,
+                record?.submittedDate
+            ])
+        });
     }
 
     /**
      * Loads one server page of branch-scoped applications.
+     *
+     * @param {boolean} silent no table loading state
+     * @param {boolean} onlyIfChanged skip DOM work when server page is unchanged
+     * @returns {Promise<boolean>} true when the table was rendered
      */
     async function loadApplications(
-        silent = false
+        silent = false,
+        onlyIfChanged = false
     ) {
         if (!table) {
             return;
@@ -976,6 +1177,22 @@ const ApplicationsController = (() => {
                 response && response.data
                     ? response.data
                     : {};
+
+            const nextSignature =
+                buildApplicationListSignature(
+                    page
+                );
+
+            if (
+                onlyIfChanged
+                && state.applicationListSignature
+                    === nextSignature
+            ) {
+                return false;
+            }
+
+            state.applicationListSignature =
+                nextSignature;
 
             state.currentRows =
                 Array.isArray(page.content)
@@ -1004,6 +1221,8 @@ const ApplicationsController = (() => {
                 state.totalPages,
                 state.totalElements
             );
+
+            return true;
         } catch (error) {
             table.render([], renderApplicationRow);
             notifyError(
@@ -1142,6 +1361,87 @@ const ApplicationsController = (() => {
         const applicationId =
             Number(record.applicationId);
 
+        /*
+         * The complete Application table row opens the existing Application
+         * Profile. Interactive controls inside the row keep their own
+         * behavior and never trigger row navigation.
+         */
+        const tableRow =
+            node.querySelector('tr');
+
+        const openRowApplication = () => {
+            if (!Number.isInteger(applicationId)
+                    || applicationId <= 0) {
+                notifyError(
+                    'The selected application is invalid.'
+                );
+                return;
+            }
+
+            void openApplication(
+                applicationId
+            );
+        };
+
+        if (tableRow) {
+            tableRow.classList.add(
+                'app-clickable-row'
+            );
+
+            tableRow.style.cursor = 'pointer';
+            tableRow.tabIndex = 0;
+            tableRow.setAttribute(
+                'aria-label',
+                `Open application ${
+                    displayValue(record.applicationNo)
+                } for ${
+                    displayValue(record.studentName)
+                }`
+            );
+
+            tableRow.addEventListener(
+                'click',
+                event => {
+                    const interactive =
+                        event.target.closest(
+                            'button, a, input, select, textarea, label, '
+                            + '[role="button"], [data-no-row-open]'
+                        );
+
+                    if (interactive) {
+                        return;
+                    }
+
+                    openRowApplication();
+                }
+            );
+
+            tableRow.addEventListener(
+                'keydown',
+                event => {
+                    if (
+                        event.key !== 'Enter'
+                        && event.key !== ' '
+                    ) {
+                        return;
+                    }
+
+                    const interactive =
+                        event.target.closest(
+                            'button, a, input, select, textarea, label, '
+                            + '[role="button"], [data-no-row-open]'
+                        );
+
+                    if (interactive) {
+                        return;
+                    }
+
+                    event.preventDefault();
+                    openRowApplication();
+                }
+            );
+        }
+
         const selectCheckbox =
             node.querySelector('.app-row-select');
 
@@ -1187,25 +1487,7 @@ const ApplicationsController = (() => {
             profileLink => {
                 profileLink.addEventListener(
                     'click',
-                    () => {
-                        if (!Number.isInteger(applicationId)
-                                || applicationId <= 0) {
-                            notifyError(
-                                'The selected application is invalid.'
-                            );
-                            return;
-                        }
-
-                        /*
-                         * Open the existing Application Profile directly.
-                         * Do not navigate, reload, or trigger the workflow
-                         * action. openApplication() already uses the existing
-                         * global loader and preserves all profile behavior.
-                         */
-                        void openApplication(
-                            applicationId
-                        );
-                    }
+                    openRowApplication
                 );
             }
         );
@@ -1280,8 +1562,21 @@ const ApplicationsController = (() => {
      * @param {number} applicationId
      */
     async function openApplication(
-        applicationId
+        applicationId,
+        options = {}
     ) {
+        const {
+            preservePosition = false,
+            silent = false
+        } = options || {};
+
+        const viewportSnapshot =
+            preservePosition
+            && typeof window.erpCaptureViewport
+            === 'function'
+                ? window.erpCaptureViewport()
+                : null;
+
         const validatedApplicationId =
             Number(applicationId);
 
@@ -1295,6 +1590,8 @@ const ApplicationsController = (() => {
 
         let loaderToken = null;
 
+        stopApplicationListAutoSync();
+
         view.detailComponent?.setAttribute(
             'aria-busy',
             'true'
@@ -1304,7 +1601,10 @@ const ApplicationsController = (() => {
             'app-detail-loading'
         );
 
-        if (typeof showLoader === 'function') {
+        if (
+            !silent
+            && typeof showLoader === 'function'
+        ) {
             loaderToken = showLoader(
                 'Opening Application details...'
             );
@@ -1329,20 +1629,101 @@ const ApplicationsController = (() => {
                 );
             }
 
+            const applicationChanged =
+                Number(state.currentApplicationId)
+                !== validatedApplicationId;
+
+            if (applicationChanged) {
+                state.failedDocumentViewUrls.clear();
+            }
+
             state.currentApplicationId =
                 validatedApplicationId;
 
             state.currentApplication =
                 application;
 
-            renderApplicationDetails(application);
+            /*
+             * Keep the currently rendered profile untouched while dependent
+             * workflow resources are loading. Render only after all data is
+             * ready so users never see partially blank sections.
+             */
+            const [
+                schoolVisitLoaded,
+                entranceTestLoaded,
+                transitionsLoaded
+            ] = await Promise.all([
+                loadSchoolVisit(
+                    validatedApplicationId,
+                    {
+                        render: false
+                    }
+                ),
+                loadEntranceTestWithRetry(
+                    validatedApplicationId,
+                    enumEquals(
+                        application.currentStage,
+                        'ENTRANCE_TEST'
+                    )
+                        ? 3
+                        : 1,
+                    {
+                        render: false
+                    }
+                ),
+                loadProfileTransitions(
+                    validatedApplicationId,
+                    {
+                        render: false
+                    }
+                )
+            ]);
 
-            await loadSchoolVisit(
-                validatedApplicationId
+            /*
+             * If the Application is already in ENTRANCE_TEST, the profile is
+             * not considered synchronized until the Entrance Test resource is
+             * available. This prevents a stale profile from being reported as
+             * successfully refreshed.
+             */
+            if (
+                enumEquals(
+                    application.currentStage,
+                    'ENTRANCE_TEST'
+                )
+                && entranceTestLoaded !== true
+            ) {
+                throw new Error(
+                    'Entrance Test details are not available yet.'
+                );
+            }
+
+            /*
+             * All refreshed server data is ready. Apply the DOM changes in
+             * one pass instead of rendering each section at different times.
+             */
+            renderApplicationDetails(
+                application
             );
 
-            await loadProfileTransitions(
-                validatedApplicationId
+            renderSchoolVisit(
+                state.schoolVisit
+            );
+
+            renderEntranceTest(
+                state.entranceTest
+            );
+
+            const primaryTransition =
+                state.profileTransitions.find(
+                    transition =>
+                        enumEquals(
+                            transition?.action,
+                            'ADVANCE'
+                        )
+                ) || null;
+
+            renderProfileNextAction(
+                primaryTransition
             );
 
             hideElement(view.tableComponent);
@@ -1352,10 +1733,20 @@ const ApplicationsController = (() => {
                 validatedApplicationId
             );
 
-            window.scrollTo({
-                top: 0,
-                behavior: 'auto'
-            });
+            if (!preservePosition) {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'auto'
+                });
+            } else if (
+                viewportSnapshot
+                && typeof window.erpRestoreViewport
+                === 'function'
+            ) {
+                window.erpRestoreViewport(
+                    viewportSnapshot
+                );
+            }
 
             return true;
         } catch (error) {
@@ -1365,6 +1756,15 @@ const ApplicationsController = (() => {
                     'Application profile could not be loaded.'
                 )
             );
+
+            if (
+                view.tableComponent
+                && !view.tableComponent.classList.contains(
+                    'hidden'
+                )
+            ) {
+                startApplicationListAutoSync();
+            }
 
             return false;
         } finally {
@@ -1466,12 +1866,10 @@ const ApplicationsController = (() => {
 
         setText(
             'view-registrationDate',
-            application.dateOfRegistration
-                ? formatDateTime(
-                    application.dateOfRegistration,
-                    false
-                )
-                : '-'
+            formatDateTime(
+                application.dateOfRegistration,
+                false
+            )
         );
 
         setText(
@@ -1808,6 +2206,1222 @@ const ApplicationsController = (() => {
         setActionAvailability(application);
     }
 
+
+    /**
+     * Loads and renders the existing Entrance Test state.
+     */
+    async function loadEntranceTest(
+        applicationId,
+        options = {}
+    ) {
+        const {
+            render = true
+        } = options || {};
+        if (!applicationId) {
+            return;
+        }
+
+        try {
+            const response =
+                await apiGet(
+                    `${API_ROOT}/${encodeURIComponent(
+                        applicationId
+                    )}/workflow/entrance-test`
+                );
+
+            state.entranceTest =
+                unwrapResponseData(response);
+
+            if (render) {
+                renderEntranceTest(
+                    state.entranceTest
+                );
+            }
+
+            return Boolean(
+                state.entranceTest
+            );
+        } catch (error) {
+            /*
+             * Entrance Test data is stage-specific. Do not break the complete
+             * Application profile if the test is not yet available.
+             */
+            state.entranceTest = null;
+
+            if (enumEquals(
+                state.currentApplication?.currentStage,
+                'ENTRANCE_TEST'
+            )) {
+                console.error(
+                    'Entrance Test details could not be loaded.',
+                    error
+                );
+            }
+
+            return false;
+        }
+    }
+
+    async function loadEntranceTestWithRetry(
+            applicationId,
+            attempts = 3,
+            options = {}
+    ) {
+        const maxAttempts =
+            Math.max(
+                1,
+                Number(attempts) || 1
+            );
+
+        for (
+            let attempt = 1;
+            attempt <= maxAttempts;
+            attempt += 1
+        ) {
+            const loaded =
+                await loadEntranceTest(
+                    applicationId,
+                    options
+                );
+
+            if (loaded) {
+                return true;
+            }
+
+            if (
+                attempt < maxAttempts
+                && enumEquals(
+                    state.currentApplication?.currentStage,
+                    'ENTRANCE_TEST'
+                )
+            ) {
+                await new Promise(
+                    resolve =>
+                        window.setTimeout(
+                            resolve,
+                            250
+                        )
+                );
+            }
+        }
+
+        return false;
+    }
+
+    function renderEntranceTest(test) {
+        if (!test) {
+            toggleElement(
+                view.entranceTestSection,
+                false
+            );
+            return;
+        }
+
+        const currentStage =
+            test.currentStage
+            || state.currentApplication?.currentStage;
+
+        const status =
+            String(
+                test.status || 'NOT_SCHEDULED'
+            ).toUpperCase();
+
+        const result =
+            String(
+                test.result || 'PENDING'
+            ).toUpperCase();
+
+        const shouldShow =
+            enumEquals(
+                currentStage,
+                'ENTRANCE_TEST'
+            )
+            || status !== 'NOT_SCHEDULED'
+            || Boolean(test.interviewId);
+
+        toggleElement(
+            view.entranceTestSection,
+            shouldShow
+        );
+
+        const directMarksReady =
+            status === 'SCHEDULED'
+            && !test.scheduledAt
+            && enumEquals(
+                currentStage,
+                'ENTRANCE_TEST'
+            );
+
+        setNodeText(
+            view.entranceTestStatus,
+            directMarksReady
+                ? 'Ready for Marks'
+                : formatEnum(status)
+        );
+
+        setNodeText(
+            view.entranceTestResult,
+            result === 'PENDING'
+                ? 'Pending'
+                : formatEnum(result)
+        );
+
+        setNodeText(
+            view.entranceTestEmployee,
+            displayValue(
+                test.employeeName
+            )
+        );
+
+        setNodeText(
+            view.entranceTestCompletedAt,
+            displayValue(
+                formatDateTime(
+                    test.completedAt
+                )
+            )
+        );
+
+        setNodeText(
+            view.entranceTestRemarks,
+            displayValue(
+                test.employeeRemarks
+            )
+        );
+
+        renderEntranceTestSubjectMarks(
+            test
+        );
+
+        toggleElement(
+            view.entranceTestEnterMarksButton,
+            enumEquals(
+                currentStage,
+                'ENTRANCE_TEST'
+            )
+            && test.canComplete === true
+        );
+
+        toggleElement(
+            view.entranceTestUpdateResultButton,
+            enumEquals(
+                currentStage,
+                'ENTRANCE_TEST'
+            )
+            && status === 'COMPLETED'
+            && result === 'WAITLIST'
+            && test.canUpdateWaitlistResult === true
+        );
+
+        if (state.currentApplication) {
+            state.currentApplication.testStatus =
+                result === 'PASSED'
+                    ? 'PASSED'
+                    : result === 'FAILED'
+                        ? 'FAILED'
+                        : result === 'WAITLIST'
+                            ? 'WAITLISTED'
+                            : result === 'RETEST_REQUIRED'
+                                ? 'RETEST_REQUIRED'
+                                : state.currentApplication.testStatus;
+        }
+    }
+
+    function renderEntranceTestSubjectMarks(test) {
+        const marks =
+            Array.isArray(test?.marks)
+                ? test.marks
+                : [];
+
+        toggleElement(
+            view.entranceTestMarksBlock,
+            marks.length > 0
+        );
+
+        if (!view.entranceTestMarksBody) {
+            return;
+        }
+
+        view.entranceTestMarksBody.replaceChildren();
+
+        if (marks.length === 0) {
+            return;
+        }
+
+        marks.forEach((mark, index) => {
+            const row =
+                document.createElement('tr');
+
+            const serial =
+                document.createElement('td');
+            serial.textContent =
+                String(index + 1);
+
+            const subject =
+                document.createElement('td');
+
+            const subjectName =
+                document.createElement('strong');
+            subjectName.textContent =
+                displayValue(
+                    mark.subjectName
+                );
+
+            subject.appendChild(
+                subjectName
+            );
+
+
+            const maximum =
+                document.createElement('td');
+            maximum.textContent =
+                formatEntranceTestNumber(
+                    mark.maximumMarks
+                );
+
+            const obtained =
+                document.createElement('td');
+            obtained.textContent =
+                formatEntranceTestNumber(
+                    mark.obtainedMarks
+                );
+
+            const percentage =
+                document.createElement('td');
+            percentage.textContent =
+                mark.percentage === null
+                || mark.percentage === undefined
+                    ? '—'
+                    : `${formatEntranceTestNumber(
+                        mark.percentage
+                    )}%`;
+
+            row.append(
+                serial,
+                subject,
+                maximum,
+                obtained,
+                percentage
+            );
+
+            view.entranceTestMarksBody.appendChild(
+                row
+            );
+        });
+
+        setNodeText(
+            view.entranceTestMarksTotal,
+            `${formatEntranceTestNumber(
+                test.obtainedMarks
+            )} / ${formatEntranceTestNumber(
+                test.maximumMarks
+            )}`
+        );
+
+        setNodeText(
+            view.entranceTestMarksPercentage,
+            test.percentage === null
+            || test.percentage === undefined
+                ? '—'
+                : `${formatEntranceTestNumber(
+                    test.percentage
+                )}%`
+        );
+    }
+
+    function openWaitlistResultModal() {
+        const test =
+            state.entranceTest;
+
+        if (
+            !test
+            || String(test.status || '').toUpperCase()
+            !== 'COMPLETED'
+            || String(test.result || '').toUpperCase()
+            !== 'WAITLIST'
+            || test.canUpdateWaitlistResult !== true
+        ) {
+            notifyError(
+                'This Entrance Test is not available for a waitlist final decision.'
+            );
+            return;
+        }
+
+        if (view.waitlistFinalResultSelect) {
+            view.waitlistFinalResultSelect.value =
+                '';
+        }
+
+        if (view.waitlistResultRemarks) {
+            view.waitlistResultRemarks.value =
+                '';
+        }
+
+        clearInlineError(
+            view.waitlistResultError
+        );
+
+        renderWaitlistResultMarks(
+            test.marks
+        );
+
+        openModal(
+            view.waitlistResultModal
+        );
+    }
+
+    function closeWaitlistResultModal() {
+        clearInlineError(
+            view.waitlistResultError
+        );
+
+        closeModal(
+            view.waitlistResultModal
+        );
+    }
+
+    function renderWaitlistResultMarks(marks) {
+        const body =
+            view.waitlistResultMarksBody;
+
+        if (!body) {
+            return;
+        }
+
+        body.replaceChildren();
+
+        const rows =
+            Array.isArray(marks)
+                ? marks
+                : [];
+
+        if (rows.length === 0) {
+            const row =
+                document.createElement('tr');
+
+            const cell =
+                document.createElement('td');
+
+            cell.colSpan = 5;
+            cell.className =
+                'text-center text-muted';
+            cell.textContent =
+                'No subject marks are available.';
+
+            row.appendChild(cell);
+            body.appendChild(row);
+            return;
+        }
+
+        rows.forEach((mark, index) => {
+            const row =
+                document.createElement('tr');
+
+            const values = [
+                index + 1,
+                displayValue(
+                    mark.subjectName
+                ),
+                formatEntranceTestNumber(
+                    mark.maximumMarks
+                ),
+                formatEntranceTestNumber(
+                    mark.obtainedMarks
+                ),
+                mark.percentage === null
+                || mark.percentage === undefined
+                    ? '—'
+                    : `${formatEntranceTestNumber(
+                        mark.percentage
+                    )}%`
+            ];
+
+            values.forEach(value => {
+                const cell =
+                    document.createElement('td');
+
+                cell.textContent =
+                    String(value);
+
+                row.appendChild(cell);
+            });
+
+            body.appendChild(row);
+        });
+    }
+
+    async function submitWaitlistResult() {
+        const applicationId =
+            Number(
+                state.currentApplicationId
+            );
+
+        if (
+            !Number.isInteger(applicationId)
+            || applicationId <= 0
+        ) {
+            notifyError(
+                'A valid Application ID is required.'
+            );
+            return;
+        }
+
+        const result =
+            String(
+                view.waitlistFinalResultSelect?.value
+                || ''
+            ).toUpperCase();
+
+        const remarks =
+            String(
+                view.waitlistResultRemarks?.value
+                || ''
+            ).trim();
+
+        if (
+            result !== 'PASSED'
+            && result !== 'FAILED'
+        ) {
+            showInlineError(
+                view.waitlistResultError,
+                'Select Pass or Fail.'
+            );
+            return;
+        }
+
+        if (!remarks) {
+            showInlineError(
+                view.waitlistResultError,
+                'Decision remarks are required.'
+            );
+            return;
+        }
+
+        clearInlineError(
+            view.waitlistResultError
+        );
+
+        setButtonBusy(
+            view.waitlistResultSaveButton,
+            true,
+            'Saving...'
+        );
+
+        let loaderToken = null;
+
+        try {
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader(
+                        'Saving Entrance Test final result...'
+                    );
+            }
+
+            await apiPatchJson(
+                `${API_ROOT}/${encodeURIComponent(
+                    applicationId
+                )}/workflow/entrance-test/waitlist-result`,
+                {
+                    result,
+                    remarks
+                }
+            );
+
+            closeWaitlistResultModal();
+
+            /*
+             * Keep the global foreground loader and screen lock active while
+             * the authoritative profile is synchronized. The user should
+             * never see the old WAITLIST state as if the operation finished.
+             */
+            const refreshed =
+                await synchronizeCurrentApplicationAfterMutation(
+                    'entrance-test-waitlist-result',
+                    applicationId
+                );
+
+            if (!refreshed) {
+                throw new Error(
+                    'The final result was saved, but the refreshed Application profile could not be loaded.'
+                );
+            }
+
+            notifySuccess(
+                result === 'PASSED'
+                    ? 'Waitlist result updated to Pass successfully.'
+                    : 'Waitlist result updated to Fail successfully.'
+            );
+        } catch (error) {
+            const message =
+                readErrorMessage(
+                    error,
+                    'Entrance Test result could not be updated.'
+                );
+
+            /*
+             * If the modal is still open, show the problem inline.
+             * If the PATCH committed and only the later refresh failed,
+             * surface the error globally because the modal has already closed.
+             */
+            if (
+                view.waitlistResultModal
+                && !view.waitlistResultModal.classList.contains(
+                    'hidden'
+                )
+            ) {
+                showInlineError(
+                    view.waitlistResultError,
+                    message
+                );
+            } else {
+                notifyError(
+                    message
+                );
+            }
+        } finally {
+            if (
+                loaderToken
+                && typeof hideLoader === 'function'
+            ) {
+                hideLoader(
+                    loaderToken
+                );
+            }
+
+            setButtonBusy(
+                view.waitlistResultSaveButton,
+                false
+            );
+        }
+    }
+
+    function formatEntranceTestNumber(value) {
+        if (value === null
+                || value === undefined
+                || value === '') {
+            return '—';
+        }
+
+        const number =
+            Number(value);
+
+        if (!Number.isFinite(number)) {
+            return String(value);
+        }
+
+        return Number.isInteger(number)
+            ? String(number)
+            : number.toFixed(2).replace(
+                /\.?0+$/,
+                ''
+            );
+    }
+
+    function openEntranceTestMarksModal() {
+        const test =
+            state.entranceTest;
+
+        if (!test
+                || test.canComplete !== true) {
+            notifyError(
+                'Entrance Test marks cannot be entered in the current state.'
+            );
+            return;
+        }
+
+        if (!Array.isArray(test.availableSubjects)
+                || test.availableSubjects.length === 0) {
+            notifyError(
+                'No active subjects are available for Entrance Test mark entry.'
+            );
+            return;
+        }
+
+        view.entranceTestMarksRows?.replaceChildren();
+
+        const existingMarks =
+            Array.isArray(test.marks)
+                ? test.marks
+                : [];
+
+        if (existingMarks.length > 0) {
+            existingMarks.forEach(mark =>
+                addEntranceTestMarkRow(mark)
+            );
+        } else {
+            addEntranceTestMarkRow();
+        }
+
+        if (view.entranceTestResultSelect) {
+            view.entranceTestResultSelect.value =
+                test.result
+                && String(test.result).toUpperCase() !== 'PENDING'
+                    ? String(test.result).toUpperCase()
+                    : '';
+        }
+
+        if (view.entranceTestCompletedAtInput) {
+            view.entranceTestCompletedAtInput.value =
+                toDateTimeLocalValue(
+                    test.completedAt
+                );
+        }
+
+        if (view.entranceTestEmployeeRemarks) {
+            view.entranceTestEmployeeRemarks.value =
+                test.employeeRemarks || '';
+        }
+
+        if (view.entranceTestInternalRemarks) {
+            view.entranceTestInternalRemarks.value =
+                test.internalRemarks || '';
+        }
+
+        updateEntranceTestLiveTotals();
+
+        clearInlineError(
+            view.entranceTestMarksError
+        );
+
+        openModal(
+            view.entranceTestMarksModal
+        );
+    }
+
+    function closeEntranceTestMarksModal() {
+        closeModal(
+            view.entranceTestMarksModal
+        );
+
+        view.entranceTestMarksForm?.reset();
+        view.entranceTestMarksRows?.replaceChildren();
+
+        clearInlineError(
+            view.entranceTestMarksError
+        );
+    }
+
+    function addEntranceTestMarkRow(existingMark = null) {
+        const container =
+            view.entranceTestMarksRows;
+
+        const test =
+            state.entranceTest;
+
+        if (!container || !test) {
+            return;
+        }
+
+        const row =
+            document.createElement('tr');
+
+        row.className =
+            'entrance-test-mark-row';
+
+        const subjectCell =
+            document.createElement('td');
+
+        const subjectSelect =
+            document.createElement('select');
+
+        subjectSelect.className =
+            'detail-input w-100 entrance-test-subject';
+
+        subjectSelect.required =
+            true;
+
+        const placeholder =
+            document.createElement('option');
+
+        placeholder.value = '';
+
+        placeholder.textContent =
+            '-- Select Subject --';
+
+        subjectSelect.appendChild(
+            placeholder
+        );
+
+        test.availableSubjects.forEach(subject => {
+            const option =
+                document.createElement('option');
+
+            option.value =
+                String(subject.subjectId);
+
+            option.textContent =
+                displayValue(
+                    subject.subjectName
+                );
+
+            subjectSelect.appendChild(
+                option
+            );
+        });
+
+        if (existingMark?.subjectId) {
+            subjectSelect.value =
+                String(existingMark.subjectId);
+        }
+
+        subjectCell.appendChild(
+            subjectSelect
+        );
+
+        const maximumCell =
+            document.createElement('td');
+
+        const maximumInput =
+            document.createElement('input');
+
+        maximumInput.type = 'number';
+        maximumInput.min = '0.01';
+        maximumInput.step = '0.01';
+        maximumInput.required = true;
+        maximumInput.className =
+            'detail-input w-100 entrance-test-maximum';
+        maximumInput.placeholder = '100';
+        maximumInput.value =
+            existingMark?.maximumMarks ?? '';
+
+        maximumCell.appendChild(
+            maximumInput
+        );
+
+        const obtainedCell =
+            document.createElement('td');
+
+        const obtainedInput =
+            document.createElement('input');
+
+        obtainedInput.type = 'number';
+        obtainedInput.min = '0';
+        obtainedInput.step = '0.01';
+        obtainedInput.required = true;
+        obtainedInput.className =
+            'detail-input w-100 entrance-test-obtained';
+        obtainedInput.placeholder = '0';
+        obtainedInput.value =
+            existingMark?.obtainedMarks ?? '';
+
+        obtainedCell.appendChild(
+            obtainedInput
+        );
+
+        const percentageCell =
+            document.createElement('td');
+
+        const percentageValue =
+            document.createElement('span');
+
+        percentageValue.className =
+            'entrance-test-row-percentage text-strong';
+
+        percentageValue.textContent =
+            existingMark?.percentage === null
+            || existingMark?.percentage === undefined
+                ? '—'
+                : `${formatEntranceTestNumber(
+                    existingMark.percentage
+                )}%`;
+
+        percentageCell.appendChild(
+            percentageValue
+        );
+
+        const actionCell =
+            document.createElement('td');
+
+        actionCell.className =
+            'col-action align-center';
+
+        const removeButton =
+            document.createElement('button');
+
+        removeButton.type = 'button';
+
+        removeButton.className =
+            'btn-danger btn-sm';
+
+        removeButton.title =
+            'Remove Subject';
+
+        removeButton.innerHTML =
+            '<i class="bi bi-trash"></i>';
+
+        removeButton.addEventListener(
+            'click',
+            () => {
+                if (container.children.length <= 1) {
+                    notifyError(
+                        'At least one subject mark is required.'
+                    );
+                    return;
+                }
+
+                row.remove();
+
+                updateEntranceTestLiveTotals();
+            }
+        );
+
+        maximumInput.addEventListener(
+            'input',
+            () => {
+                updateEntranceTestMarkRowPercentage(
+                    row
+                );
+            }
+        );
+
+        obtainedInput.addEventListener(
+            'input',
+            () => {
+                updateEntranceTestMarkRowPercentage(
+                    row
+                );
+            }
+        );
+
+        actionCell.appendChild(
+            removeButton
+        );
+
+        row.append(
+            subjectCell,
+            maximumCell,
+            obtainedCell,
+            percentageCell,
+            actionCell
+        );
+
+        container.appendChild(
+            row
+        );
+
+        updateEntranceTestMarkRowPercentage(
+            row
+        );
+    }
+
+    function updateEntranceTestMarkRowPercentage(row) {
+        if (!row) {
+            return;
+        }
+
+        const maximum =
+            Number(
+                row.querySelector(
+                    '.entrance-test-maximum'
+                )?.value
+            );
+
+        const obtained =
+            Number(
+                row.querySelector(
+                    '.entrance-test-obtained'
+                )?.value
+            );
+
+        const output =
+            row.querySelector(
+                '.entrance-test-row-percentage'
+            );
+
+        if (!output) {
+            return;
+        }
+
+        if (
+            !Number.isFinite(maximum)
+            || maximum <= 0
+            || !Number.isFinite(obtained)
+            || obtained < 0
+        ) {
+            output.textContent = '—';
+        } else {
+            output.textContent =
+                `${formatEntranceTestNumber(
+                    (obtained / maximum) * 100
+                )}%`;
+        }
+
+        updateEntranceTestLiveTotals();
+    }
+
+    function updateEntranceTestLiveTotals() {
+        const rows =
+            Array.from(
+                view.entranceTestMarksRows
+                    ?.querySelectorAll(
+                        '.entrance-test-mark-row'
+                    )
+                || []
+            );
+
+        let maximumTotal = 0;
+        let obtainedTotal = 0;
+
+        rows.forEach(row => {
+            const maximum =
+                Number(
+                    row.querySelector(
+                        '.entrance-test-maximum'
+                    )?.value
+                );
+
+            const obtained =
+                Number(
+                    row.querySelector(
+                        '.entrance-test-obtained'
+                    )?.value
+                );
+
+            if (
+                Number.isFinite(maximum)
+                && maximum > 0
+            ) {
+                maximumTotal += maximum;
+            }
+
+            if (
+                Number.isFinite(obtained)
+                && obtained >= 0
+            ) {
+                obtainedTotal += obtained;
+            }
+        });
+
+        setNodeText(
+            view.entranceTestLiveMaximum,
+            formatEntranceTestNumber(
+                maximumTotal
+            )
+        );
+
+        setNodeText(
+            view.entranceTestLiveObtained,
+            formatEntranceTestNumber(
+                obtainedTotal
+            )
+        );
+
+        setNodeText(
+            view.entranceTestLivePercentage,
+            maximumTotal > 0
+                ? `${formatEntranceTestNumber(
+                    (obtainedTotal / maximumTotal) * 100
+                )}%`
+                : '0%'
+        );
+    }
+
+    function collectEntranceTestMarks() {
+        const rows =
+            Array.from(
+                view.entranceTestMarksRows
+                    ?.querySelectorAll(
+                        '.entrance-test-mark-row'
+                    )
+                || []
+            );
+
+        if (rows.length === 0) {
+            throw new Error(
+                'Enter marks for at least one subject.'
+            );
+        }
+
+        const usedSubjects =
+            new Set();
+
+        return rows.map(row => {
+            const subjectId =
+                Number(
+                    row.querySelector(
+                        '.entrance-test-subject'
+                    )?.value
+                );
+
+            const maximumMarks =
+                Number(
+                    row.querySelector(
+                        '.entrance-test-maximum'
+                    )?.value
+                );
+
+            const obtainedMarks =
+                Number(
+                    row.querySelector(
+                        '.entrance-test-obtained'
+                    )?.value
+                );
+
+            if (!Number.isInteger(subjectId)
+                    || subjectId <= 0) {
+                throw new Error(
+                    'Select a subject for every marks row.'
+                );
+            }
+
+            if (usedSubjects.has(subjectId)) {
+                throw new Error(
+                    'The same subject cannot be entered more than once.'
+                );
+            }
+
+            usedSubjects.add(
+                subjectId
+            );
+
+            if (!Number.isFinite(maximumMarks)
+                    || maximumMarks <= 0) {
+                throw new Error(
+                    'Maximum marks must be greater than zero.'
+                );
+            }
+
+            if (!Number.isFinite(obtainedMarks)
+                    || obtainedMarks < 0) {
+                throw new Error(
+                    'Obtained marks cannot be negative.'
+                );
+            }
+
+            if (obtainedMarks > maximumMarks) {
+                throw new Error(
+                    'Obtained marks cannot exceed maximum marks.'
+                );
+            }
+
+            return {
+                subjectId,
+                maximumMarks,
+                obtainedMarks,
+                remarks: null
+            };
+        });
+    }
+
+    async function submitEntranceTestMarks() {
+        if (!state.currentApplicationId) {
+            return;
+        }
+
+        setButtonBusy(
+            view.entranceTestSaveMarksButton,
+            true,
+            'Saving...'
+        );
+
+        clearInlineError(
+            view.entranceTestMarksError
+        );
+
+        let loaderToken = null;
+
+        try {
+            const result =
+                trimValue(
+                    view.entranceTestResultSelect
+                );
+
+            if (!result) {
+                throw new Error(
+                    'Select the Entrance Test result.'
+                );
+            }
+
+            const marks =
+                collectEntranceTestMarks();
+
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader(
+                        'Saving Entrance Test result...'
+                    );
+            }
+
+            const response =
+                await apiPatchJson(
+                    `${API_ROOT}/${encodeURIComponent(
+                        state.currentApplicationId
+                    )}/workflow/entrance-test/complete`,
+                    {
+                        completedAt:
+                            trimValue(
+                                view.entranceTestCompletedAtInput
+                            ) || null,
+                        marks,
+                        result,
+                        employeeRemarks:
+                            trimValue(
+                                view.entranceTestEmployeeRemarks
+                            ) || null,
+                        internalRemarks:
+                            trimValue(
+                                view.entranceTestInternalRemarks
+                            ) || null
+                    }
+                );
+
+            state.entranceTest =
+                unwrapResponseData(
+                    response
+                );
+
+            closeEntranceTestMarksModal();
+
+            renderEntranceTest(
+                state.entranceTest
+            );
+
+            /*
+             * The PATCH already queued one global mutation. Keep the global
+             * foreground loader active until the refreshed Entrance Test
+             * profile has been synchronized and rendered completely.
+             */
+            const refreshed =
+                await synchronizeCurrentApplicationAfterMutation(
+                    'entrance-test-result',
+                    Number(
+                        state.currentApplicationId
+                    )
+                );
+
+            if (!refreshed) {
+                throw new Error(
+                    'The Entrance Test result was saved, but the refreshed Application profile could not be loaded.'
+                );
+            }
+
+            notifySuccess(
+                'Entrance Test result saved successfully.'
+            );
+        } catch (error) {
+            showInlineError(
+                view.entranceTestMarksError,
+                readErrorMessage(
+                    error,
+                    'Entrance Test result could not be saved.'
+                )
+            );
+        } finally {
+            if (loaderToken
+                    && typeof hideLoader === 'function') {
+                hideLoader(
+                    loaderToken
+                );
+            }
+
+            setButtonBusy(
+                view.entranceTestSaveMarksButton,
+                false,
+                'Save Result'
+            );
+        }
+    }
+
     /**
      * Resets the School Visit panel while its authoritative state is loaded.
      *
@@ -1862,14 +3476,6 @@ const ApplicationsController = (() => {
             '—'
         );
         setNodeText(
-            view.schoolVisitEntranceReadiness,
-            'Not Ready'
-        );
-        setNodeText(
-            view.schoolVisitCompletedAt,
-            '—'
-        );
-        setNodeText(
             view.schoolVisitRemarks,
             '—'
         );
@@ -1889,8 +3495,12 @@ const ApplicationsController = (() => {
      * @param {number} applicationId
      */
     async function loadSchoolVisit(
-        applicationId
+        applicationId,
+        options = {}
     ) {
+        const {
+            render = true
+        } = options || {};
         const id =
             Number(applicationId);
 
@@ -1915,9 +3525,13 @@ const ApplicationsController = (() => {
             state.schoolVisit =
                 schoolVisit || null;
 
-            renderSchoolVisit(
-                schoolVisit
-            );
+            if (render) {
+                renderSchoolVisit(
+                    schoolVisit
+                );
+            }
+
+            return schoolVisit;
         } catch (error) {
             console.error(
                 'School Visit details could not be loaded.',
@@ -1937,6 +3551,8 @@ const ApplicationsController = (() => {
                     'School Visit details could not be loaded. Refresh the application and try again.'
                 );
             }
+
+            return null;
         }
     }
 
@@ -2037,26 +3653,10 @@ const ApplicationsController = (() => {
         );
 
         setNodeText(
-            view.schoolVisitCompletedAt,
-            displayValue(
-                formatDateTime(
-                    schoolVisit.completedAt
-                )
-            )
-        );
-
-        setNodeText(
             view.schoolVisitRemarks,
             displayValue(
                 schoolVisit.remarks
             )
-        );
-
-        setNodeText(
-            view.schoolVisitEntranceReadiness,
-            schoolVisit.canProceedToEntranceTest === true
-                ? 'Ready'
-                : 'Not Ready'
         );
 
         if (view.schoolVisitStageMessage) {
@@ -2523,6 +4123,13 @@ const ApplicationsController = (() => {
                 state.currentApplicationId
             );
 
+            if (
+                typeof window.erpCancelPendingDataSync
+                === 'function'
+            ) {
+                window.erpCancelPendingDataSync();
+            }
+
             notifySuccess(
                 reschedule
                     ? 'School Visit rescheduled successfully.'
@@ -2712,6 +4319,84 @@ const ApplicationsController = (() => {
         );
     }
 
+    async function synchronizeCurrentApplicationAfterMutation(
+            source,
+            applicationId
+    ) {
+        const id =
+            Number(
+                applicationId
+                || state.currentApplicationId
+            );
+
+        if (!Number.isInteger(id)
+                || id <= 0) {
+            return false;
+        }
+
+        let synchronized = false;
+
+        if (
+            typeof window.erpFlushDataSync
+            === 'function'
+        ) {
+            synchronized =
+                await window.erpFlushDataSync({
+                    source,
+                    applicationId: id
+                });
+        }
+
+        /*
+         * Never allow a successful backend mutation to leave the profile
+         * stale merely because the global registry was unavailable or did
+         * not handle this active view.
+         */
+        if (synchronized !== true) {
+            synchronized =
+                await openApplication(
+                    id,
+                    {
+                        preservePosition: true,
+                        silent: true
+                    }
+                );
+        }
+
+        if (synchronized !== true) {
+            return false;
+        }
+
+        /*
+         * Verify the state expected from important workflow mutations instead
+         * of trusting a generic "handled" flag.
+         */
+        if (
+            source === 'school-visit-attendance'
+        ) {
+            return (
+                enumEquals(
+                    state.currentApplication?.currentStage,
+                    'ENTRANCE_TEST'
+                )
+                && Boolean(
+                    state.entranceTest
+                )
+            );
+        }
+
+        if (
+            source === 'entrance-test-result'
+            || source === 'entrance-test-waitlist-result'
+        ) {
+            return Boolean(
+                state.entranceTest
+            );
+        }
+
+        return true;
+    }
+
     async function submitSchoolVisitCompletion() {
         clearInlineError(
             view.schoolVisitCompleteError
@@ -2852,22 +4537,34 @@ const ApplicationsController = (() => {
                     entranceTestTransition
                 );
 
+            const applicationId =
+                Number(
+                    state.currentApplicationId
+                );
+
             closeSchoolVisitCompleteModal();
 
-            applyWorkflowResponseToProfile(
-                transitionResponse
-            );
+            /*
+             * Keep the global loader + blocking overlay active while the
+             * application is synchronized into Entrance Test. This prevents
+             * the attended School Visit profile from becoming visible and
+             * interactive before the new stage is ready.
+             *
+             * Attendance + workflow transition are one logical user action.
+             * Both PATCH events have already been coalesced while the loader
+             * was active. Consume them with one final synchronization.
+             */
+            const refreshed =
+                await synchronizeCurrentApplicationAfterMutation(
+                    'school-visit-attendance',
+                    applicationId
+                );
 
-            await loadApplications(true);
-
-            await Promise.all([
-                loadSchoolVisit(
-                    state.currentApplicationId
-                ),
-                loadProfileTransitions(
-                    state.currentApplicationId
-                )
-            ]);
+            if (!refreshed) {
+                throw new Error(
+                    'Attendance was recorded and the application moved to Entrance Test, but the refreshed Entrance Test profile could not be loaded.'
+                );
+            }
 
             notifySuccess(
                 'Attendance recorded and application moved to Entrance Test successfully.'
@@ -2881,14 +4578,22 @@ const ApplicationsController = (() => {
             await loadApplications(true);
 
             if (state.currentApplicationId) {
-                await Promise.allSettled([
-                    loadSchoolVisit(
-                        state.currentApplicationId
-                    ),
-                    loadProfileTransitions(
-                        state.currentApplicationId
-                    )
-                ]);
+                try {
+                    await openApplication(
+                        Number(
+                            state.currentApplicationId
+                        ),
+                        {
+                            preservePosition: true,
+                            silent: true
+                        }
+                    );
+                } catch (refreshError) {
+                    console.error(
+                        'School Visit recovery refresh failed:',
+                        refreshError
+                    );
+                }
             }
 
             showInlineError(
@@ -3016,7 +4721,25 @@ const ApplicationsController = (() => {
                 'view'
             );
 
+        if (
+            state.failedDocumentViewUrls.has(
+                source
+            )
+        ) {
+            view.profilePhoto.removeAttribute(
+                'src'
+            );
+            hideElement(view.profilePhoto);
+            showElement(
+                view.profilePhotoPlaceholder
+            );
+            return;
+        }
+
         view.profilePhoto.onload = () => {
+            state.failedDocumentViewUrls.delete(
+                source
+            );
             hideElement(
                 view.profilePhotoPlaceholder
             );
@@ -3024,6 +4747,9 @@ const ApplicationsController = (() => {
         };
 
         view.profilePhoto.onerror = () => {
+            state.failedDocumentViewUrls.add(
+                source
+            );
             view.profilePhoto.removeAttribute('src');
             hideElement(view.profilePhoto);
             showElement(
@@ -4083,6 +5809,18 @@ const ApplicationsController = (() => {
          * reset the currently open profile or scroll position.
          */
         await loadApplications(true);
+
+        /*
+         * Document mutations already synchronized their dedicated profile
+         * sections above. Prevent the mutation event from triggering a second
+         * full Application-profile synchronization afterward.
+         */
+        if (
+            typeof window.erpCancelPendingDataSync
+            === 'function'
+        ) {
+            window.erpCancelPendingDataSync();
+        }
     }
 
     /**
@@ -4152,6 +5890,16 @@ const ApplicationsController = (() => {
         applicationId,
         force = false
     ) {
+        if (
+            !view?.root
+            || !document.body.contains(
+                view.root
+            )
+        ) {
+            stopDocumentAutoSync();
+            return false;
+        }
+
         const expectedApplicationId =
             Number(applicationId);
 
@@ -4371,7 +6119,10 @@ const ApplicationsController = (() => {
                 }
             }
 
-            await loadApplications(true);
+            /*
+             * Do not reload the whole Applications table during background
+             * document polling. The open profile has already been updated.
+             */
         } catch (error) {
             console.warn(
                 'Automatic document/workflow synchronization failed.',
@@ -4386,11 +6137,44 @@ const ApplicationsController = (() => {
      * While an application profile is open, poll quietly for parent uploads
      * and backend verification/request-state changes.
      */
+    function buildCurrentDocumentSyncSignature() {
+        const application =
+            state.currentApplication || {};
+
+        const documents =
+            Array.isArray(application.documents)
+                ? application.documents
+                : [];
+
+        const requests =
+            Array.isArray(application.documentRequests)
+                ? application.documentRequests
+                : [];
+
+        return [
+            documents
+                .map(document => [
+                    document?.documentId,
+                    document?.verificationStatus,
+                    document?.current,
+                    document?.active,
+                    document?.uploadedAt
+                ].join(':'))
+                .join('|'),
+            requests
+                .map(request => [
+                    request?.requestId,
+                    request?.requestStatus,
+                    request?.emailStatus,
+                    request?.uploadedAt
+                ].join(':'))
+                .join('|')
+        ].join('||');
+    }
+
     function startDocumentAutoSync(
         applicationId
     ) {
-        stopDocumentAutoSync();
-
         const expectedApplicationId =
             Number(applicationId);
 
@@ -4399,16 +6183,46 @@ const ApplicationsController = (() => {
             return;
         }
 
-        state.documentSyncSignature = null;
+        /*
+         * openApplication() is also reused for silent global synchronization.
+         * If this same Application is already being polled, keep the existing
+         * timer instead of immediately launching another document refresh.
+         */
+        if (
+            state.documentSyncTimer
+            && Number(
+                state.documentSyncApplicationId
+            ) === expectedApplicationId
+        ) {
+            return;
+        }
 
-        void synchronizeApplicationDocumentState(
-            expectedApplicationId,
-            true
-        );
+        stopDocumentAutoSync();
+
+        state.documentSyncApplicationId =
+            expectedApplicationId;
+
+        /*
+         * openApplication() already loaded the complete Application including
+         * current documents/requests. Do not immediately repeat those GETs.
+         * The first lightweight external-document check happens on the timer.
+         */
+        state.documentSyncSignature =
+            buildCurrentDocumentSyncSignature();
 
         state.documentSyncTimer =
             window.setInterval(
                 () => {
+                    if (
+                        !view?.root
+                        || !document.body.contains(
+                            view.root
+                        )
+                    ) {
+                        stopDocumentAutoSync();
+                        return;
+                    }
+
                     if (document.hidden) {
                         return;
                     }
@@ -4437,6 +6251,7 @@ const ApplicationsController = (() => {
 
         state.documentSyncTimer = null;
         state.documentSyncBusy = false;
+        state.documentSyncApplicationId = null;
     }
 
     /**
@@ -4657,6 +6472,20 @@ const ApplicationsController = (() => {
             );
         }
 
+        document.dispatchEvent(
+            new CustomEvent(
+                'erp:data-mutated',
+                {
+                    detail: {
+                        method: 'PATCH',
+                        endpoint,
+                        responseData: body,
+                        occurredAt: Date.now()
+                    }
+                }
+            )
+        );
+
         return body;
     }
 
@@ -4700,6 +6529,90 @@ const ApplicationsController = (() => {
         });
     }
 
+    async function synchronizeApplicationListState() {
+        if (
+            !view?.root
+            || !document.body.contains(
+                view.root
+            )
+        ) {
+            stopApplicationListAutoSync();
+            return false;
+        }
+
+        if (
+            state.applicationListSyncBusy
+            || document.hidden
+            || !view?.tableComponent
+            || view.tableComponent.classList.contains(
+                'hidden'
+            )
+        ) {
+            return false;
+        }
+
+        state.applicationListSyncBusy = true;
+
+        try {
+            const synchronize = () =>
+                loadApplications(
+                    true,
+                    true
+                );
+
+            if (
+                typeof window.erpPreserveViewportDuring
+                === 'function'
+            ) {
+                return await window.erpPreserveViewportDuring(
+                    synchronize
+                );
+            }
+
+            return await synchronize();
+        } finally {
+            state.applicationListSyncBusy = false;
+        }
+    }
+
+    function startApplicationListAutoSync() {
+        if (
+            state.applicationListSyncTimer
+            || !state.initialApplicationListLoaded
+        ) {
+            return;
+        }
+
+        state.applicationListSyncTimer =
+            window.setInterval(
+                () => {
+                    if (
+                        !view?.root
+                        || !document.body.contains(
+                            view.root
+                        )
+                    ) {
+                        stopApplicationListAutoSync();
+                        return;
+                    }
+
+                    void synchronizeApplicationListState();
+                },
+                5000
+            );
+    }
+
+    function stopApplicationListAutoSync() {
+        if (state.applicationListSyncTimer) {
+            window.clearInterval(
+                state.applicationListSyncTimer
+            );
+        }
+
+        state.applicationListSyncTimer = null;
+        state.applicationListSyncBusy = false;
+    }
+
     /**
      * Shows the table and hides the profile.
      */
@@ -4713,12 +6626,31 @@ const ApplicationsController = (() => {
         state.currentApplication = null;
         state.profileTransitions = [];
         state.schoolVisit = null;
+        state.entranceTest = null;
         renderProfileNextAction(null);
+
+        if (state.initialApplicationListLoaded) {
+            startApplicationListAutoSync();
+            void synchronizeApplicationListState();
+        }
 
         window.scrollTo({
             top: 0,
             behavior: 'auto'
         });
+    }
+
+    function handleApplicationsVisibilityChange() {
+        if (
+            !document.hidden
+            && state.initialApplicationListLoaded
+            && view?.tableComponent
+            && !view.tableComponent.classList.contains(
+                'hidden'
+            )
+        ) {
+            void synchronizeApplicationListState();
+        }
     }
 
     function handleSearch() {
@@ -5463,6 +7395,13 @@ const ApplicationsController = (() => {
 
             await loadApplications(true);
 
+            if (
+                typeof window.erpCancelPendingDataSync
+                === 'function'
+            ) {
+                window.erpCancelPendingDataSync();
+            }
+
             if (keepProfileOpen
                     && transitionResponse) {
                 applyWorkflowResponseToProfile(
@@ -5558,6 +7497,13 @@ const ApplicationsController = (() => {
 
             state.selectedApplications.clear();
             await loadApplications(true);
+
+            if (
+                typeof window.erpCancelPendingDataSync
+                === 'function'
+            ) {
+                window.erpCancelPendingDataSync();
+            }
         } finally {
             if (loaderToken
                     && typeof hideLoader === 'function') {
@@ -5627,8 +7573,12 @@ const ApplicationsController = (() => {
     }
 
     async function loadProfileTransitions(
-        applicationId
+        applicationId,
+        options = {}
     ) {
+        const {
+            render = true
+        } = options || {};
         try {
             state.profileTransitions =
                 await fetchAvailableTransitions(
@@ -5651,9 +7601,13 @@ const ApplicationsController = (() => {
                     )
             ) || null;
 
-        renderProfileNextAction(
-            primaryTransition
-        );
+        if (render) {
+            renderProfileNextAction(
+                primaryTransition
+            );
+        }
+
+        return state.profileTransitions;
     }
 
     function renderProfileNextAction(
@@ -5691,12 +7645,29 @@ const ApplicationsController = (() => {
             return;
         }
 
-        view.profileNextStageButton.classList.toggle(
-            'hidden',
-            !transition
+        view.profileNextStageButton.classList.remove(
+            'hidden'
         );
+
+        const continueEnabled =
+            Boolean(transition);
+
         view.profileNextStageButton.disabled =
-            !transition;
+            !continueEnabled;
+
+        view.profileNextStageButton.setAttribute(
+            'aria-disabled',
+            String(!continueEnabled)
+        );
+
+        view.profileNextStageButton.title =
+            continueEnabled
+                ? (
+                    transition?.label
+                        ? `Continue: ${transition.label}`
+                        : 'Continue to the next application stage.'
+                )
+                : 'Continue is unavailable until all pending requirements are completed.';
     }
 
     function applyWorkflowResponseToProfile(
@@ -6350,6 +8321,12 @@ const ApplicationsController = (() => {
             return '';
         }
 
+        /*
+         * Never use browser/device locale for ERP dates.
+         * The shared formatter always displays:
+         *   dd-MM-yyyy
+         *   dd-MM-yyyy hh:mm AM/PM
+         */
         if (window.erpDate) {
             return includeTime
                 ? window.erpDate.formatDateTime(value, '')
@@ -6602,7 +8579,87 @@ const ApplicationsController = (() => {
         console.error(message);
     }
 
+    // =========================================================
+    // GLOBAL ERP DATA SYNC — APPLICATIONS MODULE
+    // =========================================================
+
+    async function synchronizeApplicationsView(
+            mutation = {}
+    ) {
+        /*
+         * Return false when Applications is not the active DOM view.
+         * The global registry will then allow another module handler
+         * to process the mutation.
+         */
+        if (
+            !view?.root
+            || !document.body.contains(
+                view.root
+            )
+        ) {
+            return false;
+        }
+
+        const applicationId =
+            Number(
+                state.currentApplicationId
+            );
+
+        /*
+         * Detail/profile mode:
+         * reload the authoritative application profile and all workflow
+         * resources in place. openApplication() already reloads details,
+         * School Visit, Entrance Test, document state and transitions.
+         */
+        if (
+            Number.isInteger(applicationId)
+            && applicationId > 0
+            && view?.detailComponent
+            && !view.detailComponent
+                .classList.contains('hidden')
+        ) {
+            const refreshed =
+                await openApplication(
+                    applicationId,
+                    {
+                        preservePosition: true,
+                        silent: true
+                    }
+                );
+
+            /*
+             * Report the real refresh result to global.js. Returning true
+             * unconditionally here previously masked failed/stale profile
+             * refreshes and made the page appear dependent on manual reload.
+             */
+            return refreshed === true;
+        }
+
+        /*
+         * List mode:
+         * refresh data only. No loadView(), no browser refresh.
+         */
+        await loadApplications(
+            true
+        );
+
+        return true;
+    }
+
+    if (
+        typeof window.erpRegisterModuleSync
+        === 'function'
+    ) {
+        window.erpRegisterModuleSync(
+            'applications',
+            synchronizeApplicationsView
+        );
+    }
+
+
     return {
         init
     };
+
+
 })();

@@ -29,6 +29,18 @@
         };
         const state = { years:[], classes:[], records:[], filtered:[], page:0, size:10, editingId:null };
 
+        if (typeof window.erpRegisterModuleSync === 'function') {
+            window.erpRegisterModuleSync(
+                'sections',
+                async () => {
+                    if (!document.querySelector('#ba-sections-view')) return false;
+                    await loadReferences();
+                    await loadSections();
+                    return true;
+                }
+            );
+        }
+
         bind(); resetForm(); await loadReferences(); await loadSections();
 
         function bind() {
@@ -113,6 +125,7 @@
             showOverlay(state.editingId?'Updating Section':'Creating Section','Please wait while the Section is saved.');el.save.disabled=true;
             try{
                 const res=state.editingId?await apiPut(`/sections/${state.editingId}`,payload):await apiPost('/sections',payload);
+                cancelQueuedGlobalSync();
                 successNotify(res?.message||'Section saved successfully.');showTable();await loadSections();
             }catch(e){const m=readError(e,'Unable to save Section.');showError(m);errorNotify(m);}
             finally{el.save.disabled=false;hideOverlay();}
@@ -124,6 +137,7 @@
             try{
                 const qs=new URLSearchParams({active:String(next),version:String(r.version??0)});
                 const res=await patch(`/sections/${r.sectionId}/active-status?${qs}`);
+                cancelQueuedGlobalSync();
                 successNotify(res?.message||'Section state updated.');await loadSections();
             }catch(e){errorNotify(readError(e,'Unable to change Section state.'));}finally{hideOverlay();}
         }
@@ -148,7 +162,17 @@
         function clearError(){el.errorText.textContent='';el.error.classList.add('hidden');}
     }
 
-    async function patch(path){const response=await fetch(`/api${path}`,{method:'PATCH',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'}});const text=await response.text();let body;try{body=text?JSON.parse(text):null;}catch{body=text;}if(!response.ok){const e=new Error(body?.message||`HTTP Error: ${response.status}`);e.data=body;throw e;}return body;}
+
+    function cancelQueuedGlobalSync() {
+        if (
+            typeof window.erpCancelPendingDataSync
+            === 'function'
+        ) {
+            window.erpCancelPendingDataSync();
+        }
+    }
+
+    async function patch(path){const response=await fetch(`/api${path}`,{method:'PATCH',credentials:'include',cache:'no-store',headers:{'Content-Type':'application/json'}});const text=await response.text();let body;try{body=text?JSON.parse(text):null;}catch{body=text;}if(!response.ok){const e=new Error(body?.message||`HTTP Error: ${response.status}`);e.data=body;throw e;}document.dispatchEvent(new CustomEvent('erp:data-mutated',{detail:{method:'PATCH',endpoint:path,responseData:body,occurredAt:Date.now()}}));return body;}
     const arrayOf=v=>Array.isArray(v)?v:(Array.isArray(v?.content)?v.content:[]);
     const nullable=v=>String(v??'').trim()===''?null:v;
     const text=(p,s,v)=>{const n=p.querySelector(s);if(n)n.textContent=String(v??'-');};

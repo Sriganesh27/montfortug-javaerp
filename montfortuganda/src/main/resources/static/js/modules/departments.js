@@ -182,6 +182,16 @@ function initDepartmentsView() {
         });
     }
 
+
+    function cancelQueuedGlobalSync() {
+        if (
+            typeof window.erpCancelPendingDataSync
+            === 'function'
+        ) {
+            window.erpCancelPendingDataSync();
+        }
+    }
+
     async function openDeptDetail(id) {
         currentDetailDeptId = id;
         showLoader();
@@ -217,6 +227,7 @@ function initDepartmentsView() {
                 showLoader();
                 try {
                     await apiDelete(`/departments/${id}`);
+                    cancelQueuedGlobalSync();
                     showSuccessMessage('Department deleted successfully.');
                     await loadDepartments();
                 } catch (e) {
@@ -276,6 +287,7 @@ function initDepartmentsView() {
             showLoader();
             try {
                 await apiPut(`/departments/${currentDetailDeptId}`, payload);
+                cancelQueuedGlobalSync();
                 showSuccessMessage('Department updated successfully.');
                 await openDeptDetail(currentDetailDeptId);
             } catch (e) {
@@ -292,6 +304,24 @@ function initDepartmentsView() {
         if (editBtn) editBtn.classList.remove('hidden');
         if (saveBtn) saveBtn.classList.add('hidden');
         if (cancelEditBtn) cancelEditBtn.classList.add('hidden');
+    }
+
+    // Reuse the global ERP sync layer without replacing existing module logic.
+    if (typeof window.erpRegisterModuleSync === 'function') {
+        window.erpRegisterModuleSync(
+            'departments',
+            async () => {
+                if (!document.querySelector('#ba-departments-view')) return false;
+
+                if (detailView && !detailView.classList.contains('hidden') && currentDetailDeptId) {
+                    await openDeptDetail(currentDetailDeptId);
+                } else {
+                    await loadDepartments();
+                }
+
+                return true;
+            }
+        );
     }
 
     // Initial Load

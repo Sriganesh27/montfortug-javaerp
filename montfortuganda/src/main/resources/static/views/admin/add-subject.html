@@ -1,0 +1,175 @@
+<div id="ba-add-subject-view">
+    <div class="view-header">
+        <div>
+            <h2>Add New Subject</h2>
+            <p class="text-muted">
+                Register a new subject for your branch
+            </p>
+        </div>
+
+        <div>
+            <button id="backToSubjectsBtn" class="btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Subjects
+            </button>
+        </div>
+    </div>
+
+    <div class="card form-card mx-auto">
+        <div class="card-header border-bottom">
+            <h3 class="card-title">Subject Information</h3>
+        </div>
+
+        <div class="card-body">
+            <form id="add-subject-form">
+
+                <div class="ba-detail-grid">
+                    <div class="form-group">
+                        <label for="add-subjectCode">
+                            Subject Code
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-subjectCode"
+                                class="detail-input w-100"
+                                placeholder="e.g. MAT"
+                                required
+                                maxlength="20"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-subjectName">
+                            Subject Name
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-subjectName"
+                                class="detail-input w-100"
+                                placeholder="e.g. Mathematics"
+                                required
+                                maxlength="100"
+                        >
+                    </div>
+                </div>
+
+                <div class="ba-detail-grid">
+                    <div class="form-group">
+                        <label for="add-subjectShortName">
+                            Short Name
+                        </label>
+
+                        <input
+                                type="text"
+                                id="add-subjectShortName"
+                                class="detail-input w-100"
+                                placeholder="e.g. Maths"
+                                maxlength="50"
+                        >
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-subjectType">
+                            Subject Type
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <select
+                                id="add-subjectType"
+                                class="detail-input w-100"
+                                required
+                        >
+                            <option value="CORE">Core</option>
+                            <option value="ELECTIVE">Elective</option>
+                            <option value="OPTIONAL">Optional</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="ba-detail-grid">
+                    <div class="form-group">
+                        <label for="add-subjectPractical">
+                            Practical
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <select
+                                id="add-subjectPractical"
+                                class="detail-input w-100"
+                                required
+                        >
+                            <option value="false">No</option>
+                            <option value="true">Yes</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="add-subjectDisplayOrder">
+                            Display Order
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <input
+                                type="number"
+                                id="add-subjectDisplayOrder"
+                                class="detail-input w-100"
+                                min="1"
+                                step="1"
+                                value="1"
+                                required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-subjectStatus">
+                        Status
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <select
+                            id="add-subjectStatus"
+                            class="detail-input w-100"
+                            required
+                    >
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="add-subjectDescription">
+                        Description
+                    </label>
+
+                    <textarea
+                            id="add-subjectDescription"
+                            class="detail-input w-100"
+                            rows="4"
+                            maxlength="500"
+                            placeholder="Brief description..."
+                    ></textarea>
+                </div>
+
+                <div class="form-actions border-top pt-4">
+                    <button
+                            type="reset"
+                            class="btn-secondary"
+                    >
+                        Reset Form
+                    </button>
+
+                    <button
+                            type="submit"
+                            class="btn-primary"
+                    >
+                        <i class="bi bi-save"></i> Save Subject
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

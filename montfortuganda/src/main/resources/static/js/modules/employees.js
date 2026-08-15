@@ -1253,6 +1253,26 @@ function initEmployeesView(routeInfo = {}) {
         sort: 'employeeId,desc'
     };
 
+    if (typeof window.erpRegisterModuleSync === 'function') {
+        window.erpRegisterModuleSync(
+            'employees',
+            async () => {
+                if (!document.querySelector('#ba-employees-view')) return false;
+
+                const editing = detailView && detailView.classList.contains('is-editing');
+                if (editing) return true;
+
+                if (currentDetailEmpId && detailView && !detailView.classList.contains('hidden')) {
+                    await openEmpDetail(currentDetailEmpId);
+                } else {
+                    await loadEmployees();
+                }
+
+                return true;
+            }
+        );
+    }
+
     let table = null;
     /** @type {(EmployeeData|null)} */
     let currentEmployee = null;
@@ -1863,6 +1883,16 @@ function initEmployeesView(routeInfo = {}) {
         EmpCollections.expFields,
         'exp-row'
     );
+
+
+    function cancelQueuedGlobalSync() {
+        if (
+            typeof window.erpCancelPendingDataSync
+            === 'function'
+        ) {
+            window.erpCancelPendingDataSync();
+        }
+    }
 
     async function loadEmployees() {
         table?.showLoading();
@@ -3340,6 +3370,8 @@ function initEmployeesView(routeInfo = {}) {
                     }
                 );
 
+                cancelQueuedGlobalSync();
+
                 const deactivatedEmployeeId =
                     pendingDeactivationEmployeeId;
 
@@ -4163,6 +4195,7 @@ function initEmployeesView(routeInfo = {}) {
                     }
                 );
 
+                cancelQueuedGlobalSync();
                 closeEmployeeLoginModal();
                 loginCreated = await openEmpDetail(
                     currentDetailEmpId,
@@ -4214,6 +4247,7 @@ function initEmployeesView(routeInfo = {}) {
                             `/branchadmin/employees/${currentDetailEmpId}/temporary-password`,
                             { sendEmail: true }
                         );
+                        cancelQueuedGlobalSync();
                         passwordReset = await openEmpDetail(
                             currentDetailEmpId,
                             { showLoading: false }
@@ -4451,6 +4485,8 @@ function initEmployeesView(routeInfo = {}) {
                 `/branchadmin/employees/${currentDetailEmpId}`,
                 payload
             );
+
+            cancelQueuedGlobalSync();
 
             return await openEmpDetail(
                 currentDetailEmpId,

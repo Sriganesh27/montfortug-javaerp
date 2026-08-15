@@ -280,8 +280,8 @@
 ======================================================== */
 .erp-action-feedback {
     position: fixed;
-    top: calc(50% + 35px);
-    left: calc(50% + 150px);
+    top: 50%;
+    left: 50%;
     z-index: 1000000;
     display: flex;
     align-items: center;
@@ -394,10 +394,9 @@ body.erp-action-in-progress::before {
     pointer-events: all;
 }
 
-body.sidebar-collapsed .erp-action-feedback {
-    left: calc(50% + 35px);
-}
-
+/*
+ * The action loader is viewport-centered and must not move with the sidebar.
+ */
 body.sidebar-collapsed
 #main-content-area.erp-navigation-busy::after {
     left: 70px;
@@ -438,10 +437,6 @@ body.sidebar-collapsed
 }
 
 @media (min-width: 769px) and (max-width: 1024px) {
-    .erp-action-feedback {
-        left: calc(50% + 35px);
-    }
-
     #main-content-area.erp-navigation-busy::after {
         left: 70px;
     }
@@ -449,16 +444,17 @@ body.sidebar-collapsed
 
 @media (max-width: 768px) {
     .erp-action-feedback {
-        top: calc(50% + 35px);
-        left: 16px;
-        right: 16px;
+        top: 50%;
+        left: 50%;
+        right: auto;
+        width: calc(100vw - 32px);
         min-width: 0;
-        max-width: none;
-        transform: translateY(-50%) scale(0.96);
+        max-width: 380px;
+        transform: translate(-50%, -50%) scale(0.96);
     }
 
     .erp-action-feedback.is-visible {
-        transform: translateY(-50%) scale(1);
+        transform: translate(-50%, -50%) scale(1);
     }
 
     #main-content-area.erp-navigation-busy::after {
@@ -623,4 +619,69 @@ label {
     display: flex;
     justify-content: flex-end;
     gap: 0.75rem; /* REDUCED from 1rem */
+}
+
+/* ========================================================
+   GLOBAL FOREGROUND ACTION FREEZE
+======================================================== */
+
+body.erp-action-in-progress #main-content-area {
+    pointer-events: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    touch-action: none !important;
+    overscroll-behavior: none !important;
+}
+
+body.erp-action-in-progress .main-content,
+body.erp-action-in-progress .content-wrapper {
+    pointer-events: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+body.erp-action-in-progress::after {
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+}
+
+.erp-action-feedback {
+    pointer-events: none;
+}
+
+
+/* ========================================================
+   GLOBAL ERP LOADING — ALL FOREGROUND ACTIONS
+======================================================== */
+
+body.erp-action-in-progress {
+    overflow: hidden !important;
+}
+
+body.erp-action-in-progress #main-content-area,
+body.erp-action-in-progress .main-content,
+body.erp-action-in-progress .content-wrapper {
+    pointer-events: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    touch-action: none !important;
+    overscroll-behavior: none !important;
+}
+
+body.erp-action-in-progress::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: rgba(15, 23, 42, 0.52);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    pointer-events: auto;
+    cursor: wait;
+}
+
+.erp-action-feedback {
+    z-index: 1000000 !important;
+    pointer-events: none !important;
 }

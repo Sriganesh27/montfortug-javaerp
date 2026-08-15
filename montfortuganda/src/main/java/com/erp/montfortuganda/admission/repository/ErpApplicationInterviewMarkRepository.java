@@ -30,6 +30,10 @@ public interface ErpApplicationInterviewMarkRepository
             Long subjectId
     );
 
+    long countByInterview_InterviewIdAndActiveFalse(
+            Long interviewId
+    );
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select m

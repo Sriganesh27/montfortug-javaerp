@@ -182,6 +182,51 @@
         }
     };
 
+    /**
+     * Runs a foreground ERP operation under the one global blocking loader.
+     *
+     * If the calling module already owns an active global loader, this helper
+     * reuses that loading session instead of starting another visible loading
+     * cycle. This prevents nested/double loaders.
+     */
+    window.erpRunForegroundOperation =
+        async function erpRunForegroundOperation(
+            message,
+            operation,
+            options = {}
+        ) {
+            if (typeof operation !== 'function') {
+                throw new TypeError(
+                    'A foreground operation function is required.'
+                );
+            }
+
+            const {
+                forceNew = false
+            } = options || {};
+
+            if (
+                !forceNew
+                && window.erpActionFeedback?.isBusy?.()
+            ) {
+                return operation();
+            }
+
+            const token =
+                start(
+                    String(
+                        message
+                        || 'Processing...'
+                    )
+                );
+
+            try {
+                return await operation();
+            } finally {
+                end(token);
+            }
+        };
+
     window.erpWithLoader =
         async function erpWithLoader(
             message,
@@ -743,6 +788,646 @@
     window.updateSidebarSelection = updateSidebarSelection;
 })();
 
+
+
+// ========================================================
+// GLOBAL ERP DATA SYNC + VIEWPORT PRESERVATION
+// ========================================================
+
+(function initializeErpDataSync() {
+    const MUTATION_EVENT = 'erp:data-mutated';
+    const SYNC_DELAY_MS = 180;
+    const BUSY_RETRY_MS = 120;
+
+    const syncHandlers = new Map();
+
+    let pendingTimer = null;
+    let pendingDetail = null;
+    let syncRunning = false;
+
+    function getMainContainer() {
+        return document.getElementById(
+            'main-content-area'
+        );
+    }
+
+    function getScrollContainer() {
+        const main =
+            getMainContainer();
+
+        if (
+            main
+            && main.scrollHeight > main.clientHeight
+            && getComputedStyle(main).overflowY !== 'visible'
+        ) {
+            return main;
+        }
+
+        return document.scrollingElement
+            || document.documentElement;
+    }
+
+    function isWindowScrollContainer(
+            container
+    ) {
+        return (
+            container === document.scrollingElement
+            || container === document.documentElement
+            || container === document.body
+        );
+    }
+
+    function findViewportAnchor() {
+        const main =
+            getMainContainer();
+
+        const mainRect =
+            main?.getBoundingClientRect();
+
+        const viewportTop =
+            Math.max(
+                0,
+                mainRect?.top || 0
+            );
+
+        const targetY =
+            Math.min(
+                window.innerHeight - 1,
+                viewportTop
+                + Math.max(
+                    80,
+                    (
+                        window.innerHeight
+                        - viewportTop
+                    ) * 0.28
+                )
+            );
+
+        const candidates =
+            Array.from(
+                document.querySelectorAll(
+                    '#main-content-area [id]'
+                )
+            );
+
+        let best = null;
+        let bestScore = Number.POSITIVE_INFINITY;
+
+        for (const element of candidates) {
+            if (!(element instanceof HTMLElement)) {
+                continue;
+            }
+
+            if (
+                element.hidden
+                || element.classList.contains('hidden')
+            ) {
+                continue;
+            }
+
+            const rect =
+                element.getBoundingClientRect();
+
+            if (
+                rect.width <= 0
+                || rect.height <= 0
+                || rect.bottom <= viewportTop
+                || rect.top >= window.innerHeight
+            ) {
+                continue;
+            }
+
+            /*
+             * Prefer a stable section/card near the user's current reading
+             * position. Avoid tiny controls as anchors.
+             */
+            const sizePenalty =
+                rect.height < 28
+                    ? 500
+                    : 0;
+
+            const containsTarget =
+                rect.top <= targetY
+                && rect.bottom >= targetY;
+
+            const score =
+                (
+                    containsTarget
+                        ? 0
+                        : Math.abs(
+                            rect.top - targetY
+                        )
+                )
+                + sizePenalty;
+
+            if (score < bestScore) {
+                bestScore = score;
+                best = element;
+            }
+        }
+
+        if (!best?.id) {
+            return null;
+        }
+
+        return {
+            id: best.id,
+            top:
+                best.getBoundingClientRect().top
+        };
+    }
+
+    function captureViewport() {
+        const main =
+            getMainContainer();
+
+        const scrollingElement =
+            document.scrollingElement
+            || document.documentElement;
+
+        const activeContainer =
+            getScrollContainer();
+
+        const anchor =
+            findViewportAnchor();
+
+        return {
+            windowX:
+                Number(window.scrollX || 0),
+            windowY:
+                Number(window.scrollY || 0),
+
+            documentLeft:
+                Number(
+                    scrollingElement?.scrollLeft
+                    || 0
+                ),
+            documentTop:
+                Number(
+                    scrollingElement?.scrollTop
+                    || 0
+                ),
+
+            mainLeft:
+                Number(
+                    main?.scrollLeft
+                    || 0
+                ),
+            mainTop:
+                Number(
+                    main?.scrollTop
+                    || 0
+                ),
+
+            scrollOwner:
+                isWindowScrollContainer(
+                    activeContainer
+                )
+                    ? 'window'
+                    : 'main',
+
+            anchorId:
+                anchor?.id || null,
+            anchorTop:
+                Number.isFinite(anchor?.top)
+                    ? anchor.top
+                    : null
+        };
+    }
+
+    function restoreViewport(
+            snapshot
+    ) {
+        if (!snapshot) {
+            return;
+        }
+
+        const restoreNumericPosition = () => {
+            const main =
+                getMainContainer();
+
+            const scrollingElement =
+                document.scrollingElement
+                || document.documentElement;
+
+            if (scrollingElement) {
+                scrollingElement.scrollTop =
+                    snapshot.documentTop;
+
+                scrollingElement.scrollLeft =
+                    snapshot.documentLeft;
+            }
+
+            if (main) {
+                main.scrollTop =
+                    snapshot.mainTop;
+
+                main.scrollLeft =
+                    snapshot.mainLeft;
+            }
+
+            window.scrollTo({
+                top: snapshot.windowY,
+                left: snapshot.windowX,
+                behavior: 'auto'
+            });
+        };
+
+        const restoreAnchorPosition = () => {
+            if (
+                !snapshot.anchorId
+                || !Number.isFinite(
+                    snapshot.anchorTop
+                )
+            ) {
+                return;
+            }
+
+            const anchor =
+                document.getElementById(
+                    snapshot.anchorId
+                );
+
+            if (!(anchor instanceof HTMLElement)) {
+                return;
+            }
+
+            const currentTop =
+                anchor
+                    .getBoundingClientRect()
+                    .top;
+
+            const delta =
+                currentTop
+                - snapshot.anchorTop;
+
+            if (
+                !Number.isFinite(delta)
+                || Math.abs(delta) < 0.5
+            ) {
+                return;
+            }
+
+            const main =
+                getMainContainer();
+
+            if (
+                snapshot.scrollOwner === 'main'
+                && main
+            ) {
+                main.scrollTop += delta;
+            } else {
+                window.scrollBy({
+                    top: delta,
+                    left: 0,
+                    behavior: 'auto'
+                });
+            }
+        };
+
+        const restore = () => {
+            restoreNumericPosition();
+            restoreAnchorPosition();
+        };
+
+        /*
+         * Restore immediately so there is no visible jump, then repeat after
+         * layout has settled. Anchor restoration keeps the same section at
+         * the same viewport offset even if content above changed height.
+         */
+        restore();
+
+        requestAnimationFrame(() => {
+            restore();
+
+            requestAnimationFrame(
+                restore
+            );
+        });
+    }
+
+    async function preserveViewportDuring(
+            callback
+    ) {
+        if (typeof callback !== 'function') {
+            return undefined;
+        }
+
+        const snapshot =
+            captureViewport();
+
+        try {
+            return await callback();
+        } finally {
+            restoreViewport(
+                snapshot
+            );
+        }
+    }
+
+    function registerModuleSync(
+            moduleKey,
+            handler
+    ) {
+        const key =
+            String(moduleKey || '').trim();
+
+        if (!key) {
+            throw new Error(
+                'ERP module sync key is required.'
+            );
+        }
+
+        if (typeof handler !== 'function') {
+            throw new Error(
+                `ERP sync handler for ${key} must be a function.`
+            );
+        }
+
+        syncHandlers.set(
+            key,
+            handler
+        );
+
+        return () => {
+            if (
+                syncHandlers.get(key)
+                === handler
+            ) {
+                syncHandlers.delete(
+                    key
+                );
+            }
+        };
+    }
+
+    function unregisterModuleSync(
+            moduleKey
+    ) {
+        syncHandlers.delete(
+            String(moduleKey || '').trim()
+        );
+    }
+
+    function hasBlockingModal() {
+        return Boolean(
+            document.body.classList.contains(
+                'erp-modal-open'
+            )
+            || document.querySelector(
+                '.ba-modal-backdrop:not(.hidden),'
+                + '.student-modal:not(.hidden),'
+                + '.employee-confirm-overlay.is-visible'
+            )
+        );
+    }
+
+    function isOperationBusy() {
+        return Boolean(
+            window.erpActionFeedback
+                ?.isBusy?.()
+        );
+    }
+
+    function shouldDeferSync() {
+        return (
+            isOperationBusy()
+            || hasBlockingModal()
+        );
+    }
+
+    function mergePendingDetail(
+            detail
+    ) {
+        pendingDetail = {
+            ...(pendingDetail || {}),
+            ...(detail || {}),
+            occurredAt:
+                detail?.occurredAt
+                || pendingDetail?.occurredAt
+                || Date.now()
+        };
+    }
+
+    function schedulePendingSync(
+            delay = SYNC_DELAY_MS
+    ) {
+        if (pendingTimer) {
+            window.clearTimeout(
+                pendingTimer
+            );
+        }
+
+        pendingTimer =
+            window.setTimeout(
+                () => {
+                    pendingTimer = null;
+
+                    if (shouldDeferSync()) {
+                        schedulePendingSync(
+                            BUSY_RETRY_MS
+                        );
+                        return;
+                    }
+
+                    const next =
+                        pendingDetail || {};
+
+                    pendingDetail = null;
+
+                    void runRegisteredSync(
+                        next
+                    );
+                },
+                delay
+            );
+    }
+
+    async function runRegisteredSync(
+            detail = {}
+    ) {
+        if (syncRunning) {
+            mergePendingDetail(
+                detail
+            );
+            return false;
+        }
+
+        if (shouldDeferSync()) {
+            mergePendingDetail(
+                detail
+            );
+            schedulePendingSync(
+                BUSY_RETRY_MS
+            );
+            return false;
+        }
+
+        syncRunning = true;
+
+        let handled = false;
+
+        try {
+            const handlers =
+                Array.from(
+                    syncHandlers.entries()
+                );
+
+            for (
+                const [
+                    moduleKey,
+                    handler
+                ] of handlers
+            ) {
+                try {
+                    const moduleHandled =
+                        await preserveViewportDuring(
+                            () => handler(detail)
+                        );
+
+                    if (moduleHandled === true) {
+                        handled = true;
+
+                        document.dispatchEvent(
+                            new CustomEvent(
+                                'erp:view-synchronized',
+                                {
+                                    detail: {
+                                        moduleKey,
+                                        mutation:
+                                            detail
+                                    }
+                                }
+                            )
+                        );
+
+                        break;
+                    }
+                } catch (error) {
+                    console.error(
+                        `ERP module synchronization failed: ${moduleKey}`,
+                        error
+                    );
+                }
+            }
+        } finally {
+            syncRunning = false;
+
+            if (pendingDetail) {
+                schedulePendingSync(
+                    0
+                );
+            }
+        }
+
+        return handled;
+    }
+
+    function queueSync(
+            detail = {}
+    ) {
+        mergePendingDetail(
+            detail
+        );
+
+        schedulePendingSync(
+            SYNC_DELAY_MS
+        );
+    }
+
+    async function flushSync(
+            detail = null
+    ) {
+        if (detail) {
+            mergePendingDetail(
+                detail
+            );
+        }
+
+        if (pendingTimer) {
+            window.clearTimeout(
+                pendingTimer
+            );
+            pendingTimer = null;
+        }
+
+        if (shouldDeferSync()) {
+            schedulePendingSync(
+                BUSY_RETRY_MS
+            );
+            return false;
+        }
+
+        const next =
+            pendingDetail || detail || {};
+
+        pendingDetail = null;
+
+        return runRegisteredSync(
+            next
+        );
+    }
+
+    function cancelPendingSync() {
+        if (pendingTimer) {
+            window.clearTimeout(
+                pendingTimer
+            );
+        }
+
+        pendingTimer = null;
+        pendingDetail = null;
+    }
+
+    document.addEventListener(
+        MUTATION_EVENT,
+        event => {
+            queueSync(
+                event.detail || {}
+            );
+        }
+    );
+
+    window.erpCaptureViewport =
+        captureViewport;
+
+    window.erpRestoreViewport =
+        restoreViewport;
+
+    window.erpPreserveViewportDuring =
+        preserveViewportDuring;
+
+    window.erpRegisterModuleSync =
+        registerModuleSync;
+
+    window.erpUnregisterModuleSync =
+        unregisterModuleSync;
+
+    window.erpRequestDataSync =
+        queueSync;
+
+    window.erpFlushDataSync =
+        flushSync;
+
+    window.erpCancelPendingDataSync =
+        cancelPendingSync;
+
+    window.erpDataSync = {
+        captureViewport,
+        restoreViewport,
+        preserveViewportDuring,
+        register:
+            registerModuleSync,
+        unregister:
+            unregisterModuleSync,
+        request:
+            queueSync,
+        flush:
+            flushSync,
+        cancel:
+            cancelPendingSync
+    };
+})();
 
 // ========================================================
 // GLOBAL ERP DATE / DATE-TIME FORMAT

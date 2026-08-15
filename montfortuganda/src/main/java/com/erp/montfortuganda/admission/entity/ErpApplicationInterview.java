@@ -41,7 +41,8 @@ public class ErpApplicationInterview implements Serializable {
         PENDING,
         PASSED,
         FAILED,
-        WAITLIST
+        WAITLIST,
+        RETEST_REQUIRED
     }
 
     public enum Status {
