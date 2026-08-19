@@ -1705,6 +1705,18 @@ const ApplicationsController = (() => {
                 application
             );
 
+            /*
+             * renderApplicationDetails() resets the School Visit placeholders
+             * while preparing the profile. Restore the authoritative School
+             * Visit object that was already fetched above before rendering it.
+             *
+             * Without this restoration, resetSchoolVisitDisplay() clears
+             * state.schoolVisit and the UI incorrectly falls back to
+             * "Not Scheduled" even when the backend returned SCHEDULED.
+             */
+            state.schoolVisit =
+                schoolVisitLoaded || null;
+
             renderSchoolVisit(
                 state.schoolVisit
             );
@@ -3675,26 +3687,64 @@ const ApplicationsController = (() => {
             );
 
         /*
-         * Historical School Visit information may remain visible after the
-         * application advances, but School Visit action buttons must never
-         * remain clickable outside the SCHOOL_VISIT stage.
+         * The workflow state decides which actions are relevant/visible.
+         * Backend permission flags decide whether each visible action is
+         * currently enabled.
+         *
+         * This avoids a dead-end UI where the profile clearly says
+         * "Not Scheduled" but no Schedule Visit action is visible.
          */
+        const scheduleRelevant =
+            inSchoolVisitStage
+            && (
+                visitStatus === 'NOT_SCHEDULED'
+                || visitStatus === 'CANCELLED'
+                || visitStatus === 'NO_SHOW'
+            );
+
+        const scheduledVisit =
+            visitStatus === 'SCHEDULED'
+            || visitStatus === 'RESCHEDULED';
+
+        const rescheduleRelevant =
+            inSchoolVisitStage
+            && scheduledVisit;
+
+        const completeRelevant =
+            inSchoolVisitStage
+            && scheduledVisit;
+
         toggleElement(
             view.schoolVisitScheduleButton,
-            inSchoolVisitStage
-                && schoolVisit.canSchedule === true
+            scheduleRelevant
         );
 
         toggleElement(
             view.schoolVisitRescheduleButton,
-            inSchoolVisitStage
-                && schoolVisit.canReschedule === true
+            rescheduleRelevant
         );
 
         toggleElement(
             view.schoolVisitCompleteButton,
-            inSchoolVisitStage
-                && schoolVisit.canComplete === true
+            completeRelevant
+        );
+
+        setButtonActionAvailability(
+            view.schoolVisitScheduleButton,
+            schoolVisit.canSchedule === true,
+            'This School Visit cannot be scheduled yet. Check workflow and document requirements.'
+        );
+
+        setButtonActionAvailability(
+            view.schoolVisitRescheduleButton,
+            schoolVisit.canReschedule === true,
+            'This School Visit cannot be rescheduled at the moment.'
+        );
+
+        setButtonActionAvailability(
+            view.schoolVisitCompleteButton,
+            schoolVisit.canComplete === true,
+            'Proceed to Entrance Test is available after the visit is scheduled and required documents are resolved.'
         );
 
         if (state.currentApplication) {
@@ -8463,6 +8513,31 @@ const ApplicationsController = (() => {
             showElement(element);
         } else {
             hideElement(element);
+        }
+    }
+
+    function setButtonActionAvailability(
+        button,
+        enabled,
+        disabledReason = ''
+    ) {
+        if (!button) {
+            return;
+        }
+
+        button.disabled = !enabled;
+        button.setAttribute(
+            'aria-disabled',
+            enabled ? 'false' : 'true'
+        );
+
+        if (enabled) {
+            button.removeAttribute('title');
+        } else if (disabledReason) {
+            button.setAttribute(
+                'title',
+                disabledReason
+            );
         }
     }
 

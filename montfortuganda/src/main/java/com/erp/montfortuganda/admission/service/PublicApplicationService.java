@@ -836,11 +836,62 @@ public class PublicApplicationService {
                 app.getNationality()
         );
 
+        String academicYearDisplay = "";
+
+        if (app.getAcademicYearId() != null) {
+
+            Integer branchId =
+                    app.getBranch() != null
+                            ? app.getBranch().getBranchId()
+                            : null;
+
+            if (branchId != null) {
+
+                Optional<ErpAcademicYear> academicYearOpt =
+                        academicYearRepository
+                                .findByAcademicYearIdAndBranchBranchId(
+                                        app.getAcademicYearId(),
+                                        branchId
+                                );
+
+                if (academicYearOpt.isPresent()) {
+
+                    ErpAcademicYear academicYear =
+                            academicYearOpt.get();
+
+                    if (
+                            academicYear.getAcademicYearCode() != null
+                                    && !academicYear
+                                    .getAcademicYearCode()
+                                    .isBlank()
+                    ) {
+                        academicYearDisplay =
+                                academicYear.getAcademicYearCode();
+                    } else if (
+                            academicYear.getAcademicYearName() != null
+                                    && !academicYear
+                                    .getAcademicYearName()
+                                    .isBlank()
+                    ) {
+                        academicYearDisplay =
+                                academicYear.getAcademicYearName();
+                    } else if (
+                            academicYear.getStartDate() != null
+                    ) {
+                        academicYearDisplay =
+                                String.valueOf(
+                                        academicYear
+                                                .getStartDate()
+                                                .getYear()
+                                );
+                    }
+                }
+            }
+        }
+
         data.put(
                 "academic_year",
-                app.getAcademicYearId() != null
-                        ? String.valueOf(app.getAcademicYearId())
-                        : ""
+                academicYearDisplay
         );
 
         data.put(
