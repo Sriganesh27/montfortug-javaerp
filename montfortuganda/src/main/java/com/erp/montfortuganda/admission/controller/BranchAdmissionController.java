@@ -6,12 +6,19 @@ import com.erp.montfortuganda.admission.service.BranchAdmissionService;
 import com.erp.montfortuganda.auth.service.CurrentUserContext;
 import com.erp.montfortuganda.auth.service.CurrentUserService;
 import com.erp.montfortuganda.dto.ApiResponse;
+import com.erp.montfortuganda.scholarship.dto.ScholarshipApplicationFormRequestDTO;
+import com.erp.montfortuganda.scholarship.dto.ScholarshipApplicationFormResponseDTO;
+import com.erp.montfortuganda.scholarship.service.ScholarshipService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,13 +36,16 @@ public class BranchAdmissionController {
 
     private final BranchAdmissionService admissionService;
     private final CurrentUserService currentUserService;
+    private final ScholarshipService scholarshipService;
 
     public BranchAdmissionController(
             BranchAdmissionService admissionService,
-            CurrentUserService currentUserService
+            CurrentUserService currentUserService,
+            ScholarshipService scholarshipService
     ) {
         this.admissionService = admissionService;
         this.currentUserService = currentUserService;
+        this.scholarshipService = scholarshipService;
     }
 
     /**
@@ -97,4 +107,66 @@ public class BranchAdmissionController {
                 )
         );
     }
+
+    @GetMapping("/scholarship/application-form")
+    public ResponseEntity<ApiResponse<ScholarshipApplicationFormResponseDTO>>
+    getSchoolScholarshipApplicationForm(
+            @RequestHeader("X-Scholarship-School-Access")
+            String accessKey
+    ) {
+        ScholarshipApplicationFormResponseDTO response =
+                scholarshipService.getApplicationFormForSchoolAccess(
+                        accessKey
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Scholarship application form fetched successfully",
+                        response
+                )
+        );
+    }
+
+    @PatchMapping("/scholarship/application-form")
+    public ResponseEntity<ApiResponse<ScholarshipApplicationFormResponseDTO>>
+    saveSchoolScholarshipApplicationForm(
+            @RequestHeader("X-Scholarship-School-Access")
+            String accessKey,
+            @RequestBody ScholarshipApplicationFormRequestDTO request
+    ) {
+        ScholarshipApplicationFormResponseDTO response =
+                scholarshipService.saveApplicationFormForSchoolAccess(
+                        accessKey,
+                        request
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Scholarship application draft saved successfully",
+                        response
+                )
+        );
+    }
+
+    @PostMapping("/scholarship/application-form/submit")
+    public ResponseEntity<ApiResponse<ScholarshipApplicationFormResponseDTO>>
+    submitSchoolScholarshipApplicationForm(
+            @RequestHeader("X-Scholarship-School-Access")
+            String accessKey,
+            @RequestBody ScholarshipApplicationFormRequestDTO request
+    ) {
+        ScholarshipApplicationFormResponseDTO response =
+                scholarshipService.submitApplicationFormForSchoolAccess(
+                        accessKey,
+                        request
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Scholarship application submitted successfully",
+                        response
+                )
+        );
+    }
+
 }

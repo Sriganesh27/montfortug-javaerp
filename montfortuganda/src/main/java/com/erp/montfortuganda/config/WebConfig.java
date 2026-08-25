@@ -75,5 +75,19 @@ public class WebConfig implements WebMvcConfigurer {
                 .setViewName(
                         "forward:/public-document-upload.html"
                 );
+
+        /*
+         * Canonical Scholarship Application page.
+         *
+         * Keep the browser-facing URL extensionless and forward internally
+         * to the static HTML resource. This route is used by both
+         * school-assisted and parent/guardian token flows.
+         */
+        registry.addViewController(
+                        "/scholarship-application"
+                )
+                .setViewName(
+                        "forward:/scholarship-application.html"
+                );
     }
 }

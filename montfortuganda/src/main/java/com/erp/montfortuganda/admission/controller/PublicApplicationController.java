@@ -4,6 +4,9 @@ import com.erp.montfortuganda.admission.dto.ApplicationCreateDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationResponseDTO;
 import com.erp.montfortuganda.admission.entity.ErpApplication;
 import com.erp.montfortuganda.admission.service.PublicApplicationService;
+import com.erp.montfortuganda.scholarship.dto.ScholarshipApplicationFormRequestDTO;
+import com.erp.montfortuganda.scholarship.dto.ScholarshipApplicationFormResponseDTO;
+import com.erp.montfortuganda.scholarship.service.ScholarshipService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +29,7 @@ public class PublicApplicationController {
     // The Controller only talks to the Service.
     // -------------------------------------------------------------------------
     private final PublicApplicationService applicationService;
+    private final ScholarshipService scholarshipService;
 
     @GetMapping("/public/branches")
     public ResponseEntity<Map<String, Object>> getPublicBranches() {
@@ -163,4 +167,48 @@ public class PublicApplicationController {
         applicationService.updateApplicationStatus(id, status, currentUserId, remarks);
         return ResponseEntity.ok("Status successfully updated to " + status);
     }
+
+    @GetMapping("/public/scholarship/application-form")
+    public ResponseEntity<ScholarshipApplicationFormResponseDTO>
+    getPublicScholarshipApplicationForm(
+            @RequestHeader("X-Scholarship-Access")
+            String publicToken
+    ) {
+        return ResponseEntity.ok(
+                scholarshipService.getApplicationFormForPublicToken(
+                        publicToken
+                )
+        );
+    }
+
+    @PatchMapping("/public/scholarship/application-form")
+    public ResponseEntity<ScholarshipApplicationFormResponseDTO>
+    savePublicScholarshipApplicationForm(
+            @RequestHeader("X-Scholarship-Access")
+            String publicToken,
+            @RequestBody ScholarshipApplicationFormRequestDTO request
+    ) {
+        return ResponseEntity.ok(
+                scholarshipService.saveApplicationFormForPublicToken(
+                        publicToken,
+                        request
+                )
+        );
+    }
+
+    @PostMapping("/public/scholarship/application-form/submit")
+    public ResponseEntity<ScholarshipApplicationFormResponseDTO>
+    submitPublicScholarshipApplicationForm(
+            @RequestHeader("X-Scholarship-Access")
+            String publicToken,
+            @RequestBody ScholarshipApplicationFormRequestDTO request
+    ) {
+        return ResponseEntity.ok(
+                scholarshipService.submitApplicationFormForPublicToken(
+                        publicToken,
+                        request
+                )
+        );
+    }
+
 }

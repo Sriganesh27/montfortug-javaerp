@@ -337,12 +337,14 @@
 
                 <button type="button"
                         id="ba-appNextStageBtn"
-                        class="btn-primary app-profile-continue-btn"
+                        class="btn-primary app-profile-continue-btn hidden"
                         disabled
                         aria-disabled="true"
-                        title="Continue is unavailable until all pending requirements are completed.">
+                        title="Next action is unavailable until all pending requirements are completed.">
                     <i class="bi bi-arrow-right-circle"></i>
-                    Continue
+                    <span id="ba-appNextStageBtnLabel">
+                        Next Action
+                    </span>
                 </button>
             </div>
         </div>
@@ -353,83 +355,115 @@
             <!-- ================================================= -->
             <!-- PROFILE SUMMARY                                   -->
             <!-- ================================================= -->
-            <div class="card emp-profile-summary-card emp-profile-card">
-                <div class="emp-profile-header emp-profile-layout">
+            <div class="card emp-profile-summary-card emp-profile-card app-profile-summary-compact">
+                <div class="app-profile-summary-row app-profile-two-column">
 
-                    <!-- Applicant Photo -->
-                    <div class="emp-profile-photo-panel">
-                        <div class="emp-profile-photo-box">
-                            <img id="view-appProfilePhoto"
-                                 class="emp-profile-photo hidden"
-                                 alt="Applicant profile photo">
+                    <!-- LEFT: Applicant Photo -->
+                    <div class="app-profile-photo-pane">
+                        <div class="app-profile-photo-compact">
+                        <img id="view-appProfilePhoto"
+                             class="emp-profile-photo hidden"
+                             alt="Applicant profile photo">
 
-                            <div id="view-appProfilePhotoPlaceholder"
-                                 class="emp-profile-photo-placeholder">
-                                <i class="bi bi-person-bounding-box"></i>
-                                <span>No photo available</span>
-                            </div>
+                        <div id="view-appProfilePhotoPlaceholder"
+                             class="app-profile-photo-placeholder">
+                            <i class="bi bi-person-bounding-box"></i>
+                            <span>No photo</span>
                         </div>
                     </div>
+                    </div>
 
-                    <!-- Main Summary -->
-                    <div class="emp-profile-summary">
-                        <h3 id="view-studentName"></h3>
+                    <!-- RIGHT: Applicant / Workflow Details -->
+                    <div class="app-profile-summary-content app-profile-details-pane">
 
-                        <div class="emp-profile-summary-grid emp-profile-facts">
-                            <div>
-                                <span class="text-muted">
-                                    Application Number
-                                </span>
+                        <div class="app-profile-summary-heading">
+                            <div class="app-profile-summary-main-identity">
+                                <h3 id="view-studentName"></h3>
 
-                                <strong id="view-appNo"
-                                        class="font-monospace">
-                                </strong>
+                                <span class="app-profile-name-separator"
+                                      aria-hidden="true">||</span>
+
+                                <div class="app-profile-summary-identity">
+                                    <strong id="view-appNo"
+                                            class="font-monospace"></strong>
+                                    <span>•</span>
+                                    <span id="summary-appClass"></span>
+                                    <span>•</span>
+                                    <span id="summary-appYearTerm"></span>
+                                </div>
                             </div>
 
-                            <div>
-                                <span class="text-muted">
-                                    Class Applied For
-                                </span>
-
-                                <strong id="summary-appClass"></strong>
-                            </div>
-
-                            <div>
-                                <span class="text-muted">
-                                    Admission Year / Term
-                                </span>
-
-                                <strong id="summary-appYearTerm"></strong>
-                            </div>
-
-                            <div>
+                            <div class="app-profile-summary-status">
                                 <span class="text-muted">
                                     Application Status
                                 </span>
-
                                 <span id="summary-appStatus"
-                                      class="status-badge badge">
-                                </span>
+                                      class="status-badge badge"></span>
                             </div>
+                        </div>
 
-                            <div>
+                        <!-- Compact workflow progress -->
+                        <div id="ba-workflowProgress"
+                             class="app-workflow-progress"
+                             aria-label="Admission workflow progress">
+                        </div>
+
+                        <!-- Operational summary -->
+                        <div class="app-profile-quick-grid">
+                            <div class="app-profile-quick-item">
                                 <span class="text-muted">
                                     Current Stage
                                 </span>
-
-                                <strong id="summary-appCurrentStage">
-                                    -
-                                </strong>
+                                <strong id="summary-appCurrentStage">—</strong>
                             </div>
 
-                            <div>
+                            <div class="app-profile-quick-item">
+                                <span class="text-muted">
+                                    Stage Status
+                                </span>
+                                <strong id="summary-appCurrentStageStatus">—</strong>
+                            </div>
+
+                            <div class="app-profile-quick-item">
+                                <span class="text-muted">
+                                    School Visit
+                                </span>
+                                <strong id="summary-appSchoolVisit">—</strong>
+                            </div>
+
+                            <div class="app-profile-quick-item">
                                 <span class="text-muted">
                                     Scholarship
                                 </span>
+                                <strong id="summary-appScholarship">—</strong>
+                            </div>
 
-                                <strong id="summary-appScholarship">
-                                    -
-                                </strong>
+                            <div class="app-profile-quick-item">
+                                <span class="text-muted">
+                                    Responsible Employee
+                                </span>
+                                <strong id="summary-appResponsibleEmployee">—</strong>
+                            </div>
+
+                            <div class="app-profile-quick-item">
+                                <span class="text-muted">
+                                    Employee ID
+                                </span>
+                                <strong id="summary-appResponsibleEmployeeNo">—</strong>
+                            </div>
+
+                            <div class="app-profile-quick-item">
+                                <span class="text-muted">
+                                    Submitted
+                                </span>
+                                <strong id="summary-appSubmitted">—</strong>
+                            </div>
+
+                            <div class="app-profile-quick-item">
+                                <span class="text-muted">
+                                    Last Updated
+                                </span>
+                                <strong id="summary-appUpdated">—</strong>
                             </div>
                         </div>
                     </div>
@@ -1076,10 +1110,17 @@
                             </button>
 
                             <button type="button"
-                                    id="ba-entranceTestUpdateResultBtn"
+                                    id="ba-entranceTestRetestBtn"
                                     class="btn-primary btn-sm hidden">
                                 <i class="bi bi-arrow-repeat"></i>
-                                Update Result
+                                Schedule Retest
+                            </button>
+
+                            <button type="button"
+                                    id="ba-entranceTestUpdateResultBtn"
+                                    class="btn-primary btn-sm hidden">
+                                <i class="bi bi-hourglass-split"></i>
+                                Place on Waitlist
                             </button>
                         </div>
                     </div>
@@ -1167,6 +1208,364 @@
 
 
 
+
+            <!-- ================================================= -->
+            <!-- PARENT FEE DISCUSSION                              -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section hidden"
+                      id="application-fee-discussion-section">
+
+                <legend class="emp-detail-section-header app-fee-section-header">
+                    <span>Parent Fee Discussion</span>
+
+                    <button type="button"
+                            id="ba-editFeeDiscussionBtn"
+                            class="btn-secondary btn-sm hidden">
+                        <i class="bi bi-pencil-square"></i>
+                        Edit Fee Structure
+                    </button>
+                </legend>
+
+                <div class="emp-detail-section-body">
+
+                    <!-- FIRST-TIME ENTRY MODE -->
+                    <div id="ba-feeInitialForm" class="hidden">
+
+                        <div class="emp-detail-grid emp-detail-grid-4">
+                            <div class="form-group">
+                                <label for="ba-feeTermFee">Term Fee</label>
+                                <input type="number" id="ba-feeTermFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ba-feeTransportFee">Transport Fee</label>
+                                <input type="number" id="ba-feeTransportFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ba-feeHostelFee">Hostel Fee</label>
+                                <input type="number" id="ba-feeHostelFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ba-feeUniformFee">Uniform Fee</label>
+                                <input type="number" id="ba-feeUniformFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ba-feeBooksFee">Books Fee</label>
+                                <input type="number" id="ba-feeBooksFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ba-feeAdmissionFee">Admission Fee</label>
+                                <input type="number" id="ba-feeAdmissionFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ba-feeOtherFee">Other Fee</label>
+                                <input type="number" id="ba-feeOtherFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ba-feeBaseFeeAmount">Total Fee</label>
+                                <input type="text" id="ba-feeBaseFeeAmount"
+                                       class="detail-input w-100"
+                                       value="0.00"
+                                       readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Parent Payment Decision</label>
+
+                            <div class="app-fee-decision-row">
+                                <label class="app-fee-decision-option"
+                                       for="ba-feeDecisionFullPayment">
+                                    <input type="radio"
+                                           id="ba-feeDecisionFullPayment"
+                                           name="ba-feeDecisionOption"
+                                           value="FULL_PAYMENT">
+                                    <span>Full Payment by Parent</span>
+                                </label>
+
+                                <label class="app-fee-decision-option"
+                                       for="ba-feeDecisionPartial">
+                                    <input type="radio"
+                                           id="ba-feeDecisionPartial"
+                                           name="ba-feeDecisionOption"
+                                           value="PARTIAL_ASSISTANCE">
+                                    <span>Partial Scholarship</span>
+                                </label>
+
+                                <label class="app-fee-decision-option"
+                                       for="ba-feeDecisionFullAssistance">
+                                    <input type="radio"
+                                           id="ba-feeDecisionFullAssistance"
+                                           name="ba-feeDecisionOption"
+                                           value="FULL_ASSISTANCE">
+                                    <span>Full Scholarship</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="ba-feeContributionPanel"
+                             class="emp-detail-grid emp-detail-grid-2 hidden">
+                            <div class="form-group">
+                                <label for="ba-feeParentCanPay">
+                                    Parent Contribution
+                                </label>
+                                <input type="number"
+                                       id="ba-feeParentCanPay"
+                                       class="detail-input w-100"
+                                       min="0"
+                                       step="0.01"
+                                       inputmode="decimal">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ba-feeAssistanceRequired">
+                                    Scholarship Required
+                                </label>
+                                <input type="text"
+                                       id="ba-feeAssistanceRequired"
+                                       class="detail-input w-100"
+                                       value="0.00"
+                                       readonly>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="ba-feeDiscussionRemarks">
+                                Discussion Remarks
+                            </label>
+                            <textarea id="ba-feeDiscussionRemarks"
+                                      class="detail-input w-100"
+                                      rows="3"
+                                      maxlength="500"></textarea>
+                        </div>
+
+                        <div class="app-fee-discussion-actions">
+                            <button type="button"
+                                    id="ba-saveFeeDiscussionBtn"
+                                    class="btn-primary btn-sm">
+                                <i class="bi bi-check2-circle"></i>
+                                Save Fee Discussion
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <!-- FIRST-TIME FEE DISCUSSION ENTRY -->
+                    <div id="ba-feeCreatePrompt"
+                         class="hidden">
+
+                        <div class="emp-detail-grid emp-detail-grid-3">
+                            <div class="form-group">
+                                <label>Fee Structure</label>
+                                <span class="detail-text">
+                                    Not entered
+                                </span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Parent Payment Decision</label>
+                                <span class="detail-text">
+                                    Pending
+                                </span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Scholarship Requirement</label>
+                                <span class="detail-text">
+                                    Pending fee discussion
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="app-fee-discussion-actions">
+                            <button type="button"
+                                    id="ba-openFeeDiscussionBtn"
+                                    class="btn-primary btn-sm">
+                                <i class="bi bi-cash-coin"></i>
+                                Enter Fee Discussion
+                            </button>
+                        </div>
+                    </div>
+
+
+                    <!-- SAVED READ-ONLY SUMMARY MODE -->
+                    <div id="ba-feeSavedView"
+                         class="hidden">
+
+                        <div class="emp-detail-grid emp-detail-grid-4">
+                            <div class="form-group">
+                                <label>Term Fee</label>
+                                <span id="view-feeTermFee"
+                                      class="detail-text">—</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Transport Fee</label>
+                                <span id="view-feeTransportFee"
+                                      class="detail-text">—</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Hostel Fee</label>
+                                <span id="view-feeHostelFee"
+                                      class="detail-text">—</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Uniform Fee</label>
+                                <span id="view-feeUniformFee"
+                                      class="detail-text">—</span>
+                            </div>
+                        </div>
+
+                        <div class="emp-detail-grid emp-detail-grid-4">
+                            <div class="form-group">
+                                <label>Books Fee</label>
+                                <span id="view-feeBooksFee"
+                                      class="detail-text">—</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Admission Fee</label>
+                                <span id="view-feeAdmissionFee"
+                                      class="detail-text">—</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Other Fee</label>
+                                <span id="view-feeOtherFee"
+                                      class="detail-text">—</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Total Fee</label>
+                                <span id="view-feeBaseFeeAmount"
+                                      class="detail-text">—</span>
+                            </div>
+                        </div>
+
+                        <div class="emp-detail-grid emp-detail-grid-3">
+                            <div class="form-group">
+                                <label>Payment Decision</label>
+                                <span id="view-feeDecision"
+                                      class="detail-text">—</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Parent Contribution</label>
+                                <span id="view-feeParentCanPay"
+                                      class="detail-text">—</span>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Scholarship Required</label>
+                                <span id="view-feeAssistanceRequired"
+                                      class="detail-text">—</span>
+                            </div>
+                        </div>
+
+                        <div class="emp-detail-grid emp-detail-grid-1">
+                            <div class="form-group">
+                                <label>Discussion Remarks</label>
+                                <span id="view-feeDiscussionRemarks"
+                                      class="detail-text">—</span>
+                            </div>
+                        </div>
+
+                        <div class="app-fee-discussion-actions">
+                            <span id="ba-feeDiscussionSavedSummary"
+                                  class="app-fee-saved-summary">
+                                <i class="bi bi-check-circle-fill"></i>
+                                Fee discussion saved. Continue to Payment for full payment, or choose Fill in School / Send Link for Scholarship.
+                            </span>
+
+                            <div class="app-fee-discussion-action-buttons">
+                                <button type="button"
+                                        id="ba-cancelApplicationFromFeeBtn"
+                                        class="btn-danger btn-sm hidden">
+                                    <i class="bi bi-x-octagon"></i>
+                                    Cancel Application
+                                </button>
+
+                                <button type="button"
+                                        id="ba-finalizeFeeDiscussionBtn"
+                                        class="btn-primary btn-sm hidden">
+                                    <i class="bi bi-arrow-right-circle"></i>
+                                    Finalize &amp; Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </fieldset>
+
+
+            <!-- ================================================= -->
+            <!-- SCHOLARSHIP APPLICATION                           -->
+            <!-- ================================================= -->
+            <fieldset class="emp-detail-section hidden"
+                      id="application-scholarship-section">
+                <legend class="emp-detail-section-header app-scholarship-section-header">
+                    <span>Scholarship Application</span>
+                    <span id="ba-scholarshipFormStatus"
+                          class="status-badge badge">Not Started</span>
+                </legend>
+
+                <div class="emp-detail-section-body">
+
+                    <div id="ba-scholarshipStartPanel"
+                         class="app-scholarship-start-panel">
+                        <div>
+                            <strong>Scholarship assistance selected.</strong>
+                            <p class="text-muted">
+                                Choose how the Scholarship Application will be completed.
+                                The school-assisted form opens securely in a new tab,
+                                or a private 72-hour application link can be sent to
+                                the parent / guardian.
+                            </p>
+                        </div>
+
+                        <div class="ba-pagination-controls">
+                            <button type="button"
+                                    id="ba-scholarshipFillAtSchoolBtn"
+                                    class="btn-primary btn-sm">
+                                <i class="bi bi-building"></i>
+                                Fill in School
+                            </button>
+
+                            <button type="button"
+                                    id="ba-scholarshipSendLinkBtn"
+                                    class="btn-secondary btn-sm">
+                                <i class="bi bi-envelope"></i>
+                                Send Link
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </fieldset>
+
+
             <!-- ================================================= -->
             <!-- APPLICATION DOCUMENTS                             -->
             <!-- ================================================= -->
@@ -1234,7 +1633,362 @@
 
     <!-- ===================================================== -->
     <!-- SCHOOL VISIT SCHEDULE / RESCHEDULE MODAL             -->
+    
     <!-- ===================================================== -->
+    <!-- EDIT FEE STRUCTURE MODAL                              -->
+    <!-- ===================================================== -->
+    <div id="ba-feeEditModal"
+         class="ba-modal-backdrop hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-hidden="true"
+         aria-labelledby="ba-feeEditTitle">
+
+        <div class="ba-modal-box app-request-modal-box app-fee-edit-modal-box">
+            <div class="app-request-modal-header">
+                <div class="app-request-modal-heading">
+                    <span class="app-request-modal-icon">
+                        <i class="bi bi-pencil-square"></i>
+                    </span>
+
+                    <div>
+                        <h3 id="ba-feeEditTitle">Edit Fee Structure</h3>
+                        <p id="ba-feeEditSubtitle"
+                           class="text-muted">
+                            Update the saved fee discussion details.
+                        </p>
+                    </div>
+                </div>
+
+                <button type="button"
+                        id="ba-closeFeeEditModalBtn"
+                        class="app-request-modal-close"
+                        aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <form id="ba-feeEditForm"
+                  class="app-request-form"
+                  novalidate>
+
+                <div class="app-request-modal-body app-fee-edit-modal-body">
+                    <div class="app-request-grid app-fee-edit-grid">
+                        <div class="form-group">
+                            <label for="ba-editFeeTermFee">Term Fee</label>
+                            <input type="number" id="ba-editFeeTermFee"
+                                   class="detail-input w-100"
+                                   min="0" step="0.01" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label for="ba-editFeeTransportFee">Transport Fee</label>
+                            <input type="number" id="ba-editFeeTransportFee"
+                                   class="detail-input w-100"
+                                   min="0" step="0.01" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label for="ba-editFeeHostelFee">Hostel Fee</label>
+                            <input type="number" id="ba-editFeeHostelFee"
+                                   class="detail-input w-100"
+                                   min="0" step="0.01" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label for="ba-editFeeUniformFee">Uniform Fee</label>
+                            <input type="number" id="ba-editFeeUniformFee"
+                                   class="detail-input w-100"
+                                   min="0" step="0.01" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label for="ba-editFeeBooksFee">Books Fee</label>
+                            <input type="number" id="ba-editFeeBooksFee"
+                                   class="detail-input w-100"
+                                   min="0" step="0.01" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label for="ba-editFeeAdmissionFee">Admission Fee</label>
+                            <input type="number" id="ba-editFeeAdmissionFee"
+                                   class="detail-input w-100"
+                                   min="0" step="0.01" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label for="ba-editFeeOtherFee">Other Fee</label>
+                            <input type="number" id="ba-editFeeOtherFee"
+                                   class="detail-input w-100"
+                                   min="0" step="0.01" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label for="ba-editFeeBaseFeeAmount">Total Fee</label>
+                            <input type="text" id="ba-editFeeBaseFeeAmount"
+                                   class="detail-input w-100"
+                                   readonly>
+                        </div>
+                    </div>
+
+                    <div class="app-fee-payment-decision">
+                        <div class="app-fee-payment-heading">
+                            <h4>Payment Decision</h4>
+                            <p>
+                                Select how the parent / guardian will proceed with the fee.
+                            </p>
+                        </div>
+
+                        <label class="app-fee-main-choice"
+                               for="ba-editFeeDecisionFullPayment">
+                            <input type="radio"
+                                   id="ba-editFeeDecisionFullPayment"
+                                   name="ba-editFeeDecisionOption"
+                                   value="FULL_PAYMENT">
+
+                            <span class="app-fee-main-choice-icon">
+                                <i class="bi bi-cash-stack"></i>
+                            </span>
+
+                            <span class="app-fee-main-choice-text">
+                                <strong>Full Payment by Parent</strong>
+                                <small>
+                                    Parent / guardian will pay the complete fee.
+                                </small>
+                            </span>
+
+                            <span class="app-fee-choice-check">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </span>
+                        </label>
+
+                        <div class="app-fee-scholarship-group">
+                            <div class="app-fee-scholarship-group-heading">
+                                <span class="app-fee-scholarship-group-icon">
+                                    <i class="bi bi-mortarboard"></i>
+                                </span>
+
+                                <div>
+                                    <strong>Scholarship</strong>
+                                    <small>
+                                        Parent / guardian requires financial assistance.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <div class="app-fee-scholarship-choice-grid">
+                                <label class="app-fee-scholarship-choice-card"
+                                       for="ba-editFeeDecisionPartial">
+                                    <input type="radio"
+                                           id="ba-editFeeDecisionPartial"
+                                           name="ba-editFeeDecisionOption"
+                                           value="PARTIAL_ASSISTANCE">
+
+                                    <span>
+                                        <strong>Partial Scholarship</strong>
+                                        <small>
+                                            Parent contributes part of the total fee.
+                                        </small>
+                                    </span>
+
+                                    <i class="bi bi-check-circle-fill app-fee-choice-check"></i>
+                                </label>
+
+                                <label class="app-fee-scholarship-choice-card"
+                                       for="ba-editFeeDecisionFullAssistance">
+                                    <input type="radio"
+                                           id="ba-editFeeDecisionFullAssistance"
+                                           name="ba-editFeeDecisionOption"
+                                           value="FULL_ASSISTANCE">
+
+                                    <span>
+                                        <strong>Full Scholarship</strong>
+                                        <small>
+                                            Full financial assistance is required.
+                                        </small>
+                                    </span>
+
+                                    <i class="bi bi-check-circle-fill app-fee-choice-check"></i>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="ba-editFeeContributionPanel"
+                         class="app-fee-contribution-summary hidden">
+                        <div class="form-group">
+                            <label for="ba-editFeeParentCanPay">Parent Contribution</label>
+                            <input type="number"
+                                   id="ba-editFeeParentCanPay"
+                                   class="detail-input w-100"
+                                   min="0"
+                                   step="0.01"
+                                   inputmode="decimal">
+                            <small id="ba-editFeeParentContributionHelp"
+                                   class="text-muted"></small>
+                        </div>
+                        <div class="form-group">
+                            <label for="ba-editFeeAssistanceRequired">Scholarship Required</label>
+                            <input type="text"
+                                   id="ba-editFeeAssistanceRequired"
+                                   class="detail-input w-100"
+                                   readonly>
+                        </div>
+                    </div>
+
+                    <div id="ba-editFeeScholarshipMethodPanel"
+                         class="app-fee-method-section hidden">
+                        <div class="app-fee-method-heading">
+                            <div>
+                                <strong>Scholarship Application Method</strong>
+                                <p id="ba-editFeeScholarshipMethodHelp">
+                                    Choose how the Scholarship Application will be completed.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="app-fee-method-grid">
+                                <button type="button"
+                                        id="ba-editFeeFillInSchoolBtn"
+                                        class="app-fee-method-option app-fee-method-option-primary">
+                                    <i class="bi bi-building"></i>
+                                    <span>
+                                        <strong>Fill in School</strong>
+                                        <small>
+                                            Open the secure form in a new tab
+                                        </small>
+                                    </span>
+                                </button>
+
+                                <button type="button"
+                                        id="ba-editFeeSendLinkBtn"
+                                        class="app-fee-method-option">
+                                    <i class="bi bi-envelope"></i>
+                                    <span>
+                                        <strong>Send Link</strong>
+                                        <small>
+                                            Email a private 72-hour link to the parent
+                                        </small>
+                                    </span>
+                                </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group app-fee-remarks-group">
+                        <label for="ba-editFeeDiscussionRemarks">Discussion Remarks</label>
+                        <textarea id="ba-editFeeDiscussionRemarks"
+                                  class="detail-input w-100"
+                                  rows="3"
+                                  maxlength="500"></textarea>
+                    </div>
+
+                    <div id="ba-editFeeChangeReasonGroup"
+                         class="form-group">
+                        <label for="ba-editFeeChangeReason">
+                            Reason for Change
+                            <span class="text-danger">*</span>
+                        </label>
+                        <textarea id="ba-editFeeChangeReason"
+                                  class="detail-input w-100"
+                                  rows="3"
+                                  maxlength="500"
+                                  placeholder="Enter the reason for changing the saved fee structure"></textarea>
+                    </div>
+
+                    <div id="ba-feeEditError"
+                         class="app-request-error hidden"
+                         role="alert"></div>
+                </div>
+
+                <div class="ba-modal-actions app-request-modal-actions">
+                    <button type="button"
+                            id="ba-cancelFeeEditBtn"
+                            class="btn-secondary">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            id="ba-saveFeeEditBtn"
+                            class="btn-primary">
+                        <i class="bi bi-check-circle"></i>
+                        <span id="ba-saveFeeEditBtnLabel">
+                            Save Changes
+                        </span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+<!-- ===================================================== -->
+    <!-- CANCEL APPLICATION FROM PARENT FEE DISCUSSION         -->
+    <!-- ===================================================== -->
+    <div id="ba-cancelApplicationFeeModal"
+         class="ba-modal-backdrop hidden"
+         role="dialog"
+         aria-modal="true"
+         aria-hidden="true"
+         aria-labelledby="ba-cancelApplicationFeeTitle">
+        <div class="ba-modal-box app-request-modal-box">
+            <div class="app-request-modal-header">
+                <div class="app-request-modal-heading">
+                    <span class="app-request-modal-icon">
+                        <i class="bi bi-x-octagon"></i>
+                    </span>
+                    <div>
+                        <h3 id="ba-cancelApplicationFeeTitle">
+                            Cancel Admission Application
+                        </h3>
+                        <p class="text-muted">
+                            The application, documents and audit history will be retained.
+                        </p>
+                    </div>
+                </div>
+
+                <button type="button"
+                        id="ba-closeCancelApplicationFeeBtn"
+                        class="app-request-modal-close"
+                        aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <div class="app-request-modal-body">
+                <div class="app-request-info">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <span>
+                        Further Fee Discussion, Scholarship, Payment and Admission
+                        processing will stop after cancellation.
+                    </span>
+                </div>
+
+                <div class="form-group">
+                    <label for="ba-cancelApplicationFeeReason">
+                        Cancellation Reason <span class="text-danger">*</span>
+                    </label>
+                    <textarea id="ba-cancelApplicationFeeReason"
+                              class="detail-input w-100"
+                              rows="4"
+                              maxlength="1000"
+                              placeholder="Enter the reason for cancelling this application"></textarea>
+                </div>
+
+                <div id="ba-cancelApplicationFeeError"
+                     class="form-error hidden"></div>
+            </div>
+
+            <div class="ba-modal-actions app-request-modal-actions">
+                <button type="button"
+                        id="ba-abortCancelApplicationFeeBtn"
+                        class="btn-secondary">
+                    Keep Application
+                </button>
+
+                <button type="button"
+                        id="ba-confirmCancelApplicationFeeBtn"
+                        class="btn-danger">
+                    <i class="bi bi-x-octagon"></i>
+                    Cancel Application
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+<!-- ===================================================== -->
     <div id="ba-schoolVisitScheduleModal"
          class="ba-modal-backdrop hidden"
          role="dialog" aria-modal="true" aria-hidden="true"
@@ -1804,6 +2558,96 @@
     <!-- ===================================================== -->
     <!-- ENTRANCE TEST MARKS / RESULT MODAL                    -->
     <!-- ===================================================== -->
+    <!-- ===================================================== -->
+    <!-- ENTRANCE TEST RETEST MODAL                           -->
+    <!-- ===================================================== -->
+    <div id="ba-entranceTestRetestModal"
+         class="ba-modal-backdrop hidden"
+         role="dialog" aria-modal="true" aria-hidden="true"
+         aria-labelledby="ba-entranceTestRetestTitle">
+        <div class="ba-modal-box app-request-modal-box">
+            <div class="app-request-modal-header">
+                <div class="app-request-modal-heading">
+                    <span class="app-request-modal-icon"><i class="bi bi-arrow-repeat"></i></span>
+                    <div>
+                        <h3 id="ba-entranceTestRetestTitle">Schedule Entrance Test Retest</h3>
+                        <p class="text-muted">
+                            Optional second and final Entrance Test attempt. The first-attempt marks remain preserved in history.
+                        </p>
+                    </div>
+                </div>
+                <button type="button"
+                        id="ba-closeEntranceTestRetestBtn"
+                        class="app-request-modal-close"
+                        aria-label="Close">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+
+            <form id="ba-entranceTestRetestForm"
+                  class="app-request-form"
+                  novalidate>
+                <div class="app-request-modal-body">
+                    <div class="app-request-info">
+                        <i class="bi bi-info-circle"></i>
+                        <span>
+                            Scheduling a retest is optional. The existing failed attempt remains stored for audit/history and only one retest is allowed.
+                        </span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-entranceTestRetestScheduledAt">
+                            Retest Date &amp; Time <span class="text-danger">*</span>
+                        </label>
+                        <div class="app-calendar-field">
+                            <input type="text"
+                                   id="ba-entranceTestRetestScheduledAt"
+                                   class="detail-input w-100"
+                                   placeholder="Select retest date and time"
+                                   autocomplete="off"
+                                   required>
+                            <button type="button"
+                                    class="app-calendar-button"
+                                    data-calendar-target="ba-entranceTestRetestScheduledAt"
+                                    aria-label="Open Entrance Test retest calendar">
+                                <i class="bi bi-calendar3"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-entranceTestRetestRemarks">
+                            Remarks <span class="text-muted">(Optional)</span>
+                        </label>
+                        <textarea id="ba-entranceTestRetestRemarks"
+                                  class="detail-input w-100"
+                                  rows="4"
+                                  maxlength="1000"
+                                  placeholder="Retest scheduling notes"></textarea>
+                    </div>
+
+                    <div id="ba-entranceTestRetestError"
+                         class="app-request-error hidden"
+                         role="alert"></div>
+                </div>
+
+                <div class="ba-modal-actions app-request-modal-actions">
+                    <button type="button"
+                            id="ba-cancelEntranceTestRetestBtn"
+                            class="btn-secondary">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            id="ba-saveEntranceTestRetestBtn"
+                            class="btn-primary">
+                        <i class="bi bi-arrow-repeat"></i>
+                        Schedule Retest
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div id="ba-entranceTestMarksModal"
          class="ba-modal-backdrop hidden"
          role="dialog"
@@ -1910,7 +2754,6 @@
                                     <option value="">-- Select Result --</option>
                                     <option value="PASSED">Pass</option>
                                     <option value="FAILED">Fail</option>
-                                    <option value="WAITLIST">Waitlist</option>
                                     <option value="RETEST_REQUIRED">Retest Required</option>
                                 </select>
                             </div>
@@ -1996,10 +2839,11 @@
 
                     <div>
                         <h3 id="ba-waitlistResultTitle">
-                            Update Waitlist Result
+                            Manage Waitlist
                         </h3>
-                        <p class="text-muted">
-                            Finalize this completed Entrance Test as Pass or Fail.
+                        <p id="ba-waitlistResultDescription"
+                           class="text-muted">
+                            Manage the application waitlist without changing Entrance Test marks or result.
                         </p>
                     </div>
                 </div>
@@ -2039,15 +2883,15 @@
                     </section>
 
                     <div class="emp-detail-grid emp-detail-grid-2 app-waitlist-result-fields">
-                        <div class="form-group">
+                        <div id="ba-waitlistFinalDecisionGroup"
+                             class="form-group hidden">
                             <label for="ba-waitlistFinalResult">
                                 Final Decision
                                 <span class="text-danger">*</span>
                             </label>
 
                             <select id="ba-waitlistFinalResult"
-                                    class="detail-input w-100"
-                                    required>
+                                    class="detail-input w-100">
                                 <option value="">-- Select Decision --</option>
                                 <option value="PASSED">Pass</option>
                                 <option value="FAILED">Fail</option>
@@ -2055,17 +2899,19 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Current Result</label>
+                            <label for="ba-waitlistCurrentResult">Current Entrance Test Result</label>
                             <input type="text"
+                                   id="ba-waitlistCurrentResult"
                                    class="detail-input w-100"
-                                   value="Waitlist"
+                                   value="—"
                                    readonly>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="ba-waitlistResultRemarks">
-                            Decision Remarks
+                        <label id="ba-waitlistResultRemarksLabel"
+                               for="ba-waitlistResultRemarks">
+                            Waitlist Remarks
                             <span class="text-danger">*</span>
                         </label>
 
@@ -2073,7 +2919,7 @@
                                   class="detail-input w-100"
                                   rows="3"
                                   maxlength="2000"
-                                  placeholder="Enter reason for the final decision..."
+                                  placeholder="Enter the reason for this waitlist action..."
                                   required></textarea>
                     </div>
 
@@ -2092,8 +2938,8 @@
                     <button type="submit"
                             id="ba-saveWaitlistResultBtn"
                             class="btn-primary">
-                        <i class="bi bi-check-circle"></i>
-                        Save Final Result
+                        <i class="bi bi-hourglass-split"></i>
+                        Save Waitlist Action
                     </button>
                 </div>
             </form>
@@ -2104,6 +2950,61 @@
     <!-- ===================================================== -->
     <!-- APPLICATION ROW TEMPLATE                             -->
     <!-- ===================================================== -->
+    <template id="tpl-scholarship-sibling-row">
+        <div class="app-scholarship-sibling-row">
+            <div class="app-scholarship-sibling-grid">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input class="detail-input w-100 sch-sibling-name">
+                </div>
+                <div class="form-group">
+                    <label>Age</label>
+                    <input type="number"
+                           min="0"
+                           class="detail-input w-100 sch-sibling-age">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select class="detail-input w-100 sch-sibling-status">
+                        <option value="">Select</option>
+                        <option value="STUDYING">Studying</option>
+                        <option value="WORKING">Working</option>
+                        <option value="STUDYING_AND_WORKING">Studying & Working</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Class / Course</label>
+                    <input class="detail-input w-100 sch-sibling-class">
+                </div>
+                <div class="form-group">
+                    <label>Institution</label>
+                    <input class="detail-input w-100 sch-sibling-institution">
+                </div>
+                <div class="form-group">
+                    <label>Occupation</label>
+                    <input class="detail-input w-100 sch-sibling-occupation">
+                </div>
+                <div class="form-group">
+                    <label>Annual Income (UGX)</label>
+                    <input type="number"
+                           min="0"
+                           step="0.01"
+                           class="detail-input w-100 sch-sibling-income">
+                </div>
+                <div class="form-group app-scholarship-sibling-remove">
+                    <label>&nbsp;</label>
+                    <button type="button"
+                            class="btn-danger btn-sm sch-sibling-remove-btn">
+                        <i class="bi bi-trash"></i>
+                        Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+    </template>
+
+
     <template id="tpl-app-row">
         <tr>
             <td class="app-select-column align-center">

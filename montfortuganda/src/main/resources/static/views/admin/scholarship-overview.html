@@ -1,0 +1,604 @@
+<div id="scholarship-overview-view" class="fade-in erp-record-module">
+
+    <div class="view-header">
+        <div>
+            <h2>Scholarship Overview</h2>
+            <p class="text-muted">
+                Scholarship applications, decisions and fund position.
+            </p>
+        </div>
+
+        <button type="button"
+                id="scholarship-overview-refresh-btn"
+                class="btn-primary">
+            <i class="bi bi-arrow-clockwise"></i>
+            Refresh
+        </button>
+    </div>
+
+    <!-- Overview Filters -->
+    <div class="card scholarship-overview-filter-card">
+        <div class="card-header">
+            <h3>Overview Filters</h3>
+        </div>
+
+        <div class="card-body">
+            <div class="scholarship-overview-filter-grid">
+
+                <div class="form-group">
+                    <label for="scholarship-overview-academic-year">
+                        Academic Year
+                    </label>
+                    <select id="scholarship-overview-academic-year"
+                            class="detail-input w-100"
+                            aria-label="Academic Year">
+                        <option value="">Loading Academic Years...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="scholarship-overview-term">
+                        Term
+                    </label>
+                    <select id="scholarship-overview-term"
+                            class="detail-input w-100"
+                            aria-label="Term">
+                        <option value="">Loading Terms...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="scholarship-overview-level">
+                        Education Level
+                    </label>
+                    <select id="scholarship-overview-level"
+                            class="detail-input w-100"
+                            aria-label="Education Level">
+                        <option value="">Loading Education Levels...</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="scholarship-overview-class">
+                        Class
+                    </label>
+                    <select id="scholarship-overview-class"
+                            class="detail-input w-100"
+                            aria-label="Class">
+                        <option value="">Select Education Level First</option>
+                    </select>
+                </div>
+
+                <div class="form-group scholarship-overview-filter-action">
+                    <label class="scholarship-overview-filter-action-label" aria-hidden="true">&nbsp;</label>
+                    <button type="button"
+                            id="scholarship-overview-apply-filters-btn"
+                            class="btn btn-primary">
+                        <i class="bi bi-funnel"></i>
+                        Apply Filters
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Selected Period -->
+    <div class="card scholarship-overview-section-card">
+        <div class="card-header scholarship-overview-section-header">
+            <div>
+                <h3>Selected Period</h3>
+                <p id="scholarship-overview-selected-period-label"
+                   class="text-muted">
+                    —
+                </p>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <div class="scholarship-overview-subsection">
+                <h4>Application Status</h4>
+
+                <div class="stats-grid stats-grid-4">
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Students Applied</h3>
+                            <h1 id="scholarship-overview-selected-students-applied">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Pending</h3>
+                            <h1 id="scholarship-overview-selected-students-pending">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Under Verification</h3>
+                            <h1 id="scholarship-overview-selected-students-under-verification">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-list-check"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Shortlisted</h3>
+                            <h1 id="scholarship-overview-selected-students-shortlisted">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-award"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Approved</h3>
+                            <h1 id="scholarship-overview-selected-students-approved">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Rejected</h3>
+                            <h1 id="scholarship-overview-selected-students-rejected">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-person-check"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Benefited</h3>
+                            <h1 id="scholarship-overview-selected-students-benefited">—</h1>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="scholarship-overview-subsection">
+                <h4>Financial Summary</h4>
+
+                <div class="stats-grid stats-grid-4">
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Amount Requested</h3>
+                            <h1 id="scholarship-overview-selected-amount-requested">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Amount Approved</h3>
+                            <h1 id="scholarship-overview-selected-amount-approved">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Amount Rejected</h3>
+                            <h1 id="scholarship-overview-selected-amount-rejected">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Received</h3>
+                            <h1 id="scholarship-overview-selected-funds-received">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-arrow-down-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Allocated</h3>
+                            <h1 id="scholarship-overview-selected-funds-allocated">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-arrow-up-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Spent</h3>
+                            <h1 id="scholarship-overview-selected-funds-spent">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-piggy-bank"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Remaining</h3>
+                            <h1 id="scholarship-overview-selected-funds-remaining">—</h1>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Academic Year Overall -->
+    <div class="card scholarship-overview-section-card">
+        <div class="card-header scholarship-overview-section-header">
+            <div>
+                <h3>Academic Year Overall</h3>
+                <p class="text-muted">
+                    Academic year
+                    <strong id="scholarship-overview-academic-year-label">—</strong>
+                </p>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <div class="scholarship-overview-subsection">
+                <h4>Application Status</h4>
+
+                <div class="stats-grid stats-grid-4">
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Students Applied</h3>
+                            <h1 id="scholarship-overview-academic-year-students-applied">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Pending</h3>
+                            <h1 id="scholarship-overview-academic-year-students-pending">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Under Verification</h3>
+                            <h1 id="scholarship-overview-academic-year-students-under-verification">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-list-check"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Shortlisted</h3>
+                            <h1 id="scholarship-overview-academic-year-students-shortlisted">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-award"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Approved</h3>
+                            <h1 id="scholarship-overview-academic-year-students-approved">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Rejected</h3>
+                            <h1 id="scholarship-overview-academic-year-students-rejected">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-person-check"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Benefited</h3>
+                            <h1 id="scholarship-overview-academic-year-students-benefited">—</h1>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="scholarship-overview-subsection">
+                <h4>Financial Summary</h4>
+
+                <div class="stats-grid stats-grid-4">
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Amount Requested</h3>
+                            <h1 id="scholarship-overview-academic-year-amount-requested">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Amount Approved</h3>
+                            <h1 id="scholarship-overview-academic-year-amount-approved">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Amount Rejected</h3>
+                            <h1 id="scholarship-overview-academic-year-amount-rejected">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Received</h3>
+                            <h1 id="scholarship-overview-academic-year-funds-received">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-arrow-down-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Allocated</h3>
+                            <h1 id="scholarship-overview-academic-year-funds-allocated">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-arrow-up-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Spent</h3>
+                            <h1 id="scholarship-overview-academic-year-funds-spent">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-piggy-bank"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Remaining</h3>
+                            <h1 id="scholarship-overview-academic-year-funds-remaining">—</h1>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Branch Overall -->
+    <div class="card scholarship-overview-section-card">
+        <div class="card-header scholarship-overview-section-header">
+            <div>
+                <h3>Branch Overall</h3>
+                <p class="text-muted">
+                    Complete branch scholarship position.
+                </p>
+            </div>
+        </div>
+
+        <div class="card-body">
+
+            <div class="scholarship-overview-subsection">
+                <h4>Application Status</h4>
+
+                <div class="stats-grid stats-grid-4">
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Students Applied</h3>
+                            <h1 id="scholarship-overview-branch-students-applied">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Pending</h3>
+                            <h1 id="scholarship-overview-branch-students-pending">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-search"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Under Verification</h3>
+                            <h1 id="scholarship-overview-branch-students-under-verification">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-list-check"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Shortlisted</h3>
+                            <h1 id="scholarship-overview-branch-students-shortlisted">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-award"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Approved</h3>
+                            <h1 id="scholarship-overview-branch-students-approved">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Rejected</h3>
+                            <h1 id="scholarship-overview-branch-students-rejected">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-person-check"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Benefited</h3>
+                            <h1 id="scholarship-overview-branch-students-benefited">—</h1>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="scholarship-overview-subsection">
+                <h4>Financial Summary</h4>
+
+                <div class="stats-grid stats-grid-4">
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Amount Requested</h3>
+                            <h1 id="scholarship-overview-branch-amount-requested">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Amount Approved</h3>
+                            <h1 id="scholarship-overview-branch-amount-approved">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-x-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Amount Rejected</h3>
+                            <h1 id="scholarship-overview-branch-amount-rejected">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Received</h3>
+                            <h1 id="scholarship-overview-branch-funds-received">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-blue">
+                            <i class="bi bi-arrow-down-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Allocated</h3>
+                            <h1 id="scholarship-overview-branch-funds-allocated">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-orange">
+                            <i class="bi bi-arrow-up-circle"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Spent</h3>
+                            <h1 id="scholarship-overview-branch-funds-spent">—</h1>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon icon-green">
+                            <i class="bi bi-piggy-bank"></i>
+                        </div>
+                        <div class="stat-details">
+                            <h3>Funds Remaining</h3>
+                            <h1 id="scholarship-overview-branch-funds-remaining">—</h1>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>

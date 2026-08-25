@@ -1,17 +1,11 @@
 package com.erp.montfortuganda.scholarship.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Data
@@ -20,85 +14,151 @@ import java.time.LocalDateTime;
 @Table(name = "erp_scholarship_application_docs")
 @EqualsAndHashCode(exclude = "scholarshipApplication")
 @ToString(exclude = "scholarshipApplication")
-public class ErpScholarshipApplicationDoc implements Serializable {
+public class ErpScholarshipApplicationDoc {
 
-    @Serial
-    private static final long serialVersionUID = 1L;
+    public enum DocumentType {
+        STUDENT_BIRTH_CERTIFICATE,
+        STUDENT_PHOTO,
+        ACADEMIC_REPORT,
+        PARENT_NATIONAL_ID,
+        GUARDIANSHIP_PROOF,
+        INCOME_PROOF,
+        EMPLOYER_LETTER,
+        DEATH_CERTIFICATE,
+        MEDICAL_REPORT,
+        DISABILITY_SUPPORT,
+        HARDSHIP_SUPPORT,
 
-    public enum DocumentType { INCOME_STATEMENT, SPORTS_CERTIFICATE, RECOMMENDATION, OTHER }
-    public enum VerificationStatus { PENDING, VERIFIED, REJECTED }
+        /*
+         * Keep the existing document types for backward compatibility.
+         */
+        INCOME_STATEMENT,
+        SPORTS_CERTIFICATE,
+        RECOMMENDATION,
+        OTHER
+    }
+
+    public enum VerificationStatus {
+        PENDING,
+        VERIFIED,
+        REJECTED,
+        REUPLOAD_REQUIRED
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "document_id")
     private Long documentId;
 
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "scholarship_app_id",
-            nullable = false,
-            foreignKey = @ForeignKey(name = "fk_scholarship_doc_app")
+            nullable = false
     )
     private ErpScholarshipApplication scholarshipApplication;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "document_type", nullable = false, length = 50)
+    @Column(
+            name = "document_type",
+            length = 50,
+            nullable = false
+    )
     private DocumentType documentType;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "verification_status", nullable = false, length = 20)
-    private VerificationStatus verificationStatus = VerificationStatus.PENDING;
+    @Column(
+            name = "verification_status",
+            length = 20,
+            nullable = false
+    )
+    private VerificationStatus verificationStatus =
+            VerificationStatus.PENDING;
 
-    @NotBlank
-    @Size(max = 255)
-    @Column(name = "original_file_name", nullable = false)
+    @Column(
+            name = "original_file_name",
+            length = 255,
+            nullable = false
+    )
     private String originalFileName;
 
-    @NotBlank
-    @Size(max = 255)
-    @Column(name = "stored_file_name", nullable = false)
+    @Column(
+            name = "stored_file_name",
+            length = 255,
+            nullable = false
+    )
     private String storedFileName;
 
-    @NotBlank
-    @Size(max = 500)
-    @Column(name = "file_path", nullable = false, length = 500)
+    @Column(
+            name = "file_path",
+            length = 500,
+            nullable = false
+    )
     private String filePath;
 
-    @PositiveOrZero
     @Column(name = "file_size")
     private Long fileSize;
 
-    @Column(name = "content_type", length = 100)
+    @Column(
+            name = "content_type",
+            length = 100
+    )
     private String contentType;
 
-    @Column(name = "file_hash", length = 64)
+    @Column(
+            name = "file_hash",
+            length = 64
+    )
     private String fileHash;
 
     @Column(name = "uploaded_by")
     private Long uploadedBy;
 
-    @Column(name = "active", nullable = false)
+    @Column(
+            name = "uploaded_at",
+            nullable = false
+    )
+    private LocalDateTime uploadedAt;
+
+    @Column(
+            name = "updated_at",
+            nullable = false
+    )
+    private LocalDateTime updatedAt;
+
+    @Column(
+            name = "active",
+            nullable = false
+    )
     private Boolean active = true;
 
     @Version
-    @Column(name = "version", nullable = false)
-    private Long version;
-
-    @Column(name = "uploaded_at", nullable = false, updatable = false)
-    private LocalDateTime uploadedAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    @Column(
+            name = "version",
+            nullable = false
+    )
+    private Long version = 0L;
 
     @PrePersist
     private void onCreate() {
-        if (active == null) active = true;
-        LocalDateTime now = LocalDateTime.now();
-        if (uploadedAt == null) uploadedAt = now;
-        if (updatedAt == null) updatedAt = now;
+        if (verificationStatus == null) {
+            verificationStatus =
+                    VerificationStatus.PENDING;
+        }
+
+        if (active == null) {
+            active = true;
+        }
+
+        LocalDateTime now =
+                LocalDateTime.now();
+
+        if (uploadedAt == null) {
+            uploadedAt = now;
+        }
+
+        if (updatedAt == null) {
+            updatedAt = now;
+        }
     }
 
     @PreUpdate

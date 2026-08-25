@@ -21,9 +21,11 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.time.Year;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -45,19 +47,25 @@ public class EmailService {
 
     private static final DateTimeFormatter EXPIRY_FORMATTER =
             DateTimeFormatter.ofPattern(
-                    "dd-MM-yyyy hh:mm a 'UTC'"
+                    "dd MMM yyyy, hh:mm a 'UTC'"
             );
 
     private static final DateTimeFormatter
             DOCUMENT_DEADLINE_FORMATTER =
             DateTimeFormatter.ofPattern(
-                    "dd-MM-yyyy hh:mm a"
+                    "dd MMM yyyy, hh:mm a"
             );
 
     private static final DateTimeFormatter
             SCHOOL_VISIT_DATE_TIME_FORMATTER =
             DateTimeFormatter.ofPattern(
-                    "dd-MM-yyyy hh:mm a"
+                    "dd MMM yyyy, hh:mm a"
+            );
+
+    private static final DateTimeFormatter
+            SCHOLARSHIP_LINK_EXPIRY_FORMATTER =
+            DateTimeFormatter.ofPattern(
+                    "dd MMM yyyy, hh:mm a"
             );
 
     private final JavaMailSender centralMailSender;
@@ -365,6 +373,176 @@ public class EmailService {
      * AFTER_COMMIT listener that must know whether delivery succeeded so the
      * committed history row can be marked SENT or FAILED.</p>
      */
+    /**
+     * Sends a branch-branded 72-hour scholarship application link.
+     *
+     * <p>The raw token is used only to build the public URL. The scholarship
+     * service stores only its SHA-256 hash.</p>
+     */
+    public void sendScholarshipApplicationLink(
+            ErpApplication application,
+            String rawToken,
+            LocalDateTime expiresAt,
+            BigDecimal amountRequestedUgx
+    ) {
+        if (application == null) {
+            throw new IllegalArgumentException(
+                    "Application is required for scholarship-link email delivery."
+            );
+        }
+
+        requireText(
+                application.getApplicationNo(),
+                "Application number"
+        );
+
+        requireText(
+                application.getPrimaryEmail(),
+                "Applicant email"
+        );
+
+        requireText(
+                rawToken,
+                "Scholarship application token"
+        );
+
+        if (expiresAt == null) {
+            throw new IllegalArgumentException(
+                    "Scholarship application link expiry is required."
+            );
+        }
+
+        String applicationNumber =
+                application.getApplicationNo().trim();
+
+        try {
+            Branch branch = requireBranch(
+                    application.getBranch(),
+                    "Application"
+            );
+
+            String schoolName =
+                    resolveSchoolName(branch);
+
+            EmailLogo emailLogo =
+                    resolveBranchLogo(branch);
+
+            Context context =
+                    new Context();
+
+            context.setVariable(
+                    "schoolName",
+                    schoolName
+            );
+
+            context.setVariable(
+                    "schoolLogo",
+                    "cid:" + SCHOOL_LOGO_CONTENT_ID
+            );
+
+            context.setVariable(
+                    "studentName",
+                    buildFullName(
+                            application.getFirstName(),
+                            application.getLastName()
+                    )
+            );
+
+            context.setVariable(
+                    "applicationNo",
+                    applicationNumber
+            );
+
+            context.setVariable(
+                    "scholarshipUrl",
+                    buildScholarshipApplicationUrl(
+                            rawToken
+                    )
+            );
+
+            context.setVariable(
+                    "expiresAt",
+                    expiresAt.format(
+                            SCHOLARSHIP_LINK_EXPIRY_FORMATTER
+                    )
+            );
+
+            context.setVariable(
+                    "amountRequestedUgx",
+                    amountRequestedUgx == null
+                            ? BigDecimal.ZERO
+                            : amountRequestedUgx
+            );
+
+            context.setVariable(
+                    "currentYear",
+                    Year.now().getValue()
+            );
+
+            String htmlContent =
+                    templateEngine.process(
+                            "email/application-scholarship-link",
+                            context
+                    );
+
+            JavaMailSender branchMailSender =
+                    branchMailSenderFactory
+                            .getMailSender(branch);
+
+            MimeMessage message =
+                    branchMailSender
+                            .createMimeMessage();
+
+            MimeMessageHelper helper =
+                    createMessageHelper(message);
+
+            configureBranchSender(
+                    helper,
+                    branch,
+                    " Admissions"
+            );
+
+            helper.setTo(
+                    application.getPrimaryEmail().trim()
+            );
+
+            helper.setSubject(
+                    "Scholarship Application - "
+                            + applicationNumber
+            );
+
+            helper.setText(
+                    htmlContent,
+                    true
+            );
+
+            addInlineLogo(
+                    helper,
+                    emailLogo
+            );
+
+            branchMailSender.send(
+                    message
+            );
+
+            LOGGER.info(
+                    "Scholarship application link email sent from branch {} "
+                            + "for application {}.",
+                    branch.getSchoolCode(),
+                    applicationNumber
+            );
+
+        } catch (Exception exception) {
+            throw new IllegalStateException(
+                    "Scholarship application link email could not be sent "
+                            + "for application "
+                            + applicationNumber
+                            + ".",
+                    exception
+            );
+        }
+    }
+
     public void sendApplicationStageTransition(
             ErpApplication application,
             ErpApplicationStatusHistory history
@@ -1271,6 +1449,28 @@ public class EmailService {
         )
                 + "/apply/status?ref="
                 + applicationNumber.trim();
+    }
+
+    private String buildScholarshipApplicationUrl(
+            String rawToken
+    ) {
+        requireText(
+                rawToken,
+                "Scholarship application token"
+        );
+
+        String encodedToken =
+                URLEncoder.encode(
+                        rawToken.trim(),
+                        StandardCharsets.UTF_8
+                );
+
+        return normalizeConfiguredUrl(
+                appBaseUrl,
+                "app.base-url"
+        )
+                + "/scholarship-application#token="
+                + encodedToken;
     }
 
     private String buildAdditionalDocumentUploadUrl(

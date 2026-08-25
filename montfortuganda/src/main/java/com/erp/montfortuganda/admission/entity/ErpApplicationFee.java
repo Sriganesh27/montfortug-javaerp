@@ -25,8 +25,30 @@ public class ErpApplicationFee implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public enum PaymentStatus { PENDING, PARTIAL, PAID, REFUNDED, CANCELLED }
-    public enum PaymentMode { CASH, CHEQUE, BANK_TRANSFER, MOBILE_MONEY, CREDIT_CARD, DEBIT_CARD, ONLINE }
+    public enum PaymentStatus {
+        PENDING,
+        PARTIAL,
+        PAID,
+        REFUNDED,
+        CANCELLED
+    }
+
+    public enum PaymentMode {
+        CASH,
+        CHEQUE,
+        BANK_TRANSFER,
+        MOBILE_MONEY,
+        CREDIT_CARD,
+        DEBIT_CARD,
+        ONLINE
+    }
+
+    public enum FeeDecision {
+        PENDING,
+        FULL_PAYMENT,
+        PARTIAL_ASSISTANCE,
+        FULL_ASSISTANCE
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,8 +67,65 @@ public class ErpApplicationFee implements Serializable {
 
     @NotNull
     @DecimalMin(value = "0.00")
+    @Column(name = "term_fee", nullable = false, precision = 12, scale = 2)
+    private BigDecimal termFee = BigDecimal.ZERO;
+
+    @NotNull
+    @DecimalMin(value = "0.00")
+    @Column(name = "transport_fee", nullable = false, precision = 12, scale = 2)
+    private BigDecimal transportFee = BigDecimal.ZERO;
+
+    @NotNull
+    @DecimalMin(value = "0.00")
+    @Column(name = "hostel_fee", nullable = false, precision = 12, scale = 2)
+    private BigDecimal hostelFee = BigDecimal.ZERO;
+
+    @NotNull
+    @DecimalMin(value = "0.00")
+    @Column(name = "uniform_fee", nullable = false, precision = 12, scale = 2)
+    private BigDecimal uniformFee = BigDecimal.ZERO;
+
+    @NotNull
+    @DecimalMin(value = "0.00")
+    @Column(name = "books_fee", nullable = false, precision = 12, scale = 2)
+    private BigDecimal booksFee = BigDecimal.ZERO;
+
+    @NotNull
+    @DecimalMin(value = "0.00")
+    @Column(name = "admission_fee", nullable = false, precision = 12, scale = 2)
+    private BigDecimal admissionFee = BigDecimal.ZERO;
+
+    @NotNull
+    @DecimalMin(value = "0.00")
+    @Column(name = "other_fee", nullable = false, precision = 12, scale = 2)
+    private BigDecimal otherFee = BigDecimal.ZERO;
+
+    @NotNull
+    @DecimalMin(value = "0.00")
     @Column(name = "base_fee_amount", nullable = false, precision = 12, scale = 2)
     private BigDecimal baseFeeAmount = BigDecimal.ZERO;
+
+    @NotNull
+    @DecimalMin(value = "0.00")
+    @Column(name = "parent_can_pay", nullable = false, precision = 12, scale = 2)
+    private BigDecimal parentCanPay = BigDecimal.ZERO;
+
+    @NotNull
+    @DecimalMin(value = "0.00")
+    @Column(name = "assistance_required", nullable = false, precision = 12, scale = 2)
+    private BigDecimal assistanceRequired = BigDecimal.ZERO;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "fee_decision", nullable = false, length = 30)
+    private FeeDecision feeDecision = FeeDecision.PENDING;
+
+    @Column(name = "discussion_date")
+    private LocalDateTime discussionDate;
+
+    @Size(max = 500)
+    @Column(name = "discussion_remarks", length = 500)
+    private String discussionRemarks;
 
     @NotNull
     @DecimalMin(value = "0.00")
@@ -116,9 +195,11 @@ public class ErpApplicationFee implements Serializable {
         }
 
         LocalDateTime now = LocalDateTime.now();
+
         if (createdAt == null) {
             createdAt = now;
         }
+
         if (updatedAt == null) {
             updatedAt = now;
         }

@@ -5,6 +5,7 @@ import com.erp.montfortuganda.admission.dto.ApplicationInterviewMarkRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewScheduleRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewWaitlistResultRequestDTO;
+import com.erp.montfortuganda.admission.dto.ApplicationInterviewWaitlistRequestDTO;
 import com.erp.montfortuganda.admission.entity.ErpApplication;
 import com.erp.montfortuganda.admission.entity.ErpApplicationInterview;
 import com.erp.montfortuganda.admission.entity.ErpApplicationInterviewMark;
@@ -718,6 +719,38 @@ public class ApplicationInterviewServiceImpl
                         request.result()
                 )
         );
+
+        /*
+         * School Visit attendance is recorded before the application enters
+         * the Entrance Test stage. Finalize the visit only when the Entrance
+         * Test has reached a final outcome for the current allowed attempt.
+         *
+         * A first-attempt FAILED result still permits the single retest, so it
+         * must keep the School Visit at ATTENDED. RETEST_REQUIRED behaves the
+         * same way. PASSED, legacy WAITLIST, or a second-attempt FAILED result
+         * closes the visit.
+         */
+        boolean finalEntranceTestResult =
+                request.result() == ErpApplicationInterview.Result.PASSED
+                        || request.result() == ErpApplicationInterview.Result.WAITLIST
+                        || (request.result() == ErpApplicationInterview.Result.FAILED
+                        && secondAttempt);
+
+        if (finalEntranceTestResult
+                && application.getSchoolVisitStatus()
+                == ErpApplication.SchoolVisitStatus.ATTENDED) {
+
+            application.setSchoolVisitStatus(
+                    ErpApplication.SchoolVisitStatus.COMPLETED
+            );
+            application.setSchoolVisitCompletedBy(
+                    userId
+            );
+            application.setSchoolVisitCompletedAt(
+                    completedAt
+            );
+        }
+
         application.setUpdatedBy(userId);
 
         applicationRepository.saveAndFlush(
@@ -727,6 +760,171 @@ public class ApplicationInterviewServiceImpl
         return toResponse(
                 application,
                 saved,
+                branchId
+        );
+    }
+
+    /**
+     * Places an application on, or releases it from, an application-level
+     * waitlist without changing the recorded Entrance Test result, marks,
+     * employee assignment or attempt history.
+     */
+    @Override
+    @Transactional
+    public ApplicationInterviewResponseDTO updateApplicationWaitlist(
+            CurrentUserContext context,
+            Long applicationId,
+            ApplicationInterviewWaitlistRequestDTO request
+    ) {
+        Integer branchId =
+                requireBranchId(context);
+
+        Long userId =
+                requireUserId(context);
+
+        if (request == null || request.waitlisted() == null) {
+            throw new BadRequestException(
+                    "Waitlist action details are required."
+            );
+        }
+
+        String remarks =
+                trimToNull(
+                        request.remarks()
+                );
+
+        if (remarks == null) {
+            throw new BadRequestException(
+                    "Waitlist remarks are required."
+            );
+        }
+
+        ErpApplication application =
+                loadApplicationForUpdate(
+                        requirePositiveId(
+                                applicationId,
+                                "Application ID"
+                        ),
+                        branchId
+                );
+
+        requireEntranceTestStage(application);
+        requireWorkflowEditable(application);
+
+        ErpApplicationInterview interview =
+                requireInterviewForUpdate(
+                        application.getApplicationId(),
+                        branchId
+                );
+
+        if (interview.getStatus()
+                != ErpApplicationInterview.Status.COMPLETED) {
+            throw new BadRequestException(
+                    "Waitlist actions are available only after "
+                            + "the Entrance Test has been completed."
+            );
+        }
+
+        ErpApplicationInterview.Result result =
+                interview.getResult();
+
+        if (result
+                != ErpApplicationInterview.Result.PASSED
+                && result
+                != ErpApplicationInterview.Result.FAILED) {
+            throw new BadRequestException(
+                    "The application-level waitlist can be used only "
+                            + "for a PASSED or FAILED Entrance Test result."
+            );
+        }
+
+        boolean placeOnWaitlist =
+                Boolean.TRUE.equals(
+                        request.waitlisted()
+                );
+
+        ErpApplication.ApplicationStatus oldStatus =
+                application.getApplicationStatus();
+
+        ErpApplication.ApplicationStatus newStatus;
+
+        if (placeOnWaitlist) {
+            if (oldStatus
+                    == ErpApplication.ApplicationStatus.WAITLISTED) {
+                throw new BadRequestException(
+                        "This application is already on the waitlist."
+                );
+            }
+
+            newStatus =
+                    ErpApplication.ApplicationStatus.WAITLISTED;
+        } else {
+            if (oldStatus
+                    != ErpApplication.ApplicationStatus.WAITLISTED) {
+                throw new BadRequestException(
+                        "This application is not currently on the waitlist."
+                );
+            }
+
+            newStatus =
+                    ErpApplication.ApplicationStatus.UNDER_REVIEW;
+        }
+
+        application.setApplicationStatus(
+                newStatus
+        );
+        application.setUpdatedBy(
+                userId
+        );
+
+        applicationRepository.saveAndFlush(
+                application
+        );
+
+        ErpApplicationStatusHistory history =
+                new ErpApplicationStatusHistory();
+
+        history.setApplication(
+                application
+        );
+        history.setStage(
+                "ENTRANCE_TEST_WAITLIST"
+        );
+        history.setOldStatus(
+                oldStatus
+        );
+        history.setNewStatus(
+                newStatus
+        );
+        history.setChangedBy(
+                userId
+        );
+        history.setRemarks(
+                remarks
+        );
+        history.setInternalRemarks(
+                remarks
+        );
+        history.setTransitionSource(
+                "ERP"
+        );
+        history.setEmailRequired(
+                false
+        );
+        history.setEmailStatus(
+                ErpApplicationStatusHistory.EMAIL_NOT_REQUIRED
+        );
+        history.setActive(
+                true
+        );
+
+        historyRepository.save(
+                history
+        );
+
+        return toResponse(
+                application,
+                interview,
                 branchId
         );
     }
@@ -1187,6 +1385,13 @@ public class ApplicationInterviewServiceImpl
                     false,
                     false,
                     false,
+                    false,
+                    application.getApplicationStatus() == null
+                            ? null
+                            : application.getApplicationStatus().name(),
+                    application.getApplicationStatus()
+                            == ErpApplication.ApplicationStatus.WAITLISTED,
+                    false,
                     false
             );
         }
@@ -1366,6 +1571,33 @@ public class ApplicationInterviewServiceImpl
                         && interview.getResult()
                         == ErpApplicationInterview.Result.WAITLIST;
 
+        boolean applicationWaitlisted =
+                application.getApplicationStatus()
+                        == ErpApplication.ApplicationStatus.WAITLISTED;
+
+        boolean realPassOrFailResult =
+                status == ErpApplicationInterview.Status.COMPLETED
+                        && (
+                        interview.getResult()
+                                == ErpApplicationInterview.Result.PASSED
+                                || interview.getResult()
+                                == ErpApplicationInterview.Result.FAILED
+                );
+
+        boolean canPlaceOnWaitlist =
+                editable
+                        && realPassOrFailResult
+                        && !applicationWaitlisted;
+
+        boolean canReleaseFromWaitlist =
+                editable
+                        && realPassOrFailResult
+                        && applicationWaitlisted;
+
+        canProceed =
+                canProceed
+                        && !applicationWaitlisted;
+
         return new ApplicationInterviewResponseDTO(
                 application.getApplicationId(),
                 application.getApplicationNo(),
@@ -1397,7 +1629,13 @@ public class ApplicationInterviewServiceImpl
                 canStart,
                 canComplete,
                 canProceed,
-                canUpdateWaitlistResult
+                canUpdateWaitlistResult,
+                application.getApplicationStatus() == null
+                        ? null
+                        : application.getApplicationStatus().name(),
+                applicationWaitlisted,
+                canPlaceOnWaitlist,
+                canReleaseFromWaitlist
         );
     }
 
@@ -1620,3 +1858,4 @@ public class ApplicationInterviewServiceImpl
     ) {
     }
 }
+

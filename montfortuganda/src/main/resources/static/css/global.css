@@ -685,3 +685,20 @@ body.erp-action-in-progress::after {
     z-index: 1000000 !important;
     pointer-events: none !important;
 }
+
+
+/* =========================================================
+   GLOBAL — NUMBER INPUTS WITHOUT BROWSER SPINNER ARROWS
+   Applies across the ERP wherever global.css is loaded.
+   ========================================================= */
+
+input[type="number"] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    margin: 0;
+    -webkit-appearance: none;
+}

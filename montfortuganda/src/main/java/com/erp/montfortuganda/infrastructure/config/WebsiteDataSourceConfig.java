@@ -4,6 +4,7 @@ import com.erp.montfortuganda.scholarship.entity.WebDonation;
 import com.erp.montfortuganda.scholarship.repository.ErpBranchFundAllocationRepository;
 import com.erp.montfortuganda.scholarship.repository.ErpScholarshipAllocationRepository;
 import com.erp.montfortuganda.scholarship.repository.ErpScholarshipApplicationRepository;
+import com.erp.montfortuganda.scholarship.repository.ErpScholarshipSiblingRepository;
 import com.erp.montfortuganda.scholarship.repository.WebDonationRepository;
 import com.zaxxer.hikari.HikariDataSource;
 import jakarta.persistence.EntityManagerFactory;
@@ -34,7 +35,8 @@ import java.util.Map;
                 classes = {
                         ErpBranchFundAllocationRepository.class,
                         ErpScholarshipAllocationRepository.class,
-                        ErpScholarshipApplicationRepository.class
+                        ErpScholarshipApplicationRepository.class,
+                        ErpScholarshipSiblingRepository.class
                 }
         )
 )
@@ -42,23 +44,35 @@ public class WebsiteDataSourceConfig {
 
     @Bean
     @ConfigurationProperties("app.datasource.website")
-    public DataSourceProperties
-    websiteDataSourceProperties() {
+    public DataSourceProperties websiteDataSourceProperties() {
         return new DataSourceProperties();
     }
 
     @Bean
-    @ConfigurationProperties(
-            "app.datasource.website.hikari"
-    )
+    @ConfigurationProperties("app.datasource.website.hikari")
     public HikariDataSource websiteDataSource(
             @Qualifier("websiteDataSourceProperties")
             DataSourceProperties properties
     ) {
-        return properties
-                .initializeDataSourceBuilder()
-                .type(HikariDataSource.class)
-                .build();
+        HikariDataSource dataSource =
+                properties
+                        .initializeDataSourceBuilder()
+                        .type(HikariDataSource.class)
+                        .build();
+
+        /*
+         * Defense-in-depth:
+         *
+         * The database account used by ERP for the website database must
+         * already have SELECT-only privileges. This application-level
+         * setting additionally marks every website connection read-only.
+         *
+         * ERP writes must NEVER target the website database. ERP writes
+         * belong to the ERP datasource/database only.
+         */
+        dataSource.setReadOnly(true);
+
+        return dataSource;
     }
 
     @Bean
@@ -69,8 +83,7 @@ public class WebsiteDataSourceConfig {
     }
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean
-    websiteEntityManagerFactory(
+    public LocalContainerEntityManagerFactoryBean websiteEntityManagerFactory(
             EntityManagerFactoryBuilder builder,
             @Qualifier("websiteDataSource")
             DataSource dataSource,
@@ -86,8 +99,7 @@ public class WebsiteDataSourceConfig {
     }
 
     @Bean
-    public PlatformTransactionManager
-    websiteTransactionManager(
+    public PlatformTransactionManager websiteTransactionManager(
             @Qualifier("websiteEntityManagerFactory")
             EntityManagerFactory entityManagerFactory
     ) {

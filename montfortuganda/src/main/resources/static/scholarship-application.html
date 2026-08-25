@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="description" content="Secure Scholarship Application Portal for Montfort Brothers of St. Gabriel, Uganda."><meta name="referrer" content="no-referrer">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
+    <title>Scholarship Application | Montfort Uganda</title>
+    <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp"><link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"><link rel="stylesheet" href="/css/apply.css"><link rel="stylesheet" href="/css/global.css"><link rel="stylesheet" href="/css/scholarship-application.css">
+</head>
+<body>
+<div id="scholarshipPageLoader" class="erp-action-feedback" role="status" aria-live="polite"><span class="erp-action-spinner"></span><span id="scholarshipLoaderMessage" class="erp-action-message">Loading Scholarship Application...</span></div>
+<div id="montfort-portal-wrapper" class="scholarship-portal">
+    <div class="campus-slider scholarship-campus-slider" aria-hidden="true"><img src="/assets/Images/apply1.webp" alt="" class="slide active-slide"><img src="/assets/Images/apply2.webp" alt="" class="slide"><img src="/assets/Images/apply3.webp" alt="" class="slide"><img src="/assets/Images/apply4.webp" alt="" class="slide"><div class="slider-overlay"></div></div>
+    <header class="portal-header"><div class="header-container scholarship-header-container">
+        <div class="brand scholarship-main-brand"><img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Montfort Brothers of St. Gabriel Uganda Logo" class="brand-logo"><div class="brand-text"><span class="brand-title">Montfort Brothers of St. Gabriel</span><span class="brand-subtitle">Uganda</span></div></div>
+        <div class="scholarship-school-brand" id="scholarshipSchoolBrand"><span class="scholarship-applying-label">Applying to</span><div class="scholarship-school-identity"><div class="scholarship-school-logo-wrap"><img id="scholarshipSchoolLogo" src="/assets/Images/logo_MBSG_UG_8.webp" alt="School Logo" class="scholarship-school-logo"></div><div class="scholarship-school-text"><strong id="scholarshipSchoolName">Selected Montfort School</strong><span id="scholarshipSchoolMeta">Scholarship Application</span></div></div></div>
+    </div></header>
+    <main class="portal-main scholarship-main"><div class="form-document-card scholarship-document-card"><div class="card-top-accent"></div>
+        <section id="scholarshipLoadingShell" class="scholarship-loading-shell" aria-hidden="true"><div class="form-header-title text-center"><div class="icon-circle"><i class="bi bi-mortarboard"></i></div><h1>Scholarship Application</h1><p>Preparing your secure application...</p></div><div class="scholarship-loading-summary"><span></span><span></span><span></span><span></span></div><div class="scholarship-loading-lines"><span></span><span></span><span></span></div></section>
+        <section id="scholarshipUnavailable" class="hidden" aria-live="assertive"><div class="form-header-title text-center"><div class="icon-circle scholarship-state-icon-warning"><i class="bi bi-link-45deg"></i></div><h1>Scholarship Application Unavailable</h1><p id="scholarshipUnavailableMessage">This secure Scholarship Application link is unavailable.</p></div></section>
+        <section id="scholarshipComplete" class="hidden" aria-live="polite"><div class="form-header-title text-center"><div class="icon-circle scholarship-state-icon-success"><i class="bi bi-check2-circle"></i></div><h1>Scholarship Application Submitted</h1><p>The Scholarship Application has been submitted successfully.</p><button type="button" id="returnToApplicationBtn" class="btn-primary hidden"><i class="bi bi-arrow-left"></i> Close &amp; Return to Applicant</button></div></section>
+        <form id="scholarshipForm" class="hidden" novalidate>
+            <div class="scholarship-form-heading"><div><span class="scholarship-eyebrow">Secure Scholarship Application</span><h1>Scholarship Application</h1><p id="scholarshipModeText">Please complete the information below.</p></div><span id="scholarshipModeBadge" class="scholarship-mode-badge">Secure</span></div>
+            <div class="instruction-box scholarship-applying-box"><span class="scholarship-summary-label">Applying to</span><strong id="applyingSchoolName">Selected Montfort School</strong><small id="applyingSchoolLocation"></small></div>
+            <div class="scholarship-summary-grid"><div class="scholarship-summary-item"><span>Application No.</span><strong id="applicationNo">—</strong></div><div class="scholarship-summary-item"><span>Student</span><strong id="studentName">—</strong></div><div class="scholarship-summary-item"><span>Class</span><strong id="className">—</strong></div><div class="scholarship-summary-item"><span>Academic Period</span><strong id="academicPeriod">—</strong></div><div class="scholarship-summary-item"><span>Total Fee</span><strong id="totalFee">—</strong></div><div class="scholarship-summary-item"><span>Parent Contribution</span><strong id="parentContribution">—</strong></div><div class="scholarship-summary-item scholarship-summary-highlight"><span>Scholarship Required</span><strong id="scholarshipRequiredAmount">—</strong></div></div>
+            <div class="stepper-wrapper scholarship-stepper" id="scholarship-stepper"><div class="stepper-item active" id="scholarship-stepper-1" data-step-target="1"><div class="step-counter">1</div><div class="step-name">Family</div></div><div class="stepper-item" id="scholarship-stepper-2" data-step-target="2"><div class="step-counter">2</div><div class="step-name">Household</div></div><div class="stepper-item" id="scholarship-stepper-3" data-step-target="3"><div class="step-counter">3</div><div class="step-name">Assets</div></div><div class="stepper-item" id="scholarship-stepper-4" data-step-target="4"><div class="step-counter">4</div><div class="step-name">Need</div></div><div class="stepper-item" id="scholarship-stepper-5" data-step-target="5"><div class="step-counter">5</div><div class="step-name">Declaration</div></div></div>
+            <div id="formMessage" class="scholarship-form-message hidden" role="status"></div>
+            <div id="scholarship-step-1" class="form-step active-step" data-scholarship-step="1"><div class="form-header-title"><h1>Family Information</h1><p>Enter the family and responsible-person information that applies.</p></div><fieldset class="scholarship-fieldset"><legend>Father Details</legend>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="fatherName">Father Name</label>
+                        <input class="form-control" id="fatherName" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="fatherContact">Father Contact</label>
+                        <input class="form-control" id="fatherContact" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="fatherEmail">Father Email</label>
+                        <input class="form-control" id="fatherEmail" type="email"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="fatherOccupation">Father Occupation</label>
+                        <input class="form-control" id="fatherOccupation" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="fatherStatus">Father Status</label>
+                        <select class="form-control" id="fatherStatus">
+                            <option value="">Select</option>
+                            <option value="ALIVE">Alive</option>
+                            <option value="DECEASED">Deceased</option>
+                            <option value="UNKNOWN">Unknown</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="fatherAnnualIncome">
+                            Father Annual Income (UGX)
+                        </label>
+                        <input class="form-control" id="fatherAnnualIncome" min="0" step="0.01" type="number"/>
+                    </div>
+                </div>
+            </fieldset><fieldset class="scholarship-fieldset"><legend>Mother Details</legend>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="motherName">Mother Name</label>
+                        <input class="form-control" id="motherName" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="motherContact">Mother Contact</label>
+                        <input class="form-control" id="motherContact" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="motherEmail">Mother Email</label>
+                        <input class="form-control" id="motherEmail" type="email"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="motherOccupation">Mother Occupation</label>
+                        <input class="form-control" id="motherOccupation" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="motherStatus">Mother Status</label>
+                        <select class="form-control" id="motherStatus">
+                            <option value="">Select</option>
+                            <option value="ALIVE">Alive</option>
+                            <option value="DECEASED">Deceased</option>
+                            <option value="UNKNOWN">Unknown</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="motherAnnualIncome">
+                            Mother Annual Income (UGX)
+                        </label>
+                        <input class="form-control" id="motherAnnualIncome" min="0" step="0.01" type="number"/>
+                    </div>
+                </div>
+            </fieldset><fieldset class="scholarship-fieldset"><legend>Guardian Details</legend><p class="scholarship-section-help">Complete this section only when a guardian is applicable.</p>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="guardianName">Guardian Name</label>
+                        <input class="form-control" id="guardianName" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="guardianRelation">Guardian Relation</label>
+                        <input class="form-control" id="guardianRelation" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="guardianContact">Guardian Contact</label>
+                        <input class="form-control" id="guardianContact" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="guardianEmail">Guardian Email</label>
+                        <input class="form-control" id="guardianEmail" type="email"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="guardianOccupation">Guardian Occupation</label>
+                        <input class="form-control" id="guardianOccupation" type="text"/>
+                    </div>
+                </div>
+            </fieldset><fieldset class="scholarship-fieldset"><legend>Responsible Person</legend>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="responsiblePersonType">Responsible Person Type</label>
+                        <input class="form-control" id="responsiblePersonType" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="responsiblePersonName">Responsible Person Name</label>
+                        <input class="form-control" id="responsiblePersonName" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="responsiblePersonRelation">Relationship</label>
+                        <input class="form-control" id="responsiblePersonRelation" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="responsiblePersonOccupation">Occupation</label>
+                        <input class="form-control" id="responsiblePersonOccupation" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="responsiblePersonMobile">Mobile</label>
+                        <input class="form-control" id="responsiblePersonMobile" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="responsiblePersonAnnualIncome">
+                            Annual Income (UGX)
+                        </label>
+                        <input class="form-control" id="responsiblePersonAnnualIncome" min="0" step="0.01" type="number"/>
+                    </div>
+                </div>
+            </fieldset><div class="form-actions right-align"><button type="button" class="btn-primary" data-scholarship-next="2">Save &amp; Next <i class="bi bi-arrow-right"></i></button></div></div>
+            <div id="scholarship-step-2" class="form-step hidden-element" data-scholarship-step="2"><div class="form-header-title"><h1>Household &amp; Siblings</h1><p>Record the household composition and dependent family members.</p></div><fieldset class="scholarship-fieldset"><legend>Household Information</legend>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="orphanStatus">Orphan Status</label>
+                        <input class="form-control" id="orphanStatus" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="householdSize">Household Size</label>
+                        <input class="form-control" id="householdSize" min="0" type="number"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="dependantsCount">Dependants Count</label>
+                        <input class="form-control" id="dependantsCount" min="0" type="number"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="schoolGoingChildren">School-going Children</label>
+                        <input class="form-control" id="schoolGoingChildren" min="0" type="number"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="mainIncomeEarner">Main Income Earner</label>
+                        <input class="form-control" id="mainIncomeEarner" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="incomeSource">Income Source</label>
+                        <input class="form-control" id="incomeSource" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="otherHouseholdIncome">
+                            Other Annual Household Income (UGX)
+                        </label>
+                        <input class="form-control" id="otherHouseholdIncome" min="0" step="0.01" type="number"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="householdIncome">
+                            Calculated Annual Household Income
+                        </label>
+                        <input class="form-control" id="householdIncome" readonly="" type="text"/>
+                    </div>
+
+                </div>
+            </fieldset><fieldset class="scholarship-fieldset"><legend>Siblings</legend><div id="siblingsContainer"></div><div id="siblingsEmptyState" class="instruction-box scholarship-empty-state">No siblings added. Add a sibling only when applicable.</div><div class="scholarship-fieldset-actions"><button type="button" id="addSiblingBtn" class="btn-secondary"><i class="bi bi-plus-lg"></i> Add Sibling</button></div></fieldset><div class="form-actions space-between"><button type="button" class="btn-outline" data-scholarship-back="1"><i class="bi bi-arrow-left"></i> Back</button><button type="button" class="btn-primary" data-scholarship-next="3">Save &amp; Next <i class="bi bi-arrow-right"></i></button></div></div>
+            <div id="scholarship-step-3" class="form-step hidden-element" data-scholarship-step="3"><div class="form-header-title"><h1>Family Assets</h1><p>Select only what applies. Relevant details appear automatically.</p></div><fieldset class="scholarship-fieldset scholarship-assets-fieldset"><legend>Assets &amp; Property</legend>
+                <div class="scholarship-asset-grid">
+                    <section class="scholarship-asset-card">
+                        <div class="scholarship-asset-card-header">
+                            <div>
+                                <h4>Housing</h4>
+                                <p>Current family housing situation</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="housingStatus">Housing Status</label>
+                            <select class="form-control" id="housingStatus">
+                                <option value="">Select</option>
+                                <option value="OWNED">Owned</option>
+                                <option value="RENTED">Rented</option>
+                                <option value="RELATIVE_HOME">Relative's Home</option>
+                                <option value="EMPLOYER_HOUSING">Employer Housing</option>
+                                <option value="OTHER">Other</option>
+                            </select>
+                        </div>
+                        <div class="scholarship-conditional hidden" id="ownedHouseDetails">
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label for="houseType">House Type</label>
+                                    <select class="form-control" id="houseType">
+                                        <option value="">Select</option>
+                                        <option value="PERMANENT">Permanent</option>
+                                        <option value="SEMI_PERMANENT">Semi-permanent</option>
+                                        <option value="TEMPORARY">Temporary</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="houseRoomCount">Number of Rooms</label>
+                                    <input class="form-control" id="houseRoomCount" min="0" type="number"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="houseLocation">House Location</label>
+                                    <input class="form-control" id="houseLocation" type="text"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="houseEstimatedValue">
+                                        Estimated House Value (UGX)
+                                    </label>
+                                    <input class="form-control" id="houseEstimatedValue" min="0" step="0.01" type="number"/>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="scholarship-checkbox-row" for="houseMortgaged">
+                                    <input id="houseMortgaged" type="checkbox"/>
+                                    <span>House has an outstanding mortgage / loan</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="scholarship-conditional hidden" id="rentedHouseDetails">
+                            <div class="form-group">
+                                <label for="monthlyRent">Monthly Rent (UGX)</label>
+                                <input class="form-control" id="monthlyRent" min="0" step="0.01" type="number"/>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="scholarship-asset-card">
+                        <div class="scholarship-asset-card-header">
+                            <div>
+                                <h4>Land</h4>
+                                <p>Land or plots owned by the family</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="scholarship-checkbox-row" for="landOwned">
+                                <input id="landOwned" type="checkbox"/>
+                                <span>Family owns land</span>
+                            </label>
+                        </div>
+                        <div class="scholarship-conditional hidden" id="landDetails">
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label for="landPlotCount">Number of Plots</label>
+                                    <input class="form-control" id="landPlotCount" min="0" type="number"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="landArea">Total Land Area</label>
+                                    <input class="form-control" id="landArea" min="0" step="0.01" type="number"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="landUnit">Land Unit</label>
+                                    <select class="form-control" id="landUnit">
+                                        <option value="">Select</option>
+                                        <option value="ACRE">Acre</option>
+                                        <option value="HECTARE">Hectare</option>
+                                        <option value="SQUARE_METRE">Square Metre</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="landLocation">Land Location</label>
+                                    <input class="form-control" id="landLocation" type="text"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="landUsage">Land Usage</label>
+                                    <select class="form-control" id="landUsage">
+                                        <option value="">Select</option>
+                                        <option value="RESIDENTIAL">Residential</option>
+                                        <option value="FARMING">Farming</option>
+                                        <option value="COMMERCIAL">Commercial</option>
+                                        <option value="VACANT">Vacant</option>
+                                        <option value="MIXED">Mixed</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="landEstimatedValue">
+                                        Estimated Land Value (UGX)
+                                    </label>
+                                    <input class="form-control" id="landEstimatedValue" min="0" step="0.01" type="number"/>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="scholarship-checkbox-row" for="landGeneratesIncome">
+                                    <input id="landGeneratesIncome" type="checkbox"/>
+                                    <span>Land generates income</span>
+                                </label>
+                            </div>
+                            <div class="scholarship-conditional hidden" id="landIncomeDetails">
+                                <div class="form-group">
+                                    <label for="landAnnualIncome">
+                                        Annual Income from Land (UGX)
+                                    </label>
+                                    <input class="form-control" id="landAnnualIncome" min="0" step="0.01" type="number"/>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="scholarship-asset-card">
+                        <div class="scholarship-asset-card-header">
+                            <div>
+                                <h4>Vehicles</h4>
+                                <p>Cars, motorcycles, trucks or other vehicles</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="scholarship-checkbox-row" for="vehiclesOwned">
+                                <input id="vehiclesOwned" type="checkbox"/>
+                                <span>Family owns vehicle(s)</span>
+                            </label>
+                        </div>
+                        <div class="scholarship-conditional hidden" id="vehicleDetails">
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label for="vehicleCount">Vehicle Count</label>
+                                    <input class="form-control" id="vehicleCount" min="0" type="number"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vehicleType">Main Vehicle Type</label>
+                                    <select class="form-control" id="vehicleType">
+                                        <option value="">Select</option>
+                                        <option value="CAR">Car</option>
+                                        <option value="MOTORCYCLE">Motorcycle</option>
+                                        <option value="VAN">Van</option>
+                                        <option value="TRUCK">Truck</option>
+                                        <option value="TRACTOR">Tractor</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vehicleUsage">Main Vehicle Use</label>
+                                    <select class="form-control" id="vehicleUsage">
+                                        <option value="">Select</option>
+                                        <option value="PERSONAL">Personal</option>
+                                        <option value="BUSINESS">Business</option>
+                                        <option value="FARMING">Farming</option>
+                                        <option value="TRANSPORT">Transport</option>
+                                        <option value="OTHER">Other</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="vehicleEstimatedValue">
+                                        Estimated Vehicle Value (UGX)
+                                    </label>
+                                    <input class="form-control" id="vehicleEstimatedValue" min="0" step="0.01" type="number"/>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="vehicleDescription">Vehicle Description</label>
+                                <input class="form-control" id="vehicleDescription" placeholder="Make/model or brief details" type="text"/>
+                            </div>
+                            <div class="form-group">
+                                <label class="scholarship-checkbox-row" for="vehicleFinanced">
+                                    <input id="vehicleFinanced" type="checkbox"/>
+                                    <span>Vehicle has outstanding finance / loan</span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="scholarship-asset-card">
+                        <div class="scholarship-asset-card-header">
+                            <div>
+                                <h4>Business</h4>
+                                <p>Family-owned business or trading activity</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="scholarship-checkbox-row" for="businessOwned">
+                                <input id="businessOwned" type="checkbox"/>
+                                <span>Family owns a business</span>
+                            </label>
+                        </div>
+                        <div class="scholarship-conditional hidden" id="businessDetails">
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label for="businessName">Business Name</label>
+                                    <input class="form-control" id="businessName" type="text"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="businessType">Business Type</label>
+                                    <input class="form-control" id="businessType" type="text"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="businessLocation">Business Location</label>
+                                    <input class="form-control" id="businessLocation" type="text"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="businessEmployeeCount">
+                                        Number of Employees
+                                    </label>
+                                    <input class="form-control" id="businessEmployeeCount" min="0" type="number"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="businessAnnualIncome">
+                                        Estimated Annual Business Income (UGX)
+                                    </label>
+                                    <input class="form-control" id="businessAnnualIncome" min="0" step="0.01" type="number"/>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="scholarship-asset-card">
+                        <div class="scholarship-asset-card-header">
+                            <div>
+                                <h4>Livestock / Farming Assets</h4>
+                                <p>Livestock and other farming assets</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="scholarship-checkbox-row" for="livestockOwned">
+                                <input id="livestockOwned" type="checkbox"/>
+                                <span>Family owns livestock / farming assets</span>
+                            </label>
+                        </div>
+                        <div class="scholarship-conditional hidden" id="livestockDetails">
+                            <div class="form-group">
+                                <label for="livestockDescription">
+                                    Livestock / Farming Asset Details
+                                </label>
+                                <textarea class="form-control" id="livestockDescription" placeholder="Example: 4 cattle, 10 goats, poultry, farming equipment" rows="3"></textarea>
+                            </div>
+                            <div class="grid-2">
+                                <div class="form-group">
+                                    <label for="livestockEstimatedValue">
+                                        Estimated Value (UGX)
+                                    </label>
+                                    <input class="form-control" id="livestockEstimatedValue" min="0" step="0.01" type="number"/>
+                                </div>
+                                <div class="form-group">
+                                    <label for="livestockAnnualIncome">
+                                        Estimated Annual Income (UGX)
+                                    </label>
+                                    <input class="form-control" id="livestockAnnualIncome" min="0" step="0.01" type="number"/>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="scholarship-asset-card scholarship-asset-card-wide">
+                        <div class="scholarship-asset-card-header">
+                            <div>
+                                <h4>Other Significant Assets</h4>
+                                <p>Rental property, machinery, investments or other material assets</p>
+                            </div>
+                        </div>
+
+
+                        <div class="form-group"><label class="scholarship-checkbox-row" for="otherAssetsOwned"><input id="otherAssetsOwned" type="checkbox"/><span>Family has other significant assets</span></label></div><div class="scholarship-conditional hidden" id="otherAssetsDetails"><div class="form-group">
+                        <label for="otherAssetsDescription">Description</label>
+                        <textarea class="form-control" id="otherAssetsDescription" rows="3"></textarea>
+                    </div><div class="grid-2">
+                        <div class="form-group">
+                            <label for="otherAssetsEstimatedValue">
+                                Estimated Value (UGX)
+                            </label>
+                            <input class="form-control" id="otherAssetsEstimatedValue" min="0" step="0.01" type="number"/>
+                        </div>
+                        <div class="form-group">
+                            <label for="otherAssetsAnnualIncome">
+                                Estimated Annual Income (UGX)
+                            </label>
+                            <input class="form-control" id="otherAssetsAnnualIncome" min="0" step="0.01" type="number"/>
+                        </div>
+                    </div></div></section>
+                </div>
+            </fieldset><div class="form-actions space-between"><button type="button" class="btn-outline" data-scholarship-back="2"><i class="bi bi-arrow-left"></i> Back</button><button type="button" class="btn-primary" data-scholarship-next="4">Save &amp; Next <i class="bi bi-arrow-right"></i></button></div></div>
+            <div id="scholarship-step-4" class="form-step hidden-element" data-scholarship-step="4"><div class="form-header-title"><h1>Financial Need</h1><p>Explain the circumstances supporting this Scholarship request.</p></div><fieldset class="scholarship-fieldset"><legend>Financial Assistance</legend>
+
+                <div class="form-group">
+                    <label for="financialHardshipReason">
+                        Reason for Financial Assistance
+                    </label>
+                    <textarea class="form-control" id="financialHardshipReason" rows="5"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="familySituationRemarks">
+                        Family Situation Remarks
+                    </label>
+                    <textarea class="form-control" id="familySituationRemarks" rows="4"></textarea>
+                </div>
+            </fieldset><div class="form-actions space-between"><button type="button" class="btn-outline" data-scholarship-back="3"><i class="bi bi-arrow-left"></i> Back</button><button type="button" class="btn-primary" data-scholarship-next="5">Save &amp; Next <i class="bi bi-arrow-right"></i></button></div></div>
+            <div id="scholarship-step-5" class="form-step hidden-element" data-scholarship-step="5"><div class="form-header-title"><h1>Declaration</h1><p>Review the information and confirm the declaration before submission.</p></div><fieldset class="scholarship-fieldset"><legend>Declaration &amp; Confirmation</legend>
+
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="parentGuardianName">
+                            Parent / Guardian Name
+                        </label>
+                        <input class="form-control" id="parentGuardianName" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="parentGuardianRelation">
+                            Relationship
+                        </label>
+                        <input class="form-control" id="parentGuardianRelation" type="text"/>
+                    </div>
+                    <div class="form-group">
+                        <label for="parentGuardianMobile">
+                            Mobile
+                        </label>
+                        <input class="form-control" id="parentGuardianMobile" type="text"/>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="scholarship-checkbox-row" for="declarationAccepted">
+                        <input id="declarationAccepted" type="checkbox"/>
+                        <span>
+                                I confirm that the information provided in this
+                                Scholarship Application is true and complete.
+                            </span>
+                    </label>
+                </div>
+            </fieldset><div class="form-actions space-between"><button type="button" class="btn-outline" data-scholarship-back="4"><i class="bi bi-arrow-left"></i> Back</button><div class="scholarship-final-actions"><button type="button" id="saveDraftBtn" class="btn-secondary"><i class="bi bi-cloud-check"></i> Save Draft</button><button type="submit" id="submitApplicationBtn" class="btn-primary"><i class="bi bi-check2-circle"></i> Submit Application</button></div></div></div>
+        </form></div></main></div><script src="/js/scholarship-application.js"></script></body></html>

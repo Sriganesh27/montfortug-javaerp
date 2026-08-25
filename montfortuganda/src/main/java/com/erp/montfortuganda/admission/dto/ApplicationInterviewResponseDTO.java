@@ -52,7 +52,12 @@ public record ApplicationInterviewResponseDTO(
         boolean canStart,
         boolean canComplete,
         boolean canProceedToFeeDiscussion,
-        boolean canUpdateWaitlistResult
+        boolean canUpdateWaitlistResult,
+
+        String applicationStatus,
+        boolean applicationWaitlisted,
+        boolean canPlaceOnWaitlist,
+        boolean canReleaseFromWaitlist
 ) {
 
     /**

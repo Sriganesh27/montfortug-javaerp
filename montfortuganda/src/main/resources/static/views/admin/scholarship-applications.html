@@ -1,0 +1,1183 @@
+<div id="scholarship-applications-view" class="fade-in erp-record-module">
+
+    <!-- =========================================================
+         SCHOLARSHIP APPLICATIONS
+         Uses the existing Applications page UI pattern.
+         ========================================================= -->
+
+    <div id="scholarship-applications-list-view" class="erp-record-list-view">
+
+        <div class="view-header">
+            <div>
+                <h2>Manage Scholarship Applications</h2>
+                <p class="text-muted">
+                    Review Scholarship applications submitted to this branch.
+                </p>
+            </div>
+
+            <button type="button"
+                    id="scholarship-applications-refresh-btn"
+                    class="btn-primary">
+                <i class="bi bi-arrow-clockwise"></i>
+                Refresh Applications
+            </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-3 p-3 app-filter-card">
+
+            <div class="app-filter-primary">
+
+                <div class="form-group app-filter-search">
+                    <label for="scholarship-applications-search">
+                        Search Applications
+                    </label>
+
+                    <input type="search"
+                           id="scholarship-applications-search"
+                           class="detail-input w-100"
+                           placeholder="Application no. or student name"
+                           autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label for="scholarship-applications-status">
+                        Scholarship Status
+                    </label>
+
+                    <select id="scholarship-applications-status"
+                            class="detail-input w-100">
+                        <option value="">All Statuses</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="scholarship-applications-verification">
+                        Verification
+                    </label>
+
+                    <select id="scholarship-applications-verification"
+                            class="detail-input w-100">
+                        <option value="">All</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="scholarship-applications-level">
+                        Level
+                    </label>
+
+                    <select id="scholarship-applications-level"
+                            class="detail-input w-100">
+                        <option value="">All Levels</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="scholarship-applications-class">
+                        Class
+                    </label>
+
+                    <select id="scholarship-applications-class"
+                            class="detail-input w-100">
+                        <option value="">All Classes</option>
+                    </select>
+                </div>
+
+                <div class="form-group app-filter-more-wrap">
+                    <label>&nbsp;</label>
+
+                    <button type="button"
+                            id="scholarship-applications-more-filters-btn"
+                            class="btn-secondary w-100"
+                            aria-expanded="false"
+                            aria-controls="scholarship-applications-advanced-filters">
+                        <i class="bi bi-sliders"></i>
+                        More Filters
+                    </button>
+                </div>
+
+            </div>
+
+            <div id="scholarship-applications-advanced-filters"
+                 class="app-filter-advanced hidden">
+
+                <div class="form-group">
+                    <label for="scholarship-applications-academic-year">
+                        Academic Year
+                    </label>
+
+                    <select id="scholarship-applications-academic-year"
+                            class="detail-input w-100">
+                        <option value="">All Years</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="scholarship-applications-term">
+                        Term
+                    </label>
+
+                    <select id="scholarship-applications-term"
+                            class="detail-input w-100">
+                        <option value="">All Terms</option>
+                        <option value="TERM_1">Term 1</option>
+                        <option value="TERM_2">Term 2</option>
+                        <option value="TERM_3">Term 3</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="scholarship-applications-employee">
+                        Verification Employee
+                    </label>
+
+                    <select id="scholarship-applications-employee"
+                            class="detail-input w-100">
+                        <option value="">All Employees</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="scholarship-applications-decision">
+                        Final Decision
+                    </label>
+
+                    <select id="scholarship-applications-decision"
+                            class="detail-input w-100">
+                        <option value="">All Decisions</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <div class="app-filter-actions">
+
+                <button type="button"
+                        id="scholarship-applications-search-btn"
+                        class="btn-primary">
+                    <i class="bi bi-search"></i>
+                    Search
+                </button>
+
+                <button type="button"
+                        id="scholarship-applications-reset-btn"
+                        class="btn-secondary">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    Reset
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- Results -->
+        <div class="card">
+
+            <div class="table-responsive">
+
+                <table class="data-table"
+                       id="scholarship-applications-table">
+
+                    <thead>
+                    <tr>
+                        <th>Application No.</th>
+                        <th>Student</th>
+                        <th>Class / Level</th>
+                        <th>Scholarship Required</th>
+                        <th>Verification</th>
+                        <th>Scholarship Status</th>
+                        <th>Submitted</th>
+                        <th class="col-action align-center">
+                            Action
+                        </th>
+                    </tr>
+                    </thead>
+
+                    <tbody id="scholarship-applications-table-body">
+
+                    <tr>
+                        <td colspan="8"
+                            class="text-center p-4 text-muted">
+                            Loading Scholarship applications...
+                        </td>
+                    </tr>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div class="ba-pagination-footer">
+
+                <div class="ba-pagination-controls">
+
+                    <select id="scholarship-applications-page-size"
+                            class="detail-input w-auto">
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+
+                    <span id="scholarship-applications-page-info"
+                          class="text-muted">
+                        Showing page 1 of 1
+                    </span>
+
+                </div>
+
+                <div class="ba-pagination-controls">
+
+                    <button type="button"
+                            id="scholarship-applications-prev-btn"
+                            class="btn-secondary btn-sm"
+                            disabled>
+                        <i class="bi bi-chevron-left"></i>
+                        Previous
+                    </button>
+
+                    <button type="button"
+                            id="scholarship-applications-next-btn"
+                            class="btn-secondary btn-sm"
+                            disabled>
+                        Next
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================================
+         SCHOLARSHIP APPLICATION DETAIL
+         Only Scholarship-relevant information is shown.
+         ========================================================= -->
+
+    <div id="scholarship-application-detail"
+         class="hidden erp-record-detail-view" data-mode="view">
+
+        <div class="view-header emp-detail-toolbar app-detail-toolbar">
+
+            <div>
+                <span class="section-eyebrow">
+                    Scholarship Application
+                </span>
+
+                <h2 id="scholarship-detail-student-name">
+                    Scholarship Applicant
+                </h2>
+
+                <p class="text-muted"
+                   id="scholarship-detail-application-number">
+                    —
+                </p>
+            </div>
+
+            <div class="action-btn-group emp-detail-actions app-detail-actions">
+
+                <button type="button"
+                        id="scholarship-detail-back-btn"
+                        class="btn-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Back
+                </button>
+
+                <button type="button"
+                        id="scholarship-detail-refresh-btn"
+                        class="btn-secondary">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Refresh
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- Application Summary -->
+        <div class="card mb-3 emp-profile-summary-card emp-profile-card scholarship-profile-summary">
+
+            <div class="card-header">
+                <h3>Application Summary</h3>
+            </div>
+
+            <div class="card-body">
+
+                <div class="emp-detail-grid emp-detail-grid-3">
+
+                    <div class="form-group">
+                        <label>Application No.</label>
+                        <span id="scholarship-detail-application-no"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Student</label>
+                        <span id="scholarship-detail-student"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Class / Level</label>
+                        <span id="scholarship-detail-class-level"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Academic Year</label>
+                        <span id="scholarship-detail-academic-year"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Total Fee</label>
+                        <span id="scholarship-detail-total-fee"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Parent Contribution</label>
+                        <span id="scholarship-detail-parent-contribution"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Scholarship Required</label>
+                        <span id="scholarship-detail-required"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Application Status</label>
+                        <span id="scholarship-detail-status"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Scholarship Status</label>
+                        <span id="scholarship-detail-scholarship-status"
+                              class="detail-text">—</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Family Information -->
+        <div class="card mb-3">
+
+            <div class="card-header">
+                <h3>Family Information</h3>
+            </div>
+
+            <div class="card-body">
+
+                <h4>Father</h4>
+
+                <div class="emp-detail-grid emp-detail-grid-3">
+
+                    <div class="form-group">
+                        <label>Name</label>
+                        <span id="scholarship-detail-father-name"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Contact</label>
+                        <span id="scholarship-detail-father-contact"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email</label>
+                        <span id="scholarship-detail-father-email"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Occupation</label>
+                        <span id="scholarship-detail-father-occupation"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label>
+                        <span id="scholarship-detail-father-status"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Annual Income</label>
+                        <span id="scholarship-detail-father-income"
+                              class="detail-text">—</span>
+                    </div>
+
+                </div>
+
+                <h4>Mother</h4>
+
+                <div class="emp-detail-grid emp-detail-grid-3">
+
+                    <div class="form-group">
+                        <label>Name</label>
+                        <span id="scholarship-detail-mother-name"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Contact</label>
+                        <span id="scholarship-detail-mother-contact"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Email</label>
+                        <span id="scholarship-detail-mother-email"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Occupation</label>
+                        <span id="scholarship-detail-mother-occupation"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Status</label>
+                        <span id="scholarship-detail-mother-status"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Annual Income</label>
+                        <span id="scholarship-detail-mother-income"
+                              class="detail-text">—</span>
+                    </div>
+
+                </div>
+
+                <h4>Guardian / Responsible Person</h4>
+
+                <div class="emp-detail-grid emp-detail-grid-3">
+
+                    <div class="form-group">
+                        <label>Type</label>
+                        <span id="scholarship-detail-responsible-type"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Name</label>
+                        <span id="scholarship-detail-responsible-name"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Relation</label>
+                        <span id="scholarship-detail-responsible-relation"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Occupation</label>
+                        <span id="scholarship-detail-responsible-occupation"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mobile</label>
+                        <span id="scholarship-detail-responsible-mobile"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Annual Income</label>
+                        <span id="scholarship-detail-responsible-income"
+                              class="detail-text">—</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Guardian / Responsible Person -->
+        <div class="card mb-3">
+            <div class="card-header"><h3>Guardian / Responsible Person</h3></div>
+            <div class="card-body">
+                <div class="emp-detail-grid emp-detail-grid-3">
+                    <div class="form-group"><label>Type</label><span id="scholarship-detail-responsible-type" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Name</label><span id="scholarship-detail-responsible-name" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Relation</label><span id="scholarship-detail-responsible-relation" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Occupation</label><span id="scholarship-detail-responsible-occupation" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Mobile</label><span id="scholarship-detail-responsible-mobile" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Annual Income</label><span id="scholarship-detail-responsible-income" class="detail-text">—</span></div>
+                </div>
+                <h4>Guardian / Application Record</h4>
+                <div class="emp-detail-grid emp-detail-grid-3">
+                    <div class="form-group"><label>Guardian Name</label><span id="scholarship-detail-guardian-name" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Guardian Relation</label><span id="scholarship-detail-guardian-relation" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Guardian Contact</label><span id="scholarship-detail-guardian-contact" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Guardian Email</label><span id="scholarship-detail-guardian-email" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Guardian Occupation</label><span id="scholarship-detail-guardian-occupation" class="detail-text">—</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Household & Siblings -->
+        <div class="card mb-3">
+
+            <div class="card-header">
+                <h3>Household &amp; Siblings</h3>
+            </div>
+
+            <div class="card-body">
+
+                <div class="emp-detail-grid emp-detail-grid-3">
+
+                    <div class="form-group">
+                        <label>Orphan Status</label>
+                        <span id="scholarship-detail-orphan-status"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Household Size</label>
+                        <span id="scholarship-detail-household-size"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Dependants</label>
+                        <span id="scholarship-detail-dependants"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>School-going Children</label>
+                        <span id="scholarship-detail-school-going"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Main Income Earner</label>
+                        <span id="scholarship-detail-main-income-earner"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Income Source</label>
+                        <span id="scholarship-detail-income-source"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Other Household Income</label>
+                        <span id="scholarship-detail-other-income"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Annual Household Income</label>
+                        <span id="scholarship-detail-household-income"
+                              class="detail-text">—</span>
+                    </div>
+
+                </div>
+
+                <div class="table-responsive mt-3">
+
+                    <table class="data-table"
+                           id="scholarship-detail-siblings-table">
+
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Age</th>
+                            <th>Status</th>
+                            <th>Class / Course</th>
+                            <th>Institution</th>
+                            <th>Occupation</th>
+                            <th>Annual Income</th>
+                        </tr>
+                        </thead>
+
+                        <tbody id="scholarship-detail-siblings-body">
+                        <tr>
+                            <td colspan="7"
+                                class="text-center text-muted">
+                                No sibling information available.
+                            </td>
+                        </tr>
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Family Assets -->
+        <div class="card mb-3">
+            <div class="card-header"><h3>Family Assets</h3></div>
+            <div class="card-body">
+                <h4>Housing</h4>
+                <div class="emp-detail-grid emp-detail-grid-3">
+                    <div class="form-group"><label>Housing Status</label><span id="scholarship-detail-housing-status" class="detail-text">—</span></div>
+                    <div class="form-group"><label>House Type</label><span id="scholarship-detail-house-type" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Room Count</label><span id="scholarship-detail-house-room-count" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Location</label><span id="scholarship-detail-house-location" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Estimated Value</label><span id="scholarship-detail-house-value" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Mortgaged</label><span id="scholarship-detail-house-mortgaged" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Monthly Rent</label><span id="scholarship-detail-monthly-rent" class="detail-text">—</span></div>
+                </div>
+
+                <h4>Land</h4>
+                <div class="emp-detail-grid emp-detail-grid-3">
+                    <div class="form-group"><label>Land Owned</label><span id="scholarship-detail-land-owned" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Area</label><span id="scholarship-detail-land-area" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Unit</label><span id="scholarship-detail-land-unit" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Plot Count</label><span id="scholarship-detail-land-plot-count" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Location</label><span id="scholarship-detail-land-location" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Usage</label><span id="scholarship-detail-land-usage" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Estimated Value</label><span id="scholarship-detail-land-value" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Generates Income</label><span id="scholarship-detail-land-income-owned" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Annual Land Income</label><span id="scholarship-detail-land-annual-income" class="detail-text">—</span></div>
+                </div>
+
+                <h4>Vehicles</h4>
+                <div class="emp-detail-grid emp-detail-grid-3">
+                    <div class="form-group"><label>Vehicles Owned</label><span id="scholarship-detail-vehicles-owned" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Vehicle Count</label><span id="scholarship-detail-vehicle-count" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Type</label><span id="scholarship-detail-vehicle-type" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Usage</label><span id="scholarship-detail-vehicle-usage" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Estimated Value</label><span id="scholarship-detail-vehicle-value" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Financed</label><span id="scholarship-detail-vehicle-financed" class="detail-text">—</span></div>
+                </div>
+                <div class="form-group mt-3"><label>Description</label><div id="scholarship-detail-vehicle-description" class="detail-text">—</div></div>
+
+                <h4>Business</h4>
+                <div class="emp-detail-grid emp-detail-grid-3">
+                    <div class="form-group"><label>Business Owned</label><span id="scholarship-detail-business-owned" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Name</label><span id="scholarship-detail-business-name" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Type</label><span id="scholarship-detail-business-type" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Location</label><span id="scholarship-detail-business-location" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Employees</label><span id="scholarship-detail-business-employees" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Annual Income</label><span id="scholarship-detail-business-income" class="detail-text">—</span></div>
+                </div>
+
+                <h4>Livestock / Farming</h4>
+                <div class="emp-detail-grid emp-detail-grid-3">
+                    <div class="form-group"><label>Owned</label><span id="scholarship-detail-livestock-owned" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Description</label><span id="scholarship-detail-livestock-description" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Estimated Value</label><span id="scholarship-detail-livestock-value" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Annual Income</label><span id="scholarship-detail-livestock-income" class="detail-text">—</span></div>
+                </div>
+
+                <h4>Other Material Assets</h4>
+                <div class="emp-detail-grid emp-detail-grid-3">
+                    <div class="form-group"><label>Description</label><span id="scholarship-detail-other-assets-description" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Estimated Value</label><span id="scholarship-detail-other-assets-value" class="detail-text">—</span></div>
+                    <div class="form-group"><label>Annual Income</label><span id="scholarship-detail-other-assets-income" class="detail-text">—</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Need -->
+        <div class="card mb-3">
+
+            <div class="card-header">
+                <h3>Financial Need</h3>
+            </div>
+
+            <div class="card-body">
+
+                <div class="form-group">
+                    <label>Reason for Financial Assistance</label>
+                    <div id="scholarship-detail-hardship-reason"
+                         class="detail-text">—</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Family Situation Remarks</label>
+                    <div id="scholarship-detail-family-remarks"
+                         class="detail-text">—</div>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Declaration -->
+        <div class="card mb-3">
+
+            <div class="card-header">
+                <h3>Declaration</h3>
+            </div>
+
+            <div class="card-body">
+
+                <div class="emp-detail-grid emp-detail-grid-3">
+
+                    <div class="form-group">
+                        <label>Parent / Guardian Name</label>
+                        <span id="scholarship-detail-declaration-name"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Relation</label>
+                        <span id="scholarship-detail-declaration-relation"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Mobile</label>
+                        <span id="scholarship-detail-declaration-mobile"
+                              class="detail-text">—</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Declaration Accepted</label>
+                        <span id="scholarship-detail-declaration-accepted"
+                              class="detail-text">—</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Scholarship Documents -->
+        <div class="card mb-3">
+
+            <div class="card-header">
+                <h3>Scholarship Documents</h3>
+            </div>
+
+            <div class="card-body">
+
+                <div class="table-responsive">
+
+                    <table class="data-table"
+                           id="scholarship-detail-documents-table">
+
+                        <thead>
+                        <tr>
+                            <th>Document</th>
+                            <th>Status</th>
+                            <th>Uploaded</th>
+                            <th class="col-action align-center">
+                                Action
+                            </th>
+                        </tr>
+                        </thead>
+
+                        <tbody id="scholarship-detail-documents-body">
+                        <tr>
+                            <td colspan="4"
+                                class="text-center text-muted">
+                                No Scholarship documents available.
+                            </td>
+                        </tr>
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Scholarship Processing -->
+        <div class="card mb-3">
+
+            <div class="card-header">
+                <h3>Scholarship Processing</h3>
+            </div>
+
+            <div class="card-body">
+
+                <fieldset class="emp-fieldset">
+
+                    <legend class="emp-legend">
+                        Verification
+                    </legend>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+
+                        <div class="form-group">
+                            <label>Assigned Employee</label>
+                            <span id="scholarship-processing-employee"
+                                  class="detail-text">—</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Verification Status</label>
+                            <span id="scholarship-processing-verification-status"
+                                  class="detail-text">—</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Completed At</label>
+                            <span id="scholarship-processing-verification-completed"
+                                  class="detail-text">—</span>
+                        </div>
+
+                    </div>
+
+                    <div class="ba-flex-panel">
+
+                        <div class="form-group ba-flex-1">
+                            <label for="scholarship-processing-employee-select">
+                                Verification Employee
+                            </label>
+
+                            <select id="scholarship-processing-employee-select"
+                                    class="detail-input w-100">
+                                <option value="">
+                                    Select employee
+                                </option>
+                            </select>
+                        </div>
+
+                        <button type="button"
+                                id="scholarship-processing-assign-btn"
+                                class="btn-primary">
+                            <i class="bi bi-person-check"></i>
+                            Assign Employee
+                        </button>
+
+                    </div>
+
+                    <div class="form-group">
+                        <label for="scholarship-processing-verification-remarks">
+                            Verification Remarks
+                        </label>
+
+                        <textarea id="scholarship-processing-verification-remarks"
+                                  class="detail-input w-100"
+                                  rows="4"
+                                  maxlength="1000"
+                                  placeholder="Enter verification remarks"></textarea>
+                    </div>
+
+                    <div class="ba-pagination-controls">
+
+                        <button type="button"
+                                id="scholarship-processing-complete-btn"
+                                class="btn-primary"
+                                disabled>
+                            <i class="bi bi-check2-circle"></i>
+                            Complete Verification
+                        </button>
+
+                    </div>
+
+                </fieldset>
+
+
+                <fieldset class="emp-fieldset">
+
+                    <legend class="emp-legend">
+                        Scholarship Review
+                    </legend>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+
+                        <div class="form-group">
+                            <label>Verification</label>
+                            <span id="scholarship-processing-review-verification"
+                                  class="detail-text">—</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Shortlist Status</label>
+                            <span id="scholarship-processing-shortlist-status"
+                                  class="detail-text">—</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Final Decision</label>
+                            <span id="scholarship-processing-final-decision"
+                                  class="detail-text">—</span>
+                        </div>
+
+                    </div>
+
+                    <div class="ba-pagination-controls">
+
+                        <button type="button"
+                                id="scholarship-processing-shortlist-btn"
+                                class="btn-primary"
+                                disabled>
+                            <i class="bi bi-list-check"></i>
+                            Shortlist
+                        </button>
+
+                        <button type="button"
+                                id="scholarship-processing-reject-btn"
+                                class="btn-danger"
+                                disabled>
+                            <i class="bi bi-x-circle"></i>
+                            Reject
+                        </button>
+
+                        <button type="button"
+                                id="scholarship-processing-decision-btn"
+                                class="btn-secondary"
+                                disabled>
+                            <i class="bi bi-award"></i>
+                            Final Decision
+                        </button>
+
+                    </div>
+
+                </fieldset>
+
+
+                <fieldset class="emp-fieldset">
+
+                    <legend class="emp-legend">
+                        Final Scholarship Decision
+                    </legend>
+
+                    <div class="emp-detail-grid emp-detail-grid-3">
+
+                        <div class="form-group">
+                            <label>Decision</label>
+                            <span id="scholarship-processing-decision-status"
+                                  class="detail-text">—</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Approved Amount</label>
+                            <span id="scholarship-processing-approved-amount"
+                                  class="detail-text">—</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Funding</label>
+                            <span id="scholarship-processing-funding"
+                                  class="detail-text">—</span>
+                        </div>
+
+                    </div>
+
+                    <div id="scholarship-final-decision-form">
+
+                        <div class="emp-detail-grid emp-detail-grid-3">
+
+                            <div class="form-group">
+                                <label for="scholarship-final-decision">
+                                    Decision
+                                </label>
+
+                                <select id="scholarship-final-decision"
+                                        class="detail-input w-100">
+                                    <option value="">
+                                        Select decision
+                                    </option>
+                                    <option value="SCHOOL_ASSISTED">
+                                        School Assisted
+                                    </option>
+                                    <option value="DIRECT_DONOR">
+                                        Direct Donor
+                                    </option>
+                                    <option value="PARTIAL_DONOR">
+                                        Partial Donor Mapping
+                                    </option>
+                                    <option value="NOT_APPROVED">
+                                        Not Approved
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="scholarship-final-approved-amount">
+                                    Approved Scholarship Amount
+                                </label>
+
+                                <input type="number"
+                                       id="scholarship-final-approved-amount"
+                                       class="detail-input w-100"
+                                       min="0"
+                                       step="0.01"
+                                       placeholder="Enter amount">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="scholarship-final-decision-remarks">
+                                    Decision Remarks
+                                </label>
+
+                                <input type="text"
+                                       id="scholarship-final-decision-remarks"
+                                       class="detail-input w-100"
+                                       maxlength="1000"
+                                       placeholder="Enter decision remarks">
+                            </div>
+
+                        </div>
+
+                        <div id="scholarship-direct-donor-section"
+                             class="hidden">
+
+                            <div class="emp-detail-grid emp-detail-grid-3">
+
+                                <div class="form-group">
+                                    <label for="scholarship-direct-donor">
+                                        Donor
+                                    </label>
+
+                                    <select id="scholarship-direct-donor"
+                                            class="detail-input w-100">
+                                        <option value="">
+                                            Select donor
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="scholarship-direct-donor-amount">
+                                        Donor Contribution
+                                    </label>
+
+                                    <input type="number"
+                                           id="scholarship-direct-donor-amount"
+                                           class="detail-input w-100"
+                                           min="0"
+                                           step="0.01"
+                                           placeholder="Enter donor contribution">
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div id="scholarship-partial-donor-section"
+                             class="hidden">
+
+                            <div class="table-responsive">
+
+                                <table class="data-table"
+                                       id="scholarship-donor-mapping-table">
+
+                                    <thead>
+                                    <tr>
+                                        <th>Donor</th>
+                                        <th>Contribution</th>
+                                        <th class="col-action align-center">
+                                            Action
+                                        </th>
+                                    </tr>
+                                    </thead>
+
+                                    <tbody id="scholarship-donor-mapping-body">
+                                    <tr>
+                                        <td colspan="3"
+                                            class="text-center text-muted">
+                                            No donor mappings added.
+                                        </td>
+                                    </tr>
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                            <div class="ba-pagination-controls mt-2">
+
+                                <button type="button"
+                                        id="scholarship-add-donor-mapping-btn"
+                                        class="btn-secondary">
+                                    <i class="bi bi-plus-circle"></i>
+                                    Add Donor
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <div class="ba-pagination-controls mt-3">
+
+                            <button type="button"
+                                    id="scholarship-save-final-decision-btn"
+                                    class="btn-primary"
+                                    disabled>
+                                <i class="bi bi-check2-circle"></i>
+                                Save Final Decision
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </fieldset>
+
+
+                <!-- Scholarship History -->
+                <fieldset class="emp-fieldset">
+
+                    <legend class="emp-legend">
+                        Scholarship History
+                    </legend>
+
+                    <div class="table-responsive">
+
+                        <table class="data-table"
+                               id="scholarship-history-table">
+
+                            <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Action</th>
+                                <th>Status</th>
+                                <th>Remarks</th>
+                                <th>By</th>
+                            </tr>
+                            </thead>
+
+                            <tbody id="scholarship-history-body">
+
+                            <tr>
+                                <td colspan="5"
+                                    class="text-center text-muted">
+                                    No Scholarship history available.
+                                </td>
+                            </tr>
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </fieldset>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

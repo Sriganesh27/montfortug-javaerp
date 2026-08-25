@@ -7591,24 +7591,24 @@ body.erp-modal-open {
    These rules do not override global Admin modal/layout styles.
    ========================================================= */
 
-#ba-applications-view .app-filter-card {
+:is(#ba-applications-view, #scholarship-applications-view) .app-filter-card {
     padding: 14px 16px;
 }
 
-#ba-applications-view .app-filter-primary {
+:is(#ba-applications-view, #scholarship-applications-view) .app-filter-primary {
     display: grid;
     grid-template-columns: minmax(240px, 1.55fr) repeat(4, minmax(145px, 1fr)) minmax(130px, .72fr);
     gap: 12px;
     align-items: end;
 }
 
-#ba-applications-view .app-filter-primary .form-group,
-#ba-applications-view .app-filter-advanced .form-group {
+:is(#ba-applications-view, #scholarship-applications-view) .app-filter-primary .form-group,
+:is(#ba-applications-view, #scholarship-applications-view) .app-filter-advanced .form-group {
     margin-bottom: 0;
     min-width: 0;
 }
 
-#ba-applications-view .app-filter-advanced {
+:is(#ba-applications-view, #scholarship-applications-view) .app-filter-advanced {
     display: grid;
     grid-template-columns: repeat(5, minmax(150px, 1fr));
     gap: 12px;
@@ -7618,11 +7618,11 @@ body.erp-modal-open {
     border-top: 1px solid var(--border-color, #e2e8f0);
 }
 
-#ba-applications-view .app-filter-advanced.hidden {
+:is(#ba-applications-view, #scholarship-applications-view) .app-filter-advanced.hidden {
     display: none !important;
 }
 
-#ba-applications-view .app-filter-actions {
+:is(#ba-applications-view, #scholarship-applications-view) .app-filter-actions {
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -7630,12 +7630,12 @@ body.erp-modal-open {
     margin-top: 12px;
 }
 
-#ba-applications-view .app-filter-actions .btn-primary,
-#ba-applications-view .app-filter-actions .btn-secondary {
+:is(#ba-applications-view, #scholarship-applications-view) .app-filter-actions .btn-primary,
+:is(#ba-applications-view, #scholarship-applications-view) .app-filter-actions .btn-secondary {
     min-width: 104px;
 }
 
-#ba-applications-view .app-filter-more-wrap .btn-secondary {
+:is(#ba-applications-view, #scholarship-applications-view) .app-filter-more-wrap .btn-secondary {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -7643,7 +7643,7 @@ body.erp-modal-open {
     white-space: nowrap;
 }
 
-#ba-applications-view .app-filter-count {
+:is(#ba-applications-view, #scholarship-applications-view) .app-filter-count {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -7776,36 +7776,36 @@ body.erp-modal-open {
 }
 
 @media (max-width: 1280px) {
-    #ba-applications-view .app-filter-primary {
+    :is(#ba-applications-view, #scholarship-applications-view) .app-filter-primary {
         grid-template-columns: repeat(3, minmax(180px, 1fr));
     }
 
-    #ba-applications-view .app-filter-search {
+    :is(#ba-applications-view, #scholarship-applications-view) .app-filter-search {
         grid-column: span 2;
     }
 
-    #ba-applications-view .app-filter-advanced {
+    :is(#ba-applications-view, #scholarship-applications-view) .app-filter-advanced {
         grid-template-columns: repeat(3, minmax(180px, 1fr));
     }
 }
 
 @media (max-width: 760px) {
-    #ba-applications-view .app-filter-primary,
-    #ba-applications-view .app-filter-advanced {
+    :is(#ba-applications-view, #scholarship-applications-view) .app-filter-primary,
+    :is(#ba-applications-view, #scholarship-applications-view) .app-filter-advanced {
         grid-template-columns: 1fr;
     }
 
-    #ba-applications-view .app-filter-search {
+    :is(#ba-applications-view, #scholarship-applications-view) .app-filter-search {
         grid-column: auto;
     }
 
-    #ba-applications-view .app-filter-actions,
+    :is(#ba-applications-view, #scholarship-applications-view) .app-filter-actions,
     #ba-applications-view #ba-appBulkActions {
         align-items: stretch;
         flex-direction: column;
     }
 
-    #ba-applications-view .app-filter-actions > *,
+    :is(#ba-applications-view, #scholarship-applications-view) .app-filter-actions > *,
     #ba-applications-view #ba-appBulkActions .ba-pagination-controls {
         width: 100%;
     }
@@ -8697,4 +8697,2892 @@ body.erp-modal-open {
     opacity: 1;
     cursor: pointer;
     filter: none;
+}
+
+
+/* =========================================================
+   APPLICATIONS — PARENT FEE DISCUSSION
+   Uses the existing Application detail + modal UI only.
+   ========================================================= */
+
+#ba-applications-view .app-fee-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+#ba-applications-view .app-fee-section-header > span {
+    margin-left: 0;
+    color: #334155;
+    font-size: 0.88rem;
+    font-weight: 750;
+}
+
+#ba-applications-view .app-fee-section-header > button {
+    flex: 0 0 auto;
+}
+
+#ba-applications-view .app-fee-decision-row,
+#ba-applications-view .app-fee-edit-decision-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.65rem 1.4rem;
+}
+
+#ba-applications-view .app-fee-decision-option,
+#ba-applications-view .app-fee-edit-decision-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0;
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.35;
+    cursor: pointer;
+}
+
+#ba-applications-view .app-fee-decision-option input[type="radio"],
+#ba-applications-view .app-fee-edit-decision-option input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    flex: 0 0 auto;
+    accent-color: #b08b2e;
+}
+
+#ba-applications-view .app-fee-discussion-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+#ba-applications-view .app-fee-saved-summary {
+    margin-right: auto;
+    color: #15803d;
+    font-size: 0.78rem;
+    font-weight: 650;
+}
+
+#ba-applications-view .app-fee-edit-modal-box {
+    width: min(820px, 100%);
+}
+
+#ba-applications-view #ba-feeEditModal .app-request-modal-body {
+    gap: 1rem;
+}
+
+#ba-applications-view #ba-feeEditModal .app-fee-edit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 768px) {
+    #ba-applications-view .app-fee-section-header {
+        align-items: flex-start;
+    }
+
+    #ba-applications-view .app-fee-decision-row,
+    #ba-applications-view .app-fee-edit-decision-row {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    #ba-applications-view #ba-feeEditModal .app-fee-edit-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 575.98px) {
+    #ba-applications-view .app-fee-section-header {
+        flex-direction: column;
+    }
+
+    #ba-applications-view .app-fee-section-header > button {
+        width: 100%;
+    }
+
+    #ba-applications-view .app-fee-discussion-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #ba-applications-view .app-fee-discussion-actions button {
+        width: 100%;
+    }
+
+    #ba-applications-view .app-fee-saved-summary {
+        margin-right: 0;
+    }
+}
+
+
+/* =========================================================
+   APPLICATIONS — FEE DISCUSSION VIEW / ENTRY MODE
+   Keeps saved Fee Discussion visually aligned with
+   School Visit and Entrance Test read-only sections.
+   ========================================================= */
+
+#ba-applications-view #ba-feeSavedView .detail-text {
+    min-height: 38px;
+}
+
+#ba-applications-view #ba-feeSavedView .emp-detail-grid + .emp-detail-grid {
+    margin-top: 0.75rem;
+}
+
+#ba-applications-view #ba-feeInitialForm .app-fee-discussion-actions,
+#ba-applications-view #ba-feeSavedView .app-fee-discussion-actions {
+    margin-top: 0.9rem;
+}
+
+
+/* =========================================================
+   APPLICATIONS — COMPACT PROFILE HEADER
+   ========================================================= */
+
+#ba-applications-view .app-profile-summary-compact {
+    padding: 0.9rem 1rem;
+}
+
+#ba-applications-view .app-profile-summary-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+#ba-applications-view .app-profile-photo-compact {
+    width: 88px;
+    height: 88px;
+    flex: 0 0 88px;
+    overflow: hidden;
+    border: 1px solid #d9e2ec;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+#ba-applications-view .app-profile-photo-compact .emp-profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#ba-applications-view .app-profile-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.35rem;
+    color: #94a3b8;
+    font-size: 0.68rem;
+    line-height: 1.2;
+    text-align: center;
+}
+
+#ba-applications-view .app-profile-photo-placeholder i {
+    font-size: 1.65rem;
+}
+
+#ba-applications-view .app-profile-summary-content {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#ba-applications-view .app-profile-summary-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+#ba-applications-view .app-profile-summary-heading h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.25rem;
+    line-height: 1.25;
+}
+
+#ba-applications-view .app-profile-summary-identity {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.2rem;
+    color: #64748b;
+    font-size: 0.76rem;
+}
+
+#ba-applications-view .app-profile-summary-status {
+    min-width: 145px;
+    text-align: right;
+}
+
+#ba-applications-view .app-profile-summary-status > .text-muted {
+    display: block;
+    margin-bottom: 0.15rem;
+    font-size: 0.66rem;
+}
+
+#ba-applications-view .app-workflow-progress {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin: 0.75rem 0;
+    padding: 0.52rem 0.65rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+#ba-applications-view .app-workflow-progress-step {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: 650;
+    white-space: nowrap;
+}
+
+#ba-applications-view .app-workflow-progress-step.completed {
+    color: #15803d;
+}
+
+#ba-applications-view .app-workflow-progress-step.current {
+    color: #9a7721;
+}
+
+#ba-applications-view .app-workflow-progress-symbol {
+    font-weight: 800;
+}
+
+#ba-applications-view .app-workflow-progress-arrow {
+    color: #cbd5e1;
+    font-size: 0.72rem;
+}
+
+#ba-applications-view .app-profile-quick-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.55rem;
+}
+
+#ba-applications-view .app-profile-quick-item {
+    min-width: 0;
+    padding: 0.48rem 0.58rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #fff;
+}
+
+#ba-applications-view .app-profile-quick-item > .text-muted {
+    display: block;
+    margin-bottom: 0.12rem;
+    font-size: 0.64rem;
+}
+
+#ba-applications-view .app-profile-quick-item strong {
+    display: block;
+    color: #0f172a;
+    font-size: 0.77rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 991.98px) {
+    #ba-applications-view .app-profile-quick-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 575.98px) {
+    #ba-applications-view .app-profile-summary-row,
+    #ba-applications-view .app-profile-summary-heading {
+        flex-direction: column;
+    }
+
+    #ba-applications-view .app-profile-photo-compact {
+        width: 72px;
+        height: 72px;
+        flex-basis: 72px;
+    }
+
+    #ba-applications-view .app-profile-summary-status {
+        min-width: 0;
+        text-align: left;
+    }
+
+    #ba-applications-view .app-profile-quick-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .app-workflow-progress {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    #ba-applications-view .app-workflow-progress-arrow {
+        display: none;
+    }
+}
+
+
+/* =========================================================
+   APPLICATIONS — PROFILE TWO-COLUMN LAYOUT
+   Left: larger applicant image
+   Right: compact operational details
+   ========================================================= */
+
+#ba-applications-view .app-profile-two-column {
+    display: grid;
+    grid-template-columns: 180px minmax(0, 1fr);
+    align-items: stretch;
+    gap: 1rem;
+}
+
+#ba-applications-view .app-profile-photo-pane {
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    min-width: 0;
+}
+
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-compact {
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+    max-height: 250px;
+    flex: none;
+    border: 1px solid #d9e2ec;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f8fafc;
+}
+
+#ba-applications-view .app-profile-photo-pane .emp-profile-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+}
+
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding: 0.75rem;
+    color: #94a3b8;
+    text-align: center;
+}
+
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder i {
+    font-size: 2.75rem;
+}
+
+#ba-applications-view .app-profile-details-pane {
+    min-width: 0;
+}
+
+#ba-applications-view .app-profile-details-pane .app-profile-summary-heading {
+    margin-bottom: 0.35rem;
+}
+
+#ba-applications-view .app-profile-details-pane .app-workflow-progress {
+    margin-top: 0.55rem;
+    margin-bottom: 0.65rem;
+}
+
+#ba-applications-view .app-profile-details-pane .app-profile-quick-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@media (max-width: 991.98px) {
+    #ba-applications-view .app-profile-two-column {
+        grid-template-columns: 140px minmax(0, 1fr);
+    }
+
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-compact,
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder {
+        min-height: 190px;
+    }
+
+    #ba-applications-view .app-profile-details-pane .app-profile-quick-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 575.98px) {
+    #ba-applications-view .app-profile-two-column {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .app-profile-photo-pane {
+        justify-content: flex-start;
+    }
+
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-compact {
+        width: 120px;
+        height: 150px;
+        min-height: 150px;
+    }
+
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder {
+        min-height: 150px;
+    }
+
+    #ba-applications-view .app-profile-details-pane .app-profile-quick-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =========================================================
+   APPLICATIONS — FROZEN COMPACT PROFILE HEADER
+   Left photo / right operational details.
+   Lower Application sections and cards remain unchanged.
+   ========================================================= */
+
+#ba-applications-view .app-profile-two-column {
+    grid-template-columns: 190px minmax(0, 1fr);
+}
+
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-compact {
+    min-height: 230px;
+    max-height: 260px;
+}
+
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder {
+    min-height: 230px;
+}
+
+#ba-applications-view .app-profile-details-pane .app-profile-quick-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+}
+
+#ba-applications-view .app-profile-details-pane .app-profile-quick-item {
+    min-height: 52px;
+}
+
+#ba-applications-view .app-profile-details-pane .app-profile-quick-item strong {
+    font-size: 0.78rem;
+}
+
+#ba-applications-view .app-profile-continue-btn.hidden {
+    display: none !important;
+}
+
+@media (max-width: 1100px) {
+    #ba-applications-view .app-profile-two-column {
+        grid-template-columns: 160px minmax(0, 1fr);
+    }
+
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-compact,
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder {
+        min-height: 210px;
+    }
+}
+
+@media (max-width: 991.98px) {
+    #ba-applications-view .app-profile-details-pane .app-profile-quick-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 575.98px) {
+    #ba-applications-view .app-profile-two-column {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-compact {
+        width: 132px;
+        height: 165px;
+        min-height: 165px;
+    }
+
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder {
+        min-height: 165px;
+    }
+
+    #ba-applications-view .app-profile-details-pane .app-profile-quick-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =========================================================
+   APPLICATIONS — PROFILE PHOTO SIZE / CENTERING FIX
+   ========================================================= */
+
+#ba-applications-view .app-profile-two-column {
+    grid-template-columns: 180px minmax(0, 1fr);
+    align-items: stretch;
+}
+
+#ba-applications-view .app-profile-photo-pane {
+    display: flex;
+    align-items: stretch;
+}
+
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-compact,
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder {
+    width: 180px;
+    height: 215px;
+    min-height: 215px;
+    max-height: 215px;
+    border-radius: 10px;
+}
+
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-compact {
+    object-fit: cover;
+    object-position: center;
+}
+
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder i,
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder svg {
+    display: block;
+    margin: 0 0 0.4rem 0;
+    line-height: 1;
+}
+
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder .bi {
+    font-size: 2.75rem;
+}
+
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder span,
+#ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder small {
+    margin: 0;
+    line-height: 1.2;
+}
+
+@media (max-width: 1100px) {
+    #ba-applications-view .app-profile-two-column {
+        grid-template-columns: 165px minmax(0, 1fr);
+    }
+
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-compact,
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder {
+        width: 165px;
+        height: 205px;
+        min-height: 205px;
+        max-height: 205px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    #ba-applications-view .app-profile-two-column {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .app-profile-photo-pane {
+        justify-content: center;
+    }
+
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-compact,
+    #ba-applications-view .app-profile-photo-pane .app-profile-photo-placeholder {
+        width: 150px;
+        height: 185px;
+        min-height: 185px;
+        max-height: 185px;
+    }
+}
+
+
+/* =========================================================
+   APPLICATIONS — FINAL PROFILE ALIGNMENT
+   Authoritative overrides for the profile summary only.
+   ========================================================= */
+
+/* List-only heading must not remain above an open profile. */
+#ba-applications-view.app-profile-mode > .view-header {
+    display: none !important;
+}
+
+/* Keep profile content close to the dashboard header once list heading is hidden. */
+#ba-applications-view.app-profile-mode #ba-appDetailComponent {
+    margin-top: 0 !important;
+}
+
+/* Summary card: fixed photo rail + flexible details rail. */
+#ba-applications-view .app-profile-summary-compact {
+    padding: 14px 16px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-two-column {
+    display: grid !important;
+    grid-template-columns: 185px minmax(0, 1fr) !important;
+    gap: 16px !important;
+    align-items: stretch !important;
+}
+
+/* Left photo panel */
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-pane {
+    width: 185px !important;
+    min-width: 185px !important;
+    display: flex !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/*
+ * The existing .app-profile-photo-compact DIV is the actual photo frame.
+ * Make it the single positioning context for both the real image and placeholder.
+ */
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-compact {
+    position: relative !important;
+    width: 185px !important;
+    height: 220px !important;
+    min-height: 220px !important;
+    max-height: 220px !important;
+    overflow: hidden !important;
+    border: 1px solid #dbe3ec !important;
+    border-radius: 10px !important;
+    background: #f8fafc !important;
+}
+
+/* Real photo fills the complete frame. */
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-compact > img.emp-profile-photo {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100% !important;
+    min-height: 100% !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+}
+
+/* Placeholder fills the frame and centers icon + text as one group. */
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-placeholder {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 7px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: center !important;
+    transform: none !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-placeholder i.bi {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 2.85rem !important;
+    line-height: 1 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-placeholder span {
+    display: block !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1.2 !important;
+}
+
+/* Right side */
+#ba-applications-view .app-profile-summary-compact .app-profile-details-pane {
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 9px !important;
+}
+
+/* Applicant identity and status share one aligned row. */
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-heading {
+    min-height: 43px !important;
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 18px !important;
+    margin: 0 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-heading h3 {
+    margin: 0 0 3px 0 !important;
+    line-height: 1.15 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-identity {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+    line-height: 1.25 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-status {
+    flex: 0 0 auto !important;
+    min-width: 120px !important;
+    text-align: right !important;
+    margin: 0 !important;
+}
+
+/* Workflow gets one clean full-width row. */
+#ba-applications-view .app-profile-summary-compact .app-workflow-progress {
+    width: 100% !important;
+    min-height: 36px !important;
+    margin: 0 !important;
+    padding: 8px 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    row-gap: 4px !important;
+}
+
+/* Exactly aligned 4 x 2 operational grid on normal desktop widths. */
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin: 0 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-item {
+    min-width: 0 !important;
+    height: 66px !important;
+    min-height: 66px !important;
+    max-height: 66px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: flex-start !important;
+    gap: 3px !important;
+    margin: 0 !important;
+    padding: 9px 10px !important;
+    overflow: hidden !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-item > .text-muted {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+    line-height: 1.15 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-item > strong {
+    min-width: 0 !important;
+    margin: 0 !important;
+    line-height: 1.25 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Slightly narrower desktop */
+@media (max-width: 1250px) {
+    #ba-applications-view .app-profile-summary-compact .app-profile-two-column {
+        grid-template-columns: 170px minmax(0, 1fr) !important;
+        gap: 14px !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-photo-pane,
+    #ba-applications-view .app-profile-summary-compact .app-profile-photo-compact {
+        width: 170px !important;
+        min-width: 170px !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-photo-compact {
+        height: 216px !important;
+        min-height: 216px !important;
+        max-height: 216px !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-quick-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-quick-item {
+        height: 58px !important;
+        min-height: 58px !important;
+        max-height: 58px !important;
+        padding: 7px 9px !important;
+    }
+}
+
+/* Tablet/mobile: photo above details. */
+@media (max-width: 767.98px) {
+    #ba-applications-view .app-profile-summary-compact .app-profile-two-column {
+        grid-template-columns: 1fr !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-photo-pane {
+        width: 100% !important;
+        min-width: 0 !important;
+        justify-content: center !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-photo-compact {
+        width: 155px !important;
+        min-width: 155px !important;
+        height: 190px !important;
+        min-height: 190px !important;
+        max-height: 190px !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-summary-heading {
+        align-items: flex-start !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-quick-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #ba-applications-view .app-profile-summary-compact .app-profile-summary-heading {
+        flex-direction: column !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-summary-status {
+        min-width: 0 !important;
+        text-align: left !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-quick-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-quick-item {
+        height: auto !important;
+        min-height: 54px !important;
+        max-height: none !important;
+    }
+}
+
+
+/* =========================================================
+   APPLICATIONS — PROFILE VERTICAL COMPACTION
+   Width/layout stays unchanged. Only reduce vertical height.
+   ========================================================= */
+
+#ba-applications-view .app-profile-summary-compact {
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-two-column {
+    gap: 14px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-compact {
+    height: 185px !important;
+    min-height: 185px !important;
+    max-height: 185px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-details-pane {
+    gap: 6px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-heading {
+    min-height: 36px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-heading h3 {
+    margin-bottom: 2px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-workflow-progress {
+    min-height: 30px !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-grid {
+    gap: 6px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-item {
+    height: 48px !important;
+    min-height: 48px !important;
+    max-height: 48px !important;
+    padding: 6px 9px !important;
+    gap: 2px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-item > .text-muted {
+    font-size: 0.68rem !important;
+    line-height: 1.05 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-item > strong {
+    font-size: 0.76rem !important;
+    line-height: 1.15 !important;
+}
+
+/* Keep same desktop width proportions at narrower desktop sizes too. */
+@media (max-width: 1250px) {
+    #ba-applications-view .app-profile-summary-compact .app-profile-photo-compact {
+        height: 180px !important;
+        min-height: 180px !important;
+        max-height: 180px !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-quick-item {
+        height: 46px !important;
+        min-height: 46px !important;
+        max-height: 46px !important;
+        padding: 5px 8px !important;
+    }
+}
+
+
+/* =========================================================
+   APPLICATIONS — PHOTO OVERLAY + SINGLE-LINE IDENTITY FIX
+   ========================================================= */
+
+/* The generic .hidden class must win over the photo-frame flex rules. */
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-placeholder.hidden,
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-compact > img.emp-profile-photo.hidden {
+    display: none !important;
+}
+
+/* Applicant name + application identity on one compact line. */
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-main-identity {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    column-gap: 7px;
+    row-gap: 3px;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-main-identity h3 {
+    flex: 0 0 auto;
+    margin: 0 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-name-separator {
+    flex: 0 0 auto;
+    color: #94a3b8;
+    font-weight: 700;
+    line-height: 1;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-main-identity .app-profile-summary-identity {
+    min-width: 0;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    margin: 0 !important;
+}
+
+@media (max-width: 900px) {
+    #ba-applications-view .app-profile-summary-compact .app-profile-summary-main-identity {
+        align-items: flex-start;
+    }
+}
+
+
+/* =========================================================
+   APPLICATIONS — STABLE PROFILE SUMMARY LAYOUT
+   Removes the overly tight/clipped spacing from the previous pass.
+   ========================================================= */
+
+#ba-applications-view .app-profile-summary-compact {
+    box-sizing: border-box !important;
+    padding: 12px 14px !important;
+    overflow: visible !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-two-column {
+    display: grid !important;
+    grid-template-columns: 190px minmax(0, 1fr) !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+    min-height: 0 !important;
+}
+
+/* Photo panel */
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-pane {
+    width: 190px !important;
+    min-width: 190px !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-self: stretch !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-compact {
+    position: relative !important;
+    width: 190px !important;
+    height: 210px !important;
+    min-width: 190px !important;
+    min-height: 210px !important;
+    max-width: 190px !important;
+    max-height: 210px !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    border-radius: 10px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-compact > img.emp-profile-photo {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-placeholder {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-placeholder.hidden,
+#ba-applications-view .app-profile-summary-compact .app-profile-photo-compact > img.emp-profile-photo.hidden {
+    display: none !important;
+}
+
+/* Right content */
+#ba-applications-view .app-profile-summary-compact .app-profile-details-pane {
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 7px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Name / identity / status */
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-heading {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+    min-height: 34px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-main-identity {
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: baseline !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-main-identity h3 {
+    margin: 0 !important;
+    line-height: 1.15 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-identity {
+    display: flex !important;
+    align-items: baseline !important;
+    flex-wrap: wrap !important;
+    gap: 5px !important;
+    margin: 0 !important;
+    line-height: 1.15 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-summary-status {
+    flex: 0 0 auto !important;
+    min-width: 120px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    text-align: right !important;
+}
+
+/* Workflow */
+#ba-applications-view .app-profile-summary-compact .app-workflow-progress {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-height: 36px !important;
+    margin: 0 !important;
+    padding: 7px 9px !important;
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    row-gap: 4px !important;
+    overflow: visible !important;
+}
+
+/* Summary details — 4 columns, 2 natural rows, no clipping */
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    grid-auto-rows: minmax(52px, auto) !important;
+    gap: 7px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-item {
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 52px !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 7px 10px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    overflow: visible !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-item > .text-muted {
+    margin: 0 !important;
+    font-size: 0.69rem !important;
+    line-height: 1.05 !important;
+}
+
+#ba-applications-view .app-profile-summary-compact .app-profile-quick-item > strong {
+    margin: 0 !important;
+    font-size: 0.78rem !important;
+    line-height: 1.2 !important;
+    overflow-wrap: anywhere !important;
+}
+
+/* Sidebar-open / narrower desktop */
+@media (max-width: 1180px) {
+    #ba-applications-view .app-profile-summary-compact .app-profile-two-column {
+        grid-template-columns: 175px minmax(0, 1fr) !important;
+        gap: 12px !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-photo-pane {
+        width: 175px !important;
+        min-width: 175px !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-photo-compact {
+        width: 175px !important;
+        min-width: 175px !important;
+        max-width: 175px !important;
+        height: 205px !important;
+        min-height: 205px !important;
+        max-height: 205px !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-quick-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+/* Mobile */
+@media (max-width: 720px) {
+    #ba-applications-view .app-profile-summary-compact .app-profile-two-column {
+        grid-template-columns: 1fr !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-photo-pane {
+        width: 100% !important;
+        min-width: 0 !important;
+        justify-content: center !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-photo-compact {
+        width: 155px !important;
+        min-width: 155px !important;
+        max-width: 155px !important;
+        height: 185px !important;
+        min-height: 185px !important;
+        max-height: 185px !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-summary-heading {
+        align-items: flex-start !important;
+    }
+
+    #ba-applications-view .app-profile-summary-compact .app-profile-summary-status {
+        min-width: 0 !important;
+    }
+}
+
+
+/* =========================================================
+   APPLICATIONS — SCHOLARSHIP APPLICATION CONTINUATION
+   ========================================================= */
+
+#ba-applications-view .app-scholarship-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+#ba-applications-view .app-scholarship-start-panel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem;
+    border: 1px solid #dbe3ec;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+#ba-applications-view .app-scholarship-start-panel p {
+    margin: 0.2rem 0 0;
+}
+
+#ba-applications-view .app-scholarship-form-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+#ba-applications-view .app-scholarship-form-summary > div {
+    padding: 0.55rem 0.65rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #f8fafc;
+}
+
+#ba-applications-view .app-scholarship-form-summary small,
+#ba-applications-view .app-scholarship-form-summary strong {
+    display: block;
+}
+
+#ba-applications-view .app-scholarship-form-summary small {
+    margin-bottom: 0.15rem;
+    color: #64748b;
+}
+
+#ba-applications-view .app-scholarship-subsection {
+    padding: 0.8rem 0;
+    border-top: 1px solid #edf2f7;
+}
+
+#ba-applications-view .app-scholarship-subsection:first-of-type {
+    border-top: 0;
+}
+
+#ba-applications-view .app-scholarship-subsection h4 {
+    margin: 0 0 0.65rem;
+    font-size: 0.88rem;
+}
+
+#ba-applications-view .app-scholarship-subsection-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+}
+
+#ba-applications-view .app-scholarship-subsection-heading h4 {
+    margin: 0;
+}
+
+#ba-applications-view .app-scholarship-siblings {
+    display: grid;
+    gap: 0.65rem;
+}
+
+#ba-applications-view .app-scholarship-sibling-row {
+    padding: 0.65rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fbfdff;
+}
+
+#ba-applications-view .app-scholarship-sibling-grid {
+    display: grid;
+    grid-template-columns:
+        minmax(150px, 1.4fr)
+        80px
+        minmax(150px, 1fr)
+        minmax(130px, 1fr)
+        minmax(160px, 1.2fr)
+        minmax(140px, 1fr)
+        minmax(140px, 1fr)
+        auto;
+    gap: 0.5rem;
+    align-items: end;
+}
+
+#ba-applications-view .app-scholarship-sibling-remove {
+    min-width: 90px;
+}
+
+#ba-applications-view .app-scholarship-span-3 {
+    grid-column: span 3;
+}
+
+#ba-applications-view .app-scholarship-declaration {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 0.65rem;
+}
+
+#ba-applications-view .app-scholarship-declaration input {
+    margin-top: 0.18rem;
+}
+
+#ba-applications-view .app-scholarship-form-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.6rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid #e2e8f0;
+}
+
+@media (max-width: 1200px) {
+    #ba-applications-view .app-scholarship-sibling-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    #ba-applications-view .app-scholarship-sibling-remove {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 900px) {
+    #ba-applications-view .app-scholarship-form-summary {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #ba-applications-view .app-scholarship-start-panel {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    #ba-applications-view .app-scholarship-sibling-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 575.98px) {
+    #ba-applications-view .app-scholarship-form-summary,
+    #ba-applications-view .app-scholarship-sibling-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-applications-view .app-scholarship-form-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #ba-applications-view .app-scholarship-form-actions button {
+        width: 100%;
+    }
+}
+
+/* ============================================================
+   Admission - Parent Fee Discussion / Scholarship initiation
+   ============================================================ */
+
+#ba-feeEditModal .app-request-modal-box {
+    width: min(920px, calc(100vw - 32px));
+    max-height: min(88vh, 860px);
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+#ba-feeEditModal .app-request-modal-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+#ba-feeEditModal .app-fee-edit-modal-body {
+    padding: 20px 20px 34px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scroll-padding-bottom: 110px;
+}
+
+#ba-feeEditModal .app-request-modal-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+    padding: 14px 20px;
+    background: rgba(255, 255, 255, 0.98);
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.06);
+    backdrop-filter: blur(8px);
+}
+
+#ba-feeEditModal .app-fee-edit-grid {
+    gap: 14px 16px;
+}
+
+#ba-feeEditModal .form-group {
+    margin-bottom: 14px;
+}
+
+#ba-feeEditModal .form-group > label {
+    display: block;
+    margin-bottom: 7px;
+    color: #334155;
+    font-weight: 650;
+}
+
+#ba-feeEditModal .detail-input {
+    min-height: 42px;
+    border-radius: 9px;
+    border: 1px solid #dbe3ee;
+    background: #fff;
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background-color 0.18s ease;
+}
+
+#ba-feeEditModal .detail-input:focus {
+    border-color: #b88918;
+    box-shadow: 0 0 0 3px rgba(184, 137, 24, 0.12);
+    outline: 0;
+}
+
+#ba-feeEditModal .detail-input[readonly] {
+    background: #f8fafc;
+    color: #475569;
+}
+
+#ba-feeEditModal .app-fee-primary-decision-row {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.45fr);
+    gap: 14px;
+    align-items: stretch;
+}
+
+#ba-feeEditModal .app-fee-decision-card {
+    padding: 14px 15px;
+    border: 1px solid #dbe3ee;
+    border-radius: 12px;
+    background: #fff;
+}
+
+#ba-feeEditModal label.app-fee-decision-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    cursor: pointer;
+}
+
+#ba-feeEditModal .app-fee-decision-card input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin-top: 2px;
+    accent-color: #b88918;
+    flex: 0 0 auto;
+}
+
+#ba-feeEditModal .app-fee-decision-card small {
+    margin-top: 3px;
+    line-height: 1.4;
+}
+
+#ba-feeEditModal .app-fee-scholarship-choice {
+    display: block;
+}
+
+#ba-feeEditModal .app-fee-scholarship-level-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+#ba-feeEditModal .app-fee-scholarship-level-row .app-fee-edit-decision-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 10px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    background: #f8fafc;
+    cursor: pointer;
+}
+
+#ba-feeEditModal .app-fee-scholarship-level-row .app-fee-edit-decision-option:has(input:checked),
+#ba-feeEditModal label.app-fee-decision-card:has(input:checked) {
+    border-color: #d3a92f;
+    background: #fffaf0;
+    box-shadow: 0 0 0 2px rgba(211, 169, 47, 0.10);
+}
+
+#ba-feeEditModal .app-fee-scholarship-method {
+    margin: 16px 0 20px;
+}
+
+#ba-feeEditModal .app-fee-scholarship-method-card {
+    padding: 16px;
+    border: 1px solid #cbdcf6;
+    border-radius: 12px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(239, 246, 255, 0.96),
+            rgba(248, 250, 252, 0.96)
+        );
+}
+
+#ba-feeEditModal .app-fee-scholarship-method-card > strong {
+    color: #1e3a8a;
+    font-size: 0.95rem;
+}
+
+#ba-feeEditModal .app-fee-scholarship-method-help {
+    margin: 5px 0 14px;
+    line-height: 1.5;
+}
+
+#ba-feeEditModal .app-fee-scholarship-method-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+#ba-feeEditModal .app-fee-method-card {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 11px;
+    min-height: 62px;
+    padding: 12px 14px;
+    border: 1px solid #cbd5e1;
+    border-radius: 11px;
+    background: #fff;
+    color: #0f172a;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease,
+        background-color 0.15s ease;
+}
+
+#ba-feeEditModal .app-fee-method-card:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: #94a3b8;
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+#ba-feeEditModal .app-fee-method-card-primary {
+    border-color: #172033;
+    background: #101827;
+    color: #fff;
+}
+
+#ba-feeEditModal .app-fee-method-card-primary:hover:not(:disabled) {
+    border-color: #101827;
+    background: #172033;
+}
+
+#ba-feeEditModal .app-fee-method-card i {
+    font-size: 1.2rem;
+    flex: 0 0 auto;
+}
+
+#ba-feeEditModal .app-fee-method-card span {
+    display: block;
+    min-width: 0;
+}
+
+#ba-feeEditModal .app-fee-method-card small {
+    display: block;
+    margin-top: 2px;
+    font-weight: 400;
+    line-height: 1.35;
+    opacity: 0.78;
+}
+
+#ba-feeEditModal .app-fee-method-card:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Dashboard Scholarship initiation card only; the form itself is external. */
+#application-scholarship-section .app-scholarship-start-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 18px;
+    align-items: center;
+    padding: 16px 18px;
+    border: 1px solid #dbe3ee;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+#application-scholarship-section .app-scholarship-start-panel > div:first-child {
+    min-width: 0;
+}
+
+#application-scholarship-section .app-scholarship-start-panel strong {
+    color: #0f172a;
+}
+
+#application-scholarship-section .app-scholarship-start-panel p {
+    margin: 5px 0 0;
+    line-height: 1.55;
+}
+
+#application-scholarship-section .ba-pagination-controls {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+@media (max-width: 760px) {
+    #ba-feeEditModal .app-request-modal-box {
+        width: calc(100vw - 18px);
+        max-height: 94vh;
+        border-radius: 14px;
+    }
+
+    #ba-feeEditModal .app-fee-edit-modal-body {
+        padding: 16px 14px 28px;
+    }
+
+    #ba-feeEditModal .app-fee-primary-decision-row,
+    #ba-feeEditModal .app-fee-scholarship-level-row,
+    #ba-feeEditModal .app-fee-scholarship-method-actions {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-feeEditModal .app-request-modal-actions {
+        padding: 12px 14px;
+    }
+
+    #application-scholarship-section .app-scholarship-start-panel {
+        grid-template-columns: 1fr;
+    }
+
+    #application-scholarship-section .ba-pagination-controls {
+        justify-content: flex-start;
+    }
+}
+
+/* ============================================================
+   Parent Fee Discussion - refined Manual Fee UI
+   ============================================================ */
+
+#ba-feeEditModal .app-fee-edit-modal-box {
+    width: min(820px, calc(100vw - 32px));
+}
+
+#ba-feeEditModal .app-fee-edit-modal-body {
+    padding: 22px 22px 34px;
+}
+
+#ba-feeEditModal .app-fee-payment-decision {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e6ebf1;
+}
+
+#ba-feeEditModal .app-fee-payment-heading {
+    margin-bottom: 13px;
+}
+
+#ba-feeEditModal .app-fee-payment-heading h4 {
+    margin: 0;
+    color: #111827;
+    font-size: 1rem;
+    font-weight: 750;
+}
+
+#ba-feeEditModal .app-fee-payment-heading p {
+    margin: 4px 0 0;
+    color: #6b7280;
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+#ba-feeEditModal .app-fee-main-choice {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    min-height: 72px;
+    padding: 13px 15px;
+    margin: 0 0 12px;
+    border: 1px solid #dce3eb;
+    border-radius: 11px;
+    background: #fff;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+#ba-feeEditModal .app-fee-main-choice > input,
+#ba-feeEditModal .app-fee-scholarship-choice-card > input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#ba-feeEditModal .app-fee-main-choice:hover {
+    border-color: #b9c3d0;
+}
+
+#ba-feeEditModal .app-fee-main-choice:has(input:checked) {
+    border-color: #c69a25;
+    background: #fffcf3;
+    box-shadow: 0 0 0 3px rgba(198, 154, 37, 0.09);
+}
+
+#ba-feeEditModal .app-fee-main-choice-icon,
+#ba-feeEditModal .app-fee-scholarship-group-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex: 0 0 38px;
+    border-radius: 9px;
+    background: #f1f5f9;
+    color: #334155;
+}
+
+#ba-feeEditModal .app-fee-main-choice-text strong,
+#ba-feeEditModal .app-fee-main-choice-text small,
+#ba-feeEditModal .app-fee-scholarship-group-heading strong,
+#ba-feeEditModal .app-fee-scholarship-group-heading small,
+#ba-feeEditModal .app-fee-scholarship-choice-card strong,
+#ba-feeEditModal .app-fee-scholarship-choice-card small {
+    display: block;
+}
+
+#ba-feeEditModal .app-fee-main-choice-text strong,
+#ba-feeEditModal .app-fee-scholarship-group-heading strong {
+    color: #111827;
+    font-size: 0.92rem;
+}
+
+#ba-feeEditModal .app-fee-main-choice-text small,
+#ba-feeEditModal .app-fee-scholarship-group-heading small {
+    margin-top: 3px;
+    color: #6b7280;
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+#ba-feeEditModal .app-fee-choice-check {
+    color: transparent;
+    font-size: 1.05rem;
+    transition: color 0.15s ease;
+}
+
+#ba-feeEditModal .app-fee-main-choice:has(input:checked)
+    .app-fee-choice-check,
+#ba-feeEditModal .app-fee-scholarship-choice-card:has(input:checked)
+    .app-fee-choice-check {
+    color: #b88918;
+}
+
+#ba-feeEditModal .app-fee-scholarship-group {
+    padding: 14px;
+    border: 1px solid #dce3eb;
+    border-radius: 11px;
+    background: #f8fafc;
+}
+
+#ba-feeEditModal .app-fee-scholarship-group-heading {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    margin-bottom: 12px;
+}
+
+#ba-feeEditModal .app-fee-scholarship-choice-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+#ba-feeEditModal .app-fee-scholarship-choice-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+    min-height: 66px;
+    padding: 11px 12px;
+    border: 1px solid #dce3eb;
+    border-radius: 9px;
+    background: #fff;
+    cursor: pointer;
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+#ba-feeEditModal .app-fee-scholarship-choice-card:hover {
+    border-color: #b9c3d0;
+}
+
+#ba-feeEditModal .app-fee-scholarship-choice-card:has(input:checked) {
+    border-color: #c69a25;
+    background: #fffcf3;
+    box-shadow: 0 0 0 2px rgba(198, 154, 37, 0.08);
+}
+
+#ba-feeEditModal .app-fee-scholarship-choice-card strong {
+    color: #1f2937;
+    font-size: 0.84rem;
+}
+
+#ba-feeEditModal .app-fee-scholarship-choice-card small {
+    margin-top: 3px;
+    color: #6b7280;
+    font-size: 0.74rem;
+    line-height: 1.35;
+}
+
+#ba-feeEditModal .app-fee-contribution-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 13px;
+    padding: 13px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+#ba-feeEditModal .app-fee-contribution-summary .form-group {
+    margin-bottom: 0;
+}
+
+#ba-feeEditModal .app-fee-method-section {
+    margin-top: 14px;
+    padding: 14px;
+    border: 1px solid #d9e2ee;
+    border-radius: 11px;
+    background: #fff;
+}
+
+#ba-feeEditModal .app-fee-method-heading {
+    margin-bottom: 11px;
+}
+
+#ba-feeEditModal .app-fee-method-heading strong {
+    display: block;
+    color: #111827;
+    font-size: 0.9rem;
+}
+
+#ba-feeEditModal .app-fee-method-heading p {
+    margin: 3px 0 0;
+    color: #6b7280;
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+#ba-feeEditModal .app-fee-method-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+#ba-feeEditModal .app-fee-method-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 58px;
+    padding: 11px 12px;
+    border: 1px solid #d6dee8;
+    border-radius: 9px;
+    background: #fff;
+    color: #111827;
+    text-align: left;
+    cursor: pointer;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+#ba-feeEditModal .app-fee-method-option:hover:not(:disabled) {
+    transform: translateY(-1px);
+    border-color: #aeb9c7;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.07);
+}
+
+#ba-feeEditModal .app-fee-method-option-primary {
+    border-color: #1f2937;
+    background: #111827;
+    color: #fff;
+}
+
+#ba-feeEditModal .app-fee-method-option i {
+    flex: 0 0 auto;
+}
+
+#ba-feeEditModal .app-fee-method-option span {
+    min-width: 0;
+}
+
+#ba-feeEditModal .app-fee-method-option strong,
+#ba-feeEditModal .app-fee-method-option small {
+    display: block;
+}
+
+#ba-feeEditModal .app-fee-method-option strong {
+    font-size: 0.83rem;
+}
+
+#ba-feeEditModal .app-fee-method-option small {
+    margin-top: 2px;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    opacity: 0.76;
+}
+
+#ba-feeEditModal .app-fee-remarks-group {
+    margin-top: 16px;
+}
+
+#ba-feeEditModal .app-request-modal-actions {
+    position: static;
+    padding: 14px 20px 18px;
+    background: #fff;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: none;
+}
+
+@media (max-width: 720px) {
+    #ba-feeEditModal .app-fee-scholarship-choice-grid,
+    #ba-feeEditModal .app-fee-contribution-summary,
+    #ba-feeEditModal .app-fee-method-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #ba-feeEditModal .app-fee-edit-modal-body {
+        padding: 16px 14px 24px;
+    }
+}
+/* ============================================================
+   BRANCH SCHOLARSHIPS
+   Reuse the existing Branch Dashboard statistics-card design.
+   No separate branch-scholarships.css is required.
+   ============================================================ */
+
+:is(#admin-branch-dashboard-view, #branch-scholarships-view) .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+:is(#admin-branch-dashboard-view, #branch-scholarships-view) .stat-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease;
+}
+
+:is(#admin-branch-dashboard-view, #branch-scholarships-view) .stat-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+}
+
+:is(#admin-branch-dashboard-view, #branch-scholarships-view) .stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(1rem, 1.5vw, 1.25rem);
+    margin-right: 1rem;
+}
+
+:is(#admin-branch-dashboard-view, #branch-scholarships-view) .stat-details h3 {
+    margin: 0;
+    font-size: clamp(0.7rem, 1.2vw, 0.8rem);
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+:is(#admin-branch-dashboard-view, #branch-scholarships-view) .stat-details h1 {
+    margin: 0.15rem 0 0 0;
+    font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+    color: #0f172a;
+    font-weight: 700;
+}
+
+@media (max-width: 1100px) {
+    #branch-scholarships-view .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 575.98px) {
+    #branch-scholarships-view {
+        padding: 0.5rem;
+    }
+
+    #branch-scholarships-view .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    #branch-scholarships-view .stat-card {
+        min-width: 0;
+    }
+
+    #branch-scholarships-view .view-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #branch-scholarships-view .view-header > button {
+        width: 100%;
+    }
+}
+/* ============================================================
+   SCHOLARSHIP OVERVIEW
+   Add this block to the existing:
+   src/main/resources/static/css/admin.css
+
+   Uses the existing Admin .card / .stats-grid / .stat-card
+   visual language. No separate Scholarship stylesheet is required.
+   ============================================================ */
+
+#scholarship-overview-view {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0.75rem;
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* ------------------------------------------------------------
+   Overview cards
+   ------------------------------------------------------------ */
+
+#scholarship-overview-view .stats-grid {
+    display: grid;
+    gap: 1rem;
+    margin-top: 0;
+}
+
+#scholarship-overview-view .stats-grid-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#scholarship-overview-view .stats-grid-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#scholarship-overview-view .stat-card {
+    min-width: 0;
+    min-height: 78px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 0.9rem 1rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition:
+            box-shadow 0.2s ease,
+            border-color 0.2s ease,
+            transform 0.2s ease;
+}
+
+#scholarship-overview-view .stat-card:hover {
+    border-color: #cbd5e1;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+}
+
+/* ------------------------------------------------------------
+   Card icons
+   ------------------------------------------------------------ */
+
+#scholarship-overview-view .stat-icon {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.9rem;
+    font-size: 1.1rem;
+}
+
+#scholarship-overview-view .icon-blue {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+#scholarship-overview-view .icon-green {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+#scholarship-overview-view .icon-orange {
+    background: #fffbeb;
+    color: #d97706;
+}
+
+/* ------------------------------------------------------------
+   Card text
+   ------------------------------------------------------------ */
+
+#scholarship-overview-view .stat-details {
+    min-width: 0;
+}
+
+#scholarship-overview-view .stat-details h3 {
+    margin: 0;
+    color: #64748b;
+    font-size: clamp(0.68rem, 1vw, 0.78rem);
+    line-height: 1.25;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+#scholarship-overview-view .stat-details h1 {
+    margin: 0.2rem 0 0;
+    color: #0f172a;
+    font-size: clamp(1.25rem, 2vw, 1.7rem);
+    line-height: 1.15;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ------------------------------------------------------------
+   Section cards
+   ------------------------------------------------------------ */
+
+#scholarship-overview-view > .card {
+    margin-top: 0;
+}
+
+#scholarship-overview-view > .card + .card {
+    margin-top: 0.85rem;
+}
+
+#scholarship-overview-view .card-header {
+    padding: 0.85rem 1rem;
+}
+
+#scholarship-overview-view .card-header h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+#scholarship-overview-view .card-body {
+    padding: 1rem;
+}
+
+/* ------------------------------------------------------------
+   Header
+   ------------------------------------------------------------ */
+
+#scholarship-overview-view .view-header {
+    margin-bottom: 0.85rem;
+}
+
+#scholarship-overview-view .view-header h2 {
+    margin-bottom: 0.2rem;
+}
+
+#scholarship-overview-view .view-header .text-subtitle {
+    margin: 0;
+}
+
+/* ------------------------------------------------------------
+   Responsive
+   ------------------------------------------------------------ */
+
+@media (max-width: 1200px) {
+    #scholarship-overview-view .stats-grid-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #scholarship-overview-view .stats-grid-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    #scholarship-overview-view .stats-grid-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 575.98px) {
+    #scholarship-overview-view {
+        padding: 0.5rem;
+    }
+
+    #scholarship-overview-view .stats-grid-4,
+    #scholarship-overview-view .stats-grid-3 {
+        grid-template-columns: 1fr;
+    }
+
+    #scholarship-overview-view .stat-card {
+        min-height: 72px;
+        padding: 0.8rem 0.9rem;
+    }
+
+    #scholarship-overview-view .stat-icon {
+        width: 40px;
+        height: 40px;
+        flex-basis: 40px;
+        margin-right: 0.75rem;
+    }
+
+    #scholarship-overview-view .view-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #scholarship-overview-view .view-header > button {
+        width: 100%;
+    }
+}
+
+/* =========================================================
+   SCHOLARSHIP ADMIN — APPLICATION TABLE CONSISTENCY
+   Reuse the existing Applications UI without changing it.
+   ========================================================= */
+
+#scholarship-applications-view #scholarship-applications-table {
+    table-layout: fixed;
+}
+
+#scholarship-applications-view #scholarship-applications-table th:nth-child(1),
+#scholarship-applications-view #scholarship-applications-table td:nth-child(1) {
+    width: 15%;
+}
+
+#scholarship-applications-view #scholarship-applications-table th:nth-child(2),
+#scholarship-applications-view #scholarship-applications-table td:nth-child(2) {
+    width: 19%;
+}
+
+#scholarship-applications-view #scholarship-applications-table th:nth-child(3),
+#scholarship-applications-view #scholarship-applications-table td:nth-child(3) {
+    width: 15%;
+}
+
+#scholarship-applications-view #scholarship-applications-table th:nth-child(4),
+#scholarship-applications-view #scholarship-applications-table td:nth-child(4) {
+    width: 14%;
+}
+
+#scholarship-applications-view #scholarship-applications-table th:nth-child(5),
+#scholarship-applications-view #scholarship-applications-table td:nth-child(5) {
+    width: 11%;
+}
+
+#scholarship-applications-view #scholarship-applications-table th:nth-child(6),
+#scholarship-applications-view #scholarship-applications-table td:nth-child(6) {
+    width: 12%;
+}
+
+#scholarship-applications-view #scholarship-applications-table th:nth-child(7),
+#scholarship-applications-view #scholarship-applications-table td:nth-child(7) {
+    width: 9%;
+}
+
+#scholarship-applications-view #scholarship-applications-table th:nth-child(8),
+#scholarship-applications-view #scholarship-applications-table td:nth-child(8) {
+    width: 90px;
+}
+
+#scholarship-applications-view #scholarship-applications-table tbody td {
+    vertical-align: middle;
+}
+
+#scholarship-applications-view .app-profile-link {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #1d4ed8;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 650;
+    line-height: 1.35;
+    text-align: left;
+    cursor: pointer;
+}
+
+#scholarship-applications-view .app-profile-link:hover,
+#scholarship-applications-view .app-profile-link:focus-visible {
+    color: #1e40af;
+    text-decoration: underline;
+}
+
+#scholarship-applications-view .app-profile-link-appno {
+    font-weight: 650;
+}
+
+#scholarship-applications-view .app-profile-link-name {
+    display: block;
+    font-weight: 700;
+}
+
+#scholarship-applications-view .col-action {
+    min-width: 90px;
+    white-space: nowrap;
+}
+
+#scholarship-applications-view .ba-pagination-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+#scholarship-applications-view .ba-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+#scholarship-applications-view .ba-pagination-footer .detail-input {
+    width: auto;
+    min-width: 70px;
+}
+
+#scholarship-applications-view #scholarship-final-decision-form.hidden {
+    display: none !important;
+}
+
+#scholarship-applications-view .hidden {
+    display: none !important;
+}
+
+@media (max-width: 1000px) {
+    #scholarship-applications-view #scholarship-applications-table {
+        table-layout: auto;
+    }
+
+    #scholarship-applications-view #scholarship-applications-table th,
+    #scholarship-applications-view #scholarship-applications-table td {
+        white-space: nowrap;
+    }
+}
+
+/* Compact Scholarship overview spacing */
+#scholarship-overview-view > .card + .card {
+    margin-top: 0.75rem;
+}
+
+#scholarship-overview-view .card-header {
+    padding: 0.7rem 1rem;
+}
+
+#scholarship-overview-view .card-body {
+    padding: 0.85rem 1rem 1rem;
+}
+
+#scholarship-overview-view .stats-grid {
+    gap: 0.75rem;
+}
+
+#scholarship-overview-view .stat-card {
+    min-height: 72px;
+    padding: 0.75rem 0.9rem;
+}
+
+
+/* =========================================================
+   SCHOLARSHIP ADMIN — MATCH EXISTING APPLICATIONS UI
+   Reuses the same Admin visual language, scoped only to
+   Scholarship pages.
+   ========================================================= */
+
+#scholarship-applications-view .view-header,
+#scholarship-overview-view .view-header {
+    margin-bottom: 1rem;
+}
+
+#scholarship-applications-view .view-header > div > h2,
+#scholarship-overview-view .view-header > div > h2 {
+    margin-bottom: 0.3rem;
+}
+
+#scholarship-applications-view .view-header > div > .text-muted,
+#scholarship-overview-view .view-header > div > .text-muted {
+    margin: 0;
+}
+
+/* Exact Applications filter geometry, reused for Scholarship. */
+#scholarship-applications-view .app-filter-card {
+    padding: 14px 16px;
+}
+
+#scholarship-applications-view .app-filter-primary {
+    display: grid;
+    grid-template-columns:
+        minmax(240px, 1.55fr)
+        repeat(4, minmax(145px, 1fr))
+        minmax(130px, .72fr);
+    gap: 12px;
+    align-items: end;
+}
+
+#scholarship-applications-view .app-filter-primary .form-group,
+#scholarship-applications-view .app-filter-advanced .form-group {
+    margin-bottom: 0;
+    min-width: 0;
+}
+
+#scholarship-applications-view .app-filter-advanced {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(150px, 1fr));
+    gap: 12px;
+    align-items: end;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+#scholarship-applications-view .app-filter-advanced.hidden {
+    display: none !important;
+}
+
+#scholarship-applications-view .app-filter-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+#scholarship-applications-view .app-filter-actions .btn-primary,
+#scholarship-applications-view .app-filter-actions .btn-secondary {
+    min-width: 104px;
+}
+
+#scholarship-applications-view .app-filter-more-wrap .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    white-space: nowrap;
+}
+
+/* Exact table proportions/readability used by Applications. */
+#scholarship-applications-view #scholarship-applications-table {
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+}
+
+#scholarship-applications-view #scholarship-applications-table th,
+#scholarship-applications-view #scholarship-applications-table td {
+    padding: 11px 12px;
+    white-space: normal;
+    vertical-align: middle;
+}
+
+#scholarship-applications-view #scholarship-applications-table .td-appno {
+    width: 165px;
+    min-width: 145px;
+}
+
+#scholarship-applications-view #scholarship-applications-table .td-name {
+    width: 210px;
+    min-width: 180px;
+    max-width: 240px;
+}
+
+#scholarship-applications-view #scholarship-applications-table .td-placement {
+    width: 150px;
+    min-width: 130px;
+}
+
+#scholarship-applications-view #scholarship-applications-table .td-scholarship {
+    width: 145px;
+    min-width: 125px;
+}
+
+#scholarship-applications-view #scholarship-applications-table .td-status {
+    width: 140px;
+    min-width: 120px;
+}
+
+#scholarship-applications-view #scholarship-applications-table .td-date {
+    width: 150px;
+    min-width: 130px;
+}
+
+#scholarship-applications-view #scholarship-applications-table .col-action {
+    width: 105px;
+    min-width: 105px;
+}
+
+#scholarship-applications-view #scholarship-applications-table .app-profile-link {
+    appearance: none;
+    -webkit-appearance: none;
+    display: inline;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #0f172a;
+    font: inherit;
+    line-height: inherit;
+    text-align: left;
+    cursor: pointer;
+    max-width: 100%;
+}
+
+#scholarship-applications-view #scholarship-applications-table .app-profile-link-appno {
+    font-weight: 700;
+}
+
+#scholarship-applications-view #scholarship-applications-table .app-profile-link-name {
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#scholarship-applications-view #scholarship-applications-table .app-profile-link:hover,
+#scholarship-applications-view #scholarship-applications-table .app-profile-link:focus-visible {
+    color: #1d4ed8;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+#scholarship-applications-view #scholarship-applications-table .btn-view {
+    white-space: nowrap;
+}
+
+/* Scholarship detail uses the same toolbar/action language as applications.html. */
+#scholarship-applications-view #scholarship-application-detail {
+    position: relative;
+    min-width: 0;
+}
+
+#scholarship-applications-view #scholarship-application-detail.hidden {
+    display: none !important;
+}
+
+#scholarship-applications-view #scholarship-application-detail .emp-detail-toolbar {
+    margin-bottom: 0.9rem;
+    padding: 0.85rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #d4af37;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#scholarship-applications-view #scholarship-application-detail .emp-detail-toolbar h2 {
+    font-size: 1.2rem;
+}
+
+#scholarship-applications-view #scholarship-application-detail .emp-detail-toolbar .text-muted {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+#scholarship-applications-view #scholarship-application-detail .emp-detail-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+#scholarship-applications-view #scholarship-application-detail .scholarship-profile-summary {
+    margin-bottom: 1rem;
+    padding: 1.1rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+#scholarship-applications-view #scholarship-application-detail .card {
+    border-radius: 7px;
+}
+
+#scholarship-applications-view #scholarship-application-detail .card-header {
+    padding: 0.8rem 1rem;
+}
+
+#scholarship-applications-view #scholarship-application-detail .card-header h3 {
+    margin: 0;
+    font-size: 0.98rem;
+}
+
+#scholarship-applications-view #scholarship-application-detail .card-body {
+    padding: 1rem;
+}
+
+#scholarship-applications-view #scholarship-application-detail .detail-text {
+    color: #0f172a;
+    font-weight: 500;
+    line-height: 1.45;
+}
+
+#scholarship-overview-view .card {
+    border-radius: 7px;
+}
+
+#scholarship-overview-view .card-header {
+    padding: 0.8rem 1rem;
+}
+
+#scholarship-overview-view .card-header h3 {
+    margin: 0;
+    font-size: 0.98rem;
+}
+
+#scholarship-overview-view .card-body {
+    padding: 1rem;
+}
+
+@media (max-width: 1280px) {
+    #scholarship-applications-view .app-filter-primary {
+        grid-template-columns: repeat(3, minmax(180px, 1fr));
+    }
+
+    #scholarship-applications-view .app-filter-search {
+        grid-column: span 2;
+    }
+
+    #scholarship-applications-view .app-filter-advanced {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    #scholarship-applications-view .app-filter-primary,
+    #scholarship-applications-view .app-filter-advanced {
+        grid-template-columns: 1fr;
+    }
+
+    #scholarship-applications-view .app-filter-search {
+        grid-column: auto;
+    }
+
+    #scholarship-applications-view .app-filter-actions,
+    #scholarship-applications-view #scholarship-application-detail .emp-detail-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #scholarship-applications-view .app-filter-actions > *,
+    #scholarship-applications-view #scholarship-application-detail .emp-detail-actions > * {
+        width: 100%;
+    }
+
+    #scholarship-applications-view #scholarship-applications-table {
+        min-width: 980px;
+    }
+}
+/* Branch Scholarship pages — exact existing ERP UI language, scoped only to Scholarship. */
+
+#scholarship-overview-view .stat-card {
+    min-width: 0;
+}
+
+#scholarship-overview-view .stat-details {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+#scholarship-overview-view .stat-details h1 {
+    font-size: 1.45rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    margin: 0.2rem 0 0;
+    letter-spacing: -0.02em;
+}
+
+#scholarship-overview-view .stat-details h3 {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#scholarship-applications-view #scholarship-applications-table .td-placement {
+    min-width: 145px;
+}
+
+#scholarship-applications-view .scholarship-class-primary {
+    font-weight: 600;
+    color: #0f172a;
+    line-height: 1.35;
+}
+
+#scholarship-applications-view .scholarship-level-secondary {
+    margin-top: 2px;
+    font-size: 0.76rem;
+    color: #64748b;
+    line-height: 1.25;
+}
+
+#scholarship-applications-view #scholarship-applications-table .td-date {
+    white-space: nowrap;
+}
+
+#scholarship-applications-view #scholarship-applications-table .td-appno .app-profile-link,
+#scholarship-applications-view #scholarship-applications-table .td-name .app-profile-link {
+    color: var(--primary-color, #0f172a);
+}
+
+@media (max-width: 1200px) {
+    #scholarship-overview-view .stat-details h1 {
+        font-size: 1.25rem;
+    }
+}
+
+/* =========================================================
+   SCHOLARSHIP OVERVIEW — FILTER UI
+   Add to the existing admin.css.
+   Reuses the ERP's existing form-group/detail-input pattern.
+   ========================================================= */
+
+#scholarship-overview-view .scholarship-overview-filter-card {
+    margin-bottom: 0.85rem;
+}
+
+#scholarship-overview-view .scholarship-overview-filter-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+    gap: 12px;
+    align-items: end;
+}
+
+#scholarship-overview-view .scholarship-overview-filter-grid .form-group {
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+#scholarship-overview-view .scholarship-overview-filter-grid .form-group > label {
+    display: block;
+    margin: 0 0 6px;
+}
+
+#scholarship-overview-view .scholarship-overview-filter-grid .detail-input {
+    min-height: 40px;
+}
+
+#scholarship-overview-view .scholarship-overview-section-card {
+    overflow: hidden;
+}
+
+#scholarship-overview-view .scholarship-overview-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#scholarship-overview-view .scholarship-overview-section-header p {
+    margin: 4px 0 0;
+}
+
+#scholarship-overview-view .scholarship-overview-subsection + .scholarship-overview-subsection {
+    margin-top: 1.15rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+}
+
+#scholarship-overview-view .scholarship-overview-subsection > h4 {
+    margin: 0 0 0.75rem;
+    color:  #0f172a;
+    font-size: 0.92rem;
+    font-weight: 700;
+}
+
+@media (max-width: 1100px) {
+    #scholarship-overview-view .scholarship-overview-filter-grid {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+    }
+}
+
+@media (max-width: 650px) {
+    #scholarship-overview-view .scholarship-overview-filter-grid {
+        grid-template-columns: 1fr;
+    }
+}
+#scholarship-overview-view .scholarship-overview-filter-actions {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
 }

@@ -83,10 +83,14 @@ const ApplicationsController = (() => {
         schoolVisitScheduleMode: 'schedule',
         pendingSchoolVisitTransition: null,
         entranceTest: null,
+        feeDiscussion: null,
+        feeDiscussionModalMode: null,
+        feeCreateModalAutoOpenedForApplicationId: null,
         documentSyncTimer: null,
         documentSyncBusy: false,
         documentSyncSignature: null,
         documentSyncApplicationId: null,
+        profileLoadBusy: false,
         failedDocumentViewUrls: new Set(),
         applicationListSyncTimer: null,
         applicationListSyncBusy: false,
@@ -99,6 +103,21 @@ const ApplicationsController = (() => {
 
     let view = null;
     let table = null;
+
+    /**
+     * Returns an element from the current Applications view.
+     * Falls back to document lookup for safety.
+     */
+    function byId(id) {
+        if (!id) {
+            return null;
+        }
+
+        return (
+            view?.root?.querySelector(`#${id}`)
+            || document.getElementById(id)
+        );
+    }
 
     /**
      * Initializes the dynamically loaded Branch Admin Applications view.
@@ -127,6 +146,7 @@ const ApplicationsController = (() => {
         state.schoolVisit = null;
         state.schoolVisitEmployees = [];
         state.entranceTest = null;
+        state.feeDiscussion = null;
         state.schoolVisitScheduleMode = 'schedule';
         state.pendingSchoolVisitTransition = null;
         stopDocumentAutoSync();
@@ -233,346 +253,540 @@ const ApplicationsController = (() => {
      * @returns {Object}
      */
     function cacheDom(root) {
-        const byId = id =>
+        const localById = id =>
             root.querySelector(`#${id}`);
 
         return {
             root,
 
             tableComponent:
-                byId('ba-appTableComponent'),
+                localById('ba-appTableComponent'),
             detailComponent:
-                byId('ba-appDetailComponent'),
+                localById('ba-appDetailComponent'),
             detailContent:
-                byId('ba-appDetailContent'),
+                localById('ba-appDetailContent'),
 
             table:
-                byId('ba-appTable'),
+                localById('ba-appTable'),
             tableBody:
-                byId('ba-appTableBody'),
+                localById('ba-appTableBody'),
             rowTemplate:
-                byId('tpl-app-row'),
+                localById('tpl-app-row'),
 
             searchKeyword:
-                byId('ba-appSearchKeyword'),
+                localById('ba-appSearchKeyword'),
             searchGender:
-                byId('ba-appSearchGender'),
+                localById('ba-appSearchGender'),
             searchLevel:
-                byId('ba-appSearchLevel'),
+                localById('ba-appSearchLevel'),
             searchClass:
-                byId('ba-appSearchClass'),
+                localById('ba-appSearchClass'),
             searchStage:
-                byId('ba-appSearchStage'),
+                localById('ba-appSearchStage'),
             searchDocumentStatus:
-                byId('ba-appSearchDocumentStatus'),
+                localById('ba-appSearchDocumentStatus'),
             searchScholarship:
-                byId('ba-appSearchScholarship'),
+                localById('ba-appSearchScholarship'),
             searchStatus:
-                byId('ba-appSearchStatus'),
+                localById('ba-appSearchStatus'),
             searchFromDate:
-                byId('ba-appSearchFromDate'),
+                localById('ba-appSearchFromDate'),
             searchToDate:
-                byId('ba-appSearchToDate'),
+                localById('ba-appSearchToDate'),
             moreFiltersButton:
-                byId('ba-appMoreFiltersBtn'),
+                localById('ba-appMoreFiltersBtn'),
             advancedFilters:
-                byId('ba-appAdvancedFilters'),
+                localById('ba-appAdvancedFilters'),
             activeFilterCount:
-                byId('ba-appActiveFilterCount'),
+                localById('ba-appActiveFilterCount'),
             searchButton:
-                byId('ba-appSearchBtn'),
+                localById('ba-appSearchBtn'),
             resetButton:
-                byId('ba-appResetBtn'),
+                localById('ba-appResetBtn'),
             refreshButton:
-                byId('ba-refreshAppsBtn'),
+                localById('ba-refreshAppsBtn'),
 
             selectPage:
-                byId('ba-appSelectPage'),
+                localById('ba-appSelectPage'),
             selectedCount:
-                byId('ba-appSelectedCount'),
+                localById('ba-appSelectedCount'),
             bulkNextActionButton:
-                byId('ba-appBulkNextActionBtn'),
+                localById('ba-appBulkNextActionBtn'),
             bulkClearButton:
-                byId('ba-appBulkClearBtn'),
+                localById('ba-appBulkClearBtn'),
 
             pageSize:
-                byId('ba-appPageSize'),
+                localById('ba-appPageSize'),
             pageInfo:
-                byId('ba-appPageInfo'),
+                localById('ba-appPageInfo'),
             previousPageButton:
-                byId('ba-appPrevPageBtn'),
+                localById('ba-appPrevPageBtn'),
             nextPageButton:
-                byId('ba-appNextPageBtn'),
+                localById('ba-appNextPageBtn'),
 
             backButton:
-                byId('ba-backToAppTableBtn'),
+                localById('ba-backToAppTableBtn'),
             refreshDetailButton:
-                byId('ba-refreshAppDetailBtn'),
+                localById('ba-refreshAppDetailBtn'),
             printButton:
-                byId('ba-printAppBtn'),
+                localById('ba-printAppBtn'),
             requestDocumentInlineButton:
-                byId(
+                localById(
                     'ba-requestAdditionalDocumentInlineBtn'
                 ),
             profileNextStageButton:
-                byId('ba-appNextStageBtn'),
+                localById('ba-appNextStageBtn'),
+            profileNextStageButtonLabel:
+                localById('ba-appNextStageBtnLabel'),
 
             profilePhoto:
-                byId('view-appProfilePhoto'),
+                localById('view-appProfilePhoto'),
             profilePhotoPlaceholder:
-                byId(
+                localById(
                     'view-appProfilePhotoPlaceholder'
                 ),
+            workflowProgress:
+                localById('ba-workflowProgress'),
 
             documentsContainer:
-                byId(
+                localById(
                     'application-documents-view-container'
                 ),
             documentCount:
-                byId('application-document-count'),
+                localById('application-document-count'),
 
             documentRequestsContainer:
-                byId(
+                localById(
                     'application-document-requests-container'
                 ),
             documentRequestCount:
-                byId(
+                localById(
                     'application-document-request-count'
                 ),
 
             historyContainer:
-                byId('application-history-container'),
+                localById('application-history-container'),
             historyCount:
-                byId('application-history-count'),
+                localById('application-history-count'),
 
             schoolVisitSection:
-                byId('application-school-visit-section'),
+                localById('application-school-visit-section'),
             schoolVisitStatusCaption:
-                byId('school-visit-status-caption'),
+                localById('school-visit-status-caption'),
             schoolVisitStageMessage:
-                byId('school-visit-stage-message'),
+                localById('school-visit-stage-message'),
             schoolVisitStatus:
-                byId('view-schoolVisitStatus'),
+                localById('view-schoolVisitStatus'),
             schoolVisitEmployee:
-                byId('view-schoolVisitEmployee'),
+                localById('view-schoolVisitEmployee'),
             schoolVisitEmployeeNo:
-                byId('view-schoolVisitEmployeeNo'),
+                localById('view-schoolVisitEmployeeNo'),
             schoolVisitScheduledAt:
-                byId('view-schoolVisitScheduledAt'),
+                localById('view-schoolVisitScheduledAt'),
             schoolVisitVisitedAt:
-                byId('view-schoolVisitAt'),
+                localById('view-schoolVisitAt'),
             schoolVisitStudentAttendance:
-                byId('view-schoolVisitStudentAttendance'),
+                localById('view-schoolVisitStudentAttendance'),
             schoolVisitParentAttendance:
-                byId('view-schoolVisitParentAttendance'),
+                localById('view-schoolVisitParentAttendance'),
             schoolVisitRemarks:
-                byId('view-schoolVisitRemarks'),
+                localById('view-schoolVisitRemarks'),
             schoolVisitScheduleButton:
-                byId('ba-schoolVisitScheduleBtn'),
+                localById('ba-schoolVisitScheduleBtn'),
             schoolVisitRescheduleButton:
-                byId('ba-schoolVisitRescheduleBtn'),
+                localById('ba-schoolVisitRescheduleBtn'),
             schoolVisitCompleteButton:
-                byId('ba-schoolVisitCompleteBtn'),
+                localById('ba-schoolVisitCompleteBtn'),
 
             schoolVisitScheduleModal:
-                byId('ba-schoolVisitScheduleModal'),
+                localById('ba-schoolVisitScheduleModal'),
             schoolVisitScheduleForm:
-                byId('ba-schoolVisitScheduleForm'),
+                localById('ba-schoolVisitScheduleForm'),
             schoolVisitScheduleTitle:
-                byId('ba-schoolVisitScheduleTitle'),
+                localById('ba-schoolVisitScheduleTitle'),
             schoolVisitScheduleSubtitle:
-                byId('ba-schoolVisitScheduleSubtitle'),
+                localById('ba-schoolVisitScheduleSubtitle'),
             schoolVisitScheduledAtInput:
-                byId('ba-schoolVisitScheduledAtInput'),
+                localById('ba-schoolVisitScheduledAtInput'),
             schoolVisitScheduleRemarks:
-                byId('ba-schoolVisitScheduleRemarks'),
+                localById('ba-schoolVisitScheduleRemarks'),
             schoolVisitScheduleError:
-                byId('ba-schoolVisitScheduleError'),
+                localById('ba-schoolVisitScheduleError'),
             schoolVisitCancelScheduleButton:
-                byId('ba-cancelSchoolVisitScheduleBtn'),
+                localById('ba-cancelSchoolVisitScheduleBtn'),
             schoolVisitCloseScheduleButton:
-                byId('ba-closeSchoolVisitScheduleBtn'),
+                localById('ba-closeSchoolVisitScheduleBtn'),
             schoolVisitSaveScheduleButton:
-                byId('ba-saveSchoolVisitScheduleBtn'),
+                localById('ba-saveSchoolVisitScheduleBtn'),
 
             schoolVisitCompleteModal:
-                byId('ba-schoolVisitCompleteModal'),
+                localById('ba-schoolVisitCompleteModal'),
             schoolVisitCompleteForm:
-                byId('ba-schoolVisitCompleteForm'),
+                localById('ba-schoolVisitCompleteForm'),
             schoolVisitCompleteEmployeeSelect:
-                byId('ba-schoolVisitCompleteEmployeeId'),
+                localById('ba-schoolVisitCompleteEmployeeId'),
             schoolVisitVisitedAtInput:
-                byId('ba-schoolVisitVisitedAtInput'),
+                localById('ba-schoolVisitVisitedAtInput'),
             schoolVisitStudentAttended:
-                byId('ba-schoolVisitStudentAttended'),
+                localById('ba-schoolVisitStudentAttended'),
             schoolVisitParentAttended:
-                byId('ba-schoolVisitParentAttended'),
+                localById('ba-schoolVisitParentAttended'),
             schoolVisitCompleteRemarks:
-                byId('ba-schoolVisitCompleteRemarks'),
+                localById('ba-schoolVisitCompleteRemarks'),
             schoolVisitCompleteError:
-                byId('ba-schoolVisitCompleteError'),
+                localById('ba-schoolVisitCompleteError'),
             schoolVisitCancelCompleteButton:
-                byId('ba-cancelSchoolVisitCompleteBtn'),
+                localById('ba-cancelSchoolVisitCompleteBtn'),
             schoolVisitCloseCompleteButton:
-                byId('ba-closeSchoolVisitCompleteBtn'),
+                localById('ba-closeSchoolVisitCompleteBtn'),
             schoolVisitConfirmCompleteButton:
-                byId('ba-confirmSchoolVisitCompleteBtn'),
+                localById('ba-confirmSchoolVisitCompleteBtn'),
+
+            feeDiscussionSection:
+                localById('application-fee-discussion-section'),
+            feeInitialForm:
+                localById('ba-feeInitialForm'),
+            feeCreatePrompt:
+                localById('ba-feeCreatePrompt'),
+            feeOpenDiscussionButton:
+                localById('ba-openFeeDiscussionBtn'),
+            feeSavedView:
+                localById('ba-feeSavedView'),
+            feeTermFee:
+                localById('ba-feeTermFee'),
+            feeTransportFee:
+                localById('ba-feeTransportFee'),
+            feeHostelFee:
+                localById('ba-feeHostelFee'),
+            feeUniformFee:
+                localById('ba-feeUniformFee'),
+            feeBooksFee:
+                localById('ba-feeBooksFee'),
+            feeAdmissionFee:
+                localById('ba-feeAdmissionFee'),
+            feeOtherFee:
+                localById('ba-feeOtherFee'),
+            feeBaseFeeAmount:
+                localById('ba-feeBaseFeeAmount'),
+            feeDiscussionRemarks:
+                localById('ba-feeDiscussionRemarks'),
+            feeDecisionOptions:
+                Array.from(
+                    root.querySelectorAll(
+                        'input[name="ba-feeDecisionOption"]'
+                    )
+                ),
+            feeContributionPanel:
+                localById('ba-feeContributionPanel'),
+            feeParentCanPay:
+                localById('ba-feeParentCanPay'),
+            feeAssistanceRequired:
+                localById('ba-feeAssistanceRequired'),
+            feeDiscussionEditButton:
+                localById('ba-editFeeDiscussionBtn'),
+            feeDiscussionFinalizeButton:
+                localById('ba-finalizeFeeDiscussionBtn'),
+            feeDiscussionCancelApplicationButton:
+                localById('ba-cancelApplicationFromFeeBtn'),
+            cancelApplicationFeeModal:
+                localById('ba-cancelApplicationFeeModal'),
+            cancelApplicationFeeReason:
+                localById('ba-cancelApplicationFeeReason'),
+            cancelApplicationFeeError:
+                localById('ba-cancelApplicationFeeError'),
+            closeCancelApplicationFeeButton:
+                localById('ba-closeCancelApplicationFeeBtn'),
+            abortCancelApplicationFeeButton:
+                localById('ba-abortCancelApplicationFeeBtn'),
+            confirmCancelApplicationFeeButton:
+                localById('ba-confirmCancelApplicationFeeBtn'),
+            feeDiscussionSaveButton:
+                localById('ba-saveFeeDiscussionBtn'),
+            feeDiscussionSavedSummary:
+                localById('ba-feeDiscussionSavedSummary'),
+
+            scholarshipSection:
+                localById('application-scholarship-section'),
+            scholarshipFormStatus:
+                localById('ba-scholarshipFormStatus'),
+            scholarshipStartPanel:
+                localById('ba-scholarshipStartPanel'),
+            scholarshipFillAtSchoolButton:
+                localById('ba-scholarshipFillAtSchoolBtn'),
+            scholarshipSendLinkButton:
+                localById('ba-scholarshipSendLinkBtn'),
+            feeViewTermFee:
+                localById('view-feeTermFee'),
+            feeViewTransportFee:
+                localById('view-feeTransportFee'),
+            feeViewHostelFee:
+                localById('view-feeHostelFee'),
+            feeViewUniformFee:
+                localById('view-feeUniformFee'),
+            feeViewBooksFee:
+                localById('view-feeBooksFee'),
+            feeViewAdmissionFee:
+                localById('view-feeAdmissionFee'),
+            feeViewOtherFee:
+                localById('view-feeOtherFee'),
+            feeViewBaseFeeAmount:
+                localById('view-feeBaseFeeAmount'),
+            feeViewDecision:
+                localById('view-feeDecision'),
+            feeViewParentCanPay:
+                localById('view-feeParentCanPay'),
+            feeViewAssistanceRequired:
+                localById('view-feeAssistanceRequired'),
+            feeViewDiscussionRemarks:
+                localById('view-feeDiscussionRemarks'),
+
+            feeEditModal:
+                localById('ba-feeEditModal'),
+            feeEditTitle:
+                localById('ba-feeEditTitle'),
+            feeEditSubtitle:
+                localById('ba-feeEditSubtitle'),
+            feeEditForm:
+                localById('ba-feeEditForm'),
+            feeEditCloseButton:
+                localById('ba-closeFeeEditModalBtn'),
+            feeEditCancelButton:
+                localById('ba-cancelFeeEditBtn'),
+            feeEditSaveButton:
+                localById('ba-saveFeeEditBtn'),
+            feeEditSaveButtonLabel:
+                localById('ba-saveFeeEditBtnLabel'),
+            feeEditError:
+                localById('ba-feeEditError'),
+            editFeeTermFee:
+                localById('ba-editFeeTermFee'),
+            editFeeTransportFee:
+                localById('ba-editFeeTransportFee'),
+            editFeeHostelFee:
+                localById('ba-editFeeHostelFee'),
+            editFeeUniformFee:
+                localById('ba-editFeeUniformFee'),
+            editFeeBooksFee:
+                localById('ba-editFeeBooksFee'),
+            editFeeAdmissionFee:
+                localById('ba-editFeeAdmissionFee'),
+            editFeeOtherFee:
+                localById('ba-editFeeOtherFee'),
+            editFeeBaseFeeAmount:
+                localById('ba-editFeeBaseFeeAmount'),
+            editFeeDecisionOptions:
+                Array.from(
+                    root.querySelectorAll(
+                        'input[name="ba-editFeeDecisionOption"]'
+                    )
+                ),
+            editFeeContributionPanel:
+                localById('ba-editFeeContributionPanel'),
+            editFeeParentCanPay:
+                localById('ba-editFeeParentCanPay'),
+            editFeeAssistanceRequired:
+                localById('ba-editFeeAssistanceRequired'),
+            editFeeParentContributionHelp:
+                localById('ba-editFeeParentContributionHelp'),
+            editFeeScholarshipMethodPanel:
+                localById('ba-editFeeScholarshipMethodPanel'),
+            editFeeScholarshipMethodHelp:
+                localById('ba-editFeeScholarshipMethodHelp'),
+            editFeeFillInSchoolButton:
+                localById('ba-editFeeFillInSchoolBtn'),
+            editFeeSendLinkButton:
+                localById('ba-editFeeSendLinkBtn'),
+            editFeeDiscussionRemarks:
+                localById('ba-editFeeDiscussionRemarks'),
+            editFeeChangeReasonGroup:
+                localById('ba-editFeeChangeReasonGroup'),
+            editFeeChangeReason:
+                localById('ba-editFeeChangeReason'),
 
             entranceTestSection:
-                byId('application-entrance-test-section'),
+                localById('application-entrance-test-section'),
             entranceTestEnterMarksButton:
-                byId('ba-entranceTestEnterMarksBtn'),
+                localById('ba-entranceTestEnterMarksBtn'),
             entranceTestUpdateResultButton:
-                byId('ba-entranceTestUpdateResultBtn'),
+                localById('ba-entranceTestUpdateResultBtn'),
+            entranceTestRetestButton:
+                localById('ba-entranceTestRetestBtn'),
             entranceTestStatus:
-                byId('view-entranceTestStatus'),
+                localById('view-entranceTestStatus'),
             entranceTestResult:
-                byId('view-entranceTestResult'),
+                localById('view-entranceTestResult'),
             entranceTestEmployee:
-                byId('view-entranceTestEmployee'),
+                localById('view-entranceTestEmployee'),
             entranceTestCompletedAt:
-                byId('view-entranceTestCompletedAt'),
+                localById('view-entranceTestCompletedAt'),
             entranceTestRemarks:
-                byId('view-entranceTestRemarks'),
+                localById('view-entranceTestRemarks'),
             entranceTestMarksBlock:
-                byId('view-entranceTestMarksBlock'),
+                localById('view-entranceTestMarksBlock'),
             entranceTestMarksBody:
-                byId('view-entranceTestMarksBody'),
+                localById('view-entranceTestMarksBody'),
             entranceTestMarksTotal:
-                byId('view-entranceTestMarksTotal'),
+                localById('view-entranceTestMarksTotal'),
             entranceTestMarksPercentage:
-                byId('view-entranceTestMarksPercentage'),
+                localById('view-entranceTestMarksPercentage'),
 
             entranceTestMarksModal:
-                byId('ba-entranceTestMarksModal'),
+                localById('ba-entranceTestMarksModal'),
             entranceTestMarksForm:
-                byId('ba-entranceTestMarksForm'),
+                localById('ba-entranceTestMarksForm'),
             entranceTestMarksRows:
-                byId('ba-entranceTestMarksRows'),
+                localById('ba-entranceTestMarksRows'),
             entranceTestAddSubjectButton:
-                byId('ba-addEntranceTestSubjectBtn'),
+                localById('ba-addEntranceTestSubjectBtn'),
             entranceTestResultSelect:
-                byId('ba-entranceTestResult'),
+                localById('ba-entranceTestResult'),
             entranceTestCompletedAtInput:
-                byId('ba-entranceTestCompletedAt'),
+                localById('ba-entranceTestCompletedAt'),
             entranceTestEmployeeRemarks:
-                byId('ba-entranceTestEmployeeRemarks'),
+                localById('ba-entranceTestEmployeeRemarks'),
             entranceTestInternalRemarks:
-                byId('ba-entranceTestInternalRemarks'),
+                localById('ba-entranceTestInternalRemarks'),
             entranceTestMarksError:
-                byId('ba-entranceTestMarksError'),
+                localById('ba-entranceTestMarksError'),
             entranceTestLiveMaximum:
-                byId('ba-entranceTestLiveMaximum'),
+                localById('ba-entranceTestLiveMaximum'),
             entranceTestLiveObtained:
-                byId('ba-entranceTestLiveObtained'),
+                localById('ba-entranceTestLiveObtained'),
             entranceTestLivePercentage:
-                byId('ba-entranceTestLivePercentage'),
+                localById('ba-entranceTestLivePercentage'),
             entranceTestCloseMarksButton:
-                byId('ba-closeEntranceTestMarksBtn'),
+                localById('ba-closeEntranceTestMarksBtn'),
             entranceTestCancelMarksButton:
-                byId('ba-cancelEntranceTestMarksBtn'),
+                localById('ba-cancelEntranceTestMarksBtn'),
 
             waitlistResultModal:
-                byId('ba-waitlistResultModal'),
+                localById('ba-waitlistResultModal'),
             waitlistResultForm:
-                byId('ba-waitlistResultForm'),
+                localById('ba-waitlistResultForm'),
             waitlistResultMarksBody:
-                byId('ba-waitlistResultMarksBody'),
+                localById('ba-waitlistResultMarksBody'),
+            waitlistResultTitle:
+                localById('ba-waitlistResultTitle'),
+            waitlistResultDescription:
+                localById('ba-waitlistResultDescription'),
+            waitlistFinalDecisionGroup:
+                localById('ba-waitlistFinalDecisionGroup'),
             waitlistFinalResultSelect:
-                byId('ba-waitlistFinalResult'),
+                localById('ba-waitlistFinalResult'),
+            waitlistCurrentResultInput:
+                localById('ba-waitlistCurrentResult'),
+            waitlistResultRemarksLabel:
+                localById('ba-waitlistResultRemarksLabel'),
             waitlistResultRemarks:
-                byId('ba-waitlistResultRemarks'),
+                localById('ba-waitlistResultRemarks'),
             waitlistResultError:
-                byId('ba-waitlistResultError'),
+                localById('ba-waitlistResultError'),
             waitlistResultCloseButton:
-                byId('ba-closeWaitlistResultBtn'),
+                localById('ba-closeWaitlistResultBtn'),
             waitlistResultCancelButton:
-                byId('ba-cancelWaitlistResultBtn'),
+                localById('ba-cancelWaitlistResultBtn'),
             waitlistResultSaveButton:
-                byId('ba-saveWaitlistResultBtn'),
+                localById('ba-saveWaitlistResultBtn'),
             entranceTestSaveMarksButton:
-                byId('ba-saveEntranceTestMarksBtn'),
+                localById('ba-saveEntranceTestMarksBtn'),
+
+            entranceTestRetestModal:
+                localById('ba-entranceTestRetestModal'),
+            entranceTestRetestForm:
+                localById('ba-entranceTestRetestForm'),
+            entranceTestRetestScheduledAt:
+                localById('ba-entranceTestRetestScheduledAt'),
+            entranceTestRetestRemarks:
+                localById('ba-entranceTestRetestRemarks'),
+            entranceTestRetestError:
+                localById('ba-entranceTestRetestError'),
+            entranceTestRetestCloseButton:
+                localById('ba-closeEntranceTestRetestBtn'),
+            entranceTestRetestCancelButton:
+                localById('ba-cancelEntranceTestRetestBtn'),
+            entranceTestRetestSaveButton:
+                localById('ba-saveEntranceTestRetestBtn'),
 
             reviewModal:
-                byId('ba-documentReviewModal'),
+                localById('ba-documentReviewModal'),
             reviewForm:
-                byId('ba-documentReviewForm'),
+                localById('ba-documentReviewForm'),
             reviewDocumentId:
-                byId('ba-reviewDocumentId'),
+                localById('ba-reviewDocumentId'),
             reviewSubtitle:
-                byId('ba-documentReviewSubtitle'),
+                localById('ba-documentReviewSubtitle'),
             reviewDecision:
-                byId('ba-reviewDecision'),
+                localById('ba-reviewDecision'),
             rejectionReasonGroup:
-                byId('ba-rejectionReasonGroup'),
+                localById('ba-rejectionReasonGroup'),
             rejectionReason:
-                byId('ba-rejectionReason'),
+                localById('ba-rejectionReason'),
             reuploadReasonGroup:
-                byId('ba-reuploadReasonGroup'),
+                localById('ba-reuploadReasonGroup'),
             reuploadReason:
-                byId('ba-reuploadReason'),
+                localById('ba-reuploadReason'),
             reuploadDeadlineGroup:
-                byId('ba-reuploadDeadlineGroup'),
+                localById('ba-reuploadDeadlineGroup'),
             reuploadDeadline:
-                byId('ba-reuploadDeadline'),
+                localById('ba-reuploadDeadline'),
             reviewPublicRemarks:
-                byId('ba-reviewPublicRemarks'),
+                localById('ba-reviewPublicRemarks'),
             reviewInternalRemarks:
-                byId('ba-reviewInternalRemarks'),
+                localById('ba-reviewInternalRemarks'),
             reviewError:
-                byId('ba-documentReviewError'),
+                localById('ba-documentReviewError'),
             cancelReviewButton:
-                byId('ba-cancelDocumentReviewBtn'),
+                localById('ba-cancelDocumentReviewBtn'),
             submitReviewButton:
-                byId('ba-submitDocumentReviewBtn'),
+                localById('ba-submitDocumentReviewBtn'),
 
             requestModal:
-                byId('ba-additionalDocumentModal'),
+                localById('ba-additionalDocumentModal'),
             requestForm:
-                byId('ba-additionalDocumentForm'),
+                localById('ba-additionalDocumentForm'),
             requestDocumentType:
-                byId('ba-requestDocumentType'),
+                localById('ba-requestDocumentType'),
             requestDocumentName:
-                byId('ba-requestDocumentName'),
+                localById('ba-requestDocumentName'),
             requestReason:
-                byId('ba-requestReason'),
+                localById('ba-requestReason'),
             requestPublicRemarks:
-                byId('ba-requestPublicRemarks'),
+                localById('ba-requestPublicRemarks'),
             requestInternalRemarks:
-                byId('ba-requestInternalRemarks'),
+                localById('ba-requestInternalRemarks'),
             requestUploadDeadline:
-                byId('ba-requestUploadDeadline'),
+                localById('ba-requestUploadDeadline'),
             requestError:
-                byId('ba-additionalDocumentError'),
+                localById('ba-additionalDocumentError'),
             closeRequestModalButton:
-                byId('ba-closeAdditionalDocumentModalBtn'),
+                localById('ba-closeAdditionalDocumentModalBtn'),
             cancelRequestFormButton:
-                byId('ba-cancelAdditionalDocumentBtn'),
+                localById('ba-cancelAdditionalDocumentBtn'),
             submitRequestButton:
-                byId('ba-submitAdditionalDocumentBtn'),
+                localById('ba-submitAdditionalDocumentBtn'),
 
             cancelRequestModal:
-                byId('ba-cancelDocumentRequestModal'),
+                localById('ba-cancelDocumentRequestModal'),
             cancelRequestForm:
-                byId('ba-cancelDocumentRequestForm'),
+                localById('ba-cancelDocumentRequestForm'),
             cancelRequestId:
-                byId('ba-cancelDocumentRequestId'),
+                localById('ba-cancelDocumentRequestId'),
             cancelRequestSubtitle:
-                byId(
+                localById(
                     'ba-cancelDocumentRequestSubtitle'
                 ),
             cancellationReason:
-                byId(
+                localById(
                     'ba-documentRequestCancellationReason'
                 ),
             cancellationError:
-                byId('ba-cancelDocumentRequestError'),
+                localById('ba-cancelDocumentRequestError'),
             abortCancellationButton:
-                byId(
+                localById(
                     'ba-abortCancelDocumentRequestBtn'
                 ),
             confirmCancellationButton:
-                byId(
+                localById(
                     'ba-confirmCancelDocumentRequestBtn'
                 )
         };
@@ -664,6 +878,15 @@ const ApplicationsController = (() => {
                 ],
                 minYear: currentYear - 1,
                 maxYear: currentYear
+            }
+        );
+
+        createErpCalendar(
+            '#ba-entranceTestRetestScheduledAt',
+            {
+                ...commonDeadlineConfig,
+                defaultHour: 9,
+                defaultMinute: 0
             }
         );
 
@@ -1020,6 +1243,157 @@ const ApplicationsController = (() => {
             closeSchoolVisitCompleteModal
         );
 
+        [
+            view.feeTermFee,
+            view.feeTransportFee,
+            view.feeHostelFee,
+            view.feeUniformFee,
+            view.feeBooksFee,
+            view.feeAdmissionFee,
+            view.feeOtherFee,
+            view.feeParentCanPay
+        ].forEach(input => {
+            input?.addEventListener(
+                'input',
+                updateFeeDiscussionAmounts
+            );
+        });
+
+        view.feeDecisionOptions.forEach(option => {
+            option.addEventListener(
+                'change',
+                () => {
+                    renderFeeDecisionFields(
+                        getFeeDecisionValue()
+                    );
+                    updateFeeDiscussionAmounts();
+                }
+            );
+        });
+
+        view.feeOpenDiscussionButton?.addEventListener(
+            'click',
+            openFeeCreateModal
+        );
+
+        view.feeDiscussionEditButton?.addEventListener(
+            'click',
+            openFeeEditModal
+        );
+
+        view.feeDiscussionFinalizeButton?.addEventListener(
+            'click',
+            () => {
+                void finalizeFeeDiscussion();
+            }
+        );
+
+        view.feeDiscussionCancelApplicationButton?.addEventListener(
+            'click',
+            openCancelApplicationFromFeeModal
+        );
+
+        view.closeCancelApplicationFeeButton?.addEventListener(
+            'click',
+            closeCancelApplicationFromFeeModal
+        );
+
+        view.abortCancelApplicationFeeButton?.addEventListener(
+            'click',
+            closeCancelApplicationFromFeeModal
+        );
+
+        view.confirmCancelApplicationFeeButton?.addEventListener(
+            'click',
+            () => {
+                void cancelApplicationFromFeeDiscussion();
+            }
+        );
+
+        view.cancelApplicationFeeModal?.addEventListener(
+            'click',
+            event => {
+                if (event.target === view.cancelApplicationFeeModal) {
+                    closeCancelApplicationFromFeeModal();
+                }
+            }
+        );
+
+        view.feeDiscussionSaveButton?.addEventListener(
+            'click',
+            () => {
+                void saveFeeDiscussion();
+            }
+        );
+
+
+        view.scholarshipFillAtSchoolButton?.addEventListener(
+            'click',
+            () => {
+                void openScholarshipFormAtSchool();
+            }
+        );
+
+        view.scholarshipSendLinkButton?.addEventListener(
+            'click',
+            () => {
+                void sendScholarshipApplicationLink();
+            }
+        );
+
+        view.editFeeDecisionOptions.forEach(option => {
+            option.addEventListener(
+                'change',
+                () => {
+                    renderFeeEditDecisionFields(
+                        getFeeEditDecision()
+                    );
+                    updateFeeEditAmounts();
+                }
+            );
+        });
+
+        view.editFeeFillInSchoolButton?.addEventListener(
+            'click',
+            () => {
+                void startScholarshipFromFeeModal(
+                    'SCHOOL'
+                );
+            }
+        );
+
+        view.editFeeSendLinkButton?.addEventListener(
+            'click',
+            () => {
+                void startScholarshipFromFeeModal(
+                    'EMAIL'
+                );
+            }
+        );
+
+        view.feeEditCloseButton?.addEventListener(
+            'click',
+            closeFeeEditModal
+        );
+
+        view.feeEditCancelButton?.addEventListener(
+            'click',
+            closeFeeEditModal
+        );
+
+        view.feeEditForm?.addEventListener(
+            'submit',
+            event => {
+                event.preventDefault();
+                void saveFeeDiscussionModal();
+            }
+        );
+
+        bindBackdropClose(
+            view.feeEditModal,
+            closeFeeEditModal
+        );
+
         view.entranceTestEnterMarksButton?.addEventListener(
             'click',
             openEntranceTestMarksModal
@@ -1051,6 +1425,34 @@ const ApplicationsController = (() => {
         view.entranceTestUpdateResultButton?.addEventListener(
             'click',
             openWaitlistResultModal
+        );
+
+        view.entranceTestRetestButton?.addEventListener(
+            'click',
+            openEntranceTestRetestModal
+        );
+
+        view.entranceTestRetestCloseButton?.addEventListener(
+            'click',
+            closeEntranceTestRetestModal
+        );
+
+        view.entranceTestRetestCancelButton?.addEventListener(
+            'click',
+            closeEntranceTestRetestModal
+        );
+
+        view.entranceTestRetestForm?.addEventListener(
+            'submit',
+            event => {
+                event.preventDefault();
+                void submitEntranceTestRetest();
+            }
+        );
+
+        bindBackdropClose(
+            view.entranceTestRetestModal,
+            closeEntranceTestRetestModal
         );
 
         view.waitlistResultCloseButton?.addEventListener(
@@ -1295,14 +1697,16 @@ const ApplicationsController = (() => {
             formatEnum(record.currentStage)
         );
 
-        const documentLabel =
-            formatEnum(record.documentStatus);
+        const currentStageStatus =
+            String(
+                record.currentStageStatus
+                || ''
+            ).trim();
 
         setNodeText(
             node.querySelector('.app-document-label'),
-            documentLabel === '-'
-                ? 'Documents: -'
-                : `Documents: ${documentLabel}`
+            currentStageStatus
+                || resolveLegacyStageStatus(record)
         );
 
         const schoolVisitDate =
@@ -1590,6 +1994,15 @@ const ApplicationsController = (() => {
 
         let loaderToken = null;
 
+        /*
+         * Prevent background document polling from overlapping the
+         * authoritative profile reload. openApplication() already performs
+         * several API calls; allowing the timed document poll to fire at the
+         * same time creates unnecessary concurrent DB transactions.
+         */
+        stopDocumentAutoSync();
+        state.profileLoadBusy = true;
+
         stopApplicationListAutoSync();
 
         view.detailComponent?.setAttribute(
@@ -1651,6 +2064,7 @@ const ApplicationsController = (() => {
             const [
                 schoolVisitLoaded,
                 entranceTestLoaded,
+                feeDiscussionLoaded,
                 transitionsLoaded
             ] = await Promise.all([
                 loadSchoolVisit(
@@ -1667,6 +2081,12 @@ const ApplicationsController = (() => {
                     )
                         ? 3
                         : 1,
+                    {
+                        render: false
+                    }
+                ),
+                loadFeeDiscussion(
+                    validatedApplicationId,
                     {
                         render: false
                     }
@@ -1725,6 +2145,17 @@ const ApplicationsController = (() => {
                 state.entranceTest
             );
 
+            state.feeDiscussion =
+                feeDiscussionLoaded || null;
+
+            renderFeeDiscussion(
+                state.feeDiscussion
+            );
+
+            renderScholarshipSection(
+                application
+            );
+
             const primaryTransition =
                 state.profileTransitions.find(
                     transition =>
@@ -1740,6 +2171,10 @@ const ApplicationsController = (() => {
 
             hideElement(view.tableComponent);
             showElement(view.detailComponent);
+
+            view.root?.classList.add(
+                'app-profile-mode'
+            );
 
             startDocumentAutoSync(
                 validatedApplicationId
@@ -1780,6 +2215,8 @@ const ApplicationsController = (() => {
 
             return false;
         } finally {
+            state.profileLoadBusy = false;
+
             view.detailComponent?.removeAttribute(
                 'aria-busy'
             );
@@ -1795,11 +2232,176 @@ const ApplicationsController = (() => {
         }
     }
 
+    function resolveProfileStageStatus(application) {
+        return (
+            application?.currentStageStatus
+            || resolveLegacyStageStatus(application)
+            || '—'
+        );
+    }
+
+    function renderWorkflowProgress(application) {
+        if (!view.workflowProgress) {
+            return;
+        }
+
+        const currentStage =
+            String(
+                application?.currentStage
+                || ''
+            ).trim().toUpperCase();
+
+        const scholarshipState =
+            String(
+                application?.scholarshipWorkflowStatus
+                || application?.scholarshipStatus
+                || ''
+            ).trim().toUpperCase();
+
+        const scholarshipRoute =
+            currentStage === 'SCHOLARSHIP'
+            || String(
+                application?.feeDecisionStatus
+                || ''
+            ).trim().toUpperCase()
+                === 'SCHOLARSHIP_REQUESTED'
+            || (
+                scholarshipState
+                && ![
+                    'NOT_APPLIED',
+                    'NOT_STARTED'
+                ].includes(scholarshipState)
+            );
+
+        const stages =
+            scholarshipRoute
+                ? [
+                    ['APPLICATION_VERIFICATION', 'Verification'],
+                    ['SCHOOL_VISIT', 'School Visit'],
+                    ['ENTRANCE_TEST', 'Entrance Test'],
+                    ['PARENT_FEE_DISCUSSION', 'Fee Discussion'],
+                    ['SCHOLARSHIP', 'Scholarship'],
+                    ['PAYMENT', 'Payment'],
+                    ['FINAL_ADMISSION', 'Final Admission'],
+                    ['ENROLLED', 'Enrolled']
+                ]
+                : [
+                    ['APPLICATION_VERIFICATION', 'Verification'],
+                    ['SCHOOL_VISIT', 'School Visit'],
+                    ['ENTRANCE_TEST', 'Entrance Test'],
+                    ['PARENT_FEE_DISCUSSION', 'Fee Discussion'],
+                    ['PAYMENT', 'Payment'],
+                    ['FINAL_ADMISSION', 'Final Admission'],
+                    ['ENROLLED', 'Enrolled']
+                ];
+
+        const currentIndex =
+            stages.findIndex(
+                ([code]) => code === currentStage
+            );
+
+        view.workflowProgress.innerHTML =
+            stages.map(
+                ([code, label], index) => {
+                    let cssClass = 'upcoming';
+                    let symbol = '○';
+
+                    if (
+                        currentIndex >= 0
+                        && index < currentIndex
+                    ) {
+                        cssClass = 'completed';
+                        symbol = '✓';
+                    } else if (index === currentIndex) {
+                        cssClass = 'current';
+                        symbol = '●';
+                    }
+
+                    return `
+                        <span class="app-workflow-progress-step ${cssClass}">
+                            <span class="app-workflow-progress-symbol">
+                                ${symbol}
+                            </span>
+                            <span>${escapeHtml(label)}</span>
+                        </span>
+                    `;
+                }
+            ).join(
+                '<span class="app-workflow-progress-arrow">→</span>'
+            );
+    }
+
     /**
      * Renders all application profile sections.
      *
      * @param {Object} application
      */
+    function buildProfileClassLevel(application) {
+        const className =
+            String(
+                application?.className
+                || ''
+            ).trim();
+
+        const levelName =
+            String(
+                application?.levelName
+                || application?.classLevelName
+                || application?.level
+                || ''
+            ).trim();
+
+        const parts =
+            [className, levelName]
+                .filter(Boolean);
+
+        return parts.length
+            ? parts.join(' • ')
+            : '—';
+    }
+
+    function updateCompactSchoolVisitSummary(schoolVisit) {
+        if (!schoolVisit) {
+            setText(
+                'summary-appSchoolVisit',
+                formatEnum(
+                    state.currentApplication?.schoolVisitStatus
+                )
+            );
+
+            setText(
+                'summary-appResponsibleEmployee',
+                '—'
+            );
+
+            setText(
+                'summary-appResponsibleEmployeeNo',
+                '—'
+            );
+
+            return;
+        }
+
+        setText(
+            'summary-appSchoolVisit',
+            formatEnum(
+                schoolVisit.schoolVisitStatus
+            )
+        );
+
+        setText(
+            'summary-appResponsibleEmployee',
+            schoolVisit.employeeName
+            || '—'
+        );
+
+        setText(
+            'summary-appResponsibleEmployeeNo',
+            schoolVisit.employeeNo
+            || '—'
+        );
+    }
+
     function renderApplicationDetails(
         application
     ) {
@@ -1835,7 +2437,7 @@ const ApplicationsController = (() => {
 
         setText(
             'summary-appClass',
-            application.className
+            buildProfileClassLevel(application)
         );
 
         setText(
@@ -1860,6 +2462,37 @@ const ApplicationsController = (() => {
                 || application.scholarshipStatus
             )
         );
+
+        setText(
+            'summary-appCurrentStageStatus',
+            resolveProfileStageStatus(application)
+        );
+
+        updateCompactSchoolVisitSummary(
+            state.schoolVisit
+        );
+
+        setText(
+            'summary-appSubmitted',
+            application.createdAt
+                ? formatDateTime(
+                    application.createdAt,
+                    false
+                )
+                : (
+                    application.dateOfRegistration
+                    || '—'
+                )
+        );
+
+        setText(
+            'summary-appUpdated',
+            application.updatedAt
+                ? formatDateTime(application.updatedAt)
+                : '—'
+        );
+
+        renderWorkflowProgress(application);
 
         setText(
             'view-applicationNo',
@@ -2219,6 +2852,2018 @@ const ApplicationsController = (() => {
     }
 
 
+    async function loadFeeDiscussion(
+        applicationId,
+        options = {}
+    ) {
+        const {
+            render = true
+        } = options || {};
+
+        const id = Number(applicationId);
+
+        if (!Number.isInteger(id) || id <= 0) {
+            return null;
+        }
+
+        const currentStage =
+            state.currentApplication?.currentStage;
+
+        /*
+         * Fee Discussion remains visible after the application advances
+         * beyond PARENT_FEE_DISCUSSION. Always load the saved fee record for
+         * PARENT_FEE_DISCUSSION and all later admission stages so the profile
+         * and Edit Fee Structure modal receive the authoritative stored data.
+         */
+        if (!isFeeDiscussionStageOrLater(
+            currentStage
+        )) {
+            state.feeDiscussion = null;
+
+            if (render) {
+                renderFeeDiscussion(null);
+            }
+
+            return null;
+        }
+
+        try {
+            const response =
+                await apiGet(
+                    `${API_ROOT}/${encodeURIComponent(
+                        id
+                    )}/workflow/fee-discussion`
+                );
+
+            if (Number(state.currentApplicationId) !== id) {
+                return null;
+            }
+
+            const feeDiscussion =
+                unwrapResponseData(response);
+
+            state.feeDiscussion =
+                feeDiscussion || null;
+
+            if (render) {
+                renderFeeDiscussion(
+                    state.feeDiscussion
+                );
+            }
+
+            return state.feeDiscussion;
+        } catch (error) {
+            state.feeDiscussion = null;
+
+            if (isFeeDiscussionStageOrLater(
+                state.currentApplication?.currentStage
+            )) {
+                console.error(
+                    'Fee Discussion details could not be loaded.',
+                    error
+                );
+            }
+
+            if (render) {
+                renderFeeDiscussion(null);
+            }
+
+            return null;
+        }
+    }
+
+    function renderFeeDiscussion(feeDiscussion) {
+        const currentStage =
+            state.currentApplication?.currentStage;
+
+        const shouldShow =
+            isFeeDiscussionStageOrLater(
+                currentStage
+            );
+
+        toggleElement(
+            view.feeDiscussionSection,
+            shouldShow
+        );
+
+        if (!shouldShow) {
+            return;
+        }
+
+        const fee = feeDiscussion || {};
+        const hasSavedFee =
+            Boolean(fee.feeId);
+
+        /*
+         * First entry into PARENT_FEE_DISCUSSION:
+         * show the editable form directly.
+         *
+         * Once a fee record exists:
+         * hide the form and show the same read-only summary
+         * style used by School Visit / Entrance Test.
+         */
+        toggleElement(
+            view.feeInitialForm,
+            false
+        );
+
+        toggleElement(
+            view.feeCreatePrompt,
+            !hasSavedFee
+        );
+
+        toggleElement(
+            view.feeSavedView,
+            hasSavedFee
+        );
+
+        toggleElement(
+            view.feeDiscussionEditButton,
+            hasSavedFee
+            && isFeeDiscussionEditableStage(
+                currentStage,
+                fee
+            )
+        );
+
+        const feeDecision =
+            String(
+                fee.feeDecision
+                || ''
+            )
+                .trim()
+                .toUpperCase();
+
+        const canFinalizeFeeDiscussion =
+            hasSavedFee
+            && enumEquals(
+                currentStage,
+                'PARENT_FEE_DISCUSSION'
+            )
+            && feeDecision === 'FULL_PAYMENT';
+
+        toggleElement(
+            view.feeDiscussionFinalizeButton,
+            canFinalizeFeeDiscussion
+        );
+
+        const canCancelApplicationFromFee =
+            enumEquals(
+                currentStage,
+                'PARENT_FEE_DISCUSSION'
+            )
+            && !Boolean(
+                state.currentApplication?.workflowLocked
+            );
+
+        toggleElement(
+            view.feeDiscussionCancelApplicationButton,
+            canCancelApplicationFromFee
+        );
+
+        if (view.feeDiscussionFinalizeButton) {
+            view.feeDiscussionFinalizeButton.innerHTML =
+                '<i class="bi bi-arrow-right-circle"></i> Finalize & Continue to Payment';
+        }
+
+        if (!hasSavedFee) {
+            toggleElement(
+                view.feeDiscussionSaveButton,
+                false
+            );
+
+            const applicationId =
+                Number(state.currentApplicationId);
+
+            const shouldAutoOpen =
+                enumEquals(
+                    currentStage,
+                    'PARENT_FEE_DISCUSSION'
+                )
+                && Number.isInteger(applicationId)
+                && applicationId > 0
+                && state.feeCreateModalAutoOpenedForApplicationId
+                    !== applicationId
+                && !isModalOpen(view.feeEditModal);
+
+            if (shouldAutoOpen) {
+                state.feeCreateModalAutoOpenedForApplicationId =
+                    applicationId;
+
+                /*
+                 * Defer until the current profile render is complete.
+                 * This uses the same ERP modal UI as Edit Fee Structure.
+                 */
+                window.setTimeout(
+                    () => {
+                        if (
+                            Number(state.currentApplicationId)
+                                === applicationId
+                            && !state.feeDiscussion?.feeId
+                            && enumEquals(
+                                state.currentApplication?.currentStage,
+                                'PARENT_FEE_DISCUSSION'
+                            )
+                        ) {
+                            openFeeCreateModal();
+                        }
+                    },
+                    0
+                );
+            }
+
+            return;
+        }
+
+        setFeeSummaryText(
+            view.feeViewTermFee,
+            fee.termFee
+        );
+        setFeeSummaryText(
+            view.feeViewTransportFee,
+            fee.transportFee
+        );
+        setFeeSummaryText(
+            view.feeViewHostelFee,
+            fee.hostelFee
+        );
+        setFeeSummaryText(
+            view.feeViewUniformFee,
+            fee.uniformFee
+        );
+        setFeeSummaryText(
+            view.feeViewBooksFee,
+            fee.booksFee
+        );
+        setFeeSummaryText(
+            view.feeViewAdmissionFee,
+            fee.admissionFee
+        );
+        setFeeSummaryText(
+            view.feeViewOtherFee,
+            fee.otherFee
+        );
+        setFeeSummaryText(
+            view.feeViewBaseFeeAmount,
+            fee.baseFeeAmount
+        );
+        setFeeSummaryText(
+            view.feeViewParentCanPay,
+            fee.parentCanPay
+        );
+        setFeeSummaryText(
+            view.feeViewAssistanceRequired,
+            fee.assistanceRequired
+        );
+
+        setNodeText(
+            view.feeViewDecision,
+            formatFeeDecision(
+                fee.feeDecision
+            )
+        );
+
+        setNodeText(
+            view.feeViewDiscussionRemarks,
+            fee.discussionRemarks
+            || fee.remarks
+            || '—'
+        );
+    }
+
+    function setFeeSummaryText(element, value) {
+        const numeric = Number(value);
+
+        setNodeText(
+            element,
+            Number.isFinite(numeric)
+                ? formatFeeAmount(numeric)
+                : '—'
+        );
+    }
+
+    function formatFeeDecision(value) {
+        const normalized =
+            String(value || '')
+                .trim()
+                .toUpperCase();
+
+        if (normalized === 'FULL_PAYMENT') {
+            return 'Parent Can Pay Full Fee';
+        }
+
+        if (normalized === 'PARTIAL_ASSISTANCE') {
+            return 'Needs Partial Scholarship';
+        }
+
+        if (normalized === 'FULL_ASSISTANCE') {
+            return 'Needs Full Scholarship';
+        }
+
+        return 'Pending';
+    }
+
+    function isFeeDiscussionStageOrLater(stage) {
+        const order = [
+            'APPLICATION_DRAFT',
+            'APPLICATION_VERIFICATION',
+            'SCHOOL_VISIT',
+            'ENTRANCE_TEST',
+            'PARENT_FEE_DISCUSSION',
+            'SCHOLARSHIP',
+            'PAYMENT',
+            'FINAL_ADMISSION',
+            'ENROLLED',
+            'CLOSED'
+        ];
+
+        const currentIndex =
+            order.indexOf(
+                String(stage || '')
+                    .trim()
+                    .toUpperCase()
+            );
+
+        return currentIndex >=
+            order.indexOf(
+                'PARENT_FEE_DISCUSSION'
+            );
+    }
+
+    function isFeeDiscussionEditableStage(
+            stage,
+            feeDiscussion
+    ) {
+        const normalizedStage =
+            String(stage || '')
+                .trim()
+                .toUpperCase();
+
+        if (
+            normalizedStage === 'PARENT_FEE_DISCUSSION'
+            || normalizedStage === 'SCHOLARSHIP'
+        ) {
+            return true;
+        }
+
+        if (normalizedStage === 'PAYMENT') {
+            const amountPaid =
+                Number(
+                    feeDiscussion?.amountPaid
+                    ?? 0
+                );
+
+            return Number.isFinite(amountPaid)
+                && amountPaid <= 0;
+        }
+
+        return false;
+    }
+
+    function setFeeInputValue(input, value) {
+        if (!input) {
+            return;
+        }
+
+        const numeric = Number(value);
+
+        input.value =
+            Number.isFinite(numeric)
+                ? String(numeric)
+                : '0';
+    }
+
+    function readFeeInputValue(input) {
+        if (!input) {
+            return 0;
+        }
+
+        const value = Number(input.value || 0);
+
+        if (!Number.isFinite(value) || value < 0) {
+            return 0;
+        }
+
+        return value;
+    }
+
+    function formatFeeAmount(value) {
+        const numeric = Number(value);
+
+        return (
+            Number.isFinite(numeric)
+                ? numeric
+                : 0
+        ).toLocaleString(
+            'en-UG',
+            {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }
+        );
+    }
+
+    function getFeeDecisionValue() {
+        const checked =
+            view.feeDecisionOptions.find(
+                option => option.checked
+            );
+
+        return String(
+            checked?.value || 'PENDING'
+        ).toUpperCase();
+    }
+
+    function setFeeDecisionValue(decision) {
+        const normalized =
+            String(
+                decision || 'PENDING'
+            ).toUpperCase();
+
+        view.feeDecisionOptions.forEach(option => {
+            option.checked =
+                String(option.value).toUpperCase()
+                === normalized;
+        });
+    }
+
+    function renderFeeDecisionFields(decision) {
+        const normalized =
+            String(
+                decision || 'PENDING'
+            ).toUpperCase();
+
+        toggleElement(
+            view.feeContributionPanel,
+            normalized !== 'PENDING'
+        );
+
+        if (view.feeParentCanPay) {
+            view.feeParentCanPay.readOnly =
+                normalized !== 'PARTIAL_ASSISTANCE';
+        }
+    }
+
+    function updateFeeDiscussionAmounts() {
+        const total = [
+            view.feeTermFee,
+            view.feeTransportFee,
+            view.feeHostelFee,
+            view.feeUniformFee,
+            view.feeBooksFee,
+            view.feeAdmissionFee,
+            view.feeOtherFee
+        ].reduce(
+            (sum, input) =>
+                sum + readFeeInputValue(input),
+            0
+        );
+
+        const decision =
+            getFeeDecisionValue();
+
+        let parentCanPay =
+            readFeeInputValue(
+                view.feeParentCanPay
+            );
+
+        if (decision === 'FULL_PAYMENT') {
+            parentCanPay = total;
+
+            if (view.feeParentCanPay) {
+                view.feeParentCanPay.value =
+                    String(total);
+            }
+        }
+
+        if (decision === 'FULL_ASSISTANCE') {
+            parentCanPay = 0;
+
+            if (view.feeParentCanPay) {
+                view.feeParentCanPay.value = '0';
+            }
+        }
+
+        const assistanceRequired =
+            decision === 'PENDING'
+                ? 0
+                : Math.max(
+                    total - parentCanPay,
+                    0
+                );
+
+        if (view.feeBaseFeeAmount) {
+            view.feeBaseFeeAmount.value =
+                formatFeeAmount(total);
+        }
+
+        if (view.feeAssistanceRequired) {
+            view.feeAssistanceRequired.value =
+                formatFeeAmount(
+                    assistanceRequired
+                );
+        }
+
+        return {
+            total,
+            parentCanPay,
+            assistanceRequired,
+            decision
+        };
+    }
+
+    function validateFeeDecision(amounts) {
+        if (amounts.decision === 'PENDING') {
+            return 'Select the parent payment decision.';
+        }
+
+        if (
+            amounts.parentCanPay
+            > amounts.total
+        ) {
+            return 'Parent Contribution cannot exceed the Total Fee.';
+        }
+
+        if (
+            amounts.decision === 'PARTIAL_ASSISTANCE'
+            && (
+                amounts.parentCanPay <= 0
+                || amounts.assistanceRequired <= 0
+            )
+        ) {
+            return 'Partial Scholarship requires a parent contribution and a remaining scholarship amount.';
+        }
+
+        return '';
+    }
+
+    function renderScholarshipSection(
+            application = state.currentApplication
+    ) {
+        const feeDecision =
+            String(
+                state.feeDiscussion?.feeDecision
+                || ''
+            )
+                .trim()
+                .toUpperCase();
+
+        const assistanceSelected =
+            feeDecision === 'PARTIAL_ASSISTANCE'
+            || feeDecision === 'FULL_ASSISTANCE';
+
+        const currentStage =
+            String(
+                application?.currentStage
+                || ''
+            )
+                .trim()
+                .toUpperCase();
+
+        const rawStatus =
+            String(
+                application?.scholarshipWorkflowStatus
+                || application?.scholarshipStatus
+                || ''
+            )
+                .trim()
+                .toUpperCase();
+
+        const scholarshipRelevant =
+            currentStage === 'SCHOLARSHIP'
+            || (
+                currentStage === 'PARENT_FEE_DISCUSSION'
+                && Boolean(state.feeDiscussion?.feeId)
+                && assistanceSelected
+            )
+            || Boolean(rawStatus);
+
+        toggleElement(
+            view.scholarshipSection,
+            scholarshipRelevant
+        );
+
+        if (!scholarshipRelevant) {
+            return;
+        }
+
+        let displayStatus =
+            rawStatus
+                ? formatEnum(rawStatus)
+                : 'Awaiting Method';
+
+        /*
+         * Fee Discussion has already selected an assistance path, but no
+         * school/public Scholarship route has been chosen yet.
+         */
+        if (
+            currentStage === 'PARENT_FEE_DISCUSSION'
+            && assistanceSelected
+            && (
+                !rawStatus
+                || rawStatus === 'NOT_APPLIED'
+                || rawStatus === 'NOT_STARTED'
+                || rawStatus === 'PENDING'
+            )
+        ) {
+            displayStatus =
+                'Awaiting Method';
+        } else if (
+            rawStatus === 'LINK_SENT'
+        ) {
+            displayStatus =
+                'Link Sent - Awaiting Submission';
+        } else if (
+            rawStatus === 'IN_PROGRESS'
+        ) {
+            displayStatus =
+                'Scholarship Application In Progress';
+        } else if (
+            rawStatus === 'SUBMITTED'
+        ) {
+            displayStatus =
+                'Submitted';
+        }
+
+        if (view.scholarshipFormStatus) {
+            view.scholarshipFormStatus.textContent =
+                displayStatus;
+
+            view.scholarshipFormStatus.className =
+                'status-badge badge';
+        }
+
+        const submitted =
+            rawStatus === 'SUBMITTED';
+
+        /*
+         * The Admission dashboard is initiation/status only.
+         * The Scholarship form itself exists exclusively on
+         * /scholarship-application.html.
+         */
+        toggleElement(
+            view.scholarshipStartPanel,
+            !submitted
+        );
+    }
+
+    async function ensureScholarshipStageForInitiation(
+            applicationId
+    ) {
+        const currentStage =
+            String(
+                state.currentApplication?.currentStage
+                || ''
+            )
+                .trim()
+                .toUpperCase();
+
+        if (currentStage === 'SCHOLARSHIP') {
+            return;
+        }
+
+        if (currentStage !== 'PARENT_FEE_DISCUSSION') {
+            throw new Error(
+                'Scholarship Application can be started only from Parent Fee Discussion or Scholarship stage.'
+            );
+        }
+
+        const fee =
+            state.feeDiscussion;
+
+        const decision =
+            String(
+                fee?.feeDecision
+                || ''
+            )
+                .trim()
+                .toUpperCase();
+
+        if (!fee?.feeId) {
+            throw new Error(
+                'Save the Parent Fee Discussion before starting the Scholarship Application.'
+            );
+        }
+
+        if (
+            decision !== 'PARTIAL_ASSISTANCE'
+            && decision !== 'FULL_ASSISTANCE'
+        ) {
+            throw new Error(
+                'Select and save a Scholarship / Assistance decision before continuing.'
+            );
+        }
+
+        await apiPatchJson(
+            `${API_ROOT}/${encodeURIComponent(
+                applicationId
+            )}/workflow/fee-discussion/finalize`,
+            {}
+        );
+
+        const refreshed =
+            await synchronizeCurrentApplicationAfterMutation(
+                'fee-discussion-scholarship-finalized',
+                applicationId
+            );
+
+        if (!refreshed
+                || !enumEquals(
+                    state.currentApplication?.currentStage,
+                    'SCHOLARSHIP'
+                )) {
+            throw new Error(
+                'Fee Discussion was finalized, but the application did not move to Scholarship.'
+            );
+        }
+    }
+
+    async function openScholarshipFormAtSchool() {
+        const applicationId =
+            Number(
+                state.currentApplicationId
+            );
+
+        if (!Number.isInteger(applicationId)
+                || applicationId <= 0) {
+            notifyError(
+                'A valid Application ID is required.'
+            );
+            return;
+        }
+
+        /*
+         * Open the tab synchronously from the user click so browsers do not
+         * block it after the asynchronous finalize/key-generation requests.
+         */
+        let scholarshipWindow = null;
+
+        /*
+         * Prefer a separate tab. If the browser blocks it, do not stop the
+         * Scholarship process; after the secure key is generated we fall back
+         * to opening the Scholarship Application in the current tab.
+         */
+        try {
+            scholarshipWindow =
+                window.open(
+                    'about:blank',
+                    '_blank'
+                );
+
+            if (scholarshipWindow) {
+                scholarshipWindow.opener = null;
+            }
+        } catch (popupError) {
+            scholarshipWindow = null;
+
+            console.debug(
+                'Scholarship tab was blocked. Current-tab fallback will be used.',
+                popupError
+            );
+        }
+
+        let loaderToken = null;
+
+        try {
+            setButtonBusy(
+                view.scholarshipFillAtSchoolButton,
+                true,
+                'Opening...'
+            );
+
+            if (typeof showLoader === 'function') {
+                loaderToken = showLoader(
+                    'Preparing Scholarship Application...'
+                );
+            }
+
+            await ensureScholarshipStageForInitiation(
+                applicationId
+            );
+
+            const response =
+                await apiPost(
+                    `${API_ROOT}/${encodeURIComponent(
+                        applicationId
+                    )}/workflow/scholarship/school-access`,
+                    {}
+                );
+
+            const payload =
+                response?.data
+                ?? response;
+
+            const accessKey =
+                String(
+                    payload?.accessKey
+                    || ''
+                ).trim();
+
+            if (!accessKey) {
+                throw new Error(
+                    'Secure school Scholarship access could not be generated.'
+                );
+            }
+
+            const targetUrl =
+                `/scholarship-application#schoolKey=${encodeURIComponent(
+                    accessKey
+                )}`;
+
+            if (scholarshipWindow) {
+                scholarshipWindow.location.replace(
+                    targetUrl
+                );
+
+                /*
+                 * Release the blocking dashboard loader immediately after the
+                 * secure Scholarship page has been launched. A second full
+                 * applicant/profile reload is not part of opening the form and
+                 * must never keep the dashboard blocked.
+                 */
+                setButtonBusy(
+                    view.scholarshipFillAtSchoolButton,
+                    false
+                );
+
+                if (
+                    loaderToken
+                    && typeof hideLoader === 'function'
+                ) {
+                    hideLoader(
+                        loaderToken
+                    );
+                    loaderToken = null;
+                }
+
+                if (view.scholarshipFormStatus) {
+                    view.scholarshipFormStatus.textContent =
+                        'School Assisted - In Progress';
+                }
+
+                notifyIntermediateSuccess(
+                    'School-assisted Scholarship Application opened in a new tab.'
+                );
+
+                /*
+                 * Refresh the dashboard state in the background only.
+                 * Failure here must not affect the already-opened Scholarship
+                 * Application or re-block the operator.
+                 */
+                void synchronizeCurrentApplicationAfterMutation(
+                    'scholarship-school-access',
+                    applicationId
+                ).catch(error => {
+                    console.warn(
+                        'Scholarship dashboard background refresh failed.',
+                        error
+                    );
+                });
+
+                return;
+            }
+
+            /*
+             * Browser blocked the new tab. Fall back to the same tab rather
+             * than failing the Scholarship workflow.
+             */
+            try {
+                sessionStorage.setItem(
+                    'erpScholarshipReturnUrl',
+                    window.location.href
+                );
+            } catch (storageError) {
+                console.debug(
+                    'Scholarship return URL could not be stored.',
+                    storageError
+                );
+            }
+
+            if (
+                loaderToken
+                && typeof hideLoader === 'function'
+            ) {
+                hideLoader(
+                    loaderToken
+                );
+                loaderToken = null;
+            }
+
+            window.location.assign(
+                targetUrl
+            );
+
+            return;
+        } catch (error) {
+            if (scholarshipWindow) {
+                try {
+                    scholarshipWindow.close();
+                } catch (closeError) {
+                    console.warn(
+                        'Could not close the unused Scholarship tab.',
+                        closeError
+                    );
+                }
+            }
+
+            notifyError(
+                readErrorMessage(
+                    error,
+                    'Scholarship Application could not be opened.'
+                )
+            );
+        } finally {
+            setButtonBusy(
+                view.scholarshipFillAtSchoolButton,
+                false
+            );
+
+            if (
+                loaderToken
+                && typeof hideLoader === 'function'
+            ) {
+                hideLoader(loaderToken);
+            }
+        }
+    }
+
+    async function sendScholarshipApplicationLink() {
+        const applicationId =
+            Number(
+                state.currentApplicationId
+            );
+
+        if (!Number.isInteger(applicationId)
+                || applicationId <= 0) {
+            notifyError(
+                'A valid Application ID is required.'
+            );
+            return;
+        }
+
+        let loaderToken = null;
+
+        try {
+            setButtonBusy(
+                view.scholarshipSendLinkButton,
+                true,
+                'Sending...'
+            );
+
+            if (typeof showLoader === 'function') {
+                loaderToken = showLoader(
+                    'Preparing and Sending Scholarship Link...'
+                );
+            }
+
+            await ensureScholarshipStageForInitiation(
+                applicationId
+            );
+
+            await apiPost(
+                `${API_ROOT}/${encodeURIComponent(
+                    applicationId
+                )}/workflow/scholarship/application-link`,
+                {}
+            );
+
+            await synchronizeCurrentApplicationAfterMutation(
+                'scholarship-link',
+                applicationId
+            );
+
+            notifyIntermediateSuccess(
+                'Scholarship application link sent successfully.'
+            );
+        } catch (error) {
+            notifyError(
+                readErrorMessage(
+                    error,
+                    'Scholarship application link could not be sent.'
+                )
+            );
+        } finally {
+            setButtonBusy(
+                view.scholarshipSendLinkButton,
+                false
+            );
+
+            if (
+                loaderToken
+                && typeof hideLoader === 'function'
+            ) {
+                hideLoader(loaderToken);
+            }
+        }
+    }
+
+    async function saveFeeDiscussion() {
+        const applicationId =
+            Number(state.currentApplicationId);
+
+        if (!Number.isInteger(applicationId)
+                || applicationId <= 0) {
+            notifyError(
+                'A valid Application ID is required.'
+            );
+            return;
+        }
+
+        const amounts =
+            updateFeeDiscussionAmounts();
+
+        const validationMessage =
+            validateFeeDecision(amounts);
+
+        if (validationMessage) {
+            notifyError(validationMessage);
+            return;
+        }
+
+        const payload = {
+            termFee:
+                readFeeInputValue(view.feeTermFee),
+            transportFee:
+                readFeeInputValue(view.feeTransportFee),
+            hostelFee:
+                readFeeInputValue(view.feeHostelFee),
+            uniformFee:
+                readFeeInputValue(view.feeUniformFee),
+            booksFee:
+                readFeeInputValue(view.feeBooksFee),
+            admissionFee:
+                readFeeInputValue(view.feeAdmissionFee),
+            otherFee:
+                readFeeInputValue(view.feeOtherFee),
+            parentCanPay:
+                amounts.parentCanPay,
+            feeDecision:
+                amounts.decision,
+            discussionRemarks:
+                String(
+                    view.feeDiscussionRemarks?.value
+                    || ''
+                ).trim(),
+            changeReason:
+                null
+        };
+
+        let loaderToken = null;
+
+        try {
+            setButtonBusy(
+                view.feeDiscussionSaveButton,
+                true,
+                'Saving...'
+            );
+
+            if (typeof showLoader === 'function') {
+                loaderToken = showLoader(
+                    'Saving Fee Discussion...'
+                );
+            }
+
+            const response =
+                await apiPatchJson(
+                    `${API_ROOT}/${encodeURIComponent(
+                        applicationId
+                    )}/workflow/fee-discussion`,
+                    payload
+                );
+
+            state.feeDiscussion =
+                unwrapResponseData(response);
+
+            renderFeeDiscussion(
+                state.feeDiscussion
+            );
+
+            notifyIntermediateSuccess(
+                'Fee discussion saved successfully.'
+            );
+        } catch (error) {
+            notifyError(
+                readErrorMessage(
+                    error,
+                    'Fee discussion could not be saved.'
+                )
+            );
+        } finally {
+            setButtonBusy(
+                view.feeDiscussionSaveButton,
+                false
+            );
+
+            if (
+                loaderToken != null
+                && typeof hideLoader === 'function'
+            ) {
+                hideLoader(loaderToken);
+            }
+        }
+    }
+
+    function isModalOpen(modal) {
+        return Boolean(
+            modal
+            && !modal.classList.contains('hidden')
+        );
+    }
+
+    function configureFeeDiscussionModal(mode) {
+        const normalized =
+            String(mode || '')
+                .trim()
+                .toUpperCase();
+
+        const creating =
+            normalized === 'CREATE';
+
+        state.feeDiscussionModalMode =
+            creating
+                ? 'CREATE'
+                : 'EDIT';
+
+        setNodeText(
+            view.feeEditTitle,
+            creating
+                ? 'Parent Fee Discussion'
+                : 'Edit Fee Structure'
+        );
+
+        setNodeText(
+            view.feeEditSubtitle,
+            creating
+                ? 'Enter the fee structure and record the parent payment decision.'
+                : 'Update the saved fee discussion details.'
+        );
+
+        toggleElement(
+            view.editFeeChangeReasonGroup,
+            !creating
+        );
+
+        if (view.editFeeChangeReason) {
+            view.editFeeChangeReason.value = '';
+            view.editFeeChangeReason.required =
+                !creating;
+        }
+
+        setNodeText(
+            view.feeEditSaveButtonLabel,
+            creating
+                ? 'Save Fee Discussion'
+                : 'Save Changes'
+        );
+    }
+
+
+    function openCancelApplicationFromFeeModal() {
+        if (!state.currentApplicationId
+                || !state.currentApplication) {
+            notifyError('Open an application before cancelling it.');
+            return;
+        }
+
+        if (!enumEquals(
+                state.currentApplication.currentStage,
+                'PARENT_FEE_DISCUSSION'
+        )) {
+            notifyError(
+                'Application cancellation from this action is available only during Parent Fee Discussion.'
+            );
+            return;
+        }
+
+        const rejectTransition =
+            state.profileTransitions.find(
+                transition =>
+                    enumEquals(transition?.action, 'REJECT')
+                    && enumEquals(transition?.targetStage, 'CLOSED')
+            ) || null;
+
+        if (!rejectTransition) {
+            notifyError(
+                'The application cannot be cancelled at the current workflow state.'
+            );
+            return;
+        }
+
+        if (view.cancelApplicationFeeReason) {
+            view.cancelApplicationFeeReason.value = '';
+        }
+
+        setNodeText(view.cancelApplicationFeeError, '');
+        toggleElement(view.cancelApplicationFeeError, false);
+
+        openModal(view.cancelApplicationFeeModal);
+
+        window.setTimeout(
+            () => view.cancelApplicationFeeReason?.focus(),
+            0
+        );
+    }
+
+    function closeCancelApplicationFromFeeModal() {
+        closeModal(view.cancelApplicationFeeModal);
+
+        if (view.cancelApplicationFeeReason) {
+            view.cancelApplicationFeeReason.value = '';
+        }
+
+        setNodeText(view.cancelApplicationFeeError, '');
+        toggleElement(view.cancelApplicationFeeError, false);
+    }
+
+    async function cancelApplicationFromFeeDiscussion() {
+        const applicationId = state.currentApplicationId;
+        const application = state.currentApplication;
+
+        if (!applicationId || !application) {
+            notifyError('Application details are unavailable.');
+            return;
+        }
+
+        const reason =
+            trimValue(view.cancelApplicationFeeReason);
+
+        if (!reason) {
+            setNodeText(
+                view.cancelApplicationFeeError,
+                'Cancellation reason is required.'
+            );
+            toggleElement(view.cancelApplicationFeeError, true);
+            view.cancelApplicationFeeReason?.focus();
+            return;
+        }
+
+        const rejectTransition =
+            state.profileTransitions.find(
+                transition =>
+                    enumEquals(transition?.action, 'REJECT')
+                    && enumEquals(transition?.targetStage, 'CLOSED')
+            ) || null;
+
+        if (!rejectTransition) {
+            setNodeText(
+                view.cancelApplicationFeeError,
+                'The application can no longer be cancelled from Parent Fee Discussion.'
+            );
+            toggleElement(view.cancelApplicationFeeError, true);
+            return;
+        }
+
+        let loaderToken = null;
+
+        try {
+            setButtonBusy(
+                view.confirmCancelApplicationFeeButton,
+                true,
+                'Cancelling...'
+            );
+
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader('Cancelling admission application...');
+            }
+
+            const transitionResponse =
+                await submitWorkflowTransition(
+                    applicationId,
+                    application.currentStage,
+                    rejectTransition,
+                    null,
+                    reason
+                );
+
+            closeCancelApplicationFromFeeModal();
+
+            applyWorkflowResponseToProfile(
+                transitionResponse
+            );
+
+            try {
+                await openApplication(
+                    applicationId,
+                    {
+                        preserveScroll: true,
+                        silent: true
+                    }
+                );
+            } catch (refreshError) {
+                console.warn(
+                    'Application was cancelled, but the refreshed profile could not be loaded.',
+                    refreshError
+                );
+            }
+
+            notifySuccess(
+                'Admission application cancelled successfully.'
+            );
+        } catch (error) {
+            console.error(
+                'Cancel application from Fee Discussion failed:',
+                error
+            );
+
+            const message =
+                extractApiErrorMessage(
+                    error,
+                    'Application could not be cancelled.'
+                );
+
+            setNodeText(
+                view.cancelApplicationFeeError,
+                message
+            );
+            toggleElement(
+                view.cancelApplicationFeeError,
+                true
+            );
+        } finally {
+            setButtonBusy(
+                view.confirmCancelApplicationFeeButton,
+                false
+            );
+
+            if (loaderToken !== null
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+        }
+    }
+
+    async function finalizeFeeDiscussion() {
+        const applicationId =
+            Number(state.currentApplicationId);
+
+        if (!Number.isInteger(applicationId)
+                || applicationId <= 0) {
+            notifyError(
+                'A valid Application ID is required.'
+            );
+            return;
+        }
+
+        const fee =
+            state.feeDiscussion;
+
+        if (!fee?.feeId) {
+            notifyError(
+                'Save the Fee Discussion before finalizing it.'
+            );
+            return;
+        }
+
+        const currentStage =
+            String(
+                state.currentApplication?.currentStage
+                || ''
+            )
+                .trim()
+                .toUpperCase();
+
+        if (currentStage !== 'PARENT_FEE_DISCUSSION') {
+            notifyError(
+                'Fee Discussion can be finalized only while the application is in the Parent Fee Discussion stage.'
+            );
+            return;
+        }
+
+        const decision =
+            String(
+                fee.feeDecision
+                || ''
+            )
+                .trim()
+                .toUpperCase();
+
+        if (!decision
+                || decision === 'PENDING') {
+            notifyError(
+                'Select and save a final Fee Discussion decision before continuing.'
+            );
+            return;
+        }
+
+        const destination =
+            decision === 'FULL_PAYMENT'
+                ? 'Payment'
+                : 'Scholarship';
+
+        const confirmed =
+            window.confirm(
+                `Finalize Fee Discussion and continue to ${destination}?`
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        let loaderToken = null;
+
+        try {
+            setButtonBusy(
+                view.feeDiscussionFinalizeButton,
+                true,
+                'Finalizing...'
+            );
+
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader(
+                        'Finalizing Fee Discussion...'
+                    );
+            }
+
+            await apiPatchJson(
+                `${API_ROOT}/${encodeURIComponent(
+                    applicationId
+                )}/workflow/fee-discussion/finalize`,
+                {}
+            );
+
+            const refreshed =
+                await synchronizeCurrentApplicationAfterMutation(
+                    'fee-discussion-finalized',
+                    applicationId
+                );
+
+            if (!refreshed) {
+                throw new Error(
+                    'Fee Discussion was finalized, but the refreshed application profile could not be loaded.'
+                );
+            }
+
+            notifyIntermediateSuccess(
+                `Fee Discussion finalized. Application moved to ${destination}.`
+            );
+        } catch (error) {
+            notifyError(
+                readErrorMessage(
+                    error,
+                    'Fee Discussion could not be finalized.'
+                )
+            );
+        } finally {
+            setButtonBusy(
+                view.feeDiscussionFinalizeButton,
+                false
+            );
+
+            if (loaderToken != null
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+        }
+    }
+
+    function openFeeCreateModal() {
+        if (!enumEquals(
+            state.currentApplication?.currentStage,
+            'PARENT_FEE_DISCUSSION'
+        )) {
+            /*
+             * A workflow synchronization may complete after the deferred
+             * auto-open callback was queued. In that case the application has
+             * already moved forward, so simply ignore the stale callback.
+             */
+            return;
+        }
+
+        if (state.feeDiscussion?.feeId) {
+            openFeeEditModal();
+            return;
+        }
+
+        configureFeeDiscussionModal(
+            'CREATE'
+        );
+
+        [
+            view.editFeeTermFee,
+            view.editFeeTransportFee,
+            view.editFeeHostelFee,
+            view.editFeeUniformFee,
+            view.editFeeBooksFee,
+            view.editFeeAdmissionFee,
+            view.editFeeOtherFee,
+            view.editFeeParentCanPay
+        ].forEach(input => {
+            setFeeInputValue(
+                input,
+                0
+            );
+        });
+
+        view.editFeeDecisionOptions.forEach(
+            option => {
+                option.checked = false;
+            }
+        );
+
+        if (view.editFeeDiscussionRemarks) {
+            view.editFeeDiscussionRemarks.value = '';
+        }
+
+        setFeeEditError('');
+        renderFeeEditDecisionFields(
+            'PENDING'
+        );
+        updateFeeEditAmounts();
+
+        openModal(
+            view.feeEditModal
+        );
+
+        view.editFeeTermFee?.focus();
+    }
+
+    function openFeeEditModal() {
+        const fee =
+            state.feeDiscussion;
+
+        configureFeeDiscussionModal(
+            'EDIT'
+        );
+
+        if (!fee?.feeId) {
+            notifyError(
+                'No saved fee structure is available to edit.'
+            );
+            return;
+        }
+
+        setFeeInputValue(view.editFeeTermFee, fee.termFee);
+        setFeeInputValue(view.editFeeTransportFee, fee.transportFee);
+        setFeeInputValue(view.editFeeHostelFee, fee.hostelFee);
+        setFeeInputValue(view.editFeeUniformFee, fee.uniformFee);
+        setFeeInputValue(view.editFeeBooksFee, fee.booksFee);
+        setFeeInputValue(view.editFeeAdmissionFee, fee.admissionFee);
+        setFeeInputValue(view.editFeeOtherFee, fee.otherFee);
+        setFeeInputValue(view.editFeeParentCanPay, fee.parentCanPay);
+
+        const decision =
+            String(
+                fee.feeDecision || 'PENDING'
+            ).toUpperCase();
+
+        view.editFeeDecisionOptions.forEach(option => {
+            option.checked =
+                String(option.value).toUpperCase()
+                === decision;
+        });
+
+        if (view.editFeeDiscussionRemarks) {
+            view.editFeeDiscussionRemarks.value =
+                fee.discussionRemarks
+                || fee.remarks
+                || '';
+        }
+
+        if (view.editFeeChangeReason) {
+            view.editFeeChangeReason.value = '';
+        }
+
+        setFeeEditError('');
+        renderFeeEditDecisionFields(decision);
+        updateFeeEditAmounts();
+
+        openModal(
+            view.feeEditModal
+        );
+    }
+
+    function closeFeeEditModal() {
+        setFeeEditError('');
+
+        if (view.editFeeChangeReason) {
+            view.editFeeChangeReason.value = '';
+        }
+
+        state.feeDiscussionModalMode = null;
+
+        closeModal(
+            view.feeEditModal
+        );
+    }
+
+    function getFeeEditDecision() {
+        const checked =
+            view.editFeeDecisionOptions.find(
+                option => option.checked
+            );
+
+        return String(
+            checked?.value || 'PENDING'
+        ).toUpperCase();
+    }
+
+    function renderFeeEditDecisionFields(decision) {
+        const normalized =
+            String(
+                decision || 'PENDING'
+            ).toUpperCase();
+
+        const scholarshipSelected =
+            normalized === 'PARTIAL_ASSISTANCE'
+            || normalized === 'FULL_ASSISTANCE';
+
+        toggleElement(
+            view.editFeeContributionPanel,
+            normalized !== 'PENDING'
+        );
+
+        toggleElement(
+            view.editFeeScholarshipMethodPanel,
+            scholarshipSelected
+        );
+
+        if (view.editFeeParentCanPay) {
+            view.editFeeParentCanPay.readOnly =
+                normalized !== 'PARTIAL_ASSISTANCE';
+        }
+
+        if (view.editFeeParentContributionHelp) {
+            if (normalized === 'FULL_PAYMENT') {
+                view.editFeeParentContributionHelp.textContent =
+                    'Parent contribution is automatically set to the total fee.';
+            } else if (normalized === 'PARTIAL_ASSISTANCE') {
+                view.editFeeParentContributionHelp.textContent =
+                    'Enter the amount the parent / guardian can contribute.';
+            } else if (normalized === 'FULL_ASSISTANCE') {
+                view.editFeeParentContributionHelp.textContent =
+                    'Parent contribution is automatically set to 0.';
+            } else {
+                view.editFeeParentContributionHelp.textContent = '';
+            }
+        }
+
+        if (view.editFeeScholarshipMethodHelp) {
+            const hasSavedFee =
+                Boolean(state.feeDiscussion?.feeId);
+
+            view.editFeeScholarshipMethodHelp.textContent =
+                hasSavedFee
+                    ? 'Choose how the Scholarship Application will be completed.'
+                    : 'Choose an option below. The Fee Discussion will be saved first automatically.';
+        }
+
+        if (view.editFeeFillInSchoolButton) {
+            view.editFeeFillInSchoolButton.disabled = false;
+        }
+
+        if (view.editFeeSendLinkButton) {
+            view.editFeeSendLinkButton.disabled = false;
+        }
+    }
+
+    function updateFeeEditAmounts() {
+        const total = [
+            view.editFeeTermFee,
+            view.editFeeTransportFee,
+            view.editFeeHostelFee,
+            view.editFeeUniformFee,
+            view.editFeeBooksFee,
+            view.editFeeAdmissionFee,
+            view.editFeeOtherFee
+        ].reduce(
+            (sum, input) =>
+                sum + readFeeInputValue(input),
+            0
+        );
+
+        const decision =
+            getFeeEditDecision();
+
+        let parentCanPay =
+            readFeeInputValue(
+                view.editFeeParentCanPay
+            );
+
+        if (decision === 'FULL_PAYMENT') {
+            parentCanPay = total;
+
+            if (view.editFeeParentCanPay) {
+                view.editFeeParentCanPay.value =
+                    String(total);
+            }
+        }
+
+        if (decision === 'FULL_ASSISTANCE') {
+            parentCanPay = 0;
+
+            if (view.editFeeParentCanPay) {
+                view.editFeeParentCanPay.value = '0';
+            }
+        }
+
+        const assistanceRequired =
+            decision === 'PENDING'
+                ? 0
+                : Math.max(
+                    total - parentCanPay,
+                    0
+                );
+
+        if (view.editFeeBaseFeeAmount) {
+            view.editFeeBaseFeeAmount.value =
+                formatFeeAmount(total);
+        }
+
+        if (view.editFeeAssistanceRequired) {
+            view.editFeeAssistanceRequired.value =
+                formatFeeAmount(
+                    assistanceRequired
+                );
+        }
+
+        return {
+            total,
+            parentCanPay,
+            assistanceRequired,
+            decision
+        };
+    }
+
+    function setFeeEditError(message) {
+        if (!view.feeEditError) {
+            return;
+        }
+
+        const text =
+            String(message || '').trim();
+
+        view.feeEditError.textContent = text;
+
+        toggleElement(
+            view.feeEditError,
+            Boolean(text)
+        );
+    }
+
+    async function startScholarshipFromFeeModal(
+            method
+    ) {
+        const decision =
+            getFeeEditDecision();
+
+        if (
+            decision !== 'PARTIAL_ASSISTANCE'
+            && decision !== 'FULL_ASSISTANCE'
+        ) {
+            setFeeEditError(
+                'Select Partial Scholarship or Full Scholarship first.'
+            );
+            return;
+        }
+
+        /*
+         * For a new Fee Discussion, save it automatically before initiating
+         * the selected Scholarship route. For an existing Fee Discussion,
+         * staff should use Save Changes first if they edited any fee values.
+         */
+        if (!state.feeDiscussion?.feeId) {
+            const saved =
+                await saveFeeDiscussionModal({
+                    keepOpen: true,
+                    silentSuccess: true
+                });
+
+            if (!saved) {
+                return;
+            }
+        }
+
+        closeFeeEditModal();
+
+        if (method === 'SCHOOL') {
+            await openScholarshipFormAtSchool();
+            return;
+        }
+
+        await sendScholarshipApplicationLink();
+    }
+
+    async function saveFeeDiscussionModal(options = {}) {
+        const {
+            keepOpen = false,
+            silentSuccess = false
+        } = options || {};
+        const applicationId =
+            Number(state.currentApplicationId);
+
+        if (!Number.isInteger(applicationId)
+                || applicationId <= 0) {
+            setFeeEditError(
+                'A valid Application ID is required.'
+            );
+            return false;
+        }
+
+        const creating =
+            state.feeDiscussionModalMode
+                === 'CREATE';
+
+        if (
+            creating
+            && !enumEquals(
+                state.currentApplication?.currentStage,
+                'PARENT_FEE_DISCUSSION'
+            )
+        ) {
+            setFeeEditError(
+                'Fee Discussion is not available at the current stage.'
+            );
+            return false;
+        }
+
+        const amounts =
+            updateFeeEditAmounts();
+
+        const validationMessage =
+            validateFeeDecision(amounts);
+
+        if (validationMessage) {
+            setFeeEditError(validationMessage);
+            return false;
+        }
+
+        const changeReason =
+            String(
+                view.editFeeChangeReason?.value
+                || ''
+            ).trim();
+
+        if (!creating && !changeReason) {
+            setFeeEditError(
+                'Reason for Change is required.'
+            );
+            view.editFeeChangeReason?.focus();
+            return false;
+        }
+
+        const payload = {
+            termFee:
+                readFeeInputValue(view.editFeeTermFee),
+            transportFee:
+                readFeeInputValue(view.editFeeTransportFee),
+            hostelFee:
+                readFeeInputValue(view.editFeeHostelFee),
+            uniformFee:
+                readFeeInputValue(view.editFeeUniformFee),
+            booksFee:
+                readFeeInputValue(view.editFeeBooksFee),
+            admissionFee:
+                readFeeInputValue(view.editFeeAdmissionFee),
+            otherFee:
+                readFeeInputValue(view.editFeeOtherFee),
+            parentCanPay:
+                amounts.parentCanPay,
+            feeDecision:
+                amounts.decision,
+            discussionRemarks:
+                String(
+                    view.editFeeDiscussionRemarks?.value
+                    || ''
+                ).trim(),
+            changeReason:
+                creating
+                    ? null
+                    : changeReason
+        };
+
+        let loaderToken = null;
+
+        try {
+            setFeeEditError('');
+
+            setButtonBusy(
+                view.feeEditSaveButton,
+                true,
+                creating
+                    ? 'Saving...'
+                    : 'Updating...'
+            );
+
+            if (typeof showLoader === 'function') {
+                loaderToken = showLoader(
+                    creating
+                        ? 'Saving Fee Discussion...'
+                        : 'Updating Fee Structure...'
+                );
+            }
+
+            const response =
+                await apiPatchJson(
+                    `${API_ROOT}/${encodeURIComponent(
+                        applicationId
+                    )}/workflow/fee-discussion`,
+                    payload
+                );
+
+            state.feeDiscussion =
+                unwrapResponseData(response);
+
+            const scholarshipDecision =
+                amounts.decision === 'PARTIAL_ASSISTANCE'
+                || amounts.decision === 'FULL_ASSISTANCE';
+
+            const shouldKeepOpen =
+                keepOpen
+                || scholarshipDecision;
+
+            if (!shouldKeepOpen) {
+                closeFeeEditModal();
+            }
+
+            /*
+             * Saving Fee Discussion is non-transitional. Reload the
+             * authoritative profile so the dashboard and modal use the latest
+             * persisted values before a later explicit Payment/Scholarship
+             * continuation action.
+             */
+            const synchronized =
+                await synchronizeCurrentApplicationAfterMutation(
+                    creating
+                        ? 'fee-discussion-create'
+                        : 'fee-discussion-edit',
+                    applicationId
+                );
+
+            if (synchronized !== true) {
+                renderFeeDiscussion(
+                    state.feeDiscussion
+                );
+
+                await loadProfileTransitions(
+                    applicationId
+                );
+            }
+
+            if (shouldKeepOpen) {
+                state.feeDiscussionModalMode = 'EDIT';
+
+                setNodeText(
+                    view.feeEditTitle,
+                    'Parent Fee Discussion'
+                );
+
+                setNodeText(
+                    view.feeEditSubtitle,
+                    'Fee Discussion saved. Choose how the Scholarship Application will be completed.'
+                );
+
+                toggleElement(
+                    view.editFeeChangeReasonGroup,
+                    true
+                );
+
+                renderFeeEditDecisionFields(
+                    amounts.decision
+                );
+
+                view.editFeeScholarshipMethodPanel?.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'nearest'
+                });
+            }
+
+            if (!silentSuccess) {
+                notifyIntermediateSuccess(
+                    creating
+                        ? 'Fee discussion saved successfully.'
+                        : 'Fee structure updated successfully.'
+                );
+            }
+
+            return true;
+        } catch (error) {
+            setFeeEditError(
+                readErrorMessage(
+                    error,
+                    creating
+                        ? 'Fee discussion could not be saved.'
+                        : 'Fee structure could not be updated.'
+                )
+            );
+
+            return false;
+        } finally {
+            setButtonBusy(
+                view.feeEditSaveButton,
+                false
+            );
+
+            if (
+                loaderToken != null
+                && typeof hideLoader === 'function'
+            ) {
+                hideLoader(loaderToken);
+            }
+        }
+    }
+
     /**
      * Loads and renders the existing Entrance Test state.
      */
@@ -2414,16 +5059,60 @@ const ApplicationsController = (() => {
             && test.canComplete === true
         );
 
+        const canScheduleRetest =
+            enumEquals(
+                currentStage,
+                'ENTRANCE_TEST'
+            )
+            && status === 'COMPLETED'
+            && result === 'FAILED'
+            && test.canSchedule === true
+            && test.applicationWaitlisted !== true;
+
         toggleElement(
-            view.entranceTestUpdateResultButton,
+            view.entranceTestRetestButton,
+            canScheduleRetest
+        );
+
+        const legacyWaitlistResultAction =
             enumEquals(
                 currentStage,
                 'ENTRANCE_TEST'
             )
             && status === 'COMPLETED'
             && result === 'WAITLIST'
-            && test.canUpdateWaitlistResult === true
+            && test.canUpdateWaitlistResult === true;
+
+        const applicationWaitlistAction =
+            enumEquals(
+                currentStage,
+                'ENTRANCE_TEST'
+            )
+            && status === 'COMPLETED'
+            && (result === 'PASSED' || result === 'FAILED')
+            && (
+                test.canPlaceOnWaitlist === true
+                || test.canReleaseFromWaitlist === true
+            );
+
+        toggleElement(
+            view.entranceTestUpdateResultButton,
+            legacyWaitlistResultAction
+            || applicationWaitlistAction
         );
+
+        if (view.entranceTestUpdateResultButton) {
+            if (legacyWaitlistResultAction) {
+                view.entranceTestUpdateResultButton.innerHTML =
+                    '<i class="bi bi-arrow-repeat"></i> Update Waitlist Result';
+            } else if (test.applicationWaitlisted === true) {
+                view.entranceTestUpdateResultButton.innerHTML =
+                    '<i class="bi bi-box-arrow-up-right"></i> Release from Waitlist';
+            } else {
+                view.entranceTestUpdateResultButton.innerHTML =
+                    '<i class="bi bi-hourglass-split"></i> Place on Waitlist';
+            }
+        }
 
         if (state.currentApplication) {
             state.currentApplication.testStatus =
@@ -2436,6 +5125,11 @@ const ApplicationsController = (() => {
                             : result === 'RETEST_REQUIRED'
                                 ? 'RETEST_REQUIRED'
                                 : state.currentApplication.testStatus;
+
+            if (test.applicationStatus) {
+                state.currentApplication.applicationStatus =
+                    test.applicationStatus;
+            }
         }
     }
 
@@ -2541,23 +5235,214 @@ const ApplicationsController = (() => {
         );
     }
 
+
+    function openEntranceTestRetestModal() {
+        const test =
+            state.entranceTest;
+
+        if (!test
+                || !state.currentApplicationId
+                || test.canSchedule !== true
+                || String(test.status || '').toUpperCase() !== 'COMPLETED'
+                || String(test.result || '').toUpperCase() !== 'FAILED'
+                || test.applicationWaitlisted === true) {
+            return;
+        }
+
+        view.entranceTestRetestForm?.reset();
+        clearCalendarInput(
+            view.entranceTestRetestScheduledAt
+        );
+        clearInlineError(
+            view.entranceTestRetestError
+        );
+
+        openModal(
+            view.entranceTestRetestModal
+        );
+    }
+
+    function closeEntranceTestRetestModal() {
+        closeModal(
+            view.entranceTestRetestModal
+        );
+
+        view.entranceTestRetestForm?.reset();
+
+        clearCalendarInput(
+            view.entranceTestRetestScheduledAt
+        );
+
+        clearInlineError(
+            view.entranceTestRetestError
+        );
+    }
+
+    async function submitEntranceTestRetest() {
+        const test =
+            state.entranceTest;
+
+        if (!test || !state.currentApplicationId) {
+            return;
+        }
+
+        clearInlineError(
+            view.entranceTestRetestError
+        );
+
+        const scheduledAt =
+            trimValue(
+                view.entranceTestRetestScheduledAt
+            );
+
+        if (!scheduledAt) {
+            showInlineError(
+                view.entranceTestRetestError,
+                'Retest date and time are required.'
+            );
+            return;
+        }
+
+        const employeeId =
+            Number(test.employeeId);
+
+        if (!Number.isFinite(employeeId)
+                || employeeId <= 0) {
+            showInlineError(
+                view.entranceTestRetestError,
+                'The responsible Entrance Test employee is unavailable.'
+            );
+            return;
+        }
+
+        const remarks =
+            trimValue(
+                view.entranceTestRetestRemarks
+            );
+
+        let loaderToken = null;
+
+        try {
+            setButtonBusy(
+                view.entranceTestRetestSaveButton,
+                true,
+                'Scheduling...'
+            );
+
+            if (typeof showLoader === 'function') {
+                loaderToken =
+                    showLoader(
+                        'Scheduling Entrance Test retest...'
+                    );
+            }
+
+            const response =
+                await apiPost(
+                    `${API_ROOT}/${encodeURIComponent(
+                        state.currentApplicationId
+                    )}/workflow/entrance-test/schedule`,
+                    {
+                        employeeId,
+                        scheduledAt,
+                        employeeRemarks:
+                            remarks || null,
+                        internalRemarks:
+                            null
+                    }
+                );
+
+            state.entranceTest =
+                unwrapResponseData(
+                    response
+                );
+
+            closeEntranceTestRetestModal();
+
+            renderEntranceTest(
+                state.entranceTest
+            );
+
+            const refreshed =
+                await synchronizeCurrentApplicationAfterMutation(
+                    'entrance-test-retest-scheduled',
+                    Number(
+                        state.currentApplicationId
+                    )
+                );
+
+            if (!refreshed) {
+                throw new Error(
+                    'The retest was scheduled, but the refreshed Application profile could not be loaded.'
+                );
+            }
+
+            notifyIntermediateSuccess(
+                'Entrance Test retest scheduled successfully.'
+            );
+        } catch (error) {
+            showInlineError(
+                view.entranceTestRetestError,
+                error?.message
+                    || 'Unable to schedule the Entrance Test retest.'
+            );
+        } finally {
+            setButtonBusy(
+                view.entranceTestRetestSaveButton,
+                false,
+                '<i class="bi bi-arrow-repeat"></i> Schedule Retest'
+            );
+
+            if (loaderToken != null
+                    && typeof hideLoader === 'function') {
+                hideLoader(loaderToken);
+            }
+        }
+    }
+
     function openWaitlistResultModal() {
         const test =
             state.entranceTest;
 
-        if (
-            !test
-            || String(test.status || '').toUpperCase()
-            !== 'COMPLETED'
-            || String(test.result || '').toUpperCase()
-            !== 'WAITLIST'
-            || test.canUpdateWaitlistResult !== true
-        ) {
+        if (!test) {
             notifyError(
-                'This Entrance Test is not available for a waitlist final decision.'
+                'Entrance Test details are unavailable.'
             );
             return;
         }
+
+        const status =
+            String(test.status || '').toUpperCase();
+
+        const result =
+            String(test.result || '').toUpperCase();
+
+        const legacyWaitlistResultAction =
+            status === 'COMPLETED'
+            && result === 'WAITLIST'
+            && test.canUpdateWaitlistResult === true;
+
+        const applicationWaitlistAction =
+            status === 'COMPLETED'
+            && (result === 'PASSED' || result === 'FAILED')
+            && (
+                test.canPlaceOnWaitlist === true
+                || test.canReleaseFromWaitlist === true
+            );
+
+        if (
+            !legacyWaitlistResultAction
+            && !applicationWaitlistAction
+        ) {
+            notifyError(
+                'This Entrance Test is not available for a waitlist action.'
+            );
+            return;
+        }
+
+        state.waitlistActionMode =
+            legacyWaitlistResultAction
+                ? 'LEGACY_RESULT'
+                : 'APPLICATION_WAITLIST';
 
         if (view.waitlistFinalResultSelect) {
             view.waitlistFinalResultSelect.value =
@@ -2576,6 +5461,71 @@ const ApplicationsController = (() => {
         renderWaitlistResultMarks(
             test.marks
         );
+
+        const releasing =
+            test.applicationWaitlisted === true;
+
+        toggleElement(
+            view.waitlistFinalDecisionGroup,
+            legacyWaitlistResultAction
+        );
+
+        if (view.waitlistCurrentResultInput) {
+            view.waitlistCurrentResultInput.value =
+                legacyWaitlistResultAction
+                    ? 'Waitlist'
+                    : formatEnum(result);
+        }
+
+        if (legacyWaitlistResultAction) {
+            setNodeText(
+                view.waitlistResultTitle,
+                'Update Legacy Waitlist Result'
+            );
+
+            setNodeText(
+                view.waitlistResultDescription,
+                'Finalize this legacy waitlisted Entrance Test as Pass or Fail.'
+            );
+
+            setNodeText(
+                view.waitlistResultRemarksLabel,
+                'Decision Remarks *'
+            );
+
+            if (view.waitlistResultSaveButton) {
+                view.waitlistResultSaveButton.innerHTML =
+                    '<i class="bi bi-check-circle"></i> Save Final Result';
+            }
+        } else {
+            setNodeText(
+                view.waitlistResultTitle,
+                releasing
+                    ? 'Release from Waitlist'
+                    : 'Place on Waitlist'
+            );
+
+            setNodeText(
+                view.waitlistResultDescription,
+                releasing
+                    ? 'Release this application from the waitlist without changing its Entrance Test result or marks.'
+                    : 'Place this application on the waitlist without changing its Entrance Test result or marks.'
+            );
+
+            setNodeText(
+                view.waitlistResultRemarksLabel,
+                releasing
+                    ? 'Release Remarks *'
+                    : 'Waitlist Remarks *'
+            );
+
+            if (view.waitlistResultSaveButton) {
+                view.waitlistResultSaveButton.innerHTML =
+                    releasing
+                        ? '<i class="bi bi-box-arrow-up-right"></i> Release from Waitlist'
+                        : '<i class="bi bi-hourglass-split"></i> Place on Waitlist';
+            }
+        }
 
         openModal(
             view.waitlistResultModal
@@ -2678,11 +5628,15 @@ const ApplicationsController = (() => {
             return;
         }
 
-        const result =
-            String(
-                view.waitlistFinalResultSelect?.value
-                || ''
-            ).toUpperCase();
+        const test =
+            state.entranceTest;
+
+        if (!test) {
+            notifyError(
+                'Entrance Test details are unavailable.'
+            );
+            return;
+        }
 
         const remarks =
             String(
@@ -2690,23 +5644,37 @@ const ApplicationsController = (() => {
                 || ''
             ).trim();
 
-        if (
-            result !== 'PASSED'
-            && result !== 'FAILED'
-        ) {
+        if (!remarks) {
             showInlineError(
                 view.waitlistResultError,
-                'Select Pass or Fail.'
+                'Remarks are required.'
             );
             return;
         }
 
-        if (!remarks) {
-            showInlineError(
-                view.waitlistResultError,
-                'Decision remarks are required.'
-            );
-            return;
+        const legacyMode =
+            state.waitlistActionMode
+            === 'LEGACY_RESULT';
+
+        let result = null;
+
+        if (legacyMode) {
+            result =
+                String(
+                    view.waitlistFinalResultSelect?.value
+                    || ''
+                ).toUpperCase();
+
+            if (
+                result !== 'PASSED'
+                && result !== 'FAILED'
+            ) {
+                showInlineError(
+                    view.waitlistResultError,
+                    'Select Pass or Fail.'
+                );
+                return;
+            }
         }
 
         clearInlineError(
@@ -2725,56 +5693,76 @@ const ApplicationsController = (() => {
             if (typeof showLoader === 'function') {
                 loaderToken =
                     showLoader(
-                        'Saving Entrance Test final result...'
+                        legacyMode
+                            ? 'Saving Entrance Test final result...'
+                            : test.applicationWaitlisted === true
+                                ? 'Releasing application from waitlist...'
+                                : 'Placing application on waitlist...'
                     );
             }
 
-            await apiPatchJson(
-                `${API_ROOT}/${encodeURIComponent(
-                    applicationId
-                )}/workflow/entrance-test/waitlist-result`,
-                {
-                    result,
-                    remarks
-                }
-            );
+            if (legacyMode) {
+                await apiPatchJson(
+                    `${API_ROOT}/${encodeURIComponent(
+                        applicationId
+                    )}/workflow/entrance-test/waitlist-result`,
+                    {
+                        result,
+                        remarks
+                    }
+                );
+            } else {
+                await apiPatchJson(
+                    `${API_ROOT}/${encodeURIComponent(
+                        applicationId
+                    )}/workflow/entrance-test/waitlist`,
+                    {
+                        waitlisted:
+                            test.applicationWaitlisted !== true,
+                        remarks
+                    }
+                );
+            }
+
+            const wasWaitlisted =
+                test.applicationWaitlisted === true;
 
             closeWaitlistResultModal();
 
-            /*
-             * Keep the global foreground loader and screen lock active while
-             * the authoritative profile is synchronized. The user should
-             * never see the old WAITLIST state as if the operation finished.
-             */
             const refreshed =
                 await synchronizeCurrentApplicationAfterMutation(
-                    'entrance-test-waitlist-result',
+                    legacyMode
+                        ? 'entrance-test-waitlist-result'
+                        : 'entrance-test-application-waitlist',
                     applicationId
                 );
 
             if (!refreshed) {
                 throw new Error(
-                    'The final result was saved, but the refreshed Application profile could not be loaded.'
+                    legacyMode
+                        ? 'The final result was saved, but the refreshed Application profile could not be loaded.'
+                        : 'The waitlist action was saved, but the refreshed Application profile could not be loaded.'
                 );
             }
 
-            notifySuccess(
-                result === 'PASSED'
-                    ? 'Waitlist result updated to Pass successfully.'
-                    : 'Waitlist result updated to Fail successfully.'
+            notifyIntermediateSuccess(
+                legacyMode
+                    ? result === 'PASSED'
+                        ? 'Legacy waitlist result updated to Pass successfully.'
+                        : 'Legacy waitlist result updated to Fail successfully.'
+                    : wasWaitlisted
+                        ? 'Application released from waitlist successfully.'
+                        : 'Application placed on waitlist successfully.'
             );
         } catch (error) {
             const message =
                 readErrorMessage(
                     error,
-                    'Entrance Test result could not be updated.'
+                    legacyMode
+                        ? 'Entrance Test result could not be updated.'
+                        : 'Application waitlist status could not be updated.'
                 );
 
-            /*
-             * If the modal is still open, show the problem inline.
-             * If the PATCH committed and only the later refresh failed,
-             * surface the error globally because the modal has already closed.
-             */
             if (
                 view.waitlistResultModal
                 && !view.waitlistResultModal.classList.contains(
@@ -2795,9 +5783,7 @@ const ApplicationsController = (() => {
                 loaderToken
                 && typeof hideLoader === 'function'
             ) {
-                hideLoader(
-                    loaderToken
-                );
+                hideLoader(loaderToken);
             }
 
             setButtonBusy(
@@ -3407,7 +6393,7 @@ const ApplicationsController = (() => {
                 );
             }
 
-            notifySuccess(
+            notifyIntermediateSuccess(
                 'Entrance Test result saved successfully.'
             );
         } catch (error) {
@@ -3669,6 +6655,10 @@ const ApplicationsController = (() => {
             displayValue(
                 schoolVisit.remarks
             )
+        );
+
+        updateCompactSchoolVisitSummary(
+            schoolVisit
         );
 
         if (view.schoolVisitStageMessage) {
@@ -4127,7 +7117,7 @@ const ApplicationsController = (() => {
                     );
                 }
 
-                notifySuccess(
+                notifyIntermediateSuccess(
                     'School Visit scheduled and application moved to School Visit successfully.'
                 );
 
@@ -4180,7 +7170,7 @@ const ApplicationsController = (() => {
                 window.erpCancelPendingDataSync();
             }
 
-            notifySuccess(
+            notifyIntermediateSuccess(
                 reschedule
                     ? 'School Visit rescheduled successfully.'
                     : 'School Visit scheduled successfully.'
@@ -4384,37 +7374,47 @@ const ApplicationsController = (() => {
             return false;
         }
 
-        let synchronized = false;
+        /*
+         * The active Application Profile is the authoritative UI for the
+         * admission workflow. After every successful mutation, reload the
+         * application and all stage-owned resources FIRST.
+         *
+         * Do not trust a generic global-sync "handled" flag to mean that the
+         * current profile was actually refreshed.
+         */
+        let synchronized =
+            await openApplication(
+                id,
+                {
+                    preservePosition: true,
+                    silent: true
+                }
+            );
 
+        if (synchronized !== true) {
+            return false;
+        }
+
+        /*
+         * Refresh list/global observers only after the active profile is
+         * authoritative. Failure here must not make the workflow appear to
+         * have failed when the profile itself is already synchronized.
+         */
         if (
             typeof window.erpFlushDataSync
             === 'function'
         ) {
-            synchronized =
+            try {
                 await window.erpFlushDataSync({
                     source,
                     applicationId: id
                 });
-        }
-
-        /*
-         * Never allow a successful backend mutation to leave the profile
-         * stale merely because the global registry was unavailable or did
-         * not handle this active view.
-         */
-        if (synchronized !== true) {
-            synchronized =
-                await openApplication(
-                    id,
-                    {
-                        preservePosition: true,
-                        silent: true
-                    }
+            } catch (error) {
+                console.warn(
+                    'Global Applications synchronization failed after the active profile was refreshed.',
+                    error
                 );
-        }
-
-        if (synchronized !== true) {
-            return false;
+            }
         }
 
         /*
@@ -4616,7 +7616,7 @@ const ApplicationsController = (() => {
                 );
             }
 
-            notifySuccess(
+            notifyIntermediateSuccess(
                 'Attendance recorded and application moved to Entrance Test successfully.'
             );
         } catch (error) {
@@ -5400,7 +8400,7 @@ const ApplicationsController = (() => {
                 state.currentApplicationId
             );
 
-            notifySuccess(
+            notifyIntermediateSuccess(
                 decision === 'VERIFY'
                     ? 'Document verified successfully.'
                     : decision === 'REJECT'
@@ -5568,7 +8568,7 @@ const ApplicationsController = (() => {
                 state.currentApplicationId
             );
 
-            notifySuccess(
+            notifyIntermediateSuccess(
                 'Document request created. Email status will update '
                 + 'automatically without reloading the profile.'
             );
@@ -5696,7 +8696,7 @@ const ApplicationsController = (() => {
                 state.currentApplicationId
             );
 
-            notifySuccess(
+            notifyIntermediateSuccess(
                 'Document request cancelled successfully.'
             );
         } catch (error) {
@@ -5955,7 +8955,8 @@ const ApplicationsController = (() => {
 
         if (!Number.isInteger(expectedApplicationId)
                 || expectedApplicationId <= 0
-                || state.documentSyncBusy) {
+                || state.documentSyncBusy
+                || state.profileLoadBusy) {
             return;
         }
 
@@ -6072,6 +9073,34 @@ const ApplicationsController = (() => {
                 unwrapResponseData(
                     applicationResponse
                 ) || {};
+
+            const previousStage =
+                state.currentApplication?.currentStage;
+
+            /*
+             * A stage change invalidates all stage-owned UI. Do not patch only
+             * documents/transitions while leaving Fee Discussion, Scholarship,
+             * School Visit or Entrance Test stale.
+             *
+             * Perform one complete authoritative profile reload instead.
+             */
+            if (
+                latestApplication?.currentStage
+                && !enumEquals(
+                    previousStage,
+                    latestApplication.currentStage
+                )
+            ) {
+                await openApplication(
+                    expectedApplicationId,
+                    {
+                        preservePosition: true,
+                        silent: true
+                    }
+                );
+
+                return;
+            }
 
             /*
              * Always trust the backend for the workflow stage/status.
@@ -6273,7 +9302,9 @@ const ApplicationsController = (() => {
                         return;
                     }
 
-                    if (document.hidden) {
+                    if (document.hidden
+                            || state.profileLoadBusy
+                            || state.documentSyncBusy) {
                         return;
                     }
 
@@ -6671,6 +9702,10 @@ const ApplicationsController = (() => {
 
         showElement(view.tableComponent);
         hideElement(view.detailComponent);
+
+        view.root?.classList.remove(
+            'app-profile-mode'
+        );
 
         state.currentApplicationId = null;
         state.currentApplication = null;
@@ -7454,16 +10489,43 @@ const ApplicationsController = (() => {
 
             if (keepProfileOpen
                     && transitionResponse) {
+
+                /*
+                 * A successful workflow transition can change both the major
+                 * stage and the stage-owned UI/data that must now be shown.
+                 *
+                 * Do not refresh only School Visit + transitions here.
+                 * Reopen/synchronize the authoritative Application Profile so
+                 * the correct stage section, actions and stage-specific data
+                 * are loaded immediately.
+                 *
+                 * Examples:
+                 * ENTRANCE_TEST -> PARENT_FEE_DISCUSSION
+                 *     loads the first-time manual Fee Discussion form.
+                 *
+                 * PARENT_FEE_DISCUSSION -> SCHOLARSHIP/PAYMENT
+                 *     loads the new stage and its actions immediately.
+                 */
                 applyWorkflowResponseToProfile(
                     transitionResponse
                 );
-                await loadSchoolVisit(
-                    applicationId
-                );
 
-                await loadProfileTransitions(
-                    applicationId
-                );
+                const synchronized =
+                    await synchronizeCurrentApplicationAfterMutation(
+                        'workflow-transition',
+                        applicationId
+                    );
+
+                if (synchronized !== true) {
+                    /*
+                     * Last-resort local refresh. The synchronization helper
+                     * already attempts openApplication(), but keep transitions
+                     * fresh if a host/global synchronizer reports failure.
+                     */
+                    await loadProfileTransitions(
+                        applicationId
+                    );
+                }
             }
         } catch (error) {
             errorMessage =
@@ -7487,7 +10549,7 @@ const ApplicationsController = (() => {
             showTableView();
         }
 
-        notifySuccess(
+        notifyIntermediateSuccess(
             'Application moved to the next admission stage successfully.'
         );
     }
@@ -7568,7 +10630,7 @@ const ApplicationsController = (() => {
             return;
         }
 
-        notifySuccess(
+        notifyIntermediateSuccess(
             `${completed} application(s) moved to the next admission stage successfully.`
         );
     }
@@ -7695,29 +10757,49 @@ const ApplicationsController = (() => {
             return;
         }
 
-        view.profileNextStageButton.classList.remove(
-            'hidden'
-        );
-
-        const continueEnabled =
+        const actionAvailable =
             Boolean(transition);
 
+        toggleElement(
+            view.profileNextStageButton,
+            actionAvailable
+        );
+
         view.profileNextStageButton.disabled =
-            !continueEnabled;
+            !actionAvailable;
 
         view.profileNextStageButton.setAttribute(
             'aria-disabled',
-            String(!continueEnabled)
+            String(!actionAvailable)
+        );
+
+        if (!actionAvailable) {
+            setNodeText(
+                view.profileNextStageButtonLabel,
+                'Next Action'
+            );
+
+            view.profileNextStageButton.title =
+                'No stage transition is currently available. Use the active stage section for any required action.';
+
+            return;
+        }
+
+        const buttonLabel =
+            compactWorkflowActionLabel(
+                transition.label,
+                transition.targetStage
+            );
+
+        setNodeText(
+            view.profileNextStageButtonLabel,
+            buttonLabel
         );
 
         view.profileNextStageButton.title =
-            continueEnabled
-                ? (
-                    transition?.label
-                        ? `Continue: ${transition.label}`
-                        : 'Continue to the next application stage.'
-                )
-                : 'Continue is unavailable until all pending requirements are completed.';
+            transition?.label
+                ? String(transition.label)
+                : buttonLabel;
     }
 
     function applyWorkflowResponseToProfile(
@@ -7795,6 +10877,39 @@ const ApplicationsController = (() => {
             'summary-appScholarship',
             formatEnum(response.scholarshipWorkflowStatus)
         );
+
+        if (state.currentApplication) {
+            setText(
+                'summary-appCurrentStageStatus',
+                resolveProfileStageStatus(
+                    state.currentApplication
+                )
+            );
+
+            renderWorkflowProgress(
+                state.currentApplication
+            );
+        }
+
+        if (state.currentApplication) {
+            setText(
+                'summary-appCurrentStageStatus',
+                resolveProfileStageStatus(
+                    state.currentApplication
+                )
+            );
+
+            setText(
+                'summary-appDocuments',
+                formatEnum(
+                    state.currentApplication.documentStatus
+                )
+            );
+
+            renderWorkflowProgress(
+                state.currentApplication
+            );
+        }
         setText(
             'view-paymentStatus',
             formatEnum(response.paymentStatus)
@@ -7803,6 +10918,66 @@ const ApplicationsController = (() => {
             'view-admissionStatus',
             formatEnum(response.admissionStatus)
         );
+    }
+
+    function resolveLegacyStageStatus(record) {
+        const stage =
+            String(
+                record?.currentStage
+                || ''
+            ).trim().toUpperCase();
+
+        if (stage === 'APPLICATION_VERIFICATION') {
+            return `Documents: ${
+                formatEnum(record?.documentStatus)
+            }`;
+        }
+
+        if (stage === 'SCHOOL_VISIT') {
+            return `Visit: ${
+                formatEnum(record?.schoolVisitStatus)
+            }`;
+        }
+
+        if (stage === 'ENTRANCE_TEST') {
+            return `Test: ${
+                formatEnum(record?.testStatus)
+            }`;
+        }
+
+        if (stage === 'PARENT_FEE_DISCUSSION') {
+            return `Fee: ${
+                formatEnum(record?.feeDecisionStatus)
+            }`;
+        }
+
+        if (stage === 'SCHOLARSHIP') {
+            return `Scholarship: ${
+                formatEnum(record?.scholarshipStatus)
+            }`;
+        }
+
+        if (stage === 'PAYMENT') {
+            return `Payment: ${
+                formatEnum(record?.paymentStatus)
+            }`;
+        }
+
+        if (stage === 'FINAL_ADMISSION') {
+            return `Admission: ${
+                formatEnum(record?.admissionStatus)
+            }`;
+        }
+
+        if (stage === 'ENROLLED') {
+            return 'Completed';
+        }
+
+        if (stage === 'CLOSED') {
+            return 'Application: Closed';
+        }
+
+        return 'Stage: Not Available';
     }
 
     function compactWorkflowActionLabel(
@@ -8061,6 +11236,16 @@ const ApplicationsController = (() => {
             return;
         }
 
+        const activeElement =
+            window.document.activeElement;
+
+        modal.__erpPreviouslyFocusedElement =
+            activeElement
+                    && activeElement !== window.document.body
+                    && !modal.contains(activeElement)
+                ? activeElement
+                : null;
+
         modal.classList.remove('hidden');
         modal.setAttribute(
             'aria-hidden',
@@ -8078,6 +11263,37 @@ const ApplicationsController = (() => {
         if (!modal) {
             return;
         }
+
+        /*
+         * A focused element must not remain inside a container that is about
+         * to become aria-hidden. Move focus out first, then hide the modal.
+         */
+        const activeElement =
+            window.document.activeElement;
+
+        if (activeElement
+                && modal.contains(activeElement)
+                && typeof activeElement.blur === 'function') {
+            activeElement.blur();
+        }
+
+        const previousFocus =
+            modal.__erpPreviouslyFocusedElement;
+
+        if (previousFocus
+                && previousFocus.isConnected
+                && typeof previousFocus.focus === 'function') {
+            try {
+                previousFocus.focus({
+                    preventScroll: true
+                });
+            } catch (_) {
+                previousFocus.focus();
+            }
+        }
+
+        modal.__erpPreviouslyFocusedElement =
+            null;
 
         modal.classList.add('hidden');
         modal.setAttribute(
@@ -8614,6 +11830,32 @@ const ApplicationsController = (() => {
         return fallback;
     }
 
+    /**
+     * Non-blocking success feedback for intermediate admission-workflow steps.
+     *
+     * Never opens the global success modal/window. The workflow should refresh
+     * and continue immediately to the next required section.
+     */
+    function notifyIntermediateSuccess(
+        message
+    ) {
+        if (typeof Toast !== 'undefined'
+                && Toast
+                && typeof Toast.success === 'function') {
+            Toast.success(message);
+            return;
+        }
+
+        console.log(message);
+    }
+
+    /**
+     * Blocking success confirmation.
+     *
+     * Reserve this for major completion/final-decision points only, such as
+     * final Scholarship submission, completed verification, completed payment,
+     * final admission, or enrollment.
+     */
     function notifySuccess(
         message
     ) {

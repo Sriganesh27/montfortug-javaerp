@@ -87,7 +87,9 @@ public class PublicApplicationService {
         }
 
         Integer branchId =
-                dto.getBranchId().intValue();
+                Math.toIntExact(
+                        dto.getBranchId()
+                );
 
         Branch branch =
                 branchRepository.findById(
@@ -691,7 +693,7 @@ public class PublicApplicationService {
         if (app.getBranchClassId() != null) {
             Optional<SchoolClass> schoolClassOpt =
                     classRepository.findById(
-                            app.getBranchClassId().intValue()
+                            app.getBranchClassId()
                     );
 
             if (schoolClassOpt.isPresent()) {
@@ -906,7 +908,7 @@ public class PublicApplicationService {
         if (app.getBranchClassId() != null) {
             Optional<SchoolClass> schoolClassOpt =
                     classRepository.findById(
-                            app.getBranchClassId().intValue()
+                            app.getBranchClassId()
                     );
 
             if (schoolClassOpt.isPresent()) {
