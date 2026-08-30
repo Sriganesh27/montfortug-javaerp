@@ -1,6 +1,7 @@
 package com.erp.montfortuganda.infrastructure.config;
 
 import com.erp.montfortuganda.scholarship.entity.WebDonation;
+import com.erp.montfortuganda.scholarship.repository.ErpScholarshipHistoryRepository;
 import com.erp.montfortuganda.scholarship.repository.ErpBranchFundAllocationRepository;
 import com.erp.montfortuganda.scholarship.repository.ErpScholarshipAllocationRepository;
 import com.erp.montfortuganda.scholarship.repository.ErpScholarshipApplicationRepository;
@@ -30,12 +31,18 @@ import java.util.Map;
         basePackageClasses = WebDonationRepository.class,
         entityManagerFactoryRef = "websiteEntityManagerFactory",
         transactionManagerRef = "websiteTransactionManager",
+        /*
+         * WebDonationRepository shares its package with ERP Scholarship
+         * repositories. The website datasource must never create beans for
+         * ERP repositories because those belong to the ERP datasource.
+         */
         excludeFilters = @ComponentScan.Filter(
                 type = FilterType.ASSIGNABLE_TYPE,
                 classes = {
                         ErpBranchFundAllocationRepository.class,
                         ErpScholarshipAllocationRepository.class,
                         ErpScholarshipApplicationRepository.class,
+                        ErpScholarshipHistoryRepository.class,
                         ErpScholarshipSiblingRepository.class
                 }
         )

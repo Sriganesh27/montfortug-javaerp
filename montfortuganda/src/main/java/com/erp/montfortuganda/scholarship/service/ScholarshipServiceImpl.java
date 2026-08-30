@@ -1,9 +1,12 @@
 package com.erp.montfortuganda.scholarship.service;
 
+import com.erp.montfortuganda.scholarship.dto.ScholarshipMultipleDonorAllocationRequestDTO;
+
+import com.erp.montfortuganda.scholarship.dto.ScholarshipBulkAllocationRequestDTO;
+
 import com.erp.montfortuganda.auth.service.CurrentUserService;
 import com.erp.montfortuganda.exception.BadRequestException;
 import com.erp.montfortuganda.admission.entity.ErpApplication;
-import com.erp.montfortuganda.admission.entity.ErpApplicationFee;
 import com.erp.montfortuganda.admission.repository.ErpApplicationFeeRepository;
 import com.erp.montfortuganda.scholarship.dto.*;
 import com.erp.montfortuganda.scholarship.entity.*;
@@ -50,6 +53,7 @@ public class ScholarshipServiceImpl implements ScholarshipService {
     private final ErpApplicationFeeRepository feeRepo;
     private final ErpScholarshipAllocationRepository allocationRepo;
     private final ErpBranchFundAllocationRepository branchFundRepo;
+    private final ErpScholarshipHistoryRepository historyRepo;
     private final CurrentUserService currentUserService;
     private final ApplicationEventPublisher applicationEventPublisher;
 
@@ -63,13 +67,13 @@ public class ScholarshipServiceImpl implements ScholarshipService {
         BigDecimal totalRaised = donations.stream()
                 .filter(d -> "success".equalsIgnoreCase(d.getPaymentStatus()))
                 .map(d -> d.getAmountReceived() != null ? d.getAmountReceived() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // 2. Sum up total spent
         BigDecimal totalSpent = donations.stream()
                 .filter(d -> "success".equalsIgnoreCase(d.getPaymentStatus()))
                 .map(d -> d.getAmountSpent() != null ? d.getAmountSpent() : BigDecimal.ZERO)
-                .reduce(BigDecimal.ZERO, (a, b) -> a.add(b));
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         // 3. Calculate available balance (UGX)
         BigDecimal available = totalRaised.subtract(totalSpent);
@@ -139,7 +143,7 @@ public class ScholarshipServiceImpl implements ScholarshipService {
                         })
                         .toList();
 
-        List<PendingStudentDTO> dtos =
+        List<PendingStudentDTO> pendingStudents =
                 new ArrayList<>();
 
         for (ErpScholarshipApplication app : apps) {
@@ -161,20 +165,20 @@ public class ScholarshipServiceImpl implements ScholarshipService {
                         ).trim();
             }
 
-            dtos.add(
+            pendingStudents.add(
                     new PendingStudentDTO(
                             app.getScholarshipAppId(),
                             studentName,
                             "Campus " + app.getBranchId(),
                             app.getBranchId(),
-                            app.getCategory(),
-                            app.getAmountRequestedUgx(),
-                            app.getAmountRequestedUgx()
+                            latestHistory(app).map(ErpScholarshipHistory::getCategory).orElse(null),
+                            latestHistory(app).map(ErpScholarshipHistory::getAmountRequestedUgx).orElse(BigDecimal.ZERO),
+                            latestHistory(app).map(ErpScholarshipHistory::getAmountRequestedUgx).orElse(BigDecimal.ZERO)
                     )
             );
         }
 
-        return dtos;
+        return pendingStudents;
     }
 
     @Override
@@ -220,7 +224,7 @@ public class ScholarshipServiceImpl implements ScholarshipService {
             );
 
             return new ActiveSponsorshipDTO(
-                    alloc.getId(),
+                    alloc.getScholarshipAllocationId(),
                     "Student " + alloc.getStudentId(),
                     "Campus " + alloc.getBranchId(),
                     donation != null
@@ -232,15 +236,160 @@ public class ScholarshipServiceImpl implements ScholarshipService {
         }).toList();
     }
 
+    private BigDecimal requirePositiveAllocationAmount(
+            BigDecimal amount
+    ) {
+        if (amount == null
+                || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException(
+                    "Allocation amount must be greater than zero."
+            );
+        }
+
+        return amount.setScale(
+                2,
+                java.math.RoundingMode.HALF_UP
+        );
+    }
+
+    private ErpScholarshipHistory requireAllocationHistory(
+            Long scholarshipHistoryId,
+            Long branchId
+    ) {
+        if (scholarshipHistoryId == null) {
+            throw new BadRequestException(
+                    "Scholarship History ID is required for an allocation."
+            );
+        }
+
+        if (branchId == null) {
+            throw new BadRequestException(
+                    "Branch ID is required."
+            );
+        }
+
+        ErpScholarshipHistory history =
+                historyRepo.findById(scholarshipHistoryId)
+                        .orElseThrow(() ->
+                                new BadRequestException(
+                                        "Scholarship history record not found."
+                                )
+                        );
+
+        if (history.getBranchId() == null
+                || !branchId.equals(history.getBranchId())) {
+            throw new BadRequestException(
+                    "Scholarship history does not belong to the selected branch."
+            );
+        }
+
+        if (history.getApprovedAmount() == null
+                || history.getApprovedAmount()
+                .compareTo(BigDecimal.ZERO) < 0) {
+            throw new BadRequestException(
+                    "Scholarship approved amount is not available for allocation."
+            );
+        }
+
+        return history;
+    }
+
+    private BigDecimal allocatedAmountForHistory(
+            Long scholarshipHistoryId
+    ) {
+        BigDecimal totalAllocated = BigDecimal.ZERO;
+
+        for (ErpScholarshipAllocation allocation :
+                allocationRepo
+                        .findAllByScholarshipHistoryScholarshipHistoryId(
+                                scholarshipHistoryId
+                        )) {
+
+            if (allocation != null
+                    && allocation.getAllocatedAmountUgx() != null) {
+                totalAllocated =
+                        totalAllocated.add(
+                                allocation.getAllocatedAmountUgx()
+                        );
+            }
+        }
+
+        return totalAllocated;
+    }
+
+    private void validateAllocationAgainstApproval(
+            ErpScholarshipHistory history,
+            BigDecimal newAmount
+    ) {
+        BigDecimal alreadyAllocated =
+                allocatedAmountForHistory(
+                        history.getScholarshipHistoryId()
+                );
+
+        BigDecimal approved =
+                history.getApprovedAmount();
+
+        BigDecimal remaining =
+                approved.subtract(alreadyAllocated);
+
+        if (newAmount.compareTo(remaining) > 0) {
+            throw new BadRequestException(
+                    "Allocation amount exceeds the remaining approved Scholarship amount. "
+                            + "Approved: " + approved
+                            + ", Already allocated: " + alreadyAllocated
+                            + ", Remaining: " + remaining
+            );
+        }
+    }
+
+    private void validateAllocationPeriod(
+            String academicYear,
+            String term
+    ) {
+        if (academicYear == null || academicYear.isBlank()) {
+            throw new BadRequestException(
+                    "Academic year is required for a Scholarship allocation."
+            );
+        }
+
+        if (term == null || term.isBlank()) {
+            throw new BadRequestException(
+                    "Term is required for a Scholarship allocation."
+            );
+        }
+    }
+
     @Override
     public void allocateToBranch(AllocationRequestDTO request) {
+        if (request == null) {
+            throw new BadRequestException(
+                    "Allocation request is required."
+            );
+        }
+
+        if (request.getBranchId() == null) {
+            throw new BadRequestException(
+                    "Branch ID is required."
+            );
+        }
+
         validateDonationReference(
                 request.getDonationId()
         );
 
+        BigDecimal amount =
+                requirePositiveAllocationAmount(
+                        request.getAmountUgx()
+                );
+
+        validateAllocationPeriod(
+                request.getAcademicYear(),
+                request.getTerm()
+        );
+
         ErpBranchFundAllocation alloc = new ErpBranchFundAllocation();
         alloc.setBranchId(request.getBranchId());
-        alloc.setAllocatedAmountUgx(request.getAmountUgx());
+        alloc.setAllocatedAmountUgx(amount);
         alloc.setTerm(request.getTerm());
         alloc.setAcademicYear(request.getAcademicYear());
         alloc.setAllocatedByUserId(
@@ -252,14 +401,54 @@ public class ScholarshipServiceImpl implements ScholarshipService {
 
     @Override
     public void allocateToStudent(AllocationRequestDTO request) {
+        if (request == null) {
+            throw new BadRequestException(
+                    "Allocation request is required."
+            );
+        }
+
+        if (request.getBranchId() == null) {
+            throw new BadRequestException(
+                    "Branch ID is required."
+            );
+        }
+
+        if (request.getStudentId() == null) {
+            throw new BadRequestException(
+                    "Student ID is required."
+            );
+        }
+
         validateDonationReference(
                 request.getDonationId()
         );
 
+        BigDecimal amount =
+                requirePositiveAllocationAmount(
+                        request.getAmountUgx()
+                );
+
+        validateAllocationPeriod(
+                request.getAcademicYear(),
+                request.getTerm()
+        );
+
+        ErpScholarshipHistory history =
+                requireAllocationHistory(
+                        request.getScholarshipHistoryId(),
+                        request.getBranchId()
+                );
+
+        validateAllocationAgainstApproval(
+                history,
+                amount
+        );
+
         ErpScholarshipAllocation alloc = new ErpScholarshipAllocation();
+        alloc.setScholarshipHistory(history);
         alloc.setBranchId(request.getBranchId());
         alloc.setStudentId(request.getStudentId());
-        alloc.setAllocatedAmountUgx(request.getAmountUgx());
+        alloc.setAllocatedAmountUgx(amount);
         alloc.setTerm(request.getTerm());
         alloc.setAcademicYear(request.getAcademicYear());
         alloc.setAllocatedByUserId(
@@ -267,6 +456,246 @@ public class ScholarshipServiceImpl implements ScholarshipService {
         );
         alloc.setDonationId(request.getDonationId());
         allocationRepo.save(alloc);
+    }
+
+    @SuppressWarnings("unused")
+    @Transactional
+    public void allocateToMultipleStudents(
+            ScholarshipBulkAllocationRequestDTO request
+    ) {
+        if (request == null) {
+            throw new BadRequestException(
+                    "Bulk allocation request is required."
+            );
+        }
+
+        if (request.getBranchId() == null) {
+            throw new BadRequestException(
+                    "Branch ID is required."
+            );
+        }
+
+        if (request.getDonationId() == null) {
+            throw new BadRequestException(
+                    "Donation ID is required."
+            );
+        }
+
+        if (request.getScholarshipHistoryId() == null) {
+            throw new BadRequestException(
+                    "Scholarship History ID is required."
+            );
+        }
+
+        if (request.getAllocations() == null
+                || request.getAllocations().isEmpty()) {
+            throw new BadRequestException(
+                    "At least one student allocation is required."
+            );
+        }
+
+        validateDonationReference(
+                request.getDonationId()
+        );
+
+        ErpScholarshipHistory history =
+                requireAllocationHistory(
+                        request.getScholarshipHistoryId(),
+                        request.getBranchId()
+                );
+
+        BigDecimal batchTotal = BigDecimal.ZERO;
+
+        for (ScholarshipBulkAllocationRequestDTO.StudentAllocationItem item :
+                request.getAllocations()) {
+
+            if (item == null || item.getStudentId() == null) {
+                throw new BadRequestException(
+                        "Every bulk allocation must contain a student ID."
+                );
+            }
+
+            BigDecimal amount =
+                    requirePositiveAllocationAmount(
+                            item.getAmountUgx()
+                    );
+
+            validateAllocationPeriod(
+                    item.getAcademicYear(),
+                    item.getTerm()
+            );
+
+            batchTotal =
+                    batchTotal.add(
+                            amount
+                    );
+        }
+
+        validateAllocationAgainstApproval(
+                history,
+                batchTotal
+        );
+
+        for (ScholarshipBulkAllocationRequestDTO.StudentAllocationItem item :
+                request.getAllocations()) {
+
+            BigDecimal amount =
+                    requirePositiveAllocationAmount(
+                            item.getAmountUgx()
+                    );
+
+            ErpScholarshipAllocation allocation =
+                    new ErpScholarshipAllocation();
+
+            allocation.setScholarshipHistory(
+                    history
+            );
+            allocation.setBranchId(
+                    request.getBranchId()
+            );
+            allocation.setStudentId(
+                    item.getStudentId()
+            );
+            allocation.setAllocatedAmountUgx(
+                    amount
+            );
+            allocation.setTerm(
+                    item.getTerm()
+            );
+            allocation.setAcademicYear(
+                    item.getAcademicYear()
+            );
+            allocation.setAllocatedByUserId(
+                    currentUserId()
+            );
+            allocation.setDonationId(
+                    request.getDonationId()
+            );
+
+            allocationRepo.save(
+                    allocation
+            );
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @Transactional
+    public void allocateMultipleDonorsToStudent(
+            ScholarshipMultipleDonorAllocationRequestDTO request
+    ) {
+        if (request == null) {
+            throw new BadRequestException(
+                    "Multiple-donor allocation request is required."
+            );
+        }
+
+        if (request.getBranchId() == null) {
+            throw new BadRequestException(
+                    "Branch ID is required."
+            );
+        }
+
+        if (request.getStudentId() == null) {
+            throw new BadRequestException(
+                    "Student ID is required."
+            );
+        }
+
+        if (request.getScholarshipHistoryId() == null) {
+            throw new BadRequestException(
+                    "Scholarship History ID is required."
+            );
+        }
+
+        if (request.getAllocations() == null
+                || request.getAllocations().isEmpty()) {
+            throw new BadRequestException(
+                    "At least one donor allocation is required."
+            );
+        }
+
+        ErpScholarshipHistory history =
+                requireAllocationHistory(
+                        request.getScholarshipHistoryId(),
+                        request.getBranchId()
+                );
+
+        BigDecimal batchTotal = BigDecimal.ZERO;
+
+        for (ScholarshipMultipleDonorAllocationRequestDTO.DonorAllocationItem item :
+                request.getAllocations()) {
+
+            if (item == null || item.getDonationId() == null) {
+                throw new BadRequestException(
+                        "Every allocation must contain a donor reference."
+                );
+            }
+
+            validateDonationReference(
+                    item.getDonationId()
+            );
+
+            BigDecimal amount =
+                    requirePositiveAllocationAmount(
+                            item.getAmountUgx()
+                    );
+
+            validateAllocationPeriod(
+                    item.getAcademicYear(),
+                    item.getTerm()
+            );
+
+            batchTotal =
+                    batchTotal.add(
+                            amount
+                    );
+        }
+
+        validateAllocationAgainstApproval(
+                history,
+                batchTotal
+        );
+
+        for (ScholarshipMultipleDonorAllocationRequestDTO.DonorAllocationItem item :
+                request.getAllocations()) {
+
+            BigDecimal amount =
+                    requirePositiveAllocationAmount(
+                            item.getAmountUgx()
+                    );
+
+            ErpScholarshipAllocation allocation =
+                    new ErpScholarshipAllocation();
+
+            allocation.setScholarshipHistory(
+                    history
+            );
+            allocation.setBranchId(
+                    request.getBranchId()
+            );
+            allocation.setStudentId(
+                    request.getStudentId()
+            );
+            allocation.setDonationId(
+                    item.getDonationId()
+            );
+            allocation.setAllocatedAmountUgx(
+                    amount
+            );
+            allocation.setTerm(
+                    item.getTerm()
+            );
+            allocation.setAcademicYear(
+                    item.getAcademicYear()
+            );
+            allocation.setAllocatedByUserId(
+                    currentUserId()
+            );
+
+            allocationRepo.save(
+                    allocation
+            );
+        }
     }
 
     @Override
@@ -343,9 +772,14 @@ public class ScholarshipServiceImpl implements ScholarshipService {
                                 PUBLIC_TOKEN_VALID_HOURS
                         );
 
-        scholarshipApplication.setApplicationMethod(
-                ErpScholarshipApplication.ApplicationMethod.EMAIL_LINK
+        ErpScholarshipHistory history = getOrCreateCurrentHistory(
+                scholarshipApplication,
+                Long.valueOf(context.getUserId())
         );
+        history.setApplicationMethod(
+                ErpScholarshipApplication.ApplicationMethod.EMAIL_LINK.name()
+        );
+        historyRepo.save(history);
 
         /*
          * The same scholarship application may use either the parent/public
@@ -482,9 +916,15 @@ public class ScholarshipServiceImpl implements ScholarshipService {
         scholarship.setTokenExpiresAt(null);
         scholarship.setTokenUsedAt(null);
 
-        scholarship.setApplicationMethod(
-                ErpScholarshipApplication.ApplicationMethod.SCHOOL_ASSISTED
+        ErpScholarshipHistory history = getOrCreateCurrentHistory(
+                scholarship,
+                userId
         );
+        history.setApplicationMethod(
+                ErpScholarshipApplication.ApplicationMethod.SCHOOL_ASSISTED.name()
+        );
+        historyRepo.save(history);
+
         scholarship.setStatus(
                 "IN_PROGRESS"
         );
@@ -558,8 +998,10 @@ public class ScholarshipServiceImpl implements ScholarshipService {
             );
         }
 
-        if (scholarship.getApplicationMethod()
-                != ErpScholarshipApplication.ApplicationMethod.SCHOOL_ASSISTED) {
+        if (isNotHistoryApplicationMethod(
+                scholarship,
+                ErpScholarshipApplication.ApplicationMethod.SCHOOL_ASSISTED
+        )) {
             throw new BadRequestException(
                     "School scholarship access link is no longer active."
             );
@@ -911,6 +1353,10 @@ public class ScholarshipServiceImpl implements ScholarshipService {
         validateScholarshipStage(scholarship);
         ensureScholarshipFormStillEditable(scholarship);
 
+        ErpScholarshipHistory history =
+                getOrCreateCurrentHistory(scholarship, actorUserId);
+
+        // Admission-family identity remains on the admission application.
         application.setFatherName(clean(request.getFatherName()));
         application.setFatherContact(clean(request.getFatherContact()));
         application.setFatherEmail(clean(request.getFatherEmail()));
@@ -927,247 +1373,150 @@ public class ScholarshipServiceImpl implements ScholarshipService {
         application.setGuardianEmail(clean(request.getGuardianEmail()));
         application.setGuardianOccupation(clean(request.getGuardianOccupation()));
 
-        scholarship.setFatherStatus(clean(request.getFatherStatus()));
-        scholarship.setFatherAnnualIncome(nonNegative(request.getFatherAnnualIncome()));
+        history.setFatherStatus(clean(request.getFatherStatus()));
+        history.setFatherAnnualIncome(nonNegative(request.getFatherAnnualIncome()));
+        history.setMotherStatus(clean(request.getMotherStatus()));
+        history.setMotherAnnualIncome(nonNegative(request.getMotherAnnualIncome()));
 
-        scholarship.setMotherStatus(clean(request.getMotherStatus()));
-        scholarship.setMotherAnnualIncome(nonNegative(request.getMotherAnnualIncome()));
-
-        scholarship.setResponsiblePersonType(clean(request.getResponsiblePersonType()));
-        scholarship.setResponsiblePersonName(clean(request.getResponsiblePersonName()));
-        scholarship.setResponsiblePersonRelation(clean(request.getResponsiblePersonRelation()));
-        scholarship.setResponsiblePersonOccupation(clean(request.getResponsiblePersonOccupation()));
-        scholarship.setResponsiblePersonMobile(clean(request.getResponsiblePersonMobile()));
-        scholarship.setResponsiblePersonAnnualIncome(
+        history.setResponsiblePersonType(clean(request.getResponsiblePersonType()));
+        history.setResponsiblePersonName(clean(request.getResponsiblePersonName()));
+        history.setResponsiblePersonRelation(clean(request.getResponsiblePersonRelation()));
+        history.setResponsiblePersonOccupation(clean(request.getResponsiblePersonOccupation()));
+        history.setResponsiblePersonMobile(clean(request.getResponsiblePersonMobile()));
+        history.setResponsiblePersonAnnualIncome(
                 nonNegative(request.getResponsiblePersonAnnualIncome())
         );
 
-        scholarship.setOrphanStatus(clean(request.getOrphanStatus()));
+        history.setOrphanStatus(clean(request.getOrphanStatus()));
+        history.setHouseholdSize(nonNegativeInt(request.getHouseholdSize()));
+        history.setDependantsCount(nonNegativeInt(request.getDependantsCount()));
+        history.setSchoolGoingChildren(nonNegativeInt(request.getSchoolGoingChildren()));
+        history.setMainIncomeEarner(clean(request.getMainIncomeEarner()));
+        history.setIncomeSource(clean(request.getIncomeSource()));
+        history.setOtherHouseholdIncome(nonNegative(request.getOtherHouseholdIncome()));
+        history.setHousingStatus(clean(request.getHousingStatus()));
 
-        scholarship.setHouseholdSize(nonNegativeInt(request.getHouseholdSize()));
-        scholarship.setDependantsCount(nonNegativeInt(request.getDependantsCount()));
-        scholarship.setSchoolGoingChildren(nonNegativeInt(request.getSchoolGoingChildren()));
-        scholarship.setMainIncomeEarner(clean(request.getMainIncomeEarner()));
-        scholarship.setIncomeSource(clean(request.getIncomeSource()));
-        scholarship.setOtherHouseholdIncome(
-                nonNegative(request.getOtherHouseholdIncome())
-        );
-        scholarship.setHousingStatus(clean(request.getHousingStatus()));
+        history.setHouseType(clean(request.getHouseType()));
+        history.setHouseRoomCount(nonNegativeInt(request.getHouseRoomCount()));
+        history.setHouseLocation(clean(request.getHouseLocation()));
+        history.setHouseEstimatedValue(nonNegative(request.getHouseEstimatedValue()));
+        history.setHouseMortgaged(Boolean.TRUE.equals(request.getHouseMortgaged()));
+        history.setMonthlyRent(nonNegative(request.getMonthlyRent()));
 
-        /*
-         * Housing details are driven by housingStatus in the UI.
-         * Estimated values are assets, not household income.
-         */
-        scholarship.setHouseType(clean(request.getHouseType()));
-        scholarship.setHouseRoomCount(
-                nonNegativeInt(request.getHouseRoomCount())
-        );
-        scholarship.setHouseLocation(clean(request.getHouseLocation()));
-        scholarship.setHouseEstimatedValue(
-                nonNegative(request.getHouseEstimatedValue())
-        );
-        scholarship.setHouseMortgaged(
-                Boolean.TRUE.equals(request.getHouseMortgaged())
-        );
-        scholarship.setMonthlyRent(
-                nonNegative(request.getMonthlyRent())
-        );
-
-        boolean landOwned =
-                Boolean.TRUE.equals(request.getLandOwned());
-
-        scholarship.setLandOwned(landOwned);
-        scholarship.setLandArea(
-                landOwned
-                        ? nonNegative(request.getLandArea())
-                        : null
-        );
-        scholarship.setLandUnit(
-                landOwned
-                        ? clean(request.getLandUnit())
-                        : null
-        );
-        scholarship.setLandPlotCount(
-                landOwned
-                        ? nonNegativeInt(request.getLandPlotCount())
-                        : null
-        );
-        scholarship.setLandLocation(
-                landOwned
-                        ? clean(request.getLandLocation())
-                        : null
-        );
-        scholarship.setLandUsage(
-                landOwned
-                        ? clean(request.getLandUsage())
-                        : null
-        );
-        scholarship.setLandEstimatedValue(
-                landOwned
-                        ? nonNegative(request.getLandEstimatedValue())
-                        : null
+        boolean landOwned = Boolean.TRUE.equals(request.getLandOwned());
+        history.setLandOwned(landOwned);
+        history.setLandArea(landOwned ? nonNegative(request.getLandArea()) : null);
+        history.setLandUnit(landOwned ? clean(request.getLandUnit()) : null);
+        history.setLandPlotCount(landOwned ? nonNegativeInt(request.getLandPlotCount()) : null);
+        history.setLandLocation(landOwned ? clean(request.getLandLocation()) : null);
+        history.setLandUsage(landOwned ? clean(request.getLandUsage()) : null);
+        history.setLandEstimatedValue(
+                landOwned ? nonNegative(request.getLandEstimatedValue()) : null
         );
 
         boolean landGeneratesIncome =
-                landOwned
-                        && Boolean.TRUE.equals(
-                                request.getLandGeneratesIncome()
-                        );
-
-        scholarship.setLandGeneratesIncome(
-                landGeneratesIncome
-        );
-        scholarship.setLandAnnualIncome(
+                landOwned && Boolean.TRUE.equals(request.getLandGeneratesIncome());
+        history.setLandGeneratesIncome(landGeneratesIncome);
+        history.setLandAnnualIncome(
                 landGeneratesIncome
                         ? nonNegative(request.getLandAnnualIncome())
                         : null
         );
 
-        boolean vehiclesOwned =
-                Boolean.TRUE.equals(request.getVehiclesOwned());
-
-        scholarship.setVehiclesOwned(vehiclesOwned);
-        scholarship.setVehicleCount(
-                vehiclesOwned
-                        ? nonNegativeInt(request.getVehicleCount())
-                        : null
+        boolean vehiclesOwned = Boolean.TRUE.equals(request.getVehiclesOwned());
+        history.setVehiclesOwned(vehiclesOwned);
+        history.setVehicleCount(
+                vehiclesOwned ? nonNegativeInt(request.getVehicleCount()) : null
         );
-        scholarship.setVehicleDescription(
-                vehiclesOwned
-                        ? clean(request.getVehicleDescription())
-                        : null
+        history.setVehicleDescription(
+                vehiclesOwned ? clean(request.getVehicleDescription()) : null
         );
-        scholarship.setVehicleType(
-                vehiclesOwned
-                        ? clean(request.getVehicleType())
-                        : null
+        history.setVehicleType(
+                vehiclesOwned ? clean(request.getVehicleType()) : null
         );
-        scholarship.setVehicleUsage(
-                vehiclesOwned
-                        ? clean(request.getVehicleUsage())
-                        : null
+        history.setVehicleUsage(
+                vehiclesOwned ? clean(request.getVehicleUsage()) : null
         );
-        scholarship.setVehicleEstimatedValue(
-                vehiclesOwned
-                        ? nonNegative(request.getVehicleEstimatedValue())
-                        : null
+        history.setVehicleEstimatedValue(
+                vehiclesOwned ? nonNegative(request.getVehicleEstimatedValue()) : null
         );
-        scholarship.setVehicleFinanced(
-                vehiclesOwned
-                        && Boolean.TRUE.equals(
-                                request.getVehicleFinanced()
-                        )
+        history.setVehicleFinanced(
+                vehiclesOwned && Boolean.TRUE.equals(request.getVehicleFinanced())
         );
 
-        boolean businessOwned =
-                Boolean.TRUE.equals(request.getBusinessOwned());
-
-        scholarship.setBusinessOwned(businessOwned);
-        scholarship.setBusinessName(
-                businessOwned
-                        ? clean(request.getBusinessName())
-                        : null
+        boolean businessOwned = Boolean.TRUE.equals(request.getBusinessOwned());
+        history.setBusinessOwned(businessOwned);
+        history.setBusinessName(businessOwned ? clean(request.getBusinessName()) : null);
+        history.setBusinessType(businessOwned ? clean(request.getBusinessType()) : null);
+        history.setBusinessLocation(
+                businessOwned ? clean(request.getBusinessLocation()) : null
         );
-        scholarship.setBusinessType(
-                businessOwned
-                        ? clean(request.getBusinessType())
-                        : null
+        history.setBusinessEmployeeCount(
+                businessOwned ? nonNegativeInt(request.getBusinessEmployeeCount()) : null
         );
-        scholarship.setBusinessLocation(
-                businessOwned
-                        ? clean(request.getBusinessLocation())
-                        : null
-        );
-        scholarship.setBusinessEmployeeCount(
-                businessOwned
-                        ? nonNegativeInt(request.getBusinessEmployeeCount())
-                        : null
-        );
-        scholarship.setBusinessAnnualIncome(
-                businessOwned
-                        ? nonNegative(request.getBusinessAnnualIncome())
-                        : null
+        history.setBusinessAnnualIncome(
+                businessOwned ? nonNegative(request.getBusinessAnnualIncome()) : null
         );
 
-        boolean livestockOwned =
-                Boolean.TRUE.equals(request.getLivestockOwned());
-
-        scholarship.setLivestockOwned(livestockOwned);
-        scholarship.setLivestockDescription(
-                livestockOwned
-                        ? clean(request.getLivestockDescription())
-                        : null
+        boolean livestockOwned = Boolean.TRUE.equals(request.getLivestockOwned());
+        history.setLivestockOwned(livestockOwned);
+        history.setLivestockDescription(
+                livestockOwned ? clean(request.getLivestockDescription()) : null
         );
-        scholarship.setLivestockEstimatedValue(
-                livestockOwned
-                        ? nonNegative(request.getLivestockEstimatedValue())
-                        : null
+        history.setLivestockEstimatedValue(
+                livestockOwned ? nonNegative(request.getLivestockEstimatedValue()) : null
         );
-        scholarship.setLivestockAnnualIncome(
-                livestockOwned
-                        ? nonNegative(request.getLivestockAnnualIncome())
-                        : null
+        history.setLivestockAnnualIncome(
+                livestockOwned ? nonNegative(request.getLivestockAnnualIncome()) : null
         );
 
-        scholarship.setOtherAssetsDescription(
-                clean(request.getOtherAssetsDescription())
-        );
-        scholarship.setOtherAssetsEstimatedValue(
+        history.setOtherAssetsDescription(clean(request.getOtherAssetsDescription()));
+        history.setOtherAssetsEstimatedValue(
                 nonNegative(request.getOtherAssetsEstimatedValue())
         );
-        scholarship.setOtherAssetsAnnualIncome(
+        history.setOtherAssetsAnnualIncome(
                 nonNegative(request.getOtherAssetsAnnualIncome())
         );
+        history.setFinancialHardshipReason(clean(request.getFinancialHardshipReason()));
+        history.setFamilySituationRemarks(clean(request.getFamilySituationRemarks()));
 
-        scholarship.setFinancialHardshipReason(
-                clean(request.getFinancialHardshipReason())
-        );
-        scholarship.setFamilySituationRemarks(
-                clean(request.getFamilySituationRemarks())
-        );
-
-        scholarship.setParentGuardianName(clean(request.getParentGuardianName()));
-        scholarship.setParentGuardianRelation(clean(request.getParentGuardianRelation()));
-        scholarship.setParentGuardianMobile(clean(request.getParentGuardianMobile()));
-        scholarship.setDeclarationAccepted(
+        history.setParentGuardianName(clean(request.getParentGuardianName()));
+        history.setParentGuardianRelation(clean(request.getParentGuardianRelation()));
+        history.setParentGuardianMobile(clean(request.getParentGuardianMobile()));
+        history.setDeclarationAccepted(
                 Boolean.TRUE.equals(request.getDeclarationAccepted())
         );
 
-        replaceSiblings(
-                scholarship,
-                request.getSiblings(),
-                actorUserId
-        );
+        replaceSiblings(scholarship, request.getSiblings(), actorUserId);
 
-        scholarship.setHouseholdIncome(
+        history.setHouseholdIncome(
                 calculateAnnualHouseholdIncome(
-                        scholarship.getFatherAnnualIncome(),
-                        scholarship.getMotherAnnualIncome(),
-                        scholarship.getResponsiblePersonAnnualIncome(),
-                        scholarship.getOtherHouseholdIncome(),
-                        scholarship.getLandAnnualIncome(),
-                        scholarship.getBusinessAnnualIncome(),
-                        scholarship.getLivestockAnnualIncome(),
-                        scholarship.getOtherAssetsAnnualIncome(),
+                        history.getFatherAnnualIncome(),
+                        history.getMotherAnnualIncome(),
+                        history.getResponsiblePersonAnnualIncome(),
+                        history.getOtherHouseholdIncome(),
+                        history.getLandAnnualIncome(),
+                        history.getBusinessAnnualIncome(),
+                        history.getLivestockAnnualIncome(),
+                        history.getOtherAssetsAnnualIncome(),
                         request.getSiblings()
                 )
         );
 
-        scholarship.setApplicationMethod(applicationMethod);
+        history.setApplicationMethod(applicationMethod.name());
 
         LocalDateTime now = LocalDateTime.now();
 
         if (submit) {
-            if (!Boolean.TRUE.equals(
-                    scholarship.getDeclarationAccepted()
-            )) {
+            if (!Boolean.TRUE.equals(history.getDeclarationAccepted())) {
                 throw new BadRequestException(
                         "Declaration must be accepted before submitting the scholarship application."
                 );
             }
 
             scholarship.setStatus("SUBMITTED");
-            scholarship.setSubmittedAt(now);
+            history.setStatus("SUBMITTED");
+            history.setSubmittedAt(now);
 
             if (applicationMethod
                     == ErpScholarshipApplication.ApplicationMethod.EMAIL_LINK) {
@@ -1186,20 +1535,178 @@ public class ScholarshipServiceImpl implements ScholarshipService {
             }
         } else {
             scholarship.setStatus("IN_PROGRESS");
+            history.setStatus("IN_PROGRESS");
         }
 
         if (actorUserId != null) {
             scholarship.setUpdatedBy(actorUserId);
+            history.setUpdatedBy(actorUserId);
         }
 
-        ErpScholarshipApplication saved =
-                applicationRepo.saveAndFlush(scholarship);
+        history.setUpdatedAt(now);
+        historyRepo.saveAndFlush(history);
+        ErpScholarshipApplication saved = applicationRepo.saveAndFlush(scholarship);
 
         return buildFormResponse(
                 saved,
                 saved.getBranchId(),
                 includeInternalIds
         );
+    }
+
+    private ErpScholarshipHistory getOrCreateCurrentHistory(
+            ErpScholarshipApplication scholarship,
+            Long actorUserId
+    ) {
+        return historyRepo
+                .findFirstByScholarshipApplicationScholarshipAppIdOrderByScholarshipHistoryIdDesc(
+                        scholarship.getScholarshipAppId()
+                )
+                .orElseGet(() -> {
+                    ErpScholarshipHistory history =
+                            new ErpScholarshipHistory();
+
+                    history.setScholarshipApplication(
+                            scholarship
+                    );
+
+                    history.setBranchId(
+                            scholarship.getBranchId()
+                    );
+
+                    history.setStudentId(
+                            scholarship.getStudent() != null
+                                    ? scholarship.getStudent().getStudentId()
+                                    : null
+                    );
+
+                    history.setApplicationId(
+                            scholarship.getApplication() != null
+                                    ? scholarship.getApplication().getApplicationId()
+                                    : null
+                    );
+
+                    history.setAcademicYear(
+                            scholarship.getAcademicYear()
+                    );
+
+                    /*
+                     * Scholarship request data belongs to History.
+                     * Do not read these values from ErpScholarshipApplication.
+                     */
+
+                    String term =
+                            scholarship.getApplication() != null
+                                    ? scholarship.getApplication().getTerm()
+                                    : null;
+
+                    history.setTermRequested(
+                            term != null && !term.isBlank()
+                                    ? term
+                                    : "TERM_1"
+                    );
+
+                    history.setCategory(
+                            "GENERAL"
+                    );
+
+                    history.setScholarshipType(
+                            ErpScholarshipHistory.ScholarshipType.OTHER
+                    );
+
+                    /*
+                     * The Fee Discussion is the source for the financial
+                     * scholarship request. Copy its values into the new
+                     * History snapshot so the NOT NULL database columns
+                     * are populated when the access link is issued.
+                     */
+                    BigDecimal amountRequested =
+                            BigDecimal.ZERO;
+
+                    BigDecimal requestedPercentage =
+                            BigDecimal.ZERO;
+
+                    if (scholarship.getApplication() != null
+                            && scholarship.getApplication().getApplicationId() != null
+                            && scholarship.getBranchId() != null) {
+
+                        feeRepo.findActiveByApplicationAndBranch(
+                                        scholarship.getApplication()
+                                                .getApplicationId(),
+                                        scholarship.getBranchId().intValue()
+                                )
+                                .ifPresent(fee -> {
+
+                                    BigDecimal assistance =
+                                            fee.getAssistanceRequired();
+
+                                    BigDecimal baseFee =
+                                            fee.getBaseFeeAmount();
+
+                                    if (assistance != null) {
+                                        history.setAmountRequestedUgx(
+                                                assistance
+                                        );
+                                    }
+
+                                    if (assistance != null
+                                            && baseFee != null
+                                            && baseFee.compareTo(
+                                            BigDecimal.ZERO
+                                    ) > 0) {
+
+                                        history.setRequestedPercentage(
+                                                assistance
+                                                        .multiply(
+                                                                BigDecimal.valueOf(100)
+                                                        )
+                                                        .divide(
+                                                                baseFee,
+                                                                2,
+                                                                java.math.RoundingMode.HALF_UP
+                                                        )
+                                        );
+                                    }
+                                });
+                    }
+
+                    /*
+                     * The database requires both values to be non-null.
+                     * If Fee Discussion has no amount yet, retain zero rather
+                     * than inserting NULL.
+                     */
+                    if (history.getAmountRequestedUgx() == null) {
+                        history.setAmountRequestedUgx(
+                                amountRequested
+                        );
+                    }
+
+                    if (history.getRequestedPercentage() == null) {
+                        history.setRequestedPercentage(
+                                requestedPercentage
+                        );
+                    }
+
+                    history.setApplicationMethod(
+                            ErpScholarshipApplication.ApplicationMethod
+                                    .SCHOOL_ASSISTED
+                                    .name()
+                    );
+
+                    history.setCreatedBy(
+                            actorUserId
+                    );
+
+                    history.setCreatedAt(
+                            LocalDateTime.now()
+                    );
+
+                    history.setActive(
+                            true
+                    );
+
+                    return history;
+                });
     }
 
     private ErpScholarshipApplication resolveSchoolAccessForRead(
@@ -1269,8 +1776,10 @@ public class ScholarshipServiceImpl implements ScholarshipService {
             );
         }
 
-        if (scholarship.getApplicationMethod()
-                != ErpScholarshipApplication.ApplicationMethod.SCHOOL_ASSISTED) {
+        if (isNotHistoryApplicationMethod(
+                scholarship,
+                ErpScholarshipApplication.ApplicationMethod.SCHOOL_ASSISTED
+        )) {
             throw new BadRequestException(
                     "School scholarship access link is no longer active."
             );
@@ -1294,8 +1803,10 @@ public class ScholarshipServiceImpl implements ScholarshipService {
             ErpScholarshipApplication scholarship
     ) {
         if (scholarship == null
-                || scholarship.getApplicationMethod()
-                != ErpScholarshipApplication.ApplicationMethod.EMAIL_LINK) {
+                || isNotHistoryApplicationMethod(
+                        scholarship,
+                        ErpScholarshipApplication.ApplicationMethod.EMAIL_LINK
+                )) {
             throw new BadRequestException(
                     "Scholarship application link is invalid."
             );
@@ -1319,6 +1830,16 @@ public class ScholarshipServiceImpl implements ScholarshipService {
 
         validateScholarshipStage(scholarship);
         ensureScholarshipFormStillEditable(scholarship);
+    }
+
+    private boolean isNotHistoryApplicationMethod(
+            ErpScholarshipApplication scholarship,
+            ErpScholarshipApplication.ApplicationMethod expected
+    ) {
+        return latestHistory(scholarship)
+                .map(ErpScholarshipHistory::getApplicationMethod)
+                .map(value -> !expected.name().equalsIgnoreCase(value))
+                .orElse(true);
     }
 
     private void validateScholarshipStage(
@@ -1413,11 +1934,7 @@ public class ScholarshipServiceImpl implements ScholarshipService {
             ErpScholarshipApplication scholarship,
             Long branchId
     ) {
-        return buildFormResponse(
-                scholarship,
-                branchId,
-                true
-        );
+        return buildFormResponse(scholarship, branchId, true);
     }
 
     private ScholarshipApplicationFormResponseDTO buildFormResponse(
@@ -1428,27 +1945,19 @@ public class ScholarshipServiceImpl implements ScholarshipService {
         ScholarshipApplicationFormResponseDTO response =
                 new ScholarshipApplicationFormResponseDTO();
 
-        ErpApplication application =
-                scholarship.getApplication();
+        ErpApplication application = scholarship.getApplication();
+        ErpScholarshipHistory history =
+                latestHistory(scholarship).orElse(null);
 
         if (includeInternalIds) {
-            response.setScholarshipAppId(
-                    scholarship.getScholarshipAppId()
-            );
+            response.setScholarshipAppId(scholarship.getScholarshipAppId());
             response.setApplicationId(
-                    application != null
-                            ? application.getApplicationId()
-                            : null
+                    application != null ? application.getApplicationId() : null
             );
-        } else {
-            response.setScholarshipAppId(null);
-            response.setApplicationId(null);
         }
 
         if (application != null) {
-            response.setApplicationNo(
-                    application.getApplicationNo()
-            );
+            response.setApplicationNo(application.getApplicationNo());
             response.setStudentName(
                     fullName(
                             application.getFirstName(),
@@ -1461,23 +1970,17 @@ public class ScholarshipServiceImpl implements ScholarshipService {
                             ? "Class " + application.getBranchClassId()
                             : null
             );
-            response.setAcademicYear(
-                    scholarship.getAcademicYear()
-            );
-            response.setTerm(
-                    application.getTerm()
-            );
+            response.setAcademicYear(scholarship.getAcademicYear());
+            response.setTerm(application.getTerm());
 
             response.setFatherName(application.getFatherName());
             response.setFatherContact(application.getFatherContact());
             response.setFatherEmail(application.getFatherEmail());
             response.setFatherOccupation(application.getFatherOccupation());
-
             response.setMotherName(application.getMotherName());
             response.setMotherContact(application.getMotherContact());
             response.setMotherEmail(application.getMotherEmail());
             response.setMotherOccupation(application.getMotherOccupation());
-
             response.setGuardianName(application.getGuardianName());
             response.setGuardianRelation(application.getGuardianRelation());
             response.setGuardianContact(application.getGuardianContact());
@@ -1488,135 +1991,107 @@ public class ScholarshipServiceImpl implements ScholarshipService {
                             application.getApplicationId(),
                             branchId.intValue()
                     )
-                    .ifPresent(
-                            fee -> {
-                                response.setTotalFee(
-                                        fee.getBaseFeeAmount()
-                                );
-                                response.setParentContribution(
-                                        fee.getParentCanPay()
-                                );
-                                response.setScholarshipRequiredAmount(
-                                        fee.getAssistanceRequired()
-                                );
-                            }
-                    );
+                    .ifPresent(fee -> {
+                        response.setTotalFee(fee.getBaseFeeAmount());
+                        response.setParentContribution(fee.getParentCanPay());
+                        response.setScholarshipRequiredAmount(fee.getAssistanceRequired());
+                    });
         }
 
-        response.setScholarshipType(
-                scholarship.getScholarshipType() != null
-                        ? scholarship.getScholarshipType().name()
-                        : null
-        );
-        response.setApplicationMethod(
-                scholarship.getApplicationMethod() != null
-                        ? scholarship.getApplicationMethod().name()
-                        : null
-        );
-        response.setStatus(
-                scholarship.getStatus()
-        );
+        if (history != null) {
+            response.setScholarshipType(
+                    history.getScholarshipType() != null
+                            ? history.getScholarshipType().name()
+                            : null
+            );
+            response.setApplicationMethod(history.getApplicationMethod());
+            response.setStatus(history.getStatus() != null
+                    ? history.getStatus()
+                    : scholarship.getStatus());
 
-        response.setFatherStatus(scholarship.getFatherStatus());
-        response.setFatherAnnualIncome(scholarship.getFatherAnnualIncome());
-        response.setMotherStatus(scholarship.getMotherStatus());
-        response.setMotherAnnualIncome(scholarship.getMotherAnnualIncome());
+            response.setFatherStatus(history.getFatherStatus());
+            response.setFatherAnnualIncome(history.getFatherAnnualIncome());
+            response.setMotherStatus(history.getMotherStatus());
+            response.setMotherAnnualIncome(history.getMotherAnnualIncome());
+            response.setResponsiblePersonType(history.getResponsiblePersonType());
+            response.setResponsiblePersonName(history.getResponsiblePersonName());
+            response.setResponsiblePersonRelation(history.getResponsiblePersonRelation());
+            response.setResponsiblePersonOccupation(history.getResponsiblePersonOccupation());
+            response.setResponsiblePersonMobile(history.getResponsiblePersonMobile());
+            response.setResponsiblePersonAnnualIncome(history.getResponsiblePersonAnnualIncome());
+            response.setOrphanStatus(history.getOrphanStatus());
 
-        response.setResponsiblePersonType(scholarship.getResponsiblePersonType());
-        response.setResponsiblePersonName(scholarship.getResponsiblePersonName());
-        response.setResponsiblePersonRelation(scholarship.getResponsiblePersonRelation());
-        response.setResponsiblePersonOccupation(scholarship.getResponsiblePersonOccupation());
-        response.setResponsiblePersonMobile(scholarship.getResponsiblePersonMobile());
-        response.setResponsiblePersonAnnualIncome(
-                scholarship.getResponsiblePersonAnnualIncome()
-        );
+            response.setHouseholdSize(history.getHouseholdSize());
+            response.setDependantsCount(history.getDependantsCount());
+            response.setSchoolGoingChildren(history.getSchoolGoingChildren());
+            response.setMainIncomeEarner(history.getMainIncomeEarner());
+            response.setIncomeSource(history.getIncomeSource());
+            response.setOtherHouseholdIncome(history.getOtherHouseholdIncome());
+            response.setHouseholdIncome(history.getHouseholdIncome());
+            response.setHousingStatus(history.getHousingStatus());
 
-        response.setOrphanStatus(scholarship.getOrphanStatus());
+            response.setHouseType(history.getHouseType());
+            response.setHouseRoomCount(history.getHouseRoomCount());
+            response.setHouseLocation(history.getHouseLocation());
+            response.setHouseEstimatedValue(history.getHouseEstimatedValue());
+            response.setHouseMortgaged(history.getHouseMortgaged());
+            response.setMonthlyRent(history.getMonthlyRent());
 
-        response.setHouseholdSize(scholarship.getHouseholdSize());
-        response.setDependantsCount(scholarship.getDependantsCount());
-        response.setSchoolGoingChildren(scholarship.getSchoolGoingChildren());
-        response.setMainIncomeEarner(scholarship.getMainIncomeEarner());
-        response.setIncomeSource(scholarship.getIncomeSource());
-        response.setOtherHouseholdIncome(scholarship.getOtherHouseholdIncome());
-        response.setHouseholdIncome(scholarship.getHouseholdIncome());
-        response.setHousingStatus(scholarship.getHousingStatus());
+            response.setLandOwned(history.getLandOwned());
+            response.setLandArea(history.getLandArea());
+            response.setLandUnit(history.getLandUnit());
+            response.setLandPlotCount(history.getLandPlotCount());
+            response.setLandLocation(history.getLandLocation());
+            response.setLandUsage(history.getLandUsage());
+            response.setLandEstimatedValue(history.getLandEstimatedValue());
+            response.setLandGeneratesIncome(history.getLandGeneratesIncome());
+            response.setLandAnnualIncome(history.getLandAnnualIncome());
 
-        response.setHouseType(scholarship.getHouseType());
-        response.setHouseRoomCount(scholarship.getHouseRoomCount());
-        response.setHouseLocation(scholarship.getHouseLocation());
-        response.setHouseEstimatedValue(scholarship.getHouseEstimatedValue());
-        response.setHouseMortgaged(scholarship.getHouseMortgaged());
-        response.setMonthlyRent(scholarship.getMonthlyRent());
+            response.setVehiclesOwned(history.getVehiclesOwned());
+            response.setVehicleCount(history.getVehicleCount());
+            response.setVehicleDescription(history.getVehicleDescription());
+            response.setVehicleType(history.getVehicleType());
+            response.setVehicleUsage(history.getVehicleUsage());
+            response.setVehicleEstimatedValue(history.getVehicleEstimatedValue());
+            response.setVehicleFinanced(history.getVehicleFinanced());
 
-        response.setLandOwned(scholarship.getLandOwned());
-        response.setLandArea(scholarship.getLandArea());
-        response.setLandUnit(scholarship.getLandUnit());
-        response.setLandPlotCount(scholarship.getLandPlotCount());
-        response.setLandLocation(scholarship.getLandLocation());
-        response.setLandUsage(scholarship.getLandUsage());
-        response.setLandEstimatedValue(scholarship.getLandEstimatedValue());
-        response.setLandGeneratesIncome(scholarship.getLandGeneratesIncome());
-        response.setLandAnnualIncome(scholarship.getLandAnnualIncome());
+            response.setBusinessOwned(history.getBusinessOwned());
+            response.setBusinessName(history.getBusinessName());
+            response.setBusinessType(history.getBusinessType());
+            response.setBusinessLocation(history.getBusinessLocation());
+            response.setBusinessEmployeeCount(history.getBusinessEmployeeCount());
+            response.setBusinessAnnualIncome(history.getBusinessAnnualIncome());
 
-        response.setVehiclesOwned(scholarship.getVehiclesOwned());
-        response.setVehicleCount(scholarship.getVehicleCount());
-        response.setVehicleDescription(scholarship.getVehicleDescription());
-        response.setVehicleType(scholarship.getVehicleType());
-        response.setVehicleUsage(scholarship.getVehicleUsage());
-        response.setVehicleEstimatedValue(scholarship.getVehicleEstimatedValue());
-        response.setVehicleFinanced(scholarship.getVehicleFinanced());
+            response.setLivestockOwned(history.getLivestockOwned());
+            response.setLivestockDescription(history.getLivestockDescription());
+            response.setLivestockEstimatedValue(history.getLivestockEstimatedValue());
+            response.setLivestockAnnualIncome(history.getLivestockAnnualIncome());
 
-        response.setBusinessOwned(scholarship.getBusinessOwned());
-        response.setBusinessName(scholarship.getBusinessName());
-        response.setBusinessType(scholarship.getBusinessType());
-        response.setBusinessLocation(scholarship.getBusinessLocation());
-        response.setBusinessEmployeeCount(scholarship.getBusinessEmployeeCount());
-        response.setBusinessAnnualIncome(scholarship.getBusinessAnnualIncome());
+            response.setOtherAssetsDescription(history.getOtherAssetsDescription());
+            response.setOtherAssetsEstimatedValue(history.getOtherAssetsEstimatedValue());
+            response.setOtherAssetsAnnualIncome(history.getOtherAssetsAnnualIncome());
 
-        response.setLivestockOwned(scholarship.getLivestockOwned());
-        response.setLivestockDescription(scholarship.getLivestockDescription());
-        response.setLivestockEstimatedValue(scholarship.getLivestockEstimatedValue());
-        response.setLivestockAnnualIncome(scholarship.getLivestockAnnualIncome());
+            response.setFinancialHardshipReason(history.getFinancialHardshipReason());
+            response.setFamilySituationRemarks(history.getFamilySituationRemarks());
+            response.setParentGuardianName(history.getParentGuardianName());
+            response.setParentGuardianRelation(history.getParentGuardianRelation());
+            response.setParentGuardianMobile(history.getParentGuardianMobile());
+            response.setDeclarationAccepted(history.getDeclarationAccepted());
+            response.setSubmittedAt(history.getSubmittedAt());
+        }
 
-        response.setOtherAssetsDescription(scholarship.getOtherAssetsDescription());
-        response.setOtherAssetsEstimatedValue(
-                scholarship.getOtherAssetsEstimatedValue()
-        );
-        response.setOtherAssetsAnnualIncome(
-                scholarship.getOtherAssetsAnnualIncome()
-        );
+        List<ScholarshipApplicationFormResponseDTO.SiblingResponse> siblingResponses =
+                new ArrayList<>();
 
-        response.setFinancialHardshipReason(
-                scholarship.getFinancialHardshipReason()
-        );
-        response.setFamilySituationRemarks(
-                scholarship.getFamilySituationRemarks()
-        );
-
-        response.setParentGuardianName(scholarship.getParentGuardianName());
-        response.setParentGuardianRelation(scholarship.getParentGuardianRelation());
-        response.setParentGuardianMobile(scholarship.getParentGuardianMobile());
-        response.setDeclarationAccepted(scholarship.getDeclarationAccepted());
-        response.setSubmittedAt(scholarship.getSubmittedAt());
-
-        List<ScholarshipApplicationFormResponseDTO.SiblingResponse>
-                siblingResponses = new ArrayList<>();
-
-        for (
-                ErpScholarshipSibling sibling
-                : siblingRepo
-                        .findByScholarshipApplicationScholarshipAppIdAndActiveTrueOrderBySiblingIdAsc(
-                                scholarship.getScholarshipAppId()
-                        )
-        ) {
+        for (ErpScholarshipSibling sibling :
+                siblingRepo.findByScholarshipApplicationScholarshipAppIdAndActiveTrueOrderBySiblingIdAsc(
+                        scholarship.getScholarshipAppId()
+                )) {
             ScholarshipApplicationFormResponseDTO.SiblingResponse item =
                     new ScholarshipApplicationFormResponseDTO.SiblingResponse();
 
             item.setSiblingId(
-                    includeInternalIds
-                            ? sibling.getSiblingId()
-                            : null
+                    includeInternalIds ? sibling.getScholarshipSiblingId() : null
             );
             item.setSiblingName(sibling.getSiblingName());
             item.setAge(sibling.getAge());
@@ -1629,15 +2104,24 @@ public class ScholarshipServiceImpl implements ScholarshipService {
             item.setInstitution(sibling.getInstitution());
             item.setOccupation(sibling.getOccupation());
             item.setAnnualIncome(sibling.getAnnualIncome());
-
             siblingResponses.add(item);
         }
 
-        response.setSiblings(
-                siblingResponses
-        );
-
+        response.setSiblings(siblingResponses);
         return response;
+    }
+
+    private java.util.Optional<ErpScholarshipHistory> latestHistory(
+            ErpScholarshipApplication scholarship
+    ) {
+        if (scholarship == null || scholarship.getScholarshipAppId() == null) {
+            return java.util.Optional.empty();
+        }
+
+        return historyRepo
+                .findFirstByScholarshipApplicationScholarshipAppIdOrderByScholarshipHistoryIdDesc(
+                        scholarship.getScholarshipAppId()
+                );
     }
 
     private BigDecimal calculateAnnualHouseholdIncome(

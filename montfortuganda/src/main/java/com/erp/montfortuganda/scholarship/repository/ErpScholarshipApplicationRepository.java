@@ -33,9 +33,60 @@ public interface ErpScholarshipApplicationRepository
             @Param("branchId") Long branchId
     );
 
+    /**
+     * Branch-scoped pessimistic lock used when a Scholarship record is
+     * modified by the Branch workflow.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select s
+            from ErpScholarshipApplication s
+            where s.scholarshipAppId = :scholarshipAppId
+              and s.branchId = :branchId
+              and s.active = true
+            """)
+    Optional<ErpScholarshipApplication>
+    findActiveByScholarshipAppIdAndBranchForUpdate(
+            @Param("scholarshipAppId") Long scholarshipAppId,
+            @Param("branchId") Long branchId
+    );
+
+    /**
+     * Super Admin workflow lookup. No branch from the authenticated browser
+     * is trusted here; the scholarship record itself resolves its branch.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select s
+            from ErpScholarshipApplication s
+            where s.scholarshipAppId = :scholarshipAppId
+              and s.active = true
+            """)
+    Optional<ErpScholarshipApplication>
+    findActiveByScholarshipAppIdForUpdate(
+            @Param("scholarshipAppId") Long scholarshipAppId
+    );
+
+    /**
+     * Branch Scholarship list.
+     *
+     * submitted_at is a database column on erp_scholarship_applications,
+     * but submittedAt is intentionally no longer a persistent property on
+     * ErpScholarshipApplication because Scholarship History owns the
+     * submitted snapshot. Therefore this must be a native query rather than
+     * a derived Spring Data method.
+     */
+    @Query(value = """
+            SELECT s.*
+            FROM erp_scholarship_applications s
+            WHERE s.branch_id = :branchId
+              AND s.active = 1
+            ORDER BY s.submitted_at DESC
+            """,
+            nativeQuery = true)
     List<ErpScholarshipApplication>
     findAllByBranchIdAndActiveTrueOrderBySubmittedAtDesc(
-            Long branchId
+            @Param("branchId") Long branchId
     );
 
     Optional<ErpScholarshipApplication>
@@ -61,6 +112,45 @@ public interface ErpScholarshipApplicationRepository
             @Param("branchId") Long branchId
     );
 
+    /**
+     * Resolves the scholarship application for one admission application,
+     * academic year and term. A later cycle must never reuse an older
+     * scholarship record.
+     *
+     * The term is stored in Scholarship History, which is the immutable
+     * snapshot/history layer for scholarship request data.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select s
+            from ErpScholarshipApplication s
+            where s.application.applicationId = :applicationId
+              and s.branchId = :branchId
+              and s.academicYear = :academicYear
+              and s.active = true
+              and exists (
+                    select h.scholarshipHistoryId
+                    from ErpScholarshipHistory h
+                    where h.scholarshipApplication = s
+                      and h.termRequested = :term
+              )
+            order by s.scholarshipAppId desc
+            """)
+    Optional<ErpScholarshipApplication>
+    findActiveByApplicationBranchAcademicYearAndTermForUpdate(
+            @Param("applicationId") Long applicationId,
+            @Param("branchId") Long branchId,
+            @Param("academicYear") String academicYear,
+            @Param("term") String term
+    );
+
+    /**
+     * Scholarship Overview query.
+     *
+     * This remains native because the current Overview implementation uses
+     * the database's submitted_at column for ordering while the current
+     * ErpScholarshipApplication entity does not expose submittedAt.
+     */
     @Query(value = """
             SELECT s.*
             FROM erp_scholarship_applications s
@@ -111,7 +201,8 @@ public interface ErpScholarshipApplicationRepository
             @Param("levelId") Integer levelId
     );
 
-    default List<ErpScholarshipApplication> findActiveOverviewApplications(
+    default List<ErpScholarshipApplication>
+    findActiveOverviewApplications(
             Long branchId,
             String academicYear,
             String term,

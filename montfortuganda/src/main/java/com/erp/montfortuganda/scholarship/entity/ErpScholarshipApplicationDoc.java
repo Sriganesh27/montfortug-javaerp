@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 @Entity
 @DynamicUpdate
 @Table(name = "erp_scholarship_application_docs")
-@EqualsAndHashCode(exclude = "scholarshipApplication")
-@ToString(exclude = "scholarshipApplication")
+@EqualsAndHashCode(exclude = {"scholarshipApplication", "scholarshipHistory"})
+@ToString(exclude = {"scholarshipApplication", "scholarshipHistory"})
 public class ErpScholarshipApplicationDoc {
 
     public enum DocumentType {
@@ -47,8 +47,8 @@ public class ErpScholarshipApplicationDoc {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "document_id")
-    private Long documentId;
+    @Column(name = "scholarship_document_id")
+    private Long scholarshipDocumentId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
@@ -56,6 +56,12 @@ public class ErpScholarshipApplicationDoc {
             nullable = false
     )
     private ErpScholarshipApplication scholarshipApplication;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "scholarship_history_id"
+    )
+    private ErpScholarshipHistory scholarshipHistory;
 
     @Enumerated(EnumType.STRING)
     @Column(

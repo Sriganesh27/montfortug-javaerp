@@ -2627,10 +2627,14 @@ function initOneToOneSponsorshipView() {
 
     let selectedDonorId = '', selectedStudentId = '';
     let selectedDonorName = null, selectedStudentName = null;
+    let selectedStudentBranchId = null;
+    let selectedStudentShortfallUgx = 0;
 
     function resetWizardSelection() {
         selectedDonorId = ''; selectedStudentId = '';
         selectedDonorName = null; selectedStudentName = null;
+        selectedStudentBranchId = null;
+        selectedStudentShortfallUgx = 0;
         document.getElementById('summary-sponsor').textContent = 'None selected';
         document.getElementById('summary-student').textContent = 'None selected';
 
@@ -2721,9 +2725,11 @@ function initOneToOneSponsorshipView() {
                                 card.classList.add('btn-select-student');
                                 card.setAttribute('data-id', s.id);
                                 card.setAttribute('data-name', s.studentName);
+                                card.setAttribute('data-branch-id', s.branchId || s.campusId || '');
+                                card.setAttribute('data-shortfall', s.currentShortfallUgx || s.shortfallUgx || 0);
 
                                 clone.querySelector('.card-title').textContent = s.studentName;
-                                clone.querySelector('.card-subtitle').textContent = `Shortfall: ${formatUGX(s.currentShortfallUgx)}`;
+                                clone.querySelector('.card-subtitle').textContent = `Shortfall: ${formatUGX(s.currentShortfallUgx || s.shortfallUgx || 0)}`;
                                 studentList.appendChild(clone);
                             });
                         }
@@ -2806,7 +2812,10 @@ function initOneToOneSponsorshipView() {
             const studentCard = e.target.closest('.btn-select-student');
             if (studentCard) {
                 const data = handleSelection(studentCard, 'btn-select-student');
-                selectedStudentId = data.id; selectedStudentName = data.name;
+                selectedStudentId = data.id;
+                selectedStudentName = data.name;
+                selectedStudentBranchId = Number(studentCard.getAttribute('data-branch-id')) || null;
+                selectedStudentShortfallUgx = Number(studentCard.getAttribute('data-shortfall')) || 0;
                 document.getElementById('summary-student').textContent = selectedStudentName;
                 checkEnableConfirmButton();
             }
@@ -2821,10 +2830,25 @@ function initOneToOneSponsorshipView() {
 
             showLoader();
             try {
+                if (!selectedDonorId) {
+                    throw new Error('Select a donor before confirming the mapping.');
+                }
+
+                if (!selectedStudentBranchId) {
+                    throw new Error('The selected student branch could not be resolved.');
+                }
+
+                const amountUgx = selectedStudentShortfallUgx;
+
+                if (!(amountUgx > 0)) {
+                    throw new Error('The selected student has no outstanding scholarship shortfall.');
+                }
+
                 await apiPost('/superadmin/scholarships/allocate-student', {
-                    branchId: 1,
-                    studentId: parseInt(selectedStudentId),
-                    amountUgx: 0,
+                    branchId: selectedStudentBranchId,
+                    studentId: parseInt(selectedStudentId, 10),
+                    donationId: parseInt(selectedDonorId, 10),
+                    amountUgx,
                     term: 'Term 1',
                     academicYear: '2026/2027'
                 });

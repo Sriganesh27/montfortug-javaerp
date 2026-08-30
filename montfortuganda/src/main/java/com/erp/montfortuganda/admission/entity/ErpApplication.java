@@ -291,7 +291,7 @@ public class ErpApplication {
     private String fatherEducation = "";
 
     @Column(name = "father_age")
-    private Integer fatherAge = 0;
+    private Integer fatherAge;
 
     // =====================================================================
     // 6. MOTHER DETAILS
@@ -313,7 +313,7 @@ public class ErpApplication {
     private String motherEducation = "";
 
     @Column(name = "mother_age")
-    private Integer motherAge = 0;
+    private Integer motherAge;
 
     // =====================================================================
     // 7. GUARDIAN DETAILS
@@ -344,7 +344,7 @@ public class ErpApplication {
     private String guardianLocation = "";
 
     @Column(name = "guardian_age")
-    private Integer guardianAge = 0;
+    private Integer guardianAge;
 
     // =====================================================================
     // 8. PHYSICAL ADDRESS

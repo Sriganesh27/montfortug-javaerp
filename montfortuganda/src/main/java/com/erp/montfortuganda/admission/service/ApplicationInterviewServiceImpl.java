@@ -1,8 +1,8 @@
+
 package com.erp.montfortuganda.admission.service;
 
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewCompleteRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewMarkRequestDTO;
-import com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewScheduleRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewWaitlistResultRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewWaitlistRequestDTO;
@@ -77,7 +77,7 @@ public class ApplicationInterviewServiceImpl
 
     @Override
     @Transactional
-    public ApplicationInterviewResponseDTO getInterview(
+    public com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO getInterview(
             CurrentUserContext context,
             Long applicationId
     ) {
@@ -199,7 +199,7 @@ public class ApplicationInterviewServiceImpl
 
     @Override
     @Transactional
-    public ApplicationInterviewResponseDTO scheduleInterview(
+    public com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO scheduleInterview(
             CurrentUserContext context,
             Long applicationId,
             ApplicationInterviewScheduleRequestDTO request
@@ -242,12 +242,8 @@ public class ApplicationInterviewServiceImpl
                 interview != null
                         && interview.getStatus()
                         == ErpApplicationInterview.Status.COMPLETED
-                        && (
-                        interview.getResult()
-                                == ErpApplicationInterview.Result.FAILED
-                                || interview.getResult()
-                                == ErpApplicationInterview.Result.RETEST_REQUIRED
-                );
+                        && interview.getResult()
+                        == ErpApplicationInterview.Result.RETEST_REQUIRED;
 
         if (interview != null
                 && !schedulingRetest
@@ -348,7 +344,7 @@ public class ApplicationInterviewServiceImpl
 
     @Override
     @Transactional
-    public ApplicationInterviewResponseDTO rescheduleInterview(
+    public com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO rescheduleInterview(
             CurrentUserContext context,
             Long applicationId,
             ApplicationInterviewScheduleRequestDTO request
@@ -436,7 +432,7 @@ public class ApplicationInterviewServiceImpl
 
     @Override
     @Transactional
-    public ApplicationInterviewResponseDTO startInterview(
+    public com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO startInterview(
             CurrentUserContext context,
             Long applicationId
     ) {
@@ -507,7 +503,7 @@ public class ApplicationInterviewServiceImpl
 
     @Override
     @Transactional
-    public ApplicationInterviewResponseDTO completeInterview(
+    public com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO completeInterview(
             CurrentUserContext context,
             Long applicationId,
             ApplicationInterviewCompleteRequestDTO request
@@ -721,6 +717,49 @@ public class ApplicationInterviewServiceImpl
         );
 
         /*
+         * WAITLIST is a hold decision, not a completed admission outcome.
+         * Put the application itself on the admission waitlist so the
+         * central workflow cannot expose Parent Fee Discussion while the
+         * Entrance Test decision is still being held. The existing
+         * Entrance Test result remains WAITLIST and is resolved explicitly
+         * through the waitlist decision endpoint.
+         */
+        if (request.result()
+                == ErpApplicationInterview.Result.WAITLIST) {
+            ErpApplication.ApplicationStatus oldApplicationStatus =
+                    application.getApplicationStatus();
+
+            application.setApplicationStatus(
+                    ErpApplication.ApplicationStatus.WAITLISTED
+            );
+
+            ErpApplicationStatusHistory history =
+                    new ErpApplicationStatusHistory();
+
+            history.setApplication(application);
+            history.setStage("ENTRANCE_TEST_WAITLIST");
+            history.setOldStatus(oldApplicationStatus);
+            history.setNewStatus(
+                    ErpApplication.ApplicationStatus.WAITLISTED
+            );
+            history.setChangedBy(userId);
+            history.setRemarks(
+                    trimToNull(request.employeeRemarks())
+            );
+            history.setInternalRemarks(
+                    trimToNull(request.internalRemarks())
+            );
+            history.setTransitionSource("ERP");
+            history.setEmailRequired(false);
+            history.setEmailStatus(
+                    ErpApplicationStatusHistory.EMAIL_NOT_REQUIRED
+            );
+            history.setActive(true);
+
+            historyRepository.save(history);
+        }
+
+        /*
          * School Visit attendance is recorded before the application enters
          * the Entrance Test stage. Finalize the visit only when the Entrance
          * Test has reached a final outcome for the current allowed attempt.
@@ -771,7 +810,7 @@ public class ApplicationInterviewServiceImpl
      */
     @Override
     @Transactional
-    public ApplicationInterviewResponseDTO updateApplicationWaitlist(
+    public com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO updateApplicationWaitlist(
             CurrentUserContext context,
             Long applicationId,
             ApplicationInterviewWaitlistRequestDTO request
@@ -931,7 +970,7 @@ public class ApplicationInterviewServiceImpl
 
     @Override
     @Transactional
-    public ApplicationInterviewResponseDTO updateWaitlistResult(
+    public com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO updateWaitlistResult(
             CurrentUserContext context,
             Long applicationId,
             ApplicationInterviewWaitlistResultRequestDTO request
@@ -1027,6 +1066,13 @@ public class ApplicationInterviewServiceImpl
         ErpApplicationInterview.Result oldResult =
                 interview.getResult();
 
+        if (application.getApplicationStatus()
+                != ErpApplication.ApplicationStatus.WAITLISTED) {
+            throw new BadRequestException(
+                    "The application is not currently on the Entrance Test waitlist."
+            );
+        }
+
         /*
          * Important: do not alter marks, responsible employee,
          * startedAt or completedAt. This action changes only the
@@ -1049,6 +1095,15 @@ public class ApplicationInterviewServiceImpl
                 mapApplicationTestStatus(
                         newResult
                 )
+        );
+
+        /*
+         * Resolving the Entrance Test waitlist releases the application
+         * hold. The actual next stage is still controlled by the central
+         * transition service; this method only removes the waitlist block.
+         */
+        application.setApplicationStatus(
+                ErpApplication.ApplicationStatus.UNDER_REVIEW
         );
 
         application.setUpdatedBy(
@@ -1338,7 +1393,7 @@ public class ApplicationInterviewServiceImpl
         return result;
     }
 
-    private ApplicationInterviewResponseDTO toResponse(
+    private com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO toResponse(
             ErpApplication application,
             ErpApplicationInterview interview,
             Integer branchId
@@ -1351,7 +1406,7 @@ public class ApplicationInterviewServiceImpl
                             application.getWorkflowLocked()
                     );
 
-            return new ApplicationInterviewResponseDTO(
+            return new com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO(
                     application.getApplicationId(),
                     application.getApplicationNo(),
                     null,
@@ -1392,6 +1447,8 @@ public class ApplicationInterviewServiceImpl
                     application.getApplicationStatus()
                             == ErpApplication.ApplicationStatus.WAITLISTED,
                     false,
+                    false,
+                    1,
                     false
             );
         }
@@ -1408,7 +1465,7 @@ public class ApplicationInterviewServiceImpl
                         branchId
                 );
 
-        List<ApplicationInterviewResponseDTO.SubjectMark>
+        List<com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO.SubjectMark>
                 responseMarks =
                 new ArrayList<>(
                         marks.size()
@@ -1429,7 +1486,7 @@ public class ApplicationInterviewServiceImpl
                     );
 
             responseMarks.add(
-                    new ApplicationInterviewResponseDTO.SubjectMark(
+                    new com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO.SubjectMark(
                             mark.getInterviewMarkId(),
                             mark.getSubjectId(),
                             subject == null
@@ -1509,16 +1566,18 @@ public class ApplicationInterviewServiceImpl
                                 interview.getInterviewId()
                         );
 
-        boolean firstRetestAvailable =
-                previousAttemptMarks == 0
+        int attemptNumber =
+                previousAttemptMarks > 0
+                        ? 2
+                        : 1;
+
+        boolean canRequestRetest =
+                editable
+                        && attemptNumber == 1
                         && status
                         == ErpApplicationInterview.Status.COMPLETED
-                        && (
-                        interview.getResult()
-                                == ErpApplicationInterview.Result.FAILED
-                                || interview.getResult()
-                                == ErpApplicationInterview.Result.RETEST_REQUIRED
-                );
+                        && interview.getResult()
+                        == ErpApplicationInterview.Result.RETEST_REQUIRED;
 
         boolean canSchedule =
                 editable
@@ -1529,7 +1588,7 @@ public class ApplicationInterviewServiceImpl
                                 == ErpApplicationInterview.Status.CANCELLED
                                 || status
                                 == ErpApplicationInterview.Status.NO_SHOW
-                                || firstRetestAvailable
+                                || canRequestRetest
                 );
 
         boolean canReschedule =
@@ -1551,7 +1610,7 @@ public class ApplicationInterviewServiceImpl
                                 == ErpApplicationInterview.Status.IN_PROGRESS
                 );
 
-        List<ApplicationInterviewResponseDTO.SubjectOption>
+        List<com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO.SubjectOption>
                 availableSubjects =
                 loadAvailableSubjects(branchId);
 
@@ -1598,7 +1657,7 @@ public class ApplicationInterviewServiceImpl
                 canProceed
                         && !applicationWaitlisted;
 
-        return new ApplicationInterviewResponseDTO(
+        return new com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO(
                 application.getApplicationId(),
                 application.getApplicationNo(),
                 interview.getInterviewId(),
@@ -1635,11 +1694,13 @@ public class ApplicationInterviewServiceImpl
                         : application.getApplicationStatus().name(),
                 applicationWaitlisted,
                 canPlaceOnWaitlist,
-                canReleaseFromWaitlist
+                canReleaseFromWaitlist,
+                attemptNumber,
+                canRequestRetest
         );
     }
 
-    private List<ApplicationInterviewResponseDTO.SubjectOption>
+    private List<com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO.SubjectOption>
     loadAvailableSubjects(
             Integer branchId
     ) {
@@ -1651,7 +1712,7 @@ public class ApplicationInterviewServiceImpl
                 .stream()
                 .map(
                         subject ->
-                                new ApplicationInterviewResponseDTO.SubjectOption(
+                                new com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO.SubjectOption(
                                         subject.getSubjectId(),
                                         subject.getSubjectCode(),
                                         subject.getSubjectName(),

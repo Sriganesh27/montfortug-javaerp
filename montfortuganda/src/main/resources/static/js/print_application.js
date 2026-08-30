@@ -76,6 +76,15 @@
  * @property {string} [more_info]
  */
 
+let receiptLoaderToken = null;
+
+if (typeof window.showLoader === 'function') {
+    receiptLoaderToken =
+        window.showLoader(
+            'Loading application receipt...'
+        );
+}
+
 document.addEventListener(
     'DOMContentLoaded',
     () => {
@@ -158,6 +167,43 @@ function displayField(
     return normalized !== ''
         ? normalized
         : '-';
+}
+
+function displayAgeField(
+    value
+) {
+    if (value === null
+            || value === undefined
+            || String(value).trim() === ''
+            || String(value).trim() === '0') {
+        return '-';
+    }
+
+    return displayField(value);
+}
+
+function formatReceiptDate(
+    value
+) {
+    if (value === null
+            || value === undefined
+            || String(value).trim() === '') {
+        return '-';
+    }
+
+    const normalized =
+        String(value).trim();
+
+    const isoMatch =
+        normalized.match(
+            /^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$/
+        );
+
+    if (isoMatch) {
+        return `${isoMatch[3]}-${isoMatch[2]}-${isoMatch[1]}`;
+    }
+
+    return displayField(value);
 }
 
 function setElementText(
@@ -428,8 +474,20 @@ async function loadReceipt() {
         renderReceipt(
             payload.data
         );
+
+        /*
+         * Keep the global loader active until the complete receipt has been
+         * rendered and any visible receipt images have either loaded or
+         * failed safely. This prevents a partially populated receipt from
+         * being revealed to the user.
+         */
+        await waitForReceiptImages();
+
+        finishReceiptLoading();
     } catch (error) {
         console.error(error);
+
+        finishReceiptLoading();
 
         if (error.message
                 === 'SESSION_EXPIRED') {
@@ -446,6 +504,103 @@ async function loadReceipt() {
             || 'Secure network error loading application receipt.'
         );
     }
+}
+
+function finishReceiptLoading() {
+    document.body.classList.remove(
+        'print-receipt-loading'
+    );
+
+    if (receiptLoaderToken
+            && typeof window.hideLoader
+            === 'function') {
+        window.hideLoader(
+            receiptLoaderToken
+        );
+
+        receiptLoaderToken = null;
+    }
+}
+
+function waitForReceiptImages() {
+    const imageElements =
+        [
+            document.getElementById(
+                'schoolLogo'
+            ),
+            document.getElementById(
+                'student_photo'
+            )
+        ].filter(
+            element =>
+                element
+                && !element.classList.contains(
+                    'hidden-element'
+                )
+                && element.getAttribute('src')
+        );
+
+    if (imageElements.length === 0) {
+        return Promise.resolve();
+    }
+
+    return Promise.all(
+        imageElements.map(
+            imageElement =>
+                new Promise(resolve => {
+                    if (imageElement.complete) {
+                        resolve();
+                        return;
+                    }
+
+                    let settled = false;
+
+                    const settle = () => {
+                        if (settled) {
+                            return;
+                        }
+
+                        settled = true;
+                        window.clearTimeout(
+                            timeoutId
+                        );
+                        imageElement.removeEventListener(
+                            'load',
+                            settle
+                        );
+                        imageElement.removeEventListener(
+                            'error',
+                            settle
+                        );
+                        resolve();
+                    };
+
+                    const timeoutId =
+                        window.setTimeout(
+                            settle,
+                            8000
+                        );
+
+                    imageElement.addEventListener(
+                        'load',
+                        settle,
+                        {
+                            once: true
+                        }
+                    );
+
+                    imageElement.addEventListener(
+                        'error',
+                        settle,
+                        {
+                            once: true
+                        }
+                    );
+                })
+        )
+    ).then(
+        () => undefined
+    );
 }
 
 /**
@@ -479,7 +634,7 @@ function renderReceipt(
 
     setElementText(
         'date_of_registration',
-        displayField(
+        formatReceiptDate(
             app.date_of_registration
         )
     );
@@ -643,7 +798,7 @@ function renderStudentDetails(
 
     setElementText(
         'dob',
-        displayField(app.dob)
+        formatReceiptDate(app.dob)
     );
 
     setElementText(
@@ -800,7 +955,7 @@ function renderParentGuardianDetails(
 
     setElementText(
         'father_age',
-        displayField(app.father_age)
+        displayAgeField(app.father_age)
     );
 
     setElementText(
@@ -830,7 +985,7 @@ function renderParentGuardianDetails(
 
     setElementText(
         'mother_age',
-        displayField(app.mother_age)
+        displayAgeField(app.mother_age)
     );
 
     setElementText(

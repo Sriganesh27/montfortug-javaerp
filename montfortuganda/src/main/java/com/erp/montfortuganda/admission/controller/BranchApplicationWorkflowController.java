@@ -1,7 +1,6 @@
 package com.erp.montfortuganda.admission.controller;
 
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewCompleteRequestDTO;
-import com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewScheduleRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewWaitlistRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewWaitlistResultRequestDTO;
@@ -30,6 +29,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO;
 
 import java.util.List;
 

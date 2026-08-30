@@ -15,7 +15,9 @@ import com.erp.montfortuganda.auth.service.CurrentUserContext;
 import com.erp.montfortuganda.exception.BadRequestException;
 import com.erp.montfortuganda.exception.ResourceNotFoundException;
 import com.erp.montfortuganda.scholarship.entity.ErpScholarshipApplication;
+import com.erp.montfortuganda.scholarship.entity.ErpScholarshipHistory;
 import com.erp.montfortuganda.scholarship.repository.ErpScholarshipApplicationRepository;
+import com.erp.montfortuganda.scholarship.repository.ErpScholarshipHistoryRepository;
 import com.erp.montfortuganda.school.entity.ErpAcademicYear;
 import com.erp.montfortuganda.school.repository.AcademicYearRepository;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ public class ApplicationFeeDiscussionServiceImpl
     private final ErpApplicationFeeRepository applicationFeeRepository;
     private final ErpApplicationFeeHistoryRepository applicationFeeHistoryRepository;
     private final ErpScholarshipApplicationRepository scholarshipApplicationRepository;
+    private final ErpScholarshipHistoryRepository scholarshipHistoryRepository;
     private final AcademicYearRepository academicYearRepository;
     private final BranchAccessService branchAccessService;
     private final ApplicationStageTransitionService stageTransitionService;
@@ -42,6 +45,7 @@ public class ApplicationFeeDiscussionServiceImpl
             ErpApplicationFeeRepository applicationFeeRepository,
             ErpApplicationFeeHistoryRepository applicationFeeHistoryRepository,
             ErpScholarshipApplicationRepository scholarshipApplicationRepository,
+            ErpScholarshipHistoryRepository scholarshipHistoryRepository,
             AcademicYearRepository academicYearRepository,
             BranchAccessService branchAccessService,
             ApplicationStageTransitionService stageTransitionService
@@ -52,6 +56,8 @@ public class ApplicationFeeDiscussionServiceImpl
                 applicationFeeHistoryRepository;
         this.scholarshipApplicationRepository =
                 scholarshipApplicationRepository;
+        this.scholarshipHistoryRepository =
+                scholarshipHistoryRepository;
         this.academicYearRepository =
                 academicYearRepository;
         this.branchAccessService =
@@ -447,10 +453,8 @@ public class ApplicationFeeDiscussionServiceImpl
             BigDecimal assistanceRequired
     ) {
         boolean scholarshipRequired =
-                feeDecision
-                        == ErpApplicationFee.FeeDecision.PARTIAL_ASSISTANCE
-                        || feeDecision
-                        == ErpApplicationFee.FeeDecision.FULL_ASSISTANCE;
+                feeDecision == ErpApplicationFee.FeeDecision.PARTIAL_ASSISTANCE
+                        || feeDecision == ErpApplicationFee.FeeDecision.FULL_ASSISTANCE;
 
         var existing =
                 scholarshipApplicationRepository
@@ -460,41 +464,40 @@ public class ApplicationFeeDiscussionServiceImpl
                         );
 
         if (!scholarshipRequired) {
-            existing.ifPresent(
-                    scholarship -> {
-                        String currentStatus =
-                                normalizeScholarshipStatus(
-                                        scholarship.getStatus()
-                                );
+            existing.ifPresent(scholarship -> {
+                String currentStatus =
+                        normalizeScholarshipStatus(scholarship.getStatus());
 
-                        if (isScholarshipProgressLocked(
-                                currentStatus
-                        )) {
-                            throw new BadRequestException(
-                                    "The scholarship application has already progressed beyond the initial stage. "
-                                            + "The fee decision cannot be changed to Full Payment from Fee Discussion."
-                            );
-                        }
+                if (isScholarshipProgressLocked(currentStatus)) {
+                    throw new BadRequestException(
+                            "The scholarship application has already progressed beyond the initial stage. "
+                                    + "The fee decision cannot be changed to Full Payment from Fee Discussion."
+                    );
+                }
 
-                        scholarship.setPublicTokenHash(null);
-                        scholarship.setTokenExpiresAt(null);
-                        scholarship.setTokenUsedAt(null);
-                        scholarship.setSchoolAccessTokenHash(null);
-                        scholarship.setSchoolAccessExpiresAt(null);
-                        scholarship.setSchoolAccessIssuedAt(null);
-                        scholarship.setSchoolAccessIssuedBy(null);
-                        scholarship.setStatus(
-                                "CANCELLED_BY_FEE_DECISION"
-                        );
-                        scholarship.setUpdatedBy(
-                                userId.longValue()
-                        );
+                scholarship.setPublicTokenHash(null);
+                scholarship.setTokenExpiresAt(null);
+                scholarship.setTokenUsedAt(null);
+                scholarship.setSchoolAccessTokenHash(null);
+                scholarship.setSchoolAccessExpiresAt(null);
+                scholarship.setSchoolAccessIssuedAt(null);
+                scholarship.setSchoolAccessIssuedBy(null);
+                scholarship.setStatus("CANCELLED_BY_FEE_DECISION");
+                scholarship.setUpdatedBy(userId.longValue());
 
-                        scholarshipApplicationRepository.save(
-                                scholarship
-                        );
-                    }
-            );
+                scholarshipApplicationRepository.save(scholarship);
+
+                scholarshipHistoryRepository
+                        .findFirstByScholarshipApplicationScholarshipAppIdOrderByScholarshipHistoryIdDesc(
+                                scholarship.getScholarshipAppId()
+                        )
+                        .ifPresent(history -> {
+                            history.setStatus("CANCELLED_BY_FEE_DECISION");
+                            history.setUpdatedBy(userId.longValue());
+                            history.setUpdatedAt(LocalDateTime.now());
+                            scholarshipHistoryRepository.save(history);
+                        });
+            });
             return;
         }
 
@@ -505,16 +508,11 @@ public class ApplicationFeeDiscussionServiceImpl
         }
 
         String academicYearCode =
-                resolveAcademicYearCode(
-                        application,
-                        branchId
-                );
+                resolveAcademicYearCode(application, branchId);
 
         BigDecimal requestedPercentage =
                 assistanceRequired
-                        .multiply(
-                                BigDecimal.valueOf(100)
-                        )
+                        .multiply(BigDecimal.valueOf(100))
                         .divide(
                                 baseFeeAmount,
                                 2,
@@ -522,80 +520,93 @@ public class ApplicationFeeDiscussionServiceImpl
                         );
 
         ErpScholarshipApplication scholarship =
-                existing.orElseGet(
-                        ErpScholarshipApplication::new
-                );
+                existing.orElseGet(ErpScholarshipApplication::new);
 
         if (scholarship.getScholarshipAppId() == null) {
-            scholarship.setApplication(
-                    application
-            );
-            scholarship.setBranchId(
-                    branchId.longValue()
-            );
-            scholarship.setCreatedBy(
-                    userId.longValue()
-            );
-            scholarship.setApplicationMethod(
-                    ErpScholarshipApplication.ApplicationMethod.SCHOOL_ASSISTED
-            );
-        }
-
-        scholarship.setAcademicYear(
-                academicYearCode
-        );
-        scholarship.setAmountRequestedUgx(
-                assistanceRequired
-        );
-        scholarship.setRequestedPercentage(
-                requestedPercentage
-        );
-        scholarship.setTermRequested(
-                normalizeTermRequested(
-                        application.getTerm()
-                )
-        );
-        scholarship.setCategory(
-                "NEED_BASED"
-        );
-        scholarship.setScholarshipType(
-                ErpScholarshipApplication.ScholarshipType.NEED_BASED
-        );
-
-        scholarship.setReason(
-                feeDecision
-                        == ErpApplicationFee.FeeDecision.FULL_ASSISTANCE
-                        ? "Full scholarship requested during parent fee discussion."
-                        : "Partial scholarship requested during parent fee discussion."
-        );
-
-        boolean newScholarshipRecord =
-                scholarship.getScholarshipAppId() == null;
-
-        if (!newScholarshipRecord) {
-            String currentStatus =
-                    normalizeScholarshipStatus(
-                            scholarship.getStatus()
-                    );
-
-            if (isScholarshipProgressLocked(
-                    currentStatus
-            )) {
-                throw new BadRequestException(
-                        "The scholarship application has already been submitted or reviewed. "
-                                + "Fee Discussion can no longer reset its scholarship request."
-                );
-            }
+            scholarship.setApplication(application);
+            scholarship.setBranchId(branchId.longValue());
+            scholarship.setCreatedBy(userId.longValue());
         }
 
         /*
-         * Only initial scholarship states may be reset from Fee Discussion.
-         * Once submitted/reviewed/approved, the scholarship workflow owns
-         * the record and Fee Discussion must not overwrite its progress.
+         * The Scholarship Application academic year belongs to the Scholarship
+         * Application record itself. It is set only when that record is first
+         * created. A later requested year belongs to Scholarship History and
+         * must never overwrite the Scholarship Application year.
          */
-        scholarship.setStatus(
-                "NOT_STARTED"
+        if (scholarship.getScholarshipAppId() == null) {
+            scholarship.setAcademicYear(academicYearCode);
+        }
+
+        if (scholarship.getScholarshipAppId() != null
+                && isScholarshipProgressLocked(
+                        normalizeScholarshipStatus(scholarship.getStatus()))) {
+            throw new BadRequestException(
+                    "The scholarship application has already been submitted or reviewed. "
+                            + "Fee Discussion can no longer overwrite its scholarship request."
+            );
+        }
+
+        /*
+         * Scholarship request/review data belongs to History.
+         * Application remains the master record for identity, tokens and
+         * lifecycle/audit data.
+         */
+        String termRequested =
+                normalizeTermRequested(application.getTerm());
+
+        /*
+         * Scholarship History is a year/term snapshot. A later requested
+         * academic year must receive a new History record rather than
+         * overwriting the previous year's snapshot. The same year + term may
+         * reuse its existing current-cycle record.
+         */
+        ErpScholarshipHistory history =
+                scholarship.getScholarshipAppId() == null
+                        ? new ErpScholarshipHistory()
+                        : scholarshipHistoryRepository
+                                .findFirstByScholarshipApplicationScholarshipAppIdAndAcademicYearAndTermRequestedOrderByScholarshipHistoryIdDesc(
+                                        scholarship.getScholarshipAppId(),
+                                        academicYearCode,
+                                        termRequested
+                                )
+                                .orElseGet(ErpScholarshipHistory::new);
+
+        if (history.getScholarshipHistoryId() == null) {
+            history.setScholarshipApplication(scholarship);
+            history.setBranchId(branchId.longValue());
+            history.setStudentId(
+                    scholarship.getStudent() != null
+                            ? scholarship.getStudent().getStudentId()
+                            : null
+            );
+            history.setApplicationId(application.getApplicationId());
+            history.setAcademicYear(academicYearCode);
+            history.setCreatedBy(userId.longValue());
+            history.setCreatedAt(LocalDateTime.now());
+        }
+
+        history.setTermRequested(termRequested);
+        history.setCategory("NEED_BASED");
+        history.setScholarshipType(
+                ErpScholarshipHistory.ScholarshipType.NEED_BASED
         );
+        history.setApplicationMethod("SCHOOL_ASSISTED");
+        history.setAmountRequestedUgx(assistanceRequired);
+        history.setRequestedPercentage(requestedPercentage);
+        history.setReason(
+                feeDecision == ErpApplicationFee.FeeDecision.FULL_ASSISTANCE
+                        ? "Full scholarship requested during parent fee discussion."
+                        : "Partial scholarship requested during parent fee discussion."
+        );
+        history.setStatus("NOT_STARTED");
+        history.setActive(true);
+        history.setUpdatedBy(userId.longValue());
+        history.setUpdatedAt(LocalDateTime.now());
+
+        scholarshipHistoryRepository.saveAndFlush(history);
+
+        scholarship.setStatus("NOT_STARTED");
         scholarship.setPublicTokenHash(null);
         scholarship.setTokenExpiresAt(null);
         scholarship.setTokenUsedAt(null);
@@ -603,30 +614,10 @@ public class ApplicationFeeDiscussionServiceImpl
         scholarship.setSchoolAccessExpiresAt(null);
         scholarship.setSchoolAccessIssuedAt(null);
         scholarship.setSchoolAccessIssuedBy(null);
-
-        /*
-         * This is the amount the parent has already declared they can pay
-         * during the fee discussion. The detailed scholarship form can
-         * collect the remaining household assessment later.
-         */
-        scholarship.setParentIncomeDeclared(
-                null
-        );
-
-        scholarship.setSchoolReviewStatus(
-                ErpScholarshipApplication.SchoolReviewStatus.PENDING
-        );
-        scholarship.setSuperAdminReviewStatus(
-                ErpScholarshipApplication.SuperAdminReviewStatus.PENDING
-        );
         scholarship.setActive(true);
-        scholarship.setUpdatedBy(
-                userId.longValue()
-        );
+        scholarship.setUpdatedBy(userId.longValue());
 
-        scholarshipApplicationRepository.save(
-                scholarship
-        );
+        scholarshipApplicationRepository.save(scholarship);
     }
 
     private boolean isScholarshipProgressLocked(

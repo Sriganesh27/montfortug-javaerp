@@ -1,0 +1,98 @@
+PHASE 1
+Baseline + DB + Entity Audit
+        ↓
+PHASE 2
+Application Workflow Authority
+        ↓
+PHASE 3
+School Visit
+        ↓
+PHASE 4
+Entrance Test
+        ↓
+PHASE 5
+Retest
+        ↓
+PHASE 6
+Entrance Waitlist
+        ↓
+PHASE 7
+Parent Fee Discussion
+        ↓
+PHASE 8
+Scholarship Creation + Persistence
+        ↓
+PHASE 9
+Scholarship Entry + Security
+        ↓
+PHASE 10
+Scholarship Verification
+        ↓
+PHASE 11
+Scholarship Waitlist
+        ↓
+PHASE 12
+Super Admin Scholarship Decision
+        ↓
+PHASE 13
+School Scholarship Demand Calculation
+        ↓
+PHASE 14
+School Bulk Fund Allocation/Holding
+        ↓
+PHASE 15
+School Fund Distribution
+        ↓
+PHASE 16
+1-to-1 Donor Mapping
+        ↓
+PHASE 17
+1-to-Many Donor Mapping
+        ↓
+PHASE 18
+Many-to-1 Donor Mapping
+        ↓
+PHASE 19
+Partial Donor Mapping
+        ↓
+PHASE 20
+Fund/Scholarship Balance Validation
+        ↓
+PHASE 21
+Allocation History
+        ↓
+PHASE 22
+Cancellation + Fund Release
+        ↓
+PHASE 23
+Donor Resolution
+        ↓
+PHASE 24
+Remaining Parent Payment
+        ↓
+PHASE 25
+Payment
+        ↓
+PHASE 26
+Final Admission
+        ↓
+PHASE 27
+Enrolment
+        ↓
+PHASE 28
+Frontend State + Actions
+        ↓
+PHASE 29
+Loading / New Tab Issues
+        ↓
+PHASE 30
+Security / School Isolation
+        ↓
+PHASE 31
+Performance
+        ↓
+PHASE 32
+Full Regression
+        ↓
+PHASE 33
+Final E2E

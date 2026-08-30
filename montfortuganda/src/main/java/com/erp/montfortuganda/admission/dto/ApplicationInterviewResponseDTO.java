@@ -57,7 +57,10 @@ public record ApplicationInterviewResponseDTO(
         String applicationStatus,
         boolean applicationWaitlisted,
         boolean canPlaceOnWaitlist,
-        boolean canReleaseFromWaitlist
+        boolean canReleaseFromWaitlist,
+
+        int attemptNumber,
+        boolean canRequestRetest
 ) {
 
     /**

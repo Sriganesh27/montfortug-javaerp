@@ -2240,96 +2240,215 @@ const ApplicationsController = (() => {
         );
     }
 
-    function renderWorkflowProgress(application) {
-        if (!view.workflowProgress) {
-            return;
-        }
+    function renderWorkflowProgress(profile) {
+    const container =
+        document.getElementById('workflowProgress');
 
-        const currentStage =
-            String(
-                application?.currentStage
-                || ''
-            ).trim().toUpperCase();
-
-        const scholarshipState =
-            String(
-                application?.scholarshipWorkflowStatus
-                || application?.scholarshipStatus
-                || ''
-            ).trim().toUpperCase();
-
-        const scholarshipRoute =
-            currentStage === 'SCHOLARSHIP'
-            || String(
-                application?.feeDecisionStatus
-                || ''
-            ).trim().toUpperCase()
-                === 'SCHOLARSHIP_REQUESTED'
-            || (
-                scholarshipState
-                && ![
-                    'NOT_APPLIED',
-                    'NOT_STARTED'
-                ].includes(scholarshipState)
-            );
-
-        const stages =
-            scholarshipRoute
-                ? [
-                    ['APPLICATION_VERIFICATION', 'Verification'],
-                    ['SCHOOL_VISIT', 'School Visit'],
-                    ['ENTRANCE_TEST', 'Entrance Test'],
-                    ['PARENT_FEE_DISCUSSION', 'Fee Discussion'],
-                    ['SCHOLARSHIP', 'Scholarship'],
-                    ['PAYMENT', 'Payment'],
-                    ['FINAL_ADMISSION', 'Final Admission'],
-                    ['ENROLLED', 'Enrolled']
-                ]
-                : [
-                    ['APPLICATION_VERIFICATION', 'Verification'],
-                    ['SCHOOL_VISIT', 'School Visit'],
-                    ['ENTRANCE_TEST', 'Entrance Test'],
-                    ['PARENT_FEE_DISCUSSION', 'Fee Discussion'],
-                    ['PAYMENT', 'Payment'],
-                    ['FINAL_ADMISSION', 'Final Admission'],
-                    ['ENROLLED', 'Enrolled']
-                ];
-
-        const currentIndex =
-            stages.findIndex(
-                ([code]) => code === currentStage
-            );
-
-        view.workflowProgress.innerHTML =
-            stages.map(
-                ([code, label], index) => {
-                    let cssClass = 'upcoming';
-                    let symbol = '○';
-
-                    if (
-                        currentIndex >= 0
-                        && index < currentIndex
-                    ) {
-                        cssClass = 'completed';
-                        symbol = '✓';
-                    } else if (index === currentIndex) {
-                        cssClass = 'current';
-                        symbol = '●';
-                    }
-
-                    return `
-                        <span class="app-workflow-progress-step ${cssClass}">
-                            <span class="app-workflow-progress-symbol">
-                                ${symbol}
-                            </span>
-                            <span>${escapeHtml(label)}</span>
-                        </span>
-                    `;
-                }
-            ).join(
-                '<span class="app-workflow-progress-arrow">→</span>'
-            );
+    if (!container) {
+        return;
     }
+
+    /*
+     * Backend is the workflow authority.
+     *
+     * The profile/transition response can contain the authoritative
+     * currentStage plus stage-specific sub-status fields. This renderer
+     * only presents those values; it never calculates a new workflow path.
+     */
+    const currentStage =
+        normalizeStageCode(
+            profile?.currentStage
+        );
+
+    const stageDefinitions = [
+        {
+            code: 'APPLICATION_VERIFICATION',
+            label: 'Application Verification',
+            subStage: getBackendSubStage(
+                profile,
+                'APPLICATION_VERIFICATION'
+            )
+        },
+        {
+            code: 'SCHOOL_VISIT',
+            label: 'School Visit',
+            subStage: getBackendSubStage(
+                profile,
+                'SCHOOL_VISIT'
+            )
+        },
+        {
+            code: 'ENTRANCE_TEST',
+            label: 'Entrance Test',
+            subStage: getBackendSubStage(
+                profile,
+                'ENTRANCE_TEST'
+            )
+        },
+        {
+            code: 'PARENT_FEE_DISCUSSION',
+            label: 'Parent Fee Discussion',
+            subStage: getBackendSubStage(
+                profile,
+                'PARENT_FEE_DISCUSSION'
+            )
+        },
+        {
+            code: 'SCHOLARSHIP',
+            label: 'Scholarship',
+            subStage: getBackendSubStage(
+                profile,
+                'SCHOLARSHIP'
+            )
+        },
+        {
+            code: 'PAYMENT',
+            label: 'Payment',
+            subStage: getBackendSubStage(
+                profile,
+                'PAYMENT'
+            )
+        },
+        {
+            code: 'FINAL_ADMISSION',
+            label: 'Final Admission',
+            subStage: getBackendSubStage(
+                profile,
+                'FINAL_ADMISSION'
+            )
+        },
+        {
+            code: 'ENROLLED',
+            label: 'Enrolled',
+            subStage: getBackendSubStage(
+                profile,
+                'ENROLLED'
+            )
+        }
+    ];
+
+    const currentIndex =
+        stageDefinitions.findIndex(
+            stage =>
+                stage.code === currentStage
+        );
+
+    container.innerHTML =
+        stageDefinitions.map(
+            (stage, index) => {
+                const isCurrent =
+                    stage.code === currentStage;
+
+                const isCompleted =
+                    currentIndex >= 0
+                    && index < currentIndex;
+
+                const stateClass =
+                    isCurrent
+                        ? 'current'
+                        : isCompleted
+                            ? 'completed'
+                            : 'pending';
+
+                const subStageText =
+                    stage.subStage
+                        ? escapeHtml(
+                            formatBackendSubStage(
+                                stage.subStage
+                            )
+                        )
+                        : '';
+
+                return `
+                    <div class="workflow-step ${stateClass}"
+                         data-stage="${escapeHtml(stage.code)}">
+                        <div class="workflow-step-label">
+                            ${escapeHtml(stage.label)}
+                        </div>
+                        ${
+                            subStageText
+                                ? `<div class="workflow-step-substage">${subStageText}</div>`
+                                : ''
+                        }
+                    </div>
+                `;
+            }
+        ).join('');
+}
+
+function normalizeStageCode(value) {
+    if (value === null
+            || value === undefined) {
+        return '';
+    }
+
+    return String(value)
+        .trim()
+        .toUpperCase();
+}
+
+function getBackendSubStage(
+    profile,
+    stageCode
+) {
+    if (!profile) {
+        return '';
+    }
+
+    /*
+     * These fields are supplied by the backend workflow/profile response.
+     * Do not infer a sub-stage from unrelated fields when the backend has
+     * not supplied one.
+     */
+    const fieldMap = {
+        APPLICATION_VERIFICATION:
+            'verificationStatus',
+        SCHOOL_VISIT:
+            'schoolVisitStatus',
+        ENTRANCE_TEST:
+            'testStatus',
+        PARENT_FEE_DISCUSSION:
+            'feeDecisionStatus',
+        SCHOLARSHIP:
+            'scholarshipWorkflowStatus',
+        PAYMENT:
+            'paymentStatus',
+        FINAL_ADMISSION:
+            'admissionStatus',
+        ENROLLED:
+            'admissionStatus'
+    };
+
+    const field =
+        fieldMap[stageCode];
+
+    if (!field) {
+        return '';
+    }
+
+    return profile[field] ?? '';
+}
+
+function formatBackendSubStage(value) {
+    if (value === null
+            || value === undefined
+            || String(value).trim() === '') {
+        return '';
+    }
+
+    return String(value)
+        .trim()
+        .toLowerCase()
+        .split('_')
+        .map(
+            word =>
+                word
+                    ? word.charAt(0).toUpperCase()
+                        + word.slice(1)
+                    : ''
+        )
+        .join(' ');
+}
 
     /**
      * Renders all application profile sections.
@@ -2729,11 +2848,6 @@ const ApplicationsController = (() => {
         );
 
         setText(
-            'view-formerSchool',
-            application.formerSchool
-        );
-
-        setText(
             'view-formerSchoolCode',
             application.formerSchoolCode
         );
@@ -2763,9 +2877,8 @@ const ApplicationsController = (() => {
             application.uceScore
         );
 
-        setText(
-            'view-subjectMarks',
-            application.subjectMarks
+        renderPreviousSubjectMarks(
+            application
         );
 
         setText(
@@ -2773,6 +2886,18 @@ const ApplicationsController = (() => {
             application.previousMarksDocumentAvailable
                 ? 'Available'
                 : 'Not available'
+        );
+
+        /*
+         * Previous-school academic results are dependent on the student's
+         * applied class. The public application form already collects:
+         *
+         * Subject Marks are independent of class. They are rendered from
+         * the stored JSON data by renderPreviousSubjectMarks().
+         * Class-based presentation applies only to PLE/UCE.
+         */
+        renderPreviousSchoolResultsForClass(
+            application
         );
 
         setText(
@@ -2850,6 +2975,399 @@ const ApplicationsController = (() => {
 
         setActionAvailability(application);
     }
+
+
+
+    function renderPreviousSubjectMarks(
+        application
+    ) {
+        const group =
+            document.getElementById(
+                'view-subjectMarksGroup'
+            );
+
+        const body =
+            document.getElementById(
+                'view-subjectMarksBody'
+            );
+
+        const totalElement =
+            document.getElementById(
+                'view-subjectMarksTotal'
+            );
+
+        if (!group || !body || !totalElement) {
+            return;
+        }
+
+        const subjectMarks =
+            parsePreviousSubjectMarks(
+                application?.subjectMarks
+            );
+
+        body.replaceChildren();
+
+        if (subjectMarks.length === 0) {
+            /*
+             * Do not show an empty Subject Marks section. Subject Marks are
+             * stored as JSON, so an empty/null value means there is currently
+             * no subject-level data to render.
+             */
+            group.hidden = true;
+            totalElement.textContent = '—';
+            return;
+        }
+
+        let totalScore = 0;
+        let numericMarkCount = 0;
+
+        subjectMarks.forEach(
+            (item, index) => {
+                const numericMark =
+                    parseFiniteNumber(
+                        item.marks
+                    );
+
+                if (numericMark !== null) {
+                    totalScore += numericMark;
+                    numericMarkCount += 1;
+                }
+
+                const row =
+                    document.createElement(
+                        'tr'
+                    );
+
+                appendPreviousSubjectCell(
+                    row,
+                    index + 1
+                );
+
+                appendPreviousSubjectCell(
+                    row,
+                    item.subject || '—'
+                );
+
+                appendPreviousSubjectCell(
+                    row,
+                    formatPreviousSubjectMark(
+                        item.marks
+                    )
+                );
+
+                appendPreviousSubjectCell(
+                    row,
+                    item.grade || '—'
+                );
+
+                body.appendChild(row);
+            }
+        );
+
+        totalElement.textContent =
+            numericMarkCount > 0
+                ? formatPreviousSubjectTotal(
+                    totalScore
+                )
+                : '—';
+
+        group.hidden = false;
+    }
+
+    function parsePreviousSubjectMarks(
+        rawValue
+    ) {
+        if (
+            rawValue === null
+            || rawValue === undefined
+        ) {
+            return [];
+        }
+
+        let value = rawValue;
+
+        /*
+         * The database/API currently exposes subjectMarks as a String
+         * containing JSON. Accept a real array as well so the renderer stays
+         * compatible if the DTO is later changed to return structured JSON.
+         */
+        if (typeof value === 'string') {
+            const normalized =
+                value.trim();
+
+            if (
+                normalized === ''
+                || normalized === '-'
+                || normalized === 'null'
+                || normalized === '[]'
+            ) {
+                return [];
+            }
+
+            try {
+                value =
+                    JSON.parse(
+                        normalized
+                    );
+            } catch (error) {
+                console.warn(
+                    'Subject marks JSON could not be parsed.',
+                    error
+                );
+                return [];
+            }
+        }
+
+        if (!Array.isArray(value)) {
+            return [];
+        }
+
+        return value
+            .map(item => {
+                if (
+                    !item
+                    || typeof item !== 'object'
+                ) {
+                    return null;
+                }
+
+                const subject =
+                    item.subject
+                    ?? item.subjectName
+                    ?? item.name
+                    ?? '';
+
+                const marks =
+                    item.marks
+                    ?? item.mark
+                    ?? item.obtainedMarks
+                    ?? '';
+
+                const grade =
+                    item.grade
+                    ?? '';
+
+                return {
+                    subject:
+                        String(
+                            subject
+                        ).trim(),
+
+                    marks,
+
+                    grade:
+                        String(
+                            grade
+                        ).trim()
+                };
+            })
+            .filter(item =>
+                item
+                && (
+                    item.subject !== ''
+                    || (
+                        item.marks !== null
+                        && item.marks !== undefined
+                        && String(
+                            item.marks
+                        ).trim() !== ''
+                    )
+                    || item.grade !== ''
+                )
+            );
+    }
+
+    function parseFiniteNumber(
+        value
+    ) {
+        if (
+            value === null
+            || value === undefined
+            || String(value).trim() === ''
+        ) {
+            return null;
+        }
+
+        const number =
+            Number(value);
+
+        return Number.isFinite(number)
+            ? number
+            : null;
+    }
+
+    function formatPreviousSubjectMark(
+        value
+    ) {
+        if (
+            value === null
+            || value === undefined
+            || String(value).trim() === ''
+        ) {
+            return '—';
+        }
+
+        return String(value).trim();
+    }
+
+    function formatPreviousSubjectTotal(
+        value
+    ) {
+        if (!Number.isFinite(value)) {
+            return '—';
+        }
+
+        return Number.isInteger(value)
+            ? String(value)
+            : value.toFixed(2);
+    }
+
+    function appendPreviousSubjectCell(
+        row,
+        value
+    ) {
+        const cell =
+            document.createElement(
+                'td'
+            );
+
+        cell.textContent =
+            String(value);
+
+        row.appendChild(cell);
+    }
+
+    /**
+     * Resolves the class code supplied by the backend Application Details
+     * response. This is presentation-only; it does not calculate or change
+     * the admission workflow stage.
+     *
+     * @param {Object} application
+     * @returns {string}
+     */
+    function resolveApplicationClassCode(
+        application
+    ) {
+        if (!application) {
+            return '';
+        }
+
+        const candidates = [
+            application.classCode,
+            application.appliedClassCode,
+            application.classLevelCode,
+            application.appliedClass
+        ];
+
+        for (const candidate of candidates) {
+            const value =
+                String(
+                    candidate ?? ''
+                )
+                    .trim()
+                    .toUpperCase();
+
+            if (value) {
+                return value;
+            }
+        }
+
+        return '';
+    }
+
+    function renderPreviousSchoolResultsForClass(
+        application
+    ) {
+        const classCode =
+            resolveApplicationClassCode(
+                application
+            );
+
+        const pleFields = [
+            'view-pleRef',
+            'view-pleScore'
+        ];
+
+        const uceFields = [
+            'view-uceRef',
+            'view-uceScore'
+        ];
+
+        const getFormGroup =
+            id => {
+                const element =
+                    view.root.querySelector(
+                        `#${id}`
+                    );
+
+                return element
+                    ? element.closest(
+                        '.form-group'
+                    )
+                    : null;
+            };
+
+        const hasValue =
+            value =>
+                value !== null
+                && value !== undefined
+                && String(value).trim() !== ''
+                && String(value).trim() !== '-';
+
+        const hasPleData =
+            hasValue(application?.pleRef)
+            || application?.pleScore !== null
+            && application?.pleScore !== undefined;
+
+        const hasUceData =
+            hasValue(application?.uceRef)
+            || application?.uceScore !== null
+            && application?.uceScore !== undefined;
+
+        /*
+         * Class rules are the normal applicability rules, while real backend
+         * data is preserved if a legacy application contains it.
+         */
+        const showPle =
+            classCode === 'S1'
+            || hasPleData;
+
+        const showUce =
+            classCode === 'S5'
+            || hasUceData;
+
+        const setFieldsVisible =
+            (fieldIds, visible) => {
+                fieldIds.forEach(fieldId => {
+                    const group =
+                        getFormGroup(fieldId);
+
+                    if (group) {
+                        group.hidden = !visible;
+                    }
+                });
+            };
+
+        setFieldsVisible(
+            pleFields,
+            showPle
+        );
+
+        setFieldsVisible(
+            uceFields,
+            showUce
+        );
+
+        const previousDocumentGroup =
+            getFormGroup(
+                'view-previousMarksDocument'
+            );
+
+        if (previousDocumentGroup) {
+            previousDocumentGroup.hidden = false;
+        }
+    }
+
 
 
     async function loadFeeDiscussion(
@@ -3429,6 +3947,22 @@ const ApplicationsController = (() => {
                 .trim()
                 .toUpperCase();
 
+        /*
+         * Scholarship visibility and Scholarship initiation are two different
+         * concerns. A previous Scholarship record/status may legitimately be
+         * present while the admission application is already in a later stage.
+         * That historical/status information may remain visible in the profile,
+         * but it must NEVER make the Scholarship 'Fill Application' initiation
+         * panel appear for every admission stage.
+         *
+         * The Scholarship section is therefore relevant when:
+         *  1) the admission is currently in SCHOLARSHIP,
+         *  2) Parent Fee Discussion has selected an assistance route, or
+         *  3) there is an actual Scholarship record/status to summarize.
+         *
+         * Initiation is separately restricted below to the two states in which
+         * the school is actually allowed to start/continue that route.
+         */
         const scholarshipRelevant =
             currentStage === 'SCHOLARSHIP'
             || (
@@ -3436,7 +3970,8 @@ const ApplicationsController = (() => {
                 && Boolean(state.feeDiscussion?.feeId)
                 && assistanceSelected
             )
-            || Boolean(rawStatus);
+            || Boolean(rawStatus && rawStatus !== 'NOT_APPLIED'
+                && rawStatus !== 'NOT_STARTED');
 
         toggleElement(
             view.scholarshipSection,
@@ -3500,10 +4035,25 @@ const ApplicationsController = (() => {
          * The Admission dashboard is initiation/status only.
          * The Scholarship form itself exists exclusively on
          * /scholarship-application.html.
+         *
+         * IMPORTANT: an old Scholarship status must not expose the initiation
+         * panel after the admission has moved beyond the Scholarship entry
+         * point. The panel is available only while the admission is actually
+         * at SCHOLARSHIP, or while Parent Fee Discussion has just selected an
+         * assistance route and is waiting for Scholarship initiation.
          */
+        const scholarshipInitiationAllowed =
+            currentStage === 'SCHOLARSHIP'
+            || (
+                currentStage === 'PARENT_FEE_DISCUSSION'
+                && Boolean(state.feeDiscussion?.feeId)
+                && assistanceSelected
+            );
+
         toggleElement(
             view.scholarshipStartPanel,
-            !submitted
+            scholarshipInitiationAllowed
+                && !submitted
         );
     }
 
@@ -5065,7 +5615,8 @@ const ApplicationsController = (() => {
                 'ENTRANCE_TEST'
             )
             && status === 'COMPLETED'
-            && result === 'FAILED'
+            && result === 'RETEST_REQUIRED'
+            && test.canRequestRetest === true
             && test.canSchedule === true
             && test.applicationWaitlisted !== true;
 
@@ -5243,8 +5794,9 @@ const ApplicationsController = (() => {
         if (!test
                 || !state.currentApplicationId
                 || test.canSchedule !== true
+                || test.canRequestRetest !== true
                 || String(test.status || '').toUpperCase() !== 'COMPLETED'
-                || String(test.result || '').toUpperCase() !== 'FAILED'
+                || String(test.result || '').toUpperCase() !== 'RETEST_REQUIRED'
                 || test.applicationWaitlisted === true) {
             return;
         }
@@ -5815,6 +6367,51 @@ const ApplicationsController = (() => {
             );
     }
 
+    function configureEntranceTestResultOptions(test) {
+        const select =
+            view.entranceTestResultSelect;
+
+        if (!select) {
+            return;
+        }
+
+        const currentValue =
+            String(select.value || '').toUpperCase();
+
+        const canRequestRetest =
+            test?.canRequestRetest === true;
+
+        select.replaceChildren();
+
+        const options = [
+            { value: '', label: '-- Select Result --' },
+            { value: 'PASSED', label: 'Pass' },
+            { value: 'FAILED', label: 'Fail' },
+            { value: 'WAITLIST', label: 'Waitlist' }
+        ];
+
+        if (canRequestRetest) {
+            options.push({
+                value: 'RETEST_REQUIRED',
+                label: 'Retest Required'
+            });
+        }
+
+        options.forEach(optionData => {
+            const option =
+                document.createElement('option');
+            option.value = optionData.value;
+            option.textContent = optionData.label;
+            select.appendChild(option);
+        });
+
+        if (options.some(option => option.value === currentValue)) {
+            select.value = currentValue;
+        } else {
+            select.value = '';
+        }
+    }
+
     function openEntranceTestMarksModal() {
         const test =
             state.entranceTest;
@@ -5850,12 +6447,24 @@ const ApplicationsController = (() => {
             addEntranceTestMarkRow();
         }
 
+        configureEntranceTestResultOptions(test);
+
         if (view.entranceTestResultSelect) {
-            view.entranceTestResultSelect.value =
+            const result =
                 test.result
                 && String(test.result).toUpperCase() !== 'PENDING'
                     ? String(test.result).toUpperCase()
                     : '';
+
+            const allowedResult =
+                Array.from(
+                    view.entranceTestResultSelect.options
+                ).some(
+                    option => option.value === result
+                );
+
+            view.entranceTestResultSelect.value =
+                allowedResult ? result : '';
         }
 
         if (view.entranceTestCompletedAtInput) {
@@ -6327,6 +6936,13 @@ const ApplicationsController = (() => {
             if (!result) {
                 throw new Error(
                     'Select the Entrance Test result.'
+                );
+            }
+
+            if (result === 'RETEST_REQUIRED'
+                    && state.entranceTest?.canRequestRetest !== true) {
+                throw new Error(
+                    'Retest Required is available only for the first Entrance Test attempt.'
                 );
             }
 

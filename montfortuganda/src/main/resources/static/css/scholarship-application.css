@@ -493,3 +493,334 @@
     }
 
 }
+
+/* =========================================================
+   Scholarship Application — institutional name bar
+   ========================================================= */
+.scholarship-institution-bar {
+    position: relative;
+    z-index: 20;
+}
+
+.scholarship-namebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    min-height: 96px;
+}
+
+.scholarship-namebar-school-logo,
+.scholarship-namebar-org-logo {
+    flex: 0 0 78px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.scholarship-namebar-names {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    line-height: 1.15;
+}
+
+.scholarship-brand-logo-frame {
+    width: 68px;
+    height: 68px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 1px solid rgba(15,23,42,.12);
+    border-radius: 16px;
+    background: rgba(255,255,255,.97);
+    box-shadow: 0 8px 24px rgba(15,23,42,.12);
+}
+
+.scholarship-brand-logo-frame img {
+    width: 100%;
+    height: 100%;
+    padding: 8px;
+    object-fit: contain;
+}
+
+.scholarship-organisation-name {
+    overflow: hidden;
+    max-width: 100%;
+    color: rgba(255,255,255,.76);
+    font-size: .76rem;
+    font-weight: 600;
+    letter-spacing: .055em;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.scholarship-school-name {
+    margin-top: 5px;
+    overflow: hidden;
+    max-width: 100%;
+    color: #fff;
+    font-size: clamp(1.08rem, 2vw, 1.45rem);
+    font-weight: 800;
+    letter-spacing: -.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scholarship-school-meta {
+    margin-top: 5px;
+    overflow: hidden;
+    max-width: 100%;
+    color: rgba(255,255,255,.68);
+    font-size: .7rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   Scholarship Application — persistent applicant profile
+   ========================================================= */
+.scholarship-applicant-profile {
+    display: grid;
+    grid-template-columns: minmax(0,1.45fr) minmax(320px,.85fr);
+    gap: 18px;
+    margin: 20px 0 14px;
+    padding: 20px;
+    border: 1px solid rgba(15,23,42,.09);
+    border-radius: 18px;
+    background: rgba(255,255,255,.98);
+    box-shadow: 0 12px 34px rgba(15,23,42,.08);
+}
+
+.scholarship-profile-main {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    min-width: 0;
+}
+
+.scholarship-profile-photo-wrap {
+    width: 88px;
+    height: 88px;
+    flex: 0 0 88px;
+    overflow: hidden;
+    border: 1px solid rgba(15,23,42,.10);
+    border-radius: 18px;
+    background: #f8fafc;
+}
+
+.scholarship-profile-photo-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.scholarship-profile-identity {
+    min-width: 0;
+}
+
+.scholarship-profile-kicker,
+.scholarship-section-kicker {
+    color: #9a7410;
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
+.scholarship-profile-identity h2 {
+    margin: 3px 0 7px;
+    overflow: hidden;
+    color: #172033;
+    font-size: 1.25rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.scholarship-profile-meta,
+.scholarship-profile-statuses {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px 12px;
+}
+
+.scholarship-profile-meta span {
+    color: #64748b;
+    font-size: .72rem;
+    font-weight: 600;
+}
+
+.scholarship-profile-status {
+    padding: 4px 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: .66rem;
+    font-weight: 700;
+}
+
+.scholarship-profile-finance {
+    display: grid;
+    grid-template-columns: repeat(3,minmax(0,1fr));
+    align-items: stretch;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #fff;
+}
+
+.scholarship-profile-finance > div {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    padding: 12px;
+    border-right: 1px solid #edf0f4;
+}
+
+.scholarship-profile-finance > div:last-child {
+    border-right: 0;
+}
+
+.scholarship-profile-finance span {
+    color: #7b8797;
+    font-size: .61rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.scholarship-profile-finance strong {
+    margin-top: 5px;
+    color: #172033;
+    font-size: .79rem;
+}
+
+.scholarship-profile-finance .is-highlight {
+    background: #fffaf0;
+}
+
+.scholarship-profile-finance .is-highlight strong {
+    color: #8a6500;
+}
+
+.scholarship-admission-profile {
+    margin: 0 0 18px;
+    padding: 18px;
+    border: 1px solid rgba(15,23,42,.09);
+    border-radius: 16px;
+    background: #fff;
+}
+
+.scholarship-profile-section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+
+.scholarship-profile-section-heading h2 {
+    margin: 3px 0 0;
+    color: #172033;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.scholarship-readonly-badge {
+    padding: 5px 9px;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    color: #64748b;
+    font-size: .64rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.scholarship-admission-grid {
+    display: grid;
+    grid-template-columns: repeat(4,minmax(0,1fr));
+    gap: 10px;
+}
+
+.scholarship-admission-grid > div {
+    min-width: 0;
+    padding: 10px 11px;
+    border: 1px solid #edf0f4;
+    border-radius: 9px;
+    background: #fbfcfd;
+}
+
+.scholarship-admission-grid span,
+.scholarship-admission-grid strong {
+    display: block;
+}
+
+.scholarship-admission-grid span {
+    margin-bottom: 4px;
+    color: #7b8797;
+    font-size: .61rem;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.scholarship-admission-grid strong {
+    overflow-wrap: anywhere;
+    color: #172033;
+    font-size: .75rem;
+    font-weight: 650;
+}
+
+@media(max-width:900px) {
+    .scholarship-applicant-profile {
+        grid-template-columns: 1fr;
+    }
+    .scholarship-admission-grid {
+        grid-template-columns: repeat(2,minmax(0,1fr));
+    }
+}
+
+@media(max-width:720px) {
+    .scholarship-namebar {
+        gap: 10px;
+        min-height: 78px;
+    }
+    .scholarship-namebar-school-logo,
+    .scholarship-namebar-org-logo {
+        flex-basis: 54px;
+    }
+    .scholarship-brand-logo-frame {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+    }
+    .scholarship-organisation-name {
+        font-size: .59rem;
+    }
+    .scholarship-school-name {
+        font-size: .95rem;
+    }
+    .scholarship-school-meta {
+        font-size: .58rem;
+    }
+    .scholarship-profile-finance {
+        grid-template-columns: 1fr;
+    }
+    .scholarship-profile-finance > div {
+        border-right: 0;
+        border-bottom: 1px solid #edf0f4;
+    }
+    .scholarship-profile-finance > div:last-child {
+        border-bottom: 0;
+    }
+    .scholarship-admission-grid {
+        grid-template-columns: 1fr;
+    }
+}

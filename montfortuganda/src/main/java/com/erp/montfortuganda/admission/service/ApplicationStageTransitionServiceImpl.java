@@ -1077,7 +1077,9 @@ public class ApplicationStageTransitionServiceImpl
             ErpApplication.TestStatus status =
                     application.getTestStatus();
 
-            return status == ErpApplication.TestStatus.PASSED;
+            return status == ErpApplication.TestStatus.PASSED
+                    && application.getApplicationStatus()
+                    != ErpApplication.ApplicationStatus.WAITLISTED;
         }
 
         if (current
@@ -1121,18 +1123,6 @@ public class ApplicationStageTransitionServiceImpl
         return true;
     }
 
-    /**
-     * Document Verification readiness rule:
-     *
-     * <ul>
-     *     <li>No current documents and no unresolved requests -> allowed.</li>
-     *     <li>If documents exist, every current active document must be VERIFIED.</li>
-     *     <li>PENDING or UPLOADED document requests block Continue.</li>
-     * </ul>
-     *
-     * <p>This method is authoritative for both transition execution and
-     * transition availability, so the UI cannot bypass the rule.</p>
-     */
     /**
      * The dedicated Scholarship record is the authoritative source for
      * Scholarship workflow status.

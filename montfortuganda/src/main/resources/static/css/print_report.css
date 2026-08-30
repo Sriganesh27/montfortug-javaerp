@@ -541,3 +541,15 @@ body {
         white-space: nowrap;
     }
 }
+
+/* =========================================================
+   RECEIPT INITIAL LOADING SHELL
+   Keep the real receipt hidden until its data is completely
+   rendered. The existing global ERP loader is displayed above
+   the hidden receipt during this period.
+   ========================================================= */
+@media screen {
+    body.print-receipt-loading #print-receipt-wrapper {
+        visibility: hidden;
+    }
+}

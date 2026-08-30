@@ -7,10 +7,12 @@ import com.erp.montfortuganda.auth.service.CurrentUserService;
 import com.erp.montfortuganda.employee.entity.ErpEmployee;
 import com.erp.montfortuganda.employee.repository.ErpEmployeeRepository;
 import com.erp.montfortuganda.exception.BadRequestException;
+import com.erp.montfortuganda.notification.service.EmailService;
 import com.erp.montfortuganda.scholarship.dto.*;
 import com.erp.montfortuganda.scholarship.entity.ErpBranchFundAllocation;
 import com.erp.montfortuganda.scholarship.entity.ErpScholarshipAllocation;
 import com.erp.montfortuganda.scholarship.entity.ErpScholarshipApplication;
+import com.erp.montfortuganda.scholarship.entity.ErpScholarshipHistory;
 import com.erp.montfortuganda.school.entity.ErpAcademicTerm;
 import com.erp.montfortuganda.school.entity.ErpAcademicYear;
 import com.erp.montfortuganda.school.entity.SchoolClass;
@@ -20,8 +22,11 @@ import com.erp.montfortuganda.school.repository.SchoolClassRepository;
 import com.erp.montfortuganda.scholarship.repository.ErpBranchFundAllocationRepository;
 import com.erp.montfortuganda.scholarship.repository.ErpScholarshipAllocationRepository;
 import com.erp.montfortuganda.scholarship.repository.ErpScholarshipApplicationRepository;
+import com.erp.montfortuganda.scholarship.repository.ErpScholarshipHistoryRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -38,6 +43,7 @@ public class ScholarshipVerificationServiceImpl
         implements ScholarshipVerificationService {
 
     private final ErpScholarshipApplicationRepository applicationRepo;
+    private final ErpScholarshipHistoryRepository historyRepo;
     private final ErpEmployeeRepository employeeRepo;
     private final ErpApplicationInterviewRepository interviewRepo;
     private final ScholarshipService scholarshipService;
@@ -47,9 +53,11 @@ public class ScholarshipVerificationServiceImpl
     private final SchoolClassRepository schoolClassRepo;
     private final AcademicYearRepository academicYearRepo;
     private final AcademicTermRepository academicTermRepo;
+    private final EmailService emailService;
 
     public ScholarshipVerificationServiceImpl(
             ErpScholarshipApplicationRepository applicationRepo,
+            ErpScholarshipHistoryRepository historyRepo,
             ErpEmployeeRepository employeeRepo,
             ErpApplicationInterviewRepository interviewRepo,
             ScholarshipService scholarshipService,
@@ -58,9 +66,11 @@ public class ScholarshipVerificationServiceImpl
             ErpScholarshipAllocationRepository allocationRepo,
             SchoolClassRepository schoolClassRepo,
             AcademicYearRepository academicYearRepo,
-            AcademicTermRepository academicTermRepo
+            AcademicTermRepository academicTermRepo,
+            EmailService emailService
     ) {
         this.applicationRepo = applicationRepo;
+        this.historyRepo = historyRepo;
         this.employeeRepo = employeeRepo;
         this.interviewRepo = interviewRepo;
         this.scholarshipService = scholarshipService;
@@ -70,6 +80,7 @@ public class ScholarshipVerificationServiceImpl
         this.schoolClassRepo = schoolClassRepo;
         this.academicYearRepo = academicYearRepo;
         this.academicTermRepo = academicTermRepo;
+        this.emailService = emailService;
     }
 
     @Override
@@ -129,43 +140,43 @@ public class ScholarshipVerificationServiceImpl
 
             row.put("studentName", studentName);
             row.put("academicYear", s.getAcademicYear());
-            row.put("term", s.getTermRequested());
-            row.put("amountRequestedUgx", s.getAmountRequestedUgx());
-            row.put("requestedPercentage", s.getRequestedPercentage());
-            row.put("approvedAmount", s.getApprovedAmount());
-            row.put("approvedPercentage", s.getApprovedPercentage());
+            row.put("term", historyOf(s).getTermRequested());
+            row.put("amountRequestedUgx", historyOf(s).getAmountRequestedUgx());
+            row.put("requestedPercentage", historyOf(s).getRequestedPercentage());
+            row.put("approvedAmount", historyOf(s).getApprovedAmount());
+            row.put("approvedPercentage", historyOf(s).getApprovedPercentage());
 
             row.put("verificationEmployeeId",
-                    s.getVerificationEmployeeId());
+                    historyOf(s).getVerificationEmployeeId());
             row.put("verificationEmployeeName",
                     employeeName(
-                            s.getVerificationEmployeeId(),
+                            historyOf(s).getVerificationEmployeeId(),
                             branchId
                     ));
-            row.put("verificationStatus", s.getVerificationStatus());
+            row.put("verificationStatus", historyOf(s).getVerificationStatus());
             row.put("verificationAssignedAt",
-                    s.getVerificationAssignedAt());
+                    historyOf(s).getVerificationAssignedAt());
             row.put("verificationCompletedAt",
-                    s.getVerificationCompletedAt());
-            row.put("verificationRemarks", s.getVerificationRemarks());
+                    historyOf(s).getVerificationCompletedAt());
+            row.put("verificationRemarks", historyOf(s).getVerificationRemarks());
 
             row.put("schoolReviewStatus",
-                    enumName(s.getSchoolReviewStatus()));
+                    historyOf(s).getSchoolReviewStatus());
             row.put("schoolReviewRemarks",
-                    s.getSchoolReviewRemarks());
+                    historyOf(s).getSchoolReviewRemarks());
 
             row.put("superAdminReviewStatus",
-                    enumName(s.getSuperAdminReviewStatus()));
+                    historyOf(s).getSuperadminReviewStatus());
             row.put("superAdminReviewRemarks",
-                    s.getSuperAdminReviewRemarks());
+                    historyOf(s).getSuperadminReviewRemarks());
 
             row.put("scholarshipStatus", s.getStatus());
             row.put("status", s.getStatus());
             row.put("scholarshipType",
-                    enumName(s.getScholarshipType()));
+                    enumName(historyOf(s).getScholarshipType()));
             row.put("applicationMethod",
-                    enumName(s.getApplicationMethod()));
-            row.put("submittedAt", s.getSubmittedAt());
+                    historyOf(s).getApplicationMethod());
+            row.put("submittedAt", historyOf(s).getSubmittedAt());
             row.put("createdAt", s.getCreatedAt());
 
             /*
@@ -230,6 +241,462 @@ public class ScholarshipVerificationServiceImpl
 
     @Override
     @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<ScholarshipApplicationListItemDTO>
+    searchBranchScholarships(
+            ScholarshipApplicationSearchRequestDTO request
+    ) {
+        Integer branch = branchId();
+
+        final ScholarshipApplicationSearchRequestDTO safeRequest =
+                request == null
+                        ? new ScholarshipApplicationSearchRequestDTO()
+                        : request;
+
+        List<ErpScholarshipApplication> source =
+                applicationRepo.findAllByBranchIdAndActiveTrueOrderBySubmittedAtDesc(
+                        branch.longValue()
+                );
+
+        List<ErpScholarshipApplication> filtered =
+                source.stream()
+                        .filter(application ->
+                                matchesScholarshipSearch(
+                                        application,
+                                        safeRequest
+                                )
+                        )
+                        .toList();
+
+        int pageNumber =
+                safeRequest.getPage() == null || safeRequest.getPage() < 0
+                        ? 0
+                        : safeRequest.getPage();
+
+        int pageSize =
+                safeRequest.getSize() == null || safeRequest.getSize() <= 0
+                        ? 20
+                        : Math.min(safeRequest.getSize(), 100);
+
+        int fromIndex =
+                Math.min(
+                        pageNumber * pageSize,
+                        filtered.size()
+                );
+
+        int toIndex =
+                Math.min(
+                        fromIndex + pageSize,
+                        filtered.size()
+                );
+
+        List<ScholarshipApplicationListItemDTO> rows =
+                filtered.subList(fromIndex, toIndex)
+                        .stream()
+                        .map(this::toScholarshipApplicationListItem)
+                        .toList();
+
+        org.springframework.data.domain.Pageable pageable =
+                org.springframework.data.domain.PageRequest.of(
+                        pageNumber,
+                        pageSize
+                );
+
+        return new org.springframework.data.domain.PageImpl<>(
+                rows,
+                pageable,
+                filtered.size()
+        );
+    }
+
+    private boolean matchesScholarshipSearch(
+            ErpScholarshipApplication scholarship,
+            ScholarshipApplicationSearchRequestDTO request
+    ) {
+        if (scholarship == null) {
+            return false;
+        }
+
+        var application = scholarship.getApplication();
+
+        String search = blankToNull(request.getSearch());
+
+        if (search != null) {
+            String value = search.toLowerCase();
+
+            String name =
+                    application == null
+                            ? ""
+                            : joinName(
+                                    application.getFirstName(),
+                                    application.getMiddleName(),
+                                    application.getLastName()
+                            );
+
+            String applicationNo =
+                    application == null
+                            ? ""
+                            : application.getApplicationNo();
+
+            if (!containsIgnoreCase(name, value)
+                    && !containsIgnoreCase(applicationNo, value)) {
+                return false;
+            }
+        }
+
+        String requestedStatus = blankToNull(request.getStatus());
+
+        if (requestedStatus != null
+                && (
+                        application == null
+                        || application.getApplicationStatus() == null
+                        || !application.getApplicationStatus()
+                                .name()
+                                .equalsIgnoreCase(requestedStatus)
+                )) {
+            return false;
+        }
+
+        String verificationStatus =
+                blankToNull(request.getVerificationStatus());
+
+        if (verificationStatus != null
+                && !enumOrTextEquals(
+                        historyOf(scholarship).getVerificationStatus(),
+                        verificationStatus
+                )) {
+            return false;
+        }
+
+        String scholarshipStatus =
+                blankToNull(request.getScholarshipStatus());
+
+        if (scholarshipStatus != null
+                && !enumOrTextEquals(
+                        scholarship.getStatus(),
+                        scholarshipStatus
+                )) {
+            return false;
+        }
+
+        String schoolReviewStatus =
+                blankToNull(request.getSchoolReviewStatus());
+
+        if (schoolReviewStatus != null
+                && !enumOrTextEquals(
+                        historyOf(scholarship).getSchoolReviewStatus(),
+                        schoolReviewStatus
+                )) {
+            return false;
+        }
+
+        String superAdminReviewStatus =
+                blankToNull(request.getSuperAdminReviewStatus());
+
+        if (superAdminReviewStatus != null
+                && !superAdminReviewStatus.equalsIgnoreCase(
+                        historyOf(scholarship).getSuperadminReviewStatus()
+                )) {
+            return false;
+        }
+
+        if (request.getVerificationEmployeeId() != null
+                && !request.getVerificationEmployeeId()
+                        .equals(historyOf(scholarship).getVerificationEmployeeId())) {
+            return false;
+        }
+
+        if (request.getLevelId() != null
+                || request.getClassId() != null) {
+
+            if (application == null
+                    || application.getBranchClassId() == null) {
+                return false;
+            }
+
+            SchoolClass schoolClass =
+                    schoolClassRepo.findById(
+                            application.getBranchClassId()
+                    ).orElse(null);
+
+            if (schoolClass == null) {
+                return false;
+            }
+
+            if (request.getClassId() != null
+                    && !request.getClassId().equals(
+                            schoolClass.getClassId().longValue()
+                    )) {
+                return false;
+            }
+
+            if (request.getLevelId() != null
+                    && (
+                            schoolClass.getLevel() == null
+                            || schoolClass.getLevel().getLevelId() == null
+                            || !request.getLevelId().equals(
+                                    schoolClass.getLevel().getLevelId().longValue()
+                            )
+                    )) {
+                return false;
+            }
+        }
+
+        if (!matchesText(
+                scholarship.getAcademicYear(),
+                request.getAcademicYear()
+        )) {
+            return false;
+        }
+
+        if (!matchesText(
+                historyOf(scholarship).getTermRequested(),
+                request.getTerm()
+        )) {
+            return false;
+        }
+
+        if (request.getApplicationType() != null
+                && !request.getApplicationType().isBlank()) {
+
+            if (application == null
+                    || application.getAdmissionType() == null) {
+                return false;
+            }
+
+            String expected =
+                    request.getApplicationType().trim();
+
+            String actual =
+                    application.getAdmissionType().name();
+
+            boolean match =
+                    "NEW".equalsIgnoreCase(expected)
+                    && "NEW".equalsIgnoreCase(actual);
+
+            if ("EXISTING".equalsIgnoreCase(expected)) {
+                match =
+                        "READMISSION".equalsIgnoreCase(actual)
+                        || "TRANSFER".equalsIgnoreCase(actual);
+            }
+
+            if (!match) {
+                return false;
+            }
+        }
+
+        if (request.getGender() != null
+                && !request.getGender().isBlank()) {
+
+            if (application == null
+                    || application.getGender() == null
+                    || !application.getGender()
+                            .name()
+                            .equalsIgnoreCase(
+                                    request.getGender().trim()
+                            )) {
+                return false;
+            }
+        }
+
+        String familySituation =
+                blankToNull(request.getFamilySituation());
+
+        if (familySituation != null
+                && !"ALL".equalsIgnoreCase(familySituation)
+                && !matchesFamilySituation(
+                        scholarship,
+                        familySituation
+                )) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private boolean matchesFamilySituation(
+            ErpScholarshipApplication scholarship,
+            String familySituation
+    ) {
+        if ("ORPHAN".equalsIgnoreCase(familySituation)) {
+            return "ORPHAN".equalsIgnoreCase(
+                    historyOf(scholarship).getOrphanStatus()
+            )
+                    || "YES".equalsIgnoreCase(
+                    historyOf(scholarship).getOrphanStatus()
+            )
+                    || "TRUE".equalsIgnoreCase(
+                    historyOf(scholarship).getOrphanStatus()
+            );
+        }
+
+        if ("SINGLE_PARENT".equalsIgnoreCase(familySituation)) {
+            boolean fatherDeceased =
+                    "DECEASED".equalsIgnoreCase(
+                            historyOf(scholarship).getFatherStatus()
+                    );
+
+            boolean motherDeceased =
+                    "DECEASED".equalsIgnoreCase(
+                            historyOf(scholarship).getMotherStatus()
+                    );
+
+            return fatherDeceased ^ motherDeceased;
+        }
+
+        if ("TWO_PARENTS".equalsIgnoreCase(familySituation)) {
+            return "ALIVE".equalsIgnoreCase(
+                    historyOf(scholarship).getFatherStatus()
+            )
+                    && "ALIVE".equalsIgnoreCase(
+                    historyOf(scholarship).getMotherStatus()
+            );
+        }
+
+        return false;
+    }
+
+    private String blankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private boolean matchesText(
+            String actual,
+            String requested
+    ) {
+        String value = blankToNull(requested);
+
+        return value == null
+                || (
+                    actual != null
+                    && actual.trim().equalsIgnoreCase(value)
+                );
+    }
+
+    private boolean containsIgnoreCase(
+            String actual,
+            String expected
+    ) {
+        return actual != null
+                && expected != null
+                && actual.toLowerCase()
+                        .contains(expected.toLowerCase());
+    }
+
+    private boolean enumOrTextEquals(
+            String actual,
+            String expected
+    ) {
+        return actual != null
+                && expected != null
+                && actual.trim().equalsIgnoreCase(expected.trim());
+    }
+
+    private boolean enumEquals(
+            Enum<?> actual,
+            String expected
+    ) {
+        return actual != null
+                && expected != null
+                && actual.name().equalsIgnoreCase(expected.trim());
+    }
+
+
+    private ScholarshipApplicationListItemDTO
+    toScholarshipApplicationListItem(
+            ErpScholarshipApplication scholarship
+    ) {
+        ScholarshipApplicationListItemDTO dto =
+                new ScholarshipApplicationListItemDTO();
+
+        var application = scholarship.getApplication();
+
+        if (application != null) {
+            dto.setApplicationId(
+                    application.getApplicationId()
+            );
+            dto.setApplicationNo(
+                    application.getApplicationNo()
+            );
+            dto.setStudentName(
+                    joinName(
+                            application.getFirstName(),
+                            application.getMiddleName(),
+                            application.getLastName()
+                    )
+            );
+
+            if (application.getGender() != null) {
+                dto.setGender(
+                        application.getGender().name()
+                );
+            }
+
+            if (application.getAdmissionType() != null) {
+                dto.setAdmissionType(
+                        application.getAdmissionType().name()
+                );
+            }
+
+            Integer classId =
+                    application.getBranchClassId();
+
+            if (classId != null) {
+                dto.setClassId(
+                        classId.longValue()
+                );
+
+                schoolClassRepo.findById(classId)
+                        .ifPresent(schoolClass -> {
+                            dto.setClassName(
+                                    schoolClass.getClassName()
+                            );
+
+                            if (schoolClass.getLevel() != null) {
+                                dto.setLevelId(
+                                        schoolClass.getLevel().getLevelId().longValue()
+                                );
+                                dto.setLevelName(
+                                        schoolClass.getLevel().getLevelName()
+                                );
+                            }
+                        });
+            }
+        }
+
+        dto.setAcademicYear(
+                scholarship.getAcademicYear()
+        );
+        dto.setTerm(
+                historyOf(scholarship).getTermRequested()
+        );
+        dto.setAmountRequestedUgx(
+                historyOf(scholarship).getAmountRequestedUgx()
+        );
+        dto.setVerificationStatus(
+                historyOf(scholarship).getVerificationStatus()
+        );
+        dto.setScholarshipStatus(
+                scholarship.getStatus()
+        );
+        dto.setSchoolReviewStatus(
+                historyOf(scholarship).getSchoolReviewStatus()
+        );
+        dto.setSuperAdminReviewStatus(
+                historyOf(scholarship).getSuperadminReviewStatus()
+        );
+        dto.setSubmittedAt(
+                historyOf(scholarship).getSubmittedAt()
+        );
+
+        return dto;
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
     public Map<String, Object> getBranchFundSummary() {
         Long branchId = branchId().longValue();
 
@@ -254,7 +721,7 @@ public class ScholarshipVerificationServiceImpl
                         )
                         .stream()
                         .filter(this::isFinalApproved)
-                        .map(ErpScholarshipApplication::getApprovedAmount)
+                        .map(app -> historyOf(app).getApprovedAmount())
                         .filter(java.util.Objects::nonNull)
                         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -285,7 +752,7 @@ public class ScholarshipVerificationServiceImpl
         }
 
         String review =
-                enumName(application.getSuperAdminReviewStatus());
+                historyOf(application).getSuperadminReviewStatus();
 
         return "APPROVED".equals(review)
                 || "PARTIALLY_APPROVED".equals(review);
@@ -505,8 +972,7 @@ public class ScholarshipVerificationServiceImpl
         BigDecimal requested =
                 list.stream()
                         .map(
-                                ErpScholarshipApplication
-                                        ::getAmountRequestedUgx
+                                app -> historyOf(app).getAmountRequestedUgx()
                         )
                         .filter(
                                 java.util.Objects::nonNull
@@ -520,8 +986,7 @@ public class ScholarshipVerificationServiceImpl
                 list.stream()
                         .filter(this::isFinalApproved)
                         .map(
-                                ErpScholarshipApplication
-                                        ::getApprovedAmount
+                                app -> historyOf(app).getApprovedAmount()
                         )
                         .filter(
                                 java.util.Objects::nonNull
@@ -536,15 +1001,13 @@ public class ScholarshipVerificationServiceImpl
                         .filter(
                                 application ->
                                         application != null
-                                                && application
-                                                .getSuperAdminReviewStatus()
-                                                == ErpScholarshipApplication
-                                                .SuperAdminReviewStatus
-                                                .REJECTED
+                                                && "REJECTED".equalsIgnoreCase(
+                                                historyOf(application)
+                                                        .getSuperadminReviewStatus()
+                                        )
                         )
                         .map(
-                                ErpScholarshipApplication
-                                        ::getAmountRequestedUgx
+                                app -> historyOf(app).getAmountRequestedUgx()
                         )
                         .filter(
                                 java.util.Objects::nonNull
@@ -592,19 +1055,15 @@ public class ScholarshipVerificationServiceImpl
             appliedStudents.add(studentId);
 
             String finalReview =
-                    enumName(
-                            application
-                                    .getSuperAdminReviewStatus()
-                    );
+                    historyOf(application)
+                            .getSuperadminReviewStatus();
 
             String schoolReview =
-                    enumName(
-                            application
-                                    .getSchoolReviewStatus()
-                    );
+                    historyOf(application)
+                            .getSchoolReviewStatus();
 
             String verification =
-                    application.getVerificationStatus();
+                    historyOf(application).getVerificationStatus();
 
             if ("APPROVED".equals(finalReview)
                     || "PARTIALLY_APPROVED".equals(finalReview)) {
@@ -804,6 +1263,309 @@ public class ScholarshipVerificationServiceImpl
         return result;
     }
 
+    /**
+     * Allocates existing Super Admin-provided branch scholarship funds
+     * to an approved scholarship application.
+     *
+     * <p>The authenticated branch is always taken from the current user
+     * context. The caller cannot supply a branch ID or donor ID.</p>
+     *
+     * <p>If the branch pool contains more than one donor/source allocation,
+     * the requested amount is split across the available source balances.
+     * This preserves the existing donor/source traceability required by
+     * erp_scholarship_allocations.</p>
+     */
+    @Override
+    @Transactional
+    public void allocateBranchFundToScholarship(
+            Long scholarshipAppId,
+            BigDecimal amountUgx
+    ) {
+        if (scholarshipAppId == null || scholarshipAppId <= 0L) {
+            throw new BadRequestException(
+                    "A valid Scholarship Application ID is required."
+            );
+        }
+
+        if (amountUgx == null
+                || amountUgx.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException(
+                    "Scholarship allocation amount must be greater than zero."
+            );
+        }
+
+        /*
+         * The database stores Scholarship financial values with two decimal
+         * places. Reject extra precision instead of allowing the JDBC/database
+         * layer to round or truncate a client-supplied amount implicitly.
+         */
+        if (amountUgx.scale() > 2) {
+            throw new BadRequestException(
+                    "Scholarship allocation amount may contain at most two decimal places."
+            );
+        }
+
+        /*
+         * Currency values must be represented consistently before any
+         * balance calculation or persistence.
+         */
+        amountUgx = amountUgx.setScale(2);
+
+        Integer branch = branchId();
+        Long branchLong = branch.longValue();
+
+        ErpScholarshipApplication scholarship =
+                applicationRepo
+                        .findActiveByScholarshipAppIdAndBranchForUpdate(
+                                scholarshipAppId,
+                                branchLong
+                        )
+                        .orElseThrow(() ->
+                                new BadRequestException(
+                                        "Scholarship application not found."
+                                )
+                        );
+
+        if (!branchLong.equals(scholarship.getBranchId())) {
+            throw new BadRequestException(
+                    "Scholarship Application does not belong to your branch."
+            );
+        }
+
+        if (!isFinalApproved(scholarship)) {
+            throw new BadRequestException(
+                    "Only an approved or partially approved Scholarship Application can receive branch funds."
+            );
+        }
+
+        Long studentId =
+                scholarship.getStudent() != null
+                        ? scholarship.getStudent().getStudentId()
+                        : null;
+
+        if (studentId == null) {
+            throw new BadRequestException(
+                    "Scholarship Application is not linked to a student."
+            );
+        }
+
+        String academicYear =
+                scholarship.getAcademicYear();
+
+        String term =
+                historyOf(scholarship).getTermRequested();
+
+        if (academicYear == null || academicYear.isBlank()
+                || term == null || term.isBlank()) {
+            throw new BadRequestException(
+                    "Scholarship academic year and term are required before allocation."
+            );
+        }
+
+        /*
+         * Never allow the Branch Admin to allocate more than the amount
+         * approved by Super Admin for this scholarship.
+         */
+        ErpScholarshipHistory scholarshipHistory =
+                historyOf(scholarship);
+
+        BigDecimal approvedAmount =
+                scholarshipHistory.getApprovedAmount();
+
+        if (approvedAmount == null
+                || approvedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException(
+                    "No approved Scholarship amount is available for allocation."
+            );
+        }
+
+        /*
+         * Build source balances from the existing Super Admin bulk-fund
+         * transfers. Each source is reduced by scholarship allocations
+         * already consumed from that same source and period.
+         */
+        /*
+         * Lock the complete branch fund pool for this academic year/term
+         * before calculating source balances. This serializes concurrent
+         * allocations across different Scholarship applications that are
+         * competing for the same donor/source pool.
+         */
+        List<ErpBranchFundAllocation> branchFunds =
+                branchFundRepo
+                        .findAllByBranchIdAndAcademicYearAndTerm(
+                                branchLong,
+                                academicYear,
+                                term
+                        );
+
+        if (branchFunds.isEmpty()) {
+            throw new BadRequestException(
+                    "No Scholarship funds have been allocated to this branch for the selected academic year and term."
+            );
+        }
+
+        /*
+         * IMPORTANT: Read existing Scholarship allocations only AFTER the
+         * branch fund pool has been pessimistically locked. This guarantees
+         * concurrent Scholarship allocation transactions see the committed
+         * allocations from transactions that acquired the same pool lock
+         * before them.
+         */
+        List<ErpScholarshipAllocation> periodAllocations =
+                allocationRepo
+                        .findAllByBranchIdAndAcademicYearAndTerm(
+                                branchLong,
+                                academicYear,
+                                term
+                        );
+
+        BigDecimal alreadyAllocatedToStudent =
+                periodAllocations.stream()
+                        .filter(
+                                allocation ->
+                                        allocation != null
+                                                && studentId.equals(
+                                                        allocation.getStudentId()
+                                                )
+                                                && allocation.getScholarshipHistory() != null
+                                                && scholarshipHistory.getScholarshipHistoryId()
+                                                        .equals(
+                                                                allocation.getScholarshipHistory()
+                                                                        .getScholarshipHistoryId()
+                                                        )
+                        )
+                        .map(
+                                ErpScholarshipAllocation
+                                        ::getAllocatedAmountUgx
+                        )
+                        .filter(
+                                java.util.Objects::nonNull
+                        )
+                        .reduce(
+                                BigDecimal.ZERO,
+                                BigDecimal::add
+                        );
+
+        BigDecimal remainingEligible =
+                approvedAmount
+                        .subtract(alreadyAllocatedToStudent)
+                        .max(BigDecimal.ZERO);
+
+        if (amountUgx.compareTo(remainingEligible) > 0) {
+            throw new BadRequestException(
+                    "Allocation exceeds the remaining approved Scholarship amount."
+            );
+        }
+
+        Map<Long, BigDecimal> fundByDonation =
+                new LinkedHashMap<>();
+
+        for (ErpBranchFundAllocation fund : branchFunds) {
+            if (fund == null
+                    || fund.getDonationId() == null
+                    || fund.getAllocatedAmountUgx() == null
+                    || fund.getAllocatedAmountUgx()
+                    .compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+
+            fundByDonation.merge(
+                    fund.getDonationId(),
+                    fund.getAllocatedAmountUgx(),
+                    BigDecimal::add
+            );
+        }
+
+        if (fundByDonation.isEmpty()) {
+            throw new BadRequestException(
+                    "The branch Scholarship fund has no valid funding source."
+            );
+        }
+
+        Map<Long, BigDecimal> usedByDonation =
+                new HashMap<>();
+
+        for (ErpScholarshipAllocation allocation :
+                periodAllocations) {
+
+            if (allocation == null
+                    || allocation.getDonationId() == null
+                    || allocation.getAllocatedAmountUgx() == null) {
+                continue;
+            }
+
+            usedByDonation.merge(
+                    allocation.getDonationId(),
+                    allocation.getAllocatedAmountUgx(),
+                    BigDecimal::add
+            );
+        }
+
+        BigDecimal remainingToAllocate = amountUgx;
+        Long userId = currentUserId();
+
+        for (Map.Entry<Long, BigDecimal> entry :
+                fundByDonation.entrySet()) {
+
+            if (remainingToAllocate.compareTo(BigDecimal.ZERO) <= 0) {
+                break;
+            }
+
+            Long donationId = entry.getKey();
+
+            BigDecimal sourceUsed =
+                    usedByDonation.getOrDefault(
+                            donationId,
+                            BigDecimal.ZERO
+                    );
+
+            BigDecimal sourceAvailable =
+                    entry.getValue()
+                            .subtract(sourceUsed)
+                            .max(BigDecimal.ZERO);
+
+            if (sourceAvailable.compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+
+            BigDecimal sourceAllocation =
+                    sourceAvailable.min(
+                            remainingToAllocate
+                    );
+
+            ErpScholarshipAllocation allocation =
+                    new ErpScholarshipAllocation();
+
+            allocation.setScholarshipHistory(
+                    scholarshipHistory
+            );
+            allocation.setBranchId(branchLong);
+            allocation.setStudentId(studentId);
+            allocation.setDonationId(donationId);
+            allocation.setAllocatedAmountUgx(
+                    sourceAllocation
+            );
+            allocation.setTermsCovered(term);
+            allocation.setAcademicYear(academicYear);
+            allocation.setTerm(term);
+            allocation.setAllocatedByUserId(userId);
+
+            allocationRepo.save(
+                    allocation
+            );
+
+            remainingToAllocate =
+                    remainingToAllocate
+                            .subtract(sourceAllocation);
+        }
+
+        if (remainingToAllocate.compareTo(BigDecimal.ZERO) > 0) {
+            throw new BadRequestException(
+                    "The branch has insufficient available Scholarship funds for this allocation."
+            );
+        }
+    }
+
     @Override
     public void assignVerificationEmployee(
             Long scholarshipAppId,
@@ -844,16 +1606,17 @@ public class ScholarshipVerificationServiceImpl
 
         validateEmployee(employeeId);
 
-        scholarship.setVerificationEmployeeId(employeeId);
-        scholarship.setVerificationStatus("ASSIGNED");
-        scholarship.setVerificationAssignedAt(
+        historyOf(scholarship).setVerificationEmployeeId(employeeId);
+        historyOf(scholarship).setVerificationStatus("ASSIGNED");
+        historyOf(scholarship).setVerificationAssignedAt(
                 java.time.LocalDateTime.now()
         );
-        scholarship.setVerificationStartedAt(null);
-        scholarship.setVerificationCompletedAt(null);
-        scholarship.setVerificationRemarks(null);
+        historyOf(scholarship).setVerificationStartedAt(null);
+        historyOf(scholarship).setVerificationCompletedAt(null);
+        historyOf(scholarship).setVerificationRemarks(null);
         scholarship.setUpdatedBy(currentUserId());
 
+        saveHistory(scholarship);
         applicationRepo.save(scholarship);
     }
 
@@ -865,14 +1628,14 @@ public class ScholarshipVerificationServiceImpl
         ErpScholarshipApplication scholarship =
                 getBranchApplication(scholarshipAppId);
 
-        if (scholarship.getVerificationEmployeeId() == null) {
+        if (historyOf(scholarship).getVerificationEmployeeId() == null) {
             throw new BadRequestException(
                     "Assign a Scholarship verification employee first."
             );
         }
 
         String status =
-                scholarship.getVerificationStatus();
+                historyOf(scholarship).getVerificationStatus();
 
         if (!"ASSIGNED".equalsIgnoreCase(status)
                 && !"IN_PROGRESS".equalsIgnoreCase(status)) {
@@ -881,17 +1644,18 @@ public class ScholarshipVerificationServiceImpl
             );
         }
 
-        scholarship.setVerificationStatus("COMPLETED");
-        scholarship.setVerificationCompletedAt(
+        historyOf(scholarship).setVerificationStatus("COMPLETED");
+        historyOf(scholarship).setVerificationCompletedAt(
                 java.time.LocalDateTime.now()
         );
-        scholarship.setVerificationRemarks(
+        historyOf(scholarship).setVerificationRemarks(
                 request != null
                         ? request.getRemarks()
                         : null
         );
         scholarship.setUpdatedBy(currentUserId());
 
+        saveHistory(scholarship);
         applicationRepo.save(scholarship);
     }
 
@@ -904,7 +1668,7 @@ public class ScholarshipVerificationServiceImpl
                 getBranchApplication(scholarshipAppId);
 
         if (!"COMPLETED".equalsIgnoreCase(
-                scholarship.getVerificationStatus()
+                historyOf(scholarship).getVerificationStatus()
         )) {
             throw new BadRequestException(
                     "Complete Scholarship verification before making a shortlist decision."
@@ -941,16 +1705,279 @@ public class ScholarshipVerificationServiceImpl
             );
         }
 
-        scholarship.setSchoolReviewStatus(reviewStatus);
-        scholarship.setSchoolReviewedBy(currentUserId());
-        scholarship.setSchoolReviewedAt(
+        historyOf(scholarship).setSchoolReviewStatus(reviewStatus.name());
+        historyOf(scholarship).setSchoolReviewedBy(currentUserId());
+        historyOf(scholarship).setSchoolReviewedAt(
                 java.time.LocalDateTime.now()
         );
-        scholarship.setSchoolReviewRemarks(
+        historyOf(scholarship).setSchoolReviewRemarks(
                 request.getRemarks()
         );
+
+        /*
+         * A shortlisted Scholarship is now ready for Super Admin review.
+         * This stage transition is essential because the Super Admin final
+         * decision endpoint accepts requests only from SUPER_ADMIN_REVIEW.
+         *
+         * A NOT_SHORTLISTED application must not enter Super Admin review.
+         */
+        if (reviewStatus
+                == ErpScholarshipApplication.SchoolReviewStatus.SHORTLISTED) {
+            historyOf(scholarship).setCurrentStage(
+                    "SUPER_ADMIN_REVIEW"
+            );
+        } else if (
+                reviewStatus
+                        == ErpScholarshipApplication.SchoolReviewStatus.NOT_SHORTLISTED
+        ) {
+            /*
+             * NOT_SHORTLISTED is a terminal Branch Admin decision for this
+             * review cycle. It must never leave the application waiting for
+             * Super Admin review.
+             */
+            historyOf(scholarship).setCurrentStage(
+                    "BRANCH_NOT_SHORTLISTED"
+            );
+        }
+
         scholarship.setUpdatedBy(currentUserId());
 
+        saveHistory(scholarship);
+        applicationRepo.save(scholarship);
+    }
+
+
+    public void decideFromWaitlist(
+            Long scholarshipAppId,
+            ScholarshipShortlistRequestDTO request
+    ) {
+        ErpScholarshipApplication scholarship =
+                getBranchApplication(scholarshipAppId);
+
+        ErpScholarshipHistory history =
+                historyOf(scholarship);
+
+        if (!ErpScholarshipApplication.SchoolReviewStatus.WAITLISTED.name()
+                .equalsIgnoreCase(history.getSchoolReviewStatus())) {
+            throw new BadRequestException(
+                    "Only a Scholarship currently on WAITLIST can use this action."
+            );
+        }
+
+        String decision =
+                request != null
+                        ? request.getDecision()
+                        : null;
+
+        if (decision == null || decision.isBlank()) {
+            throw new BadRequestException(
+                    "Scholarship waitlist decision is required."
+            );
+        }
+
+        ErpScholarshipApplication.SchoolReviewStatus status;
+
+        try {
+            status =
+                    ErpScholarshipApplication.SchoolReviewStatus
+                            .valueOf(decision.trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new BadRequestException(
+                    "Invalid Scholarship waitlist decision."
+            );
+        }
+
+        if (status != ErpScholarshipApplication.SchoolReviewStatus.SHORTLISTED
+                && status != ErpScholarshipApplication.SchoolReviewStatus.REJECTED) {
+            throw new BadRequestException(
+                    "A waitlisted Scholarship may only be shortlisted or rejected."
+            );
+        }
+
+        if (status == ErpScholarshipApplication.SchoolReviewStatus.REJECTED
+                && (request.getRemarks() == null
+                || request.getRemarks().isBlank())) {
+            throw new BadRequestException(
+                    "Rejection reason is required."
+            );
+        }
+
+        history.setSchoolReviewStatus(status.name());
+        history.setSchoolReviewedBy(currentUserId());
+        history.setSchoolReviewedAt(
+                java.time.LocalDateTime.now()
+        );
+        history.setSchoolReviewRemarks(
+                request.getRemarks()
+        );
+
+        /*
+         * A waitlisted Scholarship may re-enter the Super Admin workflow
+         * only after Branch Admin explicitly shortlists it. A rejection
+         * remains outside the Super Admin workflow.
+         */
+        if (status
+                == ErpScholarshipApplication.SchoolReviewStatus.SHORTLISTED) {
+            history.setCurrentStage(
+                    "SUPER_ADMIN_REVIEW"
+            );
+        } else if (
+                status
+                        == ErpScholarshipApplication.SchoolReviewStatus.REJECTED
+        ) {
+            history.setCurrentStage(
+                    "BRANCH_WAITLIST_REJECTED"
+            );
+        }
+
+        scholarship.setUpdatedBy(currentUserId());
+
+        /*
+         * No email is sent from the WAITLISTED state itself.
+         * Email #1 for SHORTLISTED/REJECTED is handled by the dedicated
+         * decision-email integration, not by this state transition method.
+         */
+        saveHistory(scholarship);
+        applicationRepo.save(scholarship);
+    }
+
+    @Transactional
+    public void completeBranchDistribution(
+            Long scholarshipAppId,
+            ScholarshipBranchDistributionCompletionRequestDTO request
+    ) {
+        if (scholarshipAppId == null || scholarshipAppId <= 0L) {
+            throw new BadRequestException(
+                    "A valid Scholarship Application ID is required."
+            );
+        }
+
+        if (request == null
+                || request.getScholarshipHistoryId() == null) {
+            throw new BadRequestException(
+                    "Scholarship History ID is required."
+            );
+        }
+
+        ErpScholarshipApplication scholarship =
+                getBranchApplication(scholarshipAppId);
+
+        Integer branch = branchId();
+        Long branchLong = branch.longValue();
+
+        if (!branchLong.equals(scholarship.getBranchId())) {
+            throw new BadRequestException(
+                    "Scholarship Application does not belong to your branch."
+            );
+        }
+
+        ErpScholarshipHistory history =
+                historyOf(scholarship);
+
+        if (history == null
+                || !request.getScholarshipHistoryId()
+                .equals(history.getScholarshipHistoryId())) {
+            throw new BadRequestException(
+                    "Scholarship History does not belong to this Scholarship Application."
+            );
+        }
+
+        if (history.getApprovedAmount() == null
+                || history.getApprovedAmount()
+                .compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException(
+                    "No approved Scholarship amount is available for distribution."
+            );
+        }
+
+        /*
+         * Distribution completion is only valid after the approved amount
+         * has actually been allocated to the student for the same branch,
+         * academic year and term. Do not allow a status-only distribution.
+         */
+        Long studentId =
+                scholarship.getStudent() != null
+                        ? scholarship.getStudent().getStudentId()
+                        : null;
+
+        if (studentId == null) {
+            throw new BadRequestException(
+                    "Scholarship Application is not linked to a student."
+            );
+        }
+
+        String academicYear = scholarship.getAcademicYear();
+        String term = history.getTermRequested();
+
+        if (academicYear == null || academicYear.isBlank()
+                || term == null || term.isBlank()) {
+            throw new BadRequestException(
+                    "Scholarship academic year and term are required before distribution."
+            );
+        }
+
+        BigDecimal allocatedAmount =
+                allocationRepo
+                        .findAllByBranchIdAndAcademicYearAndTerm(
+                                branchLong,
+                                academicYear,
+                                term
+                        )
+                        .stream()
+                        .filter(allocation ->
+                                allocation != null
+                                        && studentId.equals(
+                                        allocation.getStudentId()
+                                )
+                                        && allocation.getScholarshipHistory() != null
+                                        && history.getScholarshipHistoryId()
+                                                .equals(
+                                                        allocation.getScholarshipHistory()
+                                                                .getScholarshipHistoryId()
+                                                ))
+                        .map(ErpScholarshipAllocation::getAllocatedAmountUgx)
+                        .filter(java.util.Objects::nonNull)
+                        .reduce(
+                                BigDecimal.ZERO,
+                                BigDecimal::add
+                        );
+
+        if (allocatedAmount.compareTo(history.getApprovedAmount()) < 0) {
+            throw new BadRequestException(
+                    "Scholarship distribution cannot be completed until the full approved amount has been allocated."
+            );
+        }
+
+        /*
+         * Distribution completion is idempotency-safe. Once completed,
+         * a repeated request must not rewrite the workflow or audit state.
+         */
+        if ("DISTRIBUTION_COMPLETED".equalsIgnoreCase(
+                history.getCurrentStage()
+        )) {
+            throw new BadRequestException(
+                    "Scholarship distribution has already been completed."
+            );
+        }
+
+        history.setCurrentStage(
+                "DISTRIBUTION_COMPLETED"
+        );
+        history.setStatus(
+                "Distributed"
+        );
+        history.setReviewerRemarks(
+                request.getRemarks()
+        );
+        history.setReviewedBy(
+                currentUserId()
+        );
+
+        scholarship.setUpdatedBy(
+                currentUserId()
+        );
+
+        saveHistory(scholarship);
         applicationRepo.save(scholarship);
     }
 
@@ -959,14 +1986,48 @@ public class ScholarshipVerificationServiceImpl
             Long scholarshipAppId,
             ScholarshipFinalDecisionRequestDTO request
     ) {
+        /*
+         * Super Admin is not branch-scoped. The Super Admin controller is
+         * protected by SUPER_ADMIN, so this lookup must not require the
+         * authenticated user's branch. The scholarship record itself carries
+         * the authoritative branch_id.
+         */
         ErpScholarshipApplication scholarship =
-                getBranchApplication(scholarshipAppId);
+                applicationRepo
+                        .findActiveByScholarshipAppIdForUpdate(
+                                scholarshipAppId
+                        )
+                        .orElseThrow(() ->
+                                new BadRequestException(
+                                        "Scholarship application not found."
+                                )
+                        );
 
         if (request == null
                 || request.getDecision() == null
                 || request.getDecision().isBlank()) {
             throw new BadRequestException(
                     "Final Scholarship decision is required."
+            );
+        }
+
+        ErpScholarshipHistory history =
+                historyOf(scholarship);
+
+        /*
+         * A final Super Admin decision is allowed only while the Scholarship
+         * is actually waiting for Super Admin review. This prevents an old
+         * or already-finalized Scholarship from being decided again.
+         */
+        String currentStage =
+                history.getCurrentStage();
+
+        if (currentStage == null
+                || !"SUPER_ADMIN_REVIEW".equalsIgnoreCase(
+                        currentStage.trim()
+                )) {
+            throw new BadRequestException(
+                    "Scholarship application is not currently awaiting Super Admin review."
             );
         }
 
@@ -986,34 +2047,303 @@ public class ScholarshipVerificationServiceImpl
             );
         }
 
-        scholarship.setSuperAdminReviewStatus(status);
-        scholarship.setApprovedAmount(
-                request.getApprovedAmount()
-        );
-        scholarship.setApprovedPercentage(
-                request.getApprovedPercentage()
-        );
-        scholarship.setSuperAdminReviewedBy(currentUserId());
-        scholarship.setSuperAdminReviewedAt(
+        BigDecimal approvedAmount =
+                request.getApprovedAmount();
+
+        BigDecimal requestedAmount =
+                history.getAmountRequestedUgx();
+
+        BigDecimal approvedPercentage =
+                request.getApprovedPercentage();
+
+        /*
+         * Financial values are validated against the authoritative
+         * Scholarship History request, never trusted blindly from the client.
+         */
+        if (status
+                == ErpScholarshipApplication.SuperAdminReviewStatus.APPROVED
+                || status
+                == ErpScholarshipApplication.SuperAdminReviewStatus.PARTIALLY_APPROVED) {
+
+            if (approvedAmount == null
+                    || approvedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new BadRequestException(
+                        "A positive approved Scholarship amount is required."
+                );
+            }
+
+            if (requestedAmount != null
+                    && approvedAmount.compareTo(requestedAmount) > 0) {
+                throw new BadRequestException(
+                        "Approved Scholarship amount cannot exceed the requested amount."
+                );
+            }
+
+            if (approvedPercentage == null
+                    || approvedPercentage.compareTo(BigDecimal.ZERO) < 0
+                    || approvedPercentage.compareTo(new BigDecimal("100")) > 0) {
+                throw new BadRequestException(
+                        "Approved Scholarship percentage must be between 0 and 100."
+                );
+            }
+
+        } else if (
+                status
+                        == ErpScholarshipApplication.SuperAdminReviewStatus.REJECTED
+        ) {
+
+            if (request.getRemarks() == null
+                    || request.getRemarks().isBlank()) {
+                throw new BadRequestException(
+                        "Rejection reason is required for a rejected Scholarship."
+                );
+            }
+
+            /*
+             * A rejected Scholarship cannot carry a financial approval.
+             * Store zero rather than trusting a client-supplied amount.
+             */
+            approvedAmount = BigDecimal.ZERO;
+            approvedPercentage = BigDecimal.ZERO;
+
+        } else {
+            throw new BadRequestException(
+                    "Unsupported final Scholarship decision."
+            );
+        }
+
+        history.setSuperadminReviewStatus(status.name());
+        history.setApprovedAmount(approvedAmount);
+        history.setApprovedPercentage(approvedPercentage);
+        history.setSuperadminReviewedBy(currentUserId());
+        history.setSuperadminReviewedAt(
                 java.time.LocalDateTime.now()
         );
-        scholarship.setSuperAdminReviewRemarks(
+        history.setSuperadminReviewRemarks(
                 request.getRemarks()
         );
         scholarship.setUpdatedBy(currentUserId());
 
-        if (status == ErpScholarshipApplication.SuperAdminReviewStatus.APPROVED
-                || status == ErpScholarshipApplication.SuperAdminReviewStatus.PARTIALLY_APPROVED) {
+        if (status
+                == ErpScholarshipApplication.SuperAdminReviewStatus.APPROVED
+                || status
+                == ErpScholarshipApplication.SuperAdminReviewStatus.PARTIALLY_APPROVED) {
+
             scholarship.setStatus("Approved");
-            scholarship.setApprovedAt(
+            history.setApprovedAt(
                     java.time.LocalDateTime.now()
             );
-        } else if (status
-                == ErpScholarshipApplication.SuperAdminReviewStatus.REJECTED) {
+            history.setCurrentStage(
+                    "RETURNED_TO_BRANCH_ADMIN"
+            );
+
+        } else if (
+                status
+                        == ErpScholarshipApplication.SuperAdminReviewStatus.REJECTED
+        ) {
+
             scholarship.setStatus("Rejected");
+            history.setCurrentStage(
+                    "RETURNED_TO_BRANCH_ADMIN"
+            );
         }
 
-        applicationRepo.save(scholarship);
+        saveHistory(scholarship);
+        applicationRepo.saveAndFlush(scholarship);
+
+        /*
+         * Email #2 is sent only after the Super Admin result has been
+         * successfully committed. It is deliberately not sent from
+         * DISTRIBUTION_COMPLETED or any earlier Scholarship stage.
+         */
+        scheduleScholarshipSuperAdminResultEmail(scholarship);
+    }
+
+    private void scheduleScholarshipSuperAdminResultEmail(
+            ErpScholarshipApplication scholarship
+    ) {
+        if (scholarship == null
+                || scholarship.getScholarshipAppId() == null
+                || scholarship.getApplication() == null
+                || scholarship.getApplication().getBranch() == null) {
+            return;
+        }
+
+        Long scholarshipAppId =
+                scholarship.getScholarshipAppId();
+
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            safelySendScholarshipSuperAdminResultEmail(
+                    scholarshipAppId
+            );
+            return;
+        }
+
+        TransactionSynchronizationManager.registerSynchronization(
+                new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        safelySendScholarshipSuperAdminResultEmail(
+                                scholarshipAppId
+                        );
+                    }
+                }
+        );
+    }
+
+    private void safelySendScholarshipSuperAdminResultEmail(
+            Long scholarshipAppId
+    ) {
+        try {
+            ErpScholarshipApplication scholarship =
+                    applicationRepo.findById(
+                            scholarshipAppId
+                    ).orElse(null);
+
+            if (scholarship == null
+                    || !Boolean.TRUE.equals(scholarship.getActive())
+                    || scholarship.getApplication() == null
+                    || scholarship.getApplication().getBranch() == null) {
+                return;
+            }
+
+            ErpScholarshipHistory history =
+                    historyOf(scholarship);
+
+            String reviewStatus =
+                    history.getSuperadminReviewStatus();
+
+            String resultType =
+                    "REJECTED".equalsIgnoreCase(reviewStatus)
+                            ? "REJECTED"
+                            : "ALLOCATION";
+
+            BigDecimal allocatedAmount =
+                    history.getApprovedAmount();
+
+            String donorInformation =
+                    buildScholarshipDonorInformation(
+                            scholarship,
+                            history
+                    );
+
+            String rejectionReason =
+                    "REJECTED".equalsIgnoreCase(reviewStatus)
+                            ? history.getSuperadminReviewRemarks()
+                            : null;
+
+            String studentName =
+                    joinName(
+                            scholarship.getApplication().getFirstName(),
+                            scholarship.getApplication().getMiddleName(),
+                            scholarship.getApplication().getLastName()
+                    );
+
+            String applicationNumber =
+                    scholarship.getApplication().getApplicationNo();
+
+            emailService.sendScholarshipSuperAdminResult(
+                    scholarship.getApplication().getBranch(),
+                    studentName,
+                    applicationNumber,
+                    resultType,
+                    allocatedAmount,
+                    donorInformation,
+                    rejectionReason
+            );
+
+        } catch (RuntimeException ignored) {
+            /*
+             * The Super Admin decision is already committed. Email delivery
+             * failure must never roll back or invalidate that decision.
+             * EmailService owns the delivery logging.
+             */
+        }
+    }
+
+    private String buildScholarshipDonorInformation(
+            ErpScholarshipApplication scholarship,
+            ErpScholarshipHistory history
+    ) {
+        if (scholarship == null
+                || history == null
+                || scholarship.getBranchId() == null
+                || scholarship.getStudent() == null
+                || scholarship.getStudent().getStudentId() == null) {
+            return null;
+        }
+
+        String academicYear =
+                scholarship.getAcademicYear();
+
+        String term =
+                history.getTermRequested();
+
+        if (academicYear == null
+                || academicYear.isBlank()
+                || term == null
+                || term.isBlank()) {
+            return null;
+        }
+
+        Long branchId =
+                scholarship.getBranchId();
+
+        Long studentId =
+                scholarship.getStudent().getStudentId();
+
+        Long historyId =
+                history.getScholarshipHistoryId();
+
+        List<ErpScholarshipAllocation> allocations =
+                allocationRepo
+                        .findAllByBranchIdAndAcademicYearAndTerm(
+                                branchId,
+                                academicYear,
+                                term
+                        )
+                        .stream()
+                        .filter(allocation ->
+                                allocation != null
+                                        && studentId.equals(
+                                        allocation.getStudentId()
+                                )
+                                        && allocation.getScholarshipHistory() != null
+                                        && historyId.equals(
+                                        allocation.getScholarshipHistory()
+                                                .getScholarshipHistoryId()
+                                )
+                        )
+                        .toList();
+
+        if (allocations.isEmpty()) {
+            return "Branch Scholarship Fund allocation to be completed by Branch Admin.";
+        }
+
+        StringBuilder donorInformation =
+                new StringBuilder();
+
+        for (ErpScholarshipAllocation allocation : allocations) {
+            if (donorInformation.length() > 0) {
+                donorInformation.append("; ");
+            }
+
+            donorInformation
+                    .append("Donor ID ")
+                    .append(
+                            allocation.getDonationId() != null
+                                    ? allocation.getDonationId()
+                                    : "General Fund"
+                    )
+                    .append(": UGX ")
+                    .append(
+                            allocation.getAllocatedAmountUgx() != null
+                                    ? allocation.getAllocatedAmountUgx()
+                                    : BigDecimal.ZERO
+                    );
+        }
+
+        return donorInformation.toString();
     }
 
     private ErpScholarshipApplication getBranchApplication(
@@ -1039,6 +2369,33 @@ public class ScholarshipVerificationServiceImpl
                                 "Scholarship application not found."
                         )
                 );
+    }
+
+    private ErpScholarshipHistory historyOf(
+            ErpScholarshipApplication application
+    ) {
+        if (application == null
+                || application.getScholarshipAppId() == null) {
+            throw new BadRequestException(
+                    "Scholarship history is not available for this application."
+            );
+        }
+
+        return historyRepo
+                .findFirstByScholarshipApplicationScholarshipAppIdOrderByScholarshipHistoryIdDesc(
+                        application.getScholarshipAppId()
+                )
+                .orElseThrow(() ->
+                        new BadRequestException(
+                                "Scholarship history record not found."
+                        )
+                );
+    }
+
+    private void saveHistory(ErpScholarshipApplication application) {
+        ErpScholarshipHistory history = historyOf(application);
+        history.setUpdatedBy(currentUserId());
+        historyRepo.save(history);
     }
 
     private void validateEmployee(Long employeeId) {

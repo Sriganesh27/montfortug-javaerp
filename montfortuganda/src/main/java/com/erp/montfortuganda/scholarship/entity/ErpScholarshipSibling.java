@@ -30,6 +30,10 @@ public class ErpScholarshipSibling implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    public Long getScholarshipSiblingId() {
+        return scholarshipSiblingId;
+    }
+
     public enum CurrentStatus {
         STUDYING,
         WORKING,
@@ -39,8 +43,8 @@ public class ErpScholarshipSibling implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "sibling_id")
-    private Long siblingId;
+    @Column(name = "scholarship_sibling_id")
+    private Long scholarshipSiblingId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(

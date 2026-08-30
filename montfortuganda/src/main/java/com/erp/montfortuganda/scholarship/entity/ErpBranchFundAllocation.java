@@ -1,11 +1,7 @@
 package com.erp.montfortuganda.scholarship.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -18,17 +14,13 @@ public class ErpBranchFundAllocation {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "scholarship_branch_allocation_id")
+    private Long scholarshipBranchAllocationId;
 
-    @Column(
-            name = "branch_id",
-            nullable = false
-    )
+    @Column(name = "branch_id", nullable = false)
     private Long branchId;
 
-    @Column(
-            name = "donation_id"
-    )
+    @Column(name = "donation_id")
     private Long donationId;
 
     @Column(
@@ -39,23 +31,13 @@ public class ErpBranchFundAllocation {
     )
     private BigDecimal allocatedAmountUgx;
 
-    @Column(
-            name = "purpose",
-            length = 255
-    )
+    @Column(name = "purpose", length = 255)
     private String purpose = "Branch Scholarship Pool";
 
-    @Column(
-            name = "academic_year",
-            length = 20,
-            nullable = false
-    )
+    @Column(name = "academic_year", length = 20, nullable = false)
     private String academicYear;
 
-    @Column(
-            name = "allocated_by_user_id",
-            nullable = false
-    )
+    @Column(name = "allocated_by_user_id", nullable = false)
     private Long allocatedByUserId;
 
     @Column(
@@ -65,25 +47,15 @@ public class ErpBranchFundAllocation {
     )
     private LocalDateTime createdAt;
 
-    @Column(
-            name = "created_by"
-    )
+    @Column(name = "created_by")
     private String createdBy;
 
-    @Column(
-            name = "updated_at"
-    )
+    @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Column(
-            name = "updated_by"
-    )
+    @Column(name = "updated_by")
     private String updatedBy;
 
-    @Column(
-            name = "term",
-            length = 50,
-            nullable = false
-    )
+    @Column(name = "term", length = 50, nullable = false)
     private String term;
 }

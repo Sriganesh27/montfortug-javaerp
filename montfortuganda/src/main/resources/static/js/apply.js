@@ -420,6 +420,30 @@ function buildReviewSummary() {
 
     appendSectionBreak("Academic Details");
     appendItem("Former School", `${getVal('formerSchool') || 'N/A'} ${getVal('formerSchoolLin') ? '(LIN: '+getVal('formerSchoolLin')+')' : ''}`);
+
+    const reviewSubjectMarks = collectSubjectMarks();
+
+    if (reviewSubjectMarks.length > 0) {
+        const subjectSummary =
+            reviewSubjectMarks
+                .map(mark =>
+                    `${mark.subject}: ${mark.marks || '—'}${mark.grade ? ` (${mark.grade})` : ''}`
+                )
+                .join(" | ");
+
+        appendItem(
+            "Subject Marks",
+            subjectSummary,
+            true
+        );
+    } else {
+        appendItem(
+            "Subject Marks",
+            "Not Provided",
+            true
+        );
+    }
+
     appendItem("Attachments", "Photo & Documents Ready for Upload");
 }
 
@@ -819,6 +843,70 @@ function calculateSubjectTotal() {
     document.getElementById("totalSubjectScore").textContent = String(total);
 }
 
+function collectSubjectMarks() {
+    const rows =
+        document.querySelectorAll(
+            "#subjectsBody tr"
+        );
+
+    const subjectMarks = [];
+
+    rows.forEach(row => {
+        const nameInput =
+            row.querySelector(
+                "input[name='subject_name[]']"
+            );
+
+        const markInput =
+            row.querySelector(
+                "input[name='subject_mark[]']"
+            );
+
+        const gradeInput =
+            row.querySelector(
+                "input[name='subject_grade[]']"
+            );
+
+        if (!nameInput && !markInput && !gradeInput) {
+            return;
+        }
+
+        const subject =
+            nameInput
+                ? nameInput.value.trim()
+                : "";
+
+        const marks =
+            markInput
+                ? markInput.value.trim()
+                : "";
+
+        const grade =
+            gradeInput
+                ? gradeInput.value.trim()
+                : "";
+
+        /*
+         * Subject Marks are stored as JSON on the application.
+         * Preserve the existing data shape used by the backend:
+         * { subject, marks, grade }.
+         */
+        if (
+            subject !== ""
+            || marks !== ""
+            || grade !== ""
+        ) {
+            subjectMarks.push({
+                subject,
+                marks,
+                grade
+            });
+        }
+    });
+
+    return subjectMarks;
+}
+
 async function handleFormSubmit(e) {
     e.preventDefault();
     const form = e.target;
@@ -831,6 +919,24 @@ async function handleFormSubmit(e) {
         console.warn("Bot detected by honeypot. Request killed.");
         document.getElementById("final-ref-number").textContent = "APP-2026-U011-" + Math.floor(Math.random() * 900 + 100);
         goToStep(7);
+        return;
+    }
+
+    const subjectMarks = collectSubjectMarks();
+
+    const incompleteSubject =
+        subjectMarks.find(mark =>
+            mark.subject === ""
+            || mark.marks === ""
+            || mark.grade === ""
+        );
+
+    if (incompleteSubject) {
+        showAlert(
+            "Incomplete Subject Marks",
+            "Please complete Subject, Marks /100, and Grade for every subject row, or remove the row.",
+            "warning"
+        );
         return;
     }
 
@@ -884,14 +990,14 @@ async function handleFormSubmit(e) {
         addressPostal: form.querySelector("[name='addressPostal']") ? form.querySelector("[name='addressPostal']").value : "",
 
         fatherName: form.querySelector("[name='fatherName']") ? form.querySelector("[name='fatherName']").value : "",
-        fatherAge: form.querySelector("[name='fatherAge']") && form.querySelector("[name='fatherAge']").value ? parseInt(form.querySelector("[name='fatherAge']").value) : 0,
+        fatherAge: form.querySelector("[name='fatherAge']") && form.querySelector("[name='fatherAge']").value ? parseInt(form.querySelector("[name='fatherAge']").value) : null,
         fatherContact: form.querySelector("[name='fatherContact']") ? form.querySelector("[name='fatherContact']").value : "",
         fatherEducation: form.querySelector("[name='fatherEducation']") ? form.querySelector("[name='fatherEducation']").value : "",
         fatherOccupation: form.querySelector("[name='fatherOccupation']") ? form.querySelector("[name='fatherOccupation']").value : "",
         fatherEmail: form.querySelector("[name='fatherEmail']") ? form.querySelector("[name='fatherEmail']").value : "",
 
         motherName: form.querySelector("[name='motherName']") ? form.querySelector("[name='motherName']").value : "",
-        motherAge: form.querySelector("[name='motherAge']") && form.querySelector("[name='motherAge']").value ? parseInt(form.querySelector("[name='motherAge']").value) : 0,
+        motherAge: form.querySelector("[name='motherAge']") && form.querySelector("[name='motherAge']").value ? parseInt(form.querySelector("[name='motherAge']").value) : null,
         motherContact: form.querySelector("[name='motherContact']") ? form.querySelector("[name='motherContact']").value : "",
         motherEducation: form.querySelector("[name='motherEducation']") ? form.querySelector("[name='motherEducation']").value : "",
         motherOccupation: form.querySelector("[name='motherOccupation']") ? form.querySelector("[name='motherOccupation']").value : "",
@@ -900,7 +1006,7 @@ async function handleFormSubmit(e) {
         guardianName: form.querySelector("[name='guardianName']") ? form.querySelector("[name='guardianName']").value : "",
         guardianMobile: form.querySelector("[name='guardianContact']") ? form.querySelector("[name='guardianContact']").value : "",
         guardianEmail: form.querySelector("[name='guardianEmail']") ? form.querySelector("[name='guardianEmail']").value : "",
-        guardianAge: form.querySelector("[name='guardianAge']") && form.querySelector("[name='guardianAge']").value ? parseInt(form.querySelector("[name='guardianAge']").value) : 0,
+        guardianAge: form.querySelector("[name='guardianAge']") && form.querySelector("[name='guardianAge']").value ? parseInt(form.querySelector("[name='guardianAge']").value) : null,
         guardianEducation: form.querySelector("[name='guardianEducation']") ? form.querySelector("[name='guardianEducation']").value : "",
         guardianOccupation: form.querySelector("[name='guardianOccupation']") ? form.querySelector("[name='guardianOccupation']").value : "",
         guardianRelation: form.querySelector("[name='guardianRelation']") ? form.querySelector("[name='guardianRelation']").value : "",
@@ -913,7 +1019,14 @@ async function handleFormSubmit(e) {
         pleScore: form.querySelector("[name='pleScore']") && form.querySelector("[name='pleScore']").value ? parseFloat(form.querySelector("[name='pleScore']").value) : null,
         uceRef: form.querySelector("[name='uceRef']") ? form.querySelector("[name='uceRef']").value : "",
         uceScore: form.querySelector("[name='uceScore']") && form.querySelector("[name='uceScore']").value ? parseFloat(form.querySelector("[name='uceScore']").value) : null,
-        subjectMarks: form.querySelector("[name='subjectMarks']") ? form.querySelector("[name='subjectMarks']").value : "",
+        /*
+         * Subject Marks are entered through the dynamic table, not through a
+         * single subjectMarks form control. Serialize those rows explicitly
+         * before sending the ApplicationCreateDTO JSON payload.
+         */
+        subjectMarks: JSON.stringify(
+            subjectMarks
+        ),
         scholarshipStatus: form.querySelector("[name='scholarshipStatus']") ? form.querySelector("[name='scholarshipStatus']").value : "",
         moreInfo: form.querySelector("[name='moreInfo']") ? form.querySelector("[name='moreInfo']").value : ""
     };

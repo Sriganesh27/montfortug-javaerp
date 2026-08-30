@@ -1831,4 +1831,386 @@ public class EmailService {
             String contentType
     ) {
     }
+
+    /**
+     * Scholarship Email #1.
+     *
+     * Sent only after Branch Admin SHORTLISTED or REJECTED a Scholarship.
+     * WAITLISTED must never call this method.
+     */
+    public void sendScholarshipBranchDecision(
+            ErpApplication application,
+            boolean shortlisted,
+            String decisionReason
+    ) {
+        if (application == null
+                || !hasText(application.getPrimaryEmail())) {
+            return;
+        }
+
+        String applicationNumber =
+                application.getApplicationNo() == null
+                        ? ""
+                        : application.getApplicationNo().trim();
+
+        try {
+            Branch branch =
+                    requireBranch(
+                            application.getBranch(),
+                            "Application"
+                    );
+
+            String schoolName =
+                    resolveSchoolName(branch);
+
+            EmailLogo emailLogo =
+                    resolveBranchLogo(branch);
+
+            Context context =
+                    new Context();
+
+            context.setVariable(
+                    "schoolName",
+                    schoolName
+            );
+
+            context.setVariable(
+                    "schoolLogo",
+                    "cid:" + SCHOOL_LOGO_CONTENT_ID
+            );
+
+            context.setVariable(
+                    "studentName",
+                    buildFullName(
+                            application.getFirstName(),
+                            application.getLastName()
+                    )
+            );
+
+            context.setVariable(
+                    "applicationNo",
+                    applicationNumber
+            );
+
+            context.setVariable(
+                    "shortlisted",
+                    shortlisted
+            );
+
+            context.setVariable(
+                    "decisionReason",
+                    decisionReason
+            );
+
+            context.setVariable(
+                    "currentYear",
+                    Year.now().getValue()
+            );
+
+            String htmlContent =
+                    templateEngine.process(
+                            "email/scholarship-branch-decision",
+                            context
+                    );
+
+            JavaMailSender branchMailSender =
+                    branchMailSenderFactory
+                            .getMailSender(branch);
+
+            MimeMessage message =
+                    branchMailSender.createMimeMessage();
+
+            MimeMessageHelper helper =
+                    createMessageHelper(message);
+
+            configureBranchSender(
+                    helper,
+                    branch,
+                    " Scholarships"
+            );
+
+            helper.setTo(
+                    application.getPrimaryEmail().trim()
+            );
+
+            helper.setSubject(
+                    shortlisted
+                            ? "Scholarship Application Shortlisted - "
+                                    + applicationNumber
+                            : "Scholarship Application Decision - "
+                                    + applicationNumber
+            );
+
+            helper.setText(
+                    htmlContent,
+                    true
+            );
+
+            addInlineLogo(
+                    helper,
+                    emailLogo
+            );
+
+            branchMailSender.send(message);
+
+            LOGGER.info(
+                    "Scholarship Email #1 sent from branch {} "
+                            + "for application {}. Decision={}",
+                    branch.getSchoolCode(),
+                    applicationNumber,
+                    shortlisted
+                            ? "SHORTLISTED"
+                            : "REJECTED"
+            );
+
+        } catch (Exception exception) {
+            LOGGER.error(
+                    "Scholarship Email #1 failed for application {}",
+                    applicationNumber,
+                    exception
+            );
+        }
+    }
+
+    /**
+     * Scholarship Email #2.
+     *
+     * <p>Sent when the Super Admin result returns to the Branch Admin.
+     * This is deliberately separate from Scholarship Email #1.</p>
+     *
+     * <p>The caller supplies authoritative, server-resolved result data.
+     * No applicant email is used here; the recipient is the Branch Admin
+     * email configured on the Scholarship branch.</p>
+     *
+     * <p>Allowed result types are:
+     * ALLOCATION, DIRECT_DONOR, PARTIAL_DONOR, MULTIPLE_DONOR and REJECTED.</p>
+     */
+    public void sendScholarshipSuperAdminResult(
+            Branch branch,
+            String studentName,
+            String applicationNumber,
+            String resultType,
+            BigDecimal allocatedAmountUgx,
+            String donorInformation,
+            String rejectionReason
+    ) {
+        requireBranch(
+                branch,
+                "Scholarship"
+        );
+
+        requireText(
+                branch.getBranchEmail(),
+                "Branch Admin email"
+        );
+
+        requireText(
+                applicationNumber,
+                "Scholarship application number"
+        );
+
+        requireText(
+                resultType,
+                "Scholarship result type"
+        );
+
+        String normalizedResultType =
+                resultType
+                        .trim()
+                        .toUpperCase(Locale.ROOT);
+
+        boolean allocationResult =
+                "ALLOCATION".equals(normalizedResultType)
+                        || "DIRECT_DONOR".equals(normalizedResultType)
+                        || "PARTIAL_DONOR".equals(normalizedResultType)
+                        || "MULTIPLE_DONOR".equals(normalizedResultType);
+
+        boolean rejectionResult =
+                "REJECTED".equals(normalizedResultType);
+
+        if (!allocationResult && !rejectionResult) {
+            throw new IllegalArgumentException(
+                    "Invalid Scholarship Super Admin result type: "
+                            + normalizedResultType
+            );
+        }
+
+        if (allocationResult
+                && (allocatedAmountUgx == null
+                || allocatedAmountUgx.compareTo(BigDecimal.ZERO) <= 0)) {
+            throw new IllegalArgumentException(
+                    "A positive allocated Scholarship amount is required."
+            );
+        }
+
+        if (("DIRECT_DONOR".equals(normalizedResultType)
+                || "PARTIAL_DONOR".equals(normalizedResultType)
+                || "MULTIPLE_DONOR".equals(normalizedResultType))
+                && !hasText(donorInformation)) {
+            throw new IllegalArgumentException(
+                    "Donor information is required for donor allocation results."
+            );
+        }
+
+        if (rejectionResult
+                && !hasText(rejectionReason)) {
+            throw new IllegalArgumentException(
+                    "Rejection reason is required for a rejected Scholarship."
+            );
+        }
+
+        String applicationNo =
+                applicationNumber.trim();
+
+        try {
+            String schoolName =
+                    resolveSchoolName(branch);
+
+            EmailLogo emailLogo =
+                    resolveBranchLogo(branch);
+
+            Context context =
+                    new Context();
+
+            context.setVariable(
+                    "schoolName",
+                    schoolName
+            );
+
+            context.setVariable(
+                    "schoolLogo",
+                    "cid:" + SCHOOL_LOGO_CONTENT_ID
+            );
+
+            context.setVariable(
+                    "studentName",
+                    trimToNull(studentName)
+            );
+
+            context.setVariable(
+                    "applicationNo",
+                    applicationNo
+            );
+
+            context.setVariable(
+                    "resultType",
+                    normalizedResultType
+            );
+
+            context.setVariable(
+                    "allocatedAmountUgx",
+                    allocatedAmountUgx
+            );
+
+            context.setVariable(
+                    "donorInformation",
+                    trimToNull(donorInformation)
+            );
+
+            context.setVariable(
+                    "rejectionReason",
+                    trimToNull(rejectionReason)
+            );
+
+            context.setVariable(
+                    "currentYear",
+                    Year.now().getValue()
+            );
+
+            String htmlContent =
+                    templateEngine.process(
+                            "email/scholarship-superadmin-result",
+                            context
+                    );
+
+            JavaMailSender branchMailSender =
+                    branchMailSenderFactory
+                            .getMailSender(branch);
+
+            MimeMessage message =
+                    branchMailSender
+                            .createMimeMessage();
+
+            MimeMessageHelper helper =
+                    createMessageHelper(message);
+
+            configureBranchSender(
+                    helper,
+                    branch,
+                    " Scholarships"
+            );
+
+            helper.setTo(
+                    branch.getBranchEmail().trim()
+            );
+
+            helper.setSubject(
+                    buildScholarshipSuperAdminResultSubject(
+                            normalizedResultType,
+                            applicationNo
+                    )
+            );
+
+            helper.setText(
+                    htmlContent,
+                    true
+            );
+
+            addInlineLogo(
+                    helper,
+                    emailLogo
+            );
+
+            branchMailSender.send(
+                    message
+            );
+
+            LOGGER.info(
+                    "Scholarship Email #2 sent from branch {} "
+                            + "to Branch Admin {} for application {}. "
+                            + "Result={}",
+                    branch.getSchoolCode(),
+                    branch.getBranchEmail(),
+                    applicationNo,
+                    normalizedResultType
+            );
+
+        } catch (Exception exception) {
+            throw new IllegalStateException(
+                    "Scholarship Email #2 could not be sent for application "
+                            + applicationNo
+                            + ".",
+                    exception
+            );
+        }
+    }
+
+    private String buildScholarshipSuperAdminResultSubject(
+            String resultType,
+            String applicationNumber
+    ) {
+        return switch (resultType) {
+            case "REJECTED" ->
+                    "Scholarship Decision Returned - "
+                            + applicationNumber;
+
+            case "DIRECT_DONOR" ->
+                    "Scholarship Direct Donor Allocation Returned - "
+                            + applicationNumber;
+
+            case "PARTIAL_DONOR",
+                 "MULTIPLE_DONOR" ->
+                    "Scholarship Donor Allocation Returned - "
+                            + applicationNumber;
+
+            case "ALLOCATION" ->
+                    "Scholarship Allocation Returned - "
+                            + applicationNumber;
+
+            default ->
+                    "Scholarship Result Returned - "
+                            + applicationNumber;
+        };
+    }
+
 }

@@ -164,6 +164,64 @@ public class PublicApplicationService {
         }
 
         /*
+         * The public portal may send only a class ID, so the backend must
+         * verify that the selected class actually belongs to a level offered
+         * by the selected Branch. Do not trust the frontend filtering here.
+         * This also prevents an applicant from submitting a valid class ID
+         * belonging to another Branch.
+         */
+        if (dto.getBranchClassId() == null
+                || dto.getBranchClassId() <= 0) {
+            throw new IllegalArgumentException(
+                    "A valid Class is required."
+            );
+        }
+
+        Integer requestedClassId =
+                Math.toIntExact(dto.getBranchClassId());
+
+        SchoolClass selectedClass =
+                classRepository.findById(requestedClassId)
+                        .orElseThrow(
+                                () -> new IllegalArgumentException(
+                                        "Selected Class was not found."
+                                )
+                        );
+
+        if (!Integer.valueOf(1).equals(selectedClass.getStatus())) {
+            throw new IllegalArgumentException(
+                    "Selected Class is inactive."
+            );
+        }
+
+        if (selectedClass.getLevel() == null
+                || selectedClass.getLevel().getLevelId() == null) {
+            throw new IllegalArgumentException(
+                    "Selected Class is not linked to a valid Level."
+            );
+        }
+
+        boolean classOfferedByBranch =
+                branch.getBranchLevels() != null
+                        && branch.getBranchLevels().stream()
+                        .anyMatch(
+                                branchLevel ->
+                                        branchLevel != null
+                                                && branchLevel.getLevel() != null
+                                                && branchLevel.getLevel().getLevelId() != null
+                                                && branchLevel.getLevel().getLevelId()
+                                                .equals(
+                                                        selectedClass.getLevel().getLevelId()
+                                                )
+                        );
+
+        if (!classOfferedByBranch) {
+            throw new IllegalArgumentException(
+                    "Selected Class is not available for the selected Branch."
+            );
+        }
+
+        /*
          * Public application number format:
          *
          *   SCHOOL_CODE-YEAR-SEQUENCE
@@ -268,20 +326,20 @@ public class PublicApplicationService {
         app.setAddressPostal(dto.getAddressPostal());
 
         app.setFatherName(dto.getFatherName());
-        app.setFatherAge(dto.getFatherAge() != null ? dto.getFatherAge() : 0);
+        app.setFatherAge(dto.getFatherAge());
         app.setFatherContact(dto.getFatherContact());
         app.setFatherEducation(dto.getFatherEducation());
         app.setFatherOccupation(dto.getFatherOccupation());
         app.setFatherEmail(dto.getFatherEmail());
 
         app.setMotherName(dto.getMotherName());
-        app.setMotherAge(dto.getMotherAge() != null ? dto.getMotherAge() : 0);
+        app.setMotherAge(dto.getMotherAge());
         app.setMotherContact(dto.getMotherContact());
         app.setMotherEducation(dto.getMotherEducation());
         app.setMotherOccupation(dto.getMotherOccupation());
         app.setMotherEmail(dto.getMotherEmail());
 
-        app.setGuardianAge(dto.getGuardianAge() != null ? dto.getGuardianAge() : 0);
+        app.setGuardianAge(dto.getGuardianAge());
         app.setGuardianEducation(dto.getGuardianEducation());
         app.setGuardianOccupation(dto.getGuardianOccupation());
         app.setGuardianRelation(dto.getGuardianRelation());

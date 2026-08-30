@@ -2,7 +2,9 @@ package com.erp.montfortuganda.scholarship.service;
 
 import com.erp.montfortuganda.notification.service.EmailService;
 import com.erp.montfortuganda.scholarship.entity.ErpScholarshipApplication;
+import com.erp.montfortuganda.scholarship.entity.ErpScholarshipHistory;
 import com.erp.montfortuganda.scholarship.repository.ErpScholarshipApplicationRepository;
+import com.erp.montfortuganda.scholarship.repository.ErpScholarshipHistoryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -11,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -34,13 +37,20 @@ public class ScholarshipApplicationLinkEmailListener {
 
     private final EmailService emailService;
 
+    private final ErpScholarshipHistoryRepository
+            scholarshipHistoryRepository;
+
     public ScholarshipApplicationLinkEmailListener(
             ErpScholarshipApplicationRepository
                     scholarshipApplicationRepository,
+            ErpScholarshipHistoryRepository
+                    scholarshipHistoryRepository,
             EmailService emailService
     ) {
         this.scholarshipApplicationRepository =
                 scholarshipApplicationRepository;
+        this.scholarshipHistoryRepository =
+                scholarshipHistoryRepository;
         this.emailService = emailService;
     }
 
@@ -154,11 +164,19 @@ public class ScholarshipApplicationLinkEmailListener {
         }
 
         try {
+            BigDecimal amountRequested =
+                    scholarshipHistoryRepository
+                            .findFirstByScholarshipApplicationScholarshipAppIdOrderByScholarshipHistoryIdDesc(
+                                    scholarship.getScholarshipAppId()
+                            )
+                            .map(ErpScholarshipHistory::getAmountRequestedUgx)
+                            .orElse(null);
+
             emailService.sendScholarshipApplicationLink(
                     scholarship.getApplication(),
                     event.getRawToken(),
                     scholarship.getTokenExpiresAt(),
-                    scholarship.getAmountRequestedUgx()
+                    amountRequested
             );
 
             scholarship.setStatus(

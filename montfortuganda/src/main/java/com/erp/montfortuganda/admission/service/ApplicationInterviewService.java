@@ -1,7 +1,7 @@
 package com.erp.montfortuganda.admission.service;
 
-import com.erp.montfortuganda.admission.dto.ApplicationInterviewCompleteRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewResponseDTO;
+import com.erp.montfortuganda.admission.dto.ApplicationInterviewCompleteRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewScheduleRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewWaitlistRequestDTO;
 import com.erp.montfortuganda.admission.dto.ApplicationInterviewWaitlistResultRequestDTO;

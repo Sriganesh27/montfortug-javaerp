@@ -10,10 +10,40 @@
 <div id="scholarshipPageLoader" class="erp-action-feedback" role="status" aria-live="polite"><span class="erp-action-spinner"></span><span id="scholarshipLoaderMessage" class="erp-action-message">Loading Scholarship Application...</span></div>
 <div id="montfort-portal-wrapper" class="scholarship-portal">
     <div class="campus-slider scholarship-campus-slider" aria-hidden="true"><img src="/assets/Images/apply1.webp" alt="" class="slide active-slide"><img src="/assets/Images/apply2.webp" alt="" class="slide"><img src="/assets/Images/apply3.webp" alt="" class="slide"><img src="/assets/Images/apply4.webp" alt="" class="slide"><div class="slider-overlay"></div></div>
-    <header class="portal-header"><div class="header-container scholarship-header-container">
-        <div class="brand scholarship-main-brand"><img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Montfort Brothers of St. Gabriel Uganda Logo" class="brand-logo"><div class="brand-text"><span class="brand-title">Montfort Brothers of St. Gabriel</span><span class="brand-subtitle">Uganda</span></div></div>
-        <div class="scholarship-school-brand" id="scholarshipSchoolBrand"><span class="scholarship-applying-label">Applying to</span><div class="scholarship-school-identity"><div class="scholarship-school-logo-wrap"><img id="scholarshipSchoolLogo" src="/assets/Images/logo_MBSG_UG_8.webp" alt="School Logo" class="scholarship-school-logo"></div><div class="scholarship-school-text"><strong id="scholarshipSchoolName">Selected Montfort School</strong><span id="scholarshipSchoolMeta">Scholarship Application</span></div></div></div>
-    </div></header>
+    <header class="portal-header scholarship-institution-bar">
+        <div class="header-container scholarship-header-container scholarship-namebar">
+            <div class="scholarship-namebar-school-logo">
+                <div class="scholarship-brand-logo-frame">
+                    <img id="scholarshipSchoolLogo"
+                         src="/assets/Images/logo_MBSG_UG_8.webp"
+                         alt="School logo">
+                </div>
+            </div>
+
+            <div class="scholarship-namebar-names">
+                <span id="scholarshipOrganisationName"
+                      class="scholarship-organisation-name">
+                    Montfort Brothers of St. Gabriel
+                </span>
+                <strong id="scholarshipSchoolName"
+                        class="scholarship-school-name">
+                    Selected Montfort School
+                </strong>
+                <span id="scholarshipSchoolMeta"
+                      class="scholarship-school-meta">
+                    Scholarship Application
+                </span>
+            </div>
+
+            <div class="scholarship-namebar-org-logo">
+                <div class="scholarship-brand-logo-frame scholarship-org-logo-frame">
+                    <img id="scholarshipOrganisationLogo"
+                         src="/assets/Images/logo_MBSG_UG_8.webp"
+                         alt="Organisation logo">
+                </div>
+            </div>
+        </div>
+    </header>
     <main class="portal-main scholarship-main"><div class="form-document-card scholarship-document-card"><div class="card-top-accent"></div>
         <section id="scholarshipLoadingShell" class="scholarship-loading-shell" aria-hidden="true"><div class="form-header-title text-center"><div class="icon-circle"><i class="bi bi-mortarboard"></i></div><h1>Scholarship Application</h1><p>Preparing your secure application...</p></div><div class="scholarship-loading-summary"><span></span><span></span><span></span><span></span></div><div class="scholarship-loading-lines"><span></span><span></span><span></span></div></section>
         <section id="scholarshipUnavailable" class="hidden" aria-live="assertive"><div class="form-header-title text-center"><div class="icon-circle scholarship-state-icon-warning"><i class="bi bi-link-45deg"></i></div><h1>Scholarship Application Unavailable</h1><p id="scholarshipUnavailableMessage">This secure Scholarship Application link is unavailable.</p></div></section>
@@ -21,6 +51,52 @@
         <form id="scholarshipForm" class="hidden" novalidate>
             <div class="scholarship-form-heading"><div><span class="scholarship-eyebrow">Secure Scholarship Application</span><h1>Scholarship Application</h1><p id="scholarshipModeText">Please complete the information below.</p></div><span id="scholarshipModeBadge" class="scholarship-mode-badge">Secure</span></div>
             <div class="instruction-box scholarship-applying-box"><span class="scholarship-summary-label">Applying to</span><strong id="applyingSchoolName">Selected Montfort School</strong><small id="applyingSchoolLocation"></small></div>
+
+            <section class="scholarship-applicant-profile" aria-label="Applicant profile">
+                <div class="scholarship-profile-main">
+                    <div class="scholarship-profile-photo-wrap">
+                        <img id="scholarshipApplicantPhoto"
+                             src="/assets/Images/logo_MBSG_UG_8.webp"
+                             alt="Applicant photo">
+                    </div>
+                    <div class="scholarship-profile-identity">
+                        <span class="scholarship-profile-kicker">Applicant Profile</span>
+                        <h2 id="scholarshipProfileStudentName">—</h2>
+                        <div class="scholarship-profile-meta">
+                            <span id="scholarshipProfileApplicationNo">Application —</span>
+                            <span id="scholarshipProfileClass">Class —</span>
+                            <span id="scholarshipProfilePeriod">—</span>
+                        </div>
+                        <div class="scholarship-profile-statuses">
+                            <span id="scholarshipProfileAdmissionStatus" class="scholarship-profile-status">Admission —</span>
+                            <span id="scholarshipProfileScholarshipStatus" class="scholarship-profile-status">Scholarship —</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="scholarship-profile-finance">
+                    <div><span>Total Fee</span><strong id="profileTotalFee">—</strong></div>
+                    <div><span>Parent Contribution</span><strong id="profileParentContribution">—</strong></div>
+                    <div class="is-highlight"><span>Scholarship Required</span><strong id="profileScholarshipRequired">—</strong></div>
+                </div>
+            </section>
+
+            <section class="scholarship-admission-profile" aria-label="Admission information">
+                <div class="scholarship-profile-section-heading">
+                    <div><span class="scholarship-section-kicker">From Admission</span><h2>Applicant Information</h2></div>
+                    <span class="scholarship-readonly-badge"><i class="bi bi-lock"></i> Read only</span>
+                </div>
+                <div class="scholarship-admission-grid">
+                    <div><span>Gender</span><strong id="admissionGender">—</strong></div>
+                    <div><span>Date of Birth</span><strong id="admissionDob">—</strong></div>
+                    <div><span>Nationality</span><strong id="admissionNationality">—</strong></div>
+                    <div><span>Level</span><strong id="admissionLevel">—</strong></div>
+                    <div><span>Admission Type</span><strong id="admissionType">—</strong></div>
+                    <div><span>Mobile</span><strong id="admissionMobile">—</strong></div>
+                    <div><span>Email</span><strong id="admissionEmail">—</strong></div>
+                    <div><span>Location</span><strong id="admissionLocation">—</strong></div>
+                </div>
+            </section>
+
             <div class="scholarship-summary-grid"><div class="scholarship-summary-item"><span>Application No.</span><strong id="applicationNo">—</strong></div><div class="scholarship-summary-item"><span>Student</span><strong id="studentName">—</strong></div><div class="scholarship-summary-item"><span>Class</span><strong id="className">—</strong></div><div class="scholarship-summary-item"><span>Academic Period</span><strong id="academicPeriod">—</strong></div><div class="scholarship-summary-item"><span>Total Fee</span><strong id="totalFee">—</strong></div><div class="scholarship-summary-item"><span>Parent Contribution</span><strong id="parentContribution">—</strong></div><div class="scholarship-summary-item scholarship-summary-highlight"><span>Scholarship Required</span><strong id="scholarshipRequiredAmount">—</strong></div></div>
             <div class="stepper-wrapper scholarship-stepper" id="scholarship-stepper"><div class="stepper-item active" id="scholarship-stepper-1" data-step-target="1"><div class="step-counter">1</div><div class="step-name">Family</div></div><div class="stepper-item" id="scholarship-stepper-2" data-step-target="2"><div class="step-counter">2</div><div class="step-name">Household</div></div><div class="stepper-item" id="scholarship-stepper-3" data-step-target="3"><div class="step-counter">3</div><div class="step-name">Assets</div></div><div class="stepper-item" id="scholarship-stepper-4" data-step-target="4"><div class="step-counter">4</div><div class="step-name">Need</div></div><div class="stepper-item" id="scholarship-stepper-5" data-step-target="5"><div class="step-counter">5</div><div class="step-name">Declaration</div></div></div>
             <div id="formMessage" class="scholarship-form-message hidden" role="status"></div>
