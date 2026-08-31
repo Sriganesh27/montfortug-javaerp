@@ -372,6 +372,34 @@ public class ApplicationStageTransitionServiceImpl
         }
 
         if (current
+                == ErpApplication.CurrentStage.PARENT_FEE_DISCUSSION
+                && target
+                == ErpApplication.CurrentStage.PAYMENT) {
+
+            if (application.getFeeDecisionStatus()
+                    != ErpApplication.FeeDecisionStatus.FEE_ACCEPTED) {
+                throw new BadRequestException(
+                        "Fee Discussion must be finalized as Full Payment "
+                                + "before moving to payment."
+                );
+            }
+        }
+
+        if (current
+                == ErpApplication.CurrentStage.PARENT_FEE_DISCUSSION
+                && target
+                == ErpApplication.CurrentStage.SCHOLARSHIP) {
+
+            if (application.getFeeDecisionStatus()
+                    != ErpApplication.FeeDecisionStatus.SCHOLARSHIP_REQUESTED) {
+                throw new BadRequestException(
+                        "Fee Discussion must be finalized as assistance "
+                                + "before moving to scholarship."
+                );
+            }
+        }
+
+        if (current
                 == ErpApplication.CurrentStage.SCHOLARSHIP
                 && target
                 == ErpApplication.CurrentStage.PAYMENT) {
@@ -1080,6 +1108,22 @@ public class ApplicationStageTransitionServiceImpl
             return status == ErpApplication.TestStatus.PASSED
                     && application.getApplicationStatus()
                     != ErpApplication.ApplicationStatus.WAITLISTED;
+        }
+
+        if (current
+                == ErpApplication.CurrentStage.PARENT_FEE_DISCUSSION
+                && target
+                == ErpApplication.CurrentStage.PAYMENT) {
+            return application.getFeeDecisionStatus()
+                    == ErpApplication.FeeDecisionStatus.FEE_ACCEPTED;
+        }
+
+        if (current
+                == ErpApplication.CurrentStage.PARENT_FEE_DISCUSSION
+                && target
+                == ErpApplication.CurrentStage.SCHOLARSHIP) {
+            return application.getFeeDecisionStatus()
+                    == ErpApplication.FeeDecisionStatus.SCHOLARSHIP_REQUESTED;
         }
 
         if (current

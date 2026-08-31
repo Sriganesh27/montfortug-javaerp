@@ -842,16 +842,11 @@
                 </legend>
 
                 <div class="emp-detail-section-body">
-                    <div class="emp-detail-grid emp-detail-grid-4">
+                    <!-- Exactly three previous-school identity fields. -->
+                    <div class="emp-detail-grid emp-detail-grid-3">
                         <div class="form-group">
                             <label>Previous School</label>
                             <span id="view-previousSchool"
-                                  class="detail-text"></span>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Former School</label>
-                            <span id="view-formerSchool"
                                   class="detail-text"></span>
                         </div>
 
@@ -868,6 +863,9 @@
                         </div>
                     </div>
 
+                    <!-- PLE/UCE remain four fields because there are four
+                         distinct values and the renderer hides inapplicable
+                         groups based on the applied class. -->
                     <div class="emp-detail-grid emp-detail-grid-4">
                         <div class="form-group">
                             <label>PLE Reference</label>
@@ -894,7 +892,8 @@
                         </div>
                     </div>
 
-                    <div class="emp-detail-grid emp-detail-grid-2">
+                    <!-- Subject marks occupy the complete section width. -->
+                    <div class="emp-detail-grid emp-detail-grid-1 app-previous-subject-marks-row">
                         <div class="form-group"
                              id="view-subjectMarksGroup">
                             <label>Subject Marks</label>
@@ -905,7 +904,6 @@
                                     <table class="data-table app-previous-subject-marks-table">
                                         <thead>
                                         <tr>
-                                            <th>S.No.</th>
                                             <th>Subject</th>
                                             <th>Marks</th>
                                             <th>Grade</th>
@@ -913,7 +911,7 @@
                                         </thead>
                                         <tbody id="view-subjectMarksBody">
                                         <tr>
-                                            <td colspan="4"
+                                            <td colspan="3"
                                                 class="text-center text-muted">
                                                 No subject marks recorded.
                                             </td>
@@ -921,8 +919,7 @@
                                         </tbody>
                                         <tfoot>
                                         <tr>
-                                            <th colspan="2"
-                                                class="text-end">
+                                            <th class="text-end">
                                                 Total Score
                                             </th>
                                             <th id="view-subjectMarksTotal">—</th>
@@ -933,19 +930,13 @@
                                 </div>
                             </div>
                         </div>
-
-                        <div class="form-group"
-                             id="view-previousMarksDocumentGroup">
-                            <label>Previous Marks Document</label>
-                            <span id="view-previousMarksDocument"
-                                  class="detail-text"></span>
-                        </div>
                     </div>
                 </div>
             </fieldset>
 
 
-            <!-- ================================================= -->
+
+<!-- ================================================= -->
             <!-- ADMISSION WORKFLOW                                -->
             <!-- ================================================= -->
             <fieldset class="emp-detail-section">
@@ -1268,141 +1259,38 @@
                         <div class="emp-detail-grid emp-detail-grid-4">
                             <div class="form-group">
                                 <label for="ba-feeTermFee">Term Fee</label>
-                                <input type="number" id="ba-feeTermFee"
-                                       class="detail-input w-100"
-                                       min="0" step="0.01" inputmode="decimal">
+                                <input type="number" id="ba-feeTermFee" class="detail-input w-100" min="0" step="0.01" inputmode="decimal">
                             </div>
-
                             <div class="form-group">
                                 <label for="ba-feeTransportFee">Transport Fee</label>
-                                <input type="number" id="ba-feeTransportFee"
-                                       class="detail-input w-100"
-                                       min="0" step="0.01" inputmode="decimal">
+                                <input type="number" id="ba-feeTransportFee" class="detail-input w-100" min="0" step="0.01" inputmode="decimal">
                             </div>
-
                             <div class="form-group">
                                 <label for="ba-feeHostelFee">Hostel Fee</label>
-                                <input type="number" id="ba-feeHostelFee"
-                                       class="detail-input w-100"
-                                       min="0" step="0.01" inputmode="decimal">
+                                <input type="number" id="ba-feeHostelFee" class="detail-input w-100" min="0" step="0.01" inputmode="decimal">
                             </div>
-
                             <div class="form-group">
                                 <label for="ba-feeUniformFee">Uniform Fee</label>
-                                <input type="number" id="ba-feeUniformFee"
-                                       class="detail-input w-100"
-                                       min="0" step="0.01" inputmode="decimal">
+                                <input type="number" id="ba-feeUniformFee" class="detail-input w-100" min="0" step="0.01" inputmode="decimal">
                             </div>
-
                             <div class="form-group">
                                 <label for="ba-feeBooksFee">Books Fee</label>
-                                <input type="number" id="ba-feeBooksFee"
-                                       class="detail-input w-100"
-                                       min="0" step="0.01" inputmode="decimal">
+                                <input type="number" id="ba-feeBooksFee" class="detail-input w-100" min="0" step="0.01" inputmode="decimal">
                             </div>
-
                             <div class="form-group">
                                 <label for="ba-feeAdmissionFee">Admission Fee</label>
-                                <input type="number" id="ba-feeAdmissionFee"
-                                       class="detail-input w-100"
-                                       min="0" step="0.01" inputmode="decimal">
+                                <input type="number" id="ba-feeAdmissionFee" class="detail-input w-100" min="0" step="0.01" inputmode="decimal">
                             </div>
-
                             <div class="form-group">
                                 <label for="ba-feeOtherFee">Other Fee</label>
-                                <input type="number" id="ba-feeOtherFee"
-                                       class="detail-input w-100"
-                                       min="0" step="0.01" inputmode="decimal">
+                                <input type="number" id="ba-feeOtherFee" class="detail-input w-100" min="0" step="0.01" inputmode="decimal">
                             </div>
-
                             <div class="form-group">
                                 <label for="ba-feeBaseFeeAmount">Total Fee</label>
-                                <input type="text" id="ba-feeBaseFeeAmount"
-                                       class="detail-input w-100"
-                                       value="0.00"
-                                       readonly>
+                                <input type="text" id="ba-feeBaseFeeAmount" class="detail-input w-100" value="0.00" readonly>
                             </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Parent Payment Decision</label>
-
-                            <div class="app-fee-decision-row">
-                                <label class="app-fee-decision-option"
-                                       for="ba-feeDecisionFullPayment">
-                                    <input type="radio"
-                                           id="ba-feeDecisionFullPayment"
-                                           name="ba-feeDecisionOption"
-                                           value="FULL_PAYMENT">
-                                    <span>Full Payment by Parent</span>
-                                </label>
-
-                                <label class="app-fee-decision-option"
-                                       for="ba-feeDecisionPartial">
-                                    <input type="radio"
-                                           id="ba-feeDecisionPartial"
-                                           name="ba-feeDecisionOption"
-                                           value="PARTIAL_ASSISTANCE">
-                                    <span>Partial Scholarship</span>
-                                </label>
-
-                                <label class="app-fee-decision-option"
-                                       for="ba-feeDecisionFullAssistance">
-                                    <input type="radio"
-                                           id="ba-feeDecisionFullAssistance"
-                                           name="ba-feeDecisionOption"
-                                           value="FULL_ASSISTANCE">
-                                    <span>Full Scholarship</span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div id="ba-feeContributionPanel"
-                             class="emp-detail-grid emp-detail-grid-2 hidden">
-                            <div class="form-group">
-                                <label for="ba-feeParentCanPay">
-                                    Parent Contribution
-                                </label>
-                                <input type="number"
-                                       id="ba-feeParentCanPay"
-                                       class="detail-input w-100"
-                                       min="0"
-                                       step="0.01"
-                                       inputmode="decimal">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="ba-feeAssistanceRequired">
-                                    Scholarship Required
-                                </label>
-                                <input type="text"
-                                       id="ba-feeAssistanceRequired"
-                                       class="detail-input w-100"
-                                       value="0.00"
-                                       readonly>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="ba-feeDiscussionRemarks">
-                                Discussion Remarks
-                            </label>
-                            <textarea id="ba-feeDiscussionRemarks"
-                                      class="detail-input w-100"
-                                      rows="3"
-                                      maxlength="500"></textarea>
-                        </div>
-
-                        <div class="app-fee-discussion-actions">
-                            <button type="button"
-                                    id="ba-saveFeeDiscussionBtn"
-                                    class="btn-primary btn-sm">
-                                <i class="bi bi-check2-circle"></i>
-                                Save Fee Discussion
-                            </button>
                         </div>
                     </div>
-
 
                     <!-- FIRST-TIME FEE DISCUSSION ENTRY -->
                     <div id="ba-feeCreatePrompt"
@@ -1669,7 +1557,8 @@
     <!-- SCHOOL VISIT SCHEDULE / RESCHEDULE MODAL             -->
     
     <!-- ===================================================== -->
-    <!-- EDIT FEE STRUCTURE MODAL                              -->
+    <!-- ===================================================== -->
+    <!-- PARENT FEE DISCUSSION / EDIT FEE STRUCTURE MODAL      -->
     <!-- ===================================================== -->
     <div id="ba-feeEditModal"
          class="ba-modal-backdrop hidden"
@@ -1684,13 +1573,9 @@
                     <span class="app-request-modal-icon">
                         <i class="bi bi-pencil-square"></i>
                     </span>
-
                     <div>
-                        <h3 id="ba-feeEditTitle">Edit Fee Structure</h3>
-                        <p id="ba-feeEditSubtitle"
-                           class="text-muted">
-                            Update the saved fee discussion details.
-                        </p>
+                        <h3 id="ba-feeEditTitle">Parent Fee Discussion</h3>
+                        <p id="ba-feeEditSubtitle" class="text-muted"></p>
                     </div>
                 </div>
 
@@ -1707,219 +1592,182 @@
                   novalidate>
 
                 <div class="app-request-modal-body app-fee-edit-modal-body">
-                    <div class="app-request-grid app-fee-edit-grid">
-                        <div class="form-group">
-                            <label for="ba-editFeeTermFee">Term Fee</label>
-                            <input type="number" id="ba-editFeeTermFee"
-                                   class="detail-input w-100"
-                                   min="0" step="0.01" inputmode="decimal">
+                    <div id="ba-feeStepIndicator"
+                         class="app-fee-step-indicator"
+                         aria-label="Fee Discussion steps">
+                        <span id="ba-feeStepIndicator1" class="is-active">① Enter Fees</span>
+                        <span id="ba-feeStepIndicator2">② Payment Decision</span>
+                        <span id="ba-feeStepIndicator3" class="hidden">③ Scholarship</span>
+                    </div>
+
+                    <div id="ba-feeStep1" class="app-fee-step">
+                        <div class="app-request-grid app-fee-edit-grid">
+                            <div class="form-group">
+                                <label for="ba-editFeeTermFee">Term Fee</label>
+                                <input type="number" id="ba-editFeeTermFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+                            <div class="form-group">
+                                <label for="ba-editFeeTransportFee">Transport Fee</label>
+                                <input type="number" id="ba-editFeeTransportFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+                            <div class="form-group">
+                                <label for="ba-editFeeHostelFee">Hostel Fee</label>
+                                <input type="number" id="ba-editFeeHostelFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+                            <div class="form-group">
+                                <label for="ba-editFeeUniformFee">Uniform Fee</label>
+                                <input type="number" id="ba-editFeeUniformFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+                            <div class="form-group">
+                                <label for="ba-editFeeBooksFee">Books Fee</label>
+                                <input type="number" id="ba-editFeeBooksFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+                            <div class="form-group">
+                                <label for="ba-editFeeAdmissionFee">Admission Fee</label>
+                                <input type="number" id="ba-editFeeAdmissionFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+                            <div class="form-group">
+                                <label for="ba-editFeeOtherFee">Other Fee</label>
+                                <input type="number" id="ba-editFeeOtherFee"
+                                       class="detail-input w-100"
+                                       min="0" step="0.01" inputmode="decimal">
+                            </div>
+                            <div class="form-group">
+                                <label for="ba-editFeeBaseFeeAmount">Total Fee</label>
+                                <input type="text" id="ba-editFeeBaseFeeAmount"
+                                       class="detail-input w-100"
+                                       readonly>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="ba-editFeeTransportFee">Transport Fee</label>
-                            <input type="number" id="ba-editFeeTransportFee"
-                                   class="detail-input w-100"
-                                   min="0" step="0.01" inputmode="decimal">
+
+                        <div class="app-fee-confirm-row">
+                            <label for="ba-feeConfirmDetails" class="app-fee-simple-radio">
+                                <input type="checkbox" id="ba-feeConfirmDetails">
+                                <span>Confirm fee details</span>
+                            </label>
                         </div>
-                        <div class="form-group">
-                            <label for="ba-editFeeHostelFee">Hostel Fee</label>
-                            <input type="number" id="ba-editFeeHostelFee"
-                                   class="detail-input w-100"
-                                   min="0" step="0.01" inputmode="decimal">
-                        </div>
-                        <div class="form-group">
-                            <label for="ba-editFeeUniformFee">Uniform Fee</label>
-                            <input type="number" id="ba-editFeeUniformFee"
-                                   class="detail-input w-100"
-                                   min="0" step="0.01" inputmode="decimal">
-                        </div>
-                        <div class="form-group">
-                            <label for="ba-editFeeBooksFee">Books Fee</label>
-                            <input type="number" id="ba-editFeeBooksFee"
-                                   class="detail-input w-100"
-                                   min="0" step="0.01" inputmode="decimal">
-                        </div>
-                        <div class="form-group">
-                            <label for="ba-editFeeAdmissionFee">Admission Fee</label>
-                            <input type="number" id="ba-editFeeAdmissionFee"
-                                   class="detail-input w-100"
-                                   min="0" step="0.01" inputmode="decimal">
-                        </div>
-                        <div class="form-group">
-                            <label for="ba-editFeeOtherFee">Other Fee</label>
-                            <input type="number" id="ba-editFeeOtherFee"
-                                   class="detail-input w-100"
-                                   min="0" step="0.01" inputmode="decimal">
-                        </div>
-                        <div class="form-group">
-                            <label for="ba-editFeeBaseFeeAmount">Total Fee</label>
-                            <input type="text" id="ba-editFeeBaseFeeAmount"
-                                   class="detail-input w-100"
-                                   readonly>
+
+                        <div id="ba-editFeeChangeReasonGroup" class="form-group hidden">
+                            <label for="ba-editFeeChangeReason">
+                                Reason for Change <span class="text-danger">*</span>
+                            </label>
+                            <textarea id="ba-editFeeChangeReason"
+                                      class="detail-input w-100"
+                                      rows="3"
+                                      maxlength="500"
+                                      placeholder="Enter the reason for changing the saved fee structure"></textarea>
                         </div>
                     </div>
 
-                    <div class="app-fee-payment-decision">
-                        <div class="app-fee-payment-heading">
-                            <h4>Payment Decision</h4>
-                            <p>
-                                Select how the parent / guardian will proceed with the fee.
-                            </p>
+                    <div id="ba-feeStep2" class="app-fee-step hidden">
+                        <div class="app-fee-step-total">
+                            <span>Total Fee</span>
+                            <strong id="ba-feeStep2Total">0.00</strong>
                         </div>
 
-                        <label class="app-fee-main-choice"
-                               for="ba-editFeeDecisionFullPayment">
-                            <input type="radio"
-                                   id="ba-editFeeDecisionFullPayment"
-                                   name="ba-editFeeDecisionOption"
-                                   value="FULL_PAYMENT">
-
-                            <span class="app-fee-main-choice-icon">
-                                <i class="bi bi-cash-stack"></i>
-                            </span>
-
-                            <span class="app-fee-main-choice-text">
-                                <strong>Full Payment by Parent</strong>
-                                <small>
-                                    Parent / guardian will pay the complete fee.
-                                </small>
-                            </span>
-
-                            <span class="app-fee-choice-check">
-                                <i class="bi bi-check-circle-fill"></i>
-                            </span>
-                        </label>
-
-                        <div class="app-fee-scholarship-group">
-                            <div class="app-fee-scholarship-group-heading">
-                                <span class="app-fee-scholarship-group-icon">
-                                    <i class="bi bi-mortarboard"></i>
-                                </span>
-
-                                <div>
-                                    <strong>Scholarship</strong>
-                                    <small>
-                                        Parent / guardian requires financial assistance.
-                                    </small>
-                                </div>
-                            </div>
-
-                            <div class="app-fee-scholarship-choice-grid">
-                                <label class="app-fee-scholarship-choice-card"
-                                       for="ba-editFeeDecisionPartial">
+                        <div class="form-group">
+                            <label>Payment Decision</label>
+                            <div class="app-fee-simple-radio-group">
+                                <label class="app-fee-simple-radio" for="ba-feeDecisionFullPayment">
                                     <input type="radio"
-                                           id="ba-editFeeDecisionPartial"
-                                           name="ba-editFeeDecisionOption"
+                                           id="ba-feeDecisionFullPayment"
+                                           name="ba-feeDecisionOption"
+                                           value="FULL_PAYMENT">
+                                    <span>Parents Pay</span>
+                                </label>
+
+                                <label class="app-fee-simple-radio" for="ba-feeDecisionScholarship">
+                                    <input type="radio"
+                                           id="ba-feeDecisionScholarship"
+                                           name="ba-feeDecisionMainOption"
+                                           value="SCHOLARSHIP">
+                                    <span>Scholarship</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="ba-feeStep3" class="app-fee-step hidden">
+                        <div class="app-fee-step-total">
+                            <span>Total Fee</span>
+                            <strong id="ba-feeStep3Total">0.00</strong>
+                        </div>
+
+                        <div id="ba-feeScholarshipTypePanel" class="form-group">
+                            <label>Scholarship</label>
+                            <div class="app-fee-simple-radio-group">
+                                <label class="app-fee-simple-radio" for="ba-feeDecisionPartial">
+                                    <input type="radio"
+                                           id="ba-feeDecisionPartial"
+                                           name="ba-feeDecisionOption"
                                            value="PARTIAL_ASSISTANCE">
-
-                                    <span>
-                                        <strong>Partial Scholarship</strong>
-                                        <small>
-                                            Parent contributes part of the total fee.
-                                        </small>
-                                    </span>
-
-                                    <i class="bi bi-check-circle-fill app-fee-choice-check"></i>
+                                    <span>Partial Scholarship</span>
                                 </label>
 
-                                <label class="app-fee-scholarship-choice-card"
-                                       for="ba-editFeeDecisionFullAssistance">
+                                <label class="app-fee-simple-radio" for="ba-feeDecisionFullAssistance">
                                     <input type="radio"
-                                           id="ba-editFeeDecisionFullAssistance"
-                                           name="ba-editFeeDecisionOption"
+                                           id="ba-feeDecisionFullAssistance"
+                                           name="ba-feeDecisionOption"
                                            value="FULL_ASSISTANCE">
-
-                                    <span>
-                                        <strong>Full Scholarship</strong>
-                                        <small>
-                                            Full financial assistance is required.
-                                        </small>
-                                    </span>
-
-                                    <i class="bi bi-check-circle-fill app-fee-choice-check"></i>
+                                    <span>Full Scholarship</span>
                                 </label>
                             </div>
                         </div>
-                    </div>
 
-                    <div id="ba-editFeeContributionPanel"
-                         class="app-fee-contribution-summary hidden">
-                        <div class="form-group">
-                            <label for="ba-editFeeParentCanPay">Parent Contribution</label>
-                            <input type="number"
-                                   id="ba-editFeeParentCanPay"
-                                   class="detail-input w-100"
-                                   min="0"
-                                   step="0.01"
-                                   inputmode="decimal">
-                            <small id="ba-editFeeParentContributionHelp"
-                                   class="text-muted"></small>
-                        </div>
-                        <div class="form-group">
-                            <label for="ba-editFeeAssistanceRequired">Scholarship Required</label>
-                            <input type="text"
-                                   id="ba-editFeeAssistanceRequired"
-                                   class="detail-input w-100"
-                                   readonly>
-                        </div>
-                    </div>
-
-                    <div id="ba-editFeeScholarshipMethodPanel"
-                         class="app-fee-method-section hidden">
-                        <div class="app-fee-method-heading">
-                            <div>
-                                <strong>Scholarship Application Method</strong>
-                                <p id="ba-editFeeScholarshipMethodHelp">
-                                    Choose how the Scholarship Application will be completed.
-                                </p>
+                        <div id="ba-editFeeContributionPanel"
+                             class="emp-detail-grid emp-detail-grid-2 hidden">
+                            <div class="form-group">
+                                <label for="ba-editFeeParentCanPay">Parent Contribution</label>
+                                <input type="number"
+                                       id="ba-editFeeParentCanPay"
+                                       class="detail-input w-100"
+                                       min="0"
+                                       step="0.01"
+                                       inputmode="decimal">
+                            </div>
+                            <div class="form-group">
+                                <label for="ba-editFeeAssistanceRequired">Scholarship Required</label>
+                                <input type="text"
+                                       id="ba-editFeeAssistanceRequired"
+                                       class="detail-input w-100"
+                                       value="0.00"
+                                       readonly>
                             </div>
                         </div>
 
-                        <div class="app-fee-method-grid">
-                                <button type="button"
-                                        id="ba-editFeeFillInSchoolBtn"
-                                        class="app-fee-method-option app-fee-method-option-primary">
-                                    <i class="bi bi-building"></i>
-                                    <span>
-                                        <strong>Fill in School</strong>
-                                        <small>
-                                            Open the secure form in a new tab
-                                        </small>
-                                    </span>
-                                </button>
+                        <div id="ba-editFeeScholarshipMethodPanel"
+                             class="form-group">
+                            <label>Scholarship Application</label>
+                            <div class="app-fee-simple-radio-group">
+                                <label class="app-fee-simple-radio" for="ba-feeScholarshipMethodSchool">
+                                    <input type="radio"
+                                           id="ba-feeScholarshipMethodSchool"
+                                           name="ba-feeScholarshipMethod"
+                                           value="SCHOOL">
+                                    <span>Fill in School</span>
+                                </label>
 
-                                <button type="button"
-                                        id="ba-editFeeSendLinkBtn"
-                                        class="app-fee-method-option">
-                                    <i class="bi bi-envelope"></i>
-                                    <span>
-                                        <strong>Send Link</strong>
-                                        <small>
-                                            Email a private 72-hour link to the parent
-                                        </small>
-                                    </span>
-                                </button>
+                                <label class="app-fee-simple-radio" for="ba-feeScholarshipMethodEmail">
+                                    <input type="radio"
+                                           id="ba-feeScholarshipMethodEmail"
+                                           name="ba-feeScholarshipMethod"
+                                           value="EMAIL">
+                                    <span>Send Link</span>
+                                </label>
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="form-group app-fee-remarks-group">
-                        <label for="ba-editFeeDiscussionRemarks">Discussion Remarks</label>
-                        <textarea id="ba-editFeeDiscussionRemarks"
-                                  class="detail-input w-100"
-                                  rows="3"
-                                  maxlength="500"></textarea>
-                    </div>
-
-                    <div id="ba-editFeeChangeReasonGroup"
-                         class="form-group">
-                        <label for="ba-editFeeChangeReason">
-                            Reason for Change
-                            <span class="text-danger">*</span>
-                        </label>
-                        <textarea id="ba-editFeeChangeReason"
-                                  class="detail-input w-100"
-                                  rows="3"
-                                  maxlength="500"
-                                  placeholder="Enter the reason for changing the saved fee structure"></textarea>
                     </div>
 
                     <div id="ba-feeEditError"
@@ -1933,13 +1781,27 @@
                             class="btn-secondary">
                         Cancel
                     </button>
+
+                    <button type="button"
+                            id="ba-feeEditBackBtn"
+                            class="btn-secondary hidden">
+                        <i class="bi bi-arrow-left"></i>
+                        Back
+                    </button>
+
+                    <button type="button"
+                            id="ba-feeEditNextBtn"
+                            class="btn-primary"
+                            disabled>
+                        <span id="ba-feeEditNextBtnLabel">Next</span>
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+
                     <button type="submit"
                             id="ba-saveFeeEditBtn"
-                            class="btn-primary">
+                            class="btn-primary hidden">
                         <i class="bi bi-check-circle"></i>
-                        <span id="ba-saveFeeEditBtnLabel">
-                            Save Changes
-                        </span>
+                        <span id="ba-saveFeeEditBtnLabel">Save Details</span>
                     </button>
                 </div>
             </form>

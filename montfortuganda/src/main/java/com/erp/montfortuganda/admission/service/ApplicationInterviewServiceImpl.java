@@ -238,12 +238,28 @@ public class ApplicationInterviewServiceImpl
                         )
                         .orElse(null);
 
+        long previousAttemptMarks =
+                interview == null
+                        ? 0
+                        : markRepository
+                        .countByInterview_InterviewIdAndActiveFalse(
+                                interview.getInterviewId()
+                        );
+
         boolean schedulingRetest =
                 interview != null
                         && interview.getStatus()
                         == ErpApplicationInterview.Status.COMPLETED
                         && interview.getResult()
                         == ErpApplicationInterview.Result.RETEST_REQUIRED;
+
+        if (previousAttemptMarks > 0
+                && !schedulingRetest) {
+            throw new BadRequestException(
+                    "The maximum of two Entrance Test attempts "
+                            + "has already been used."
+            );
+        }
 
         if (interview != null
                 && !schedulingRetest
@@ -260,12 +276,6 @@ public class ApplicationInterviewServiceImpl
         }
 
         if (schedulingRetest) {
-            long previousAttemptMarks =
-                    markRepository
-                            .countByInterview_InterviewIdAndActiveFalse(
-                                    interview.getInterviewId()
-                            );
-
             if (previousAttemptMarks > 0) {
                 throw new BadRequestException(
                         "The maximum of two Entrance Test attempts "
@@ -1582,12 +1592,17 @@ public class ApplicationInterviewServiceImpl
         boolean canSchedule =
                 editable
                         && (
-                        status
-                                == ErpApplicationInterview.Status.NOT_SCHEDULED
-                                || status
-                                == ErpApplicationInterview.Status.CANCELLED
-                                || status
-                                == ErpApplicationInterview.Status.NO_SHOW
+                        (
+                                previousAttemptMarks == 0
+                                        && (
+                                        status
+                                                == ErpApplicationInterview.Status.NOT_SCHEDULED
+                                                || status
+                                                == ErpApplicationInterview.Status.CANCELLED
+                                                || status
+                                                == ErpApplicationInterview.Status.NO_SHOW
+                                )
+                        )
                                 || canRequestRetest
                 );
 
@@ -1920,3 +1935,4 @@ public class ApplicationInterviewServiceImpl
     }
 }
 
+    

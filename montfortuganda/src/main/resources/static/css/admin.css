@@ -12077,3 +12077,58 @@ body.erp-modal-open{
         min-width: 500px;
     }
 }
+
+/* Fee Discussion wizard — scoped only to the existing Fee Discussion modal. */
+#ba-feeEditModal .app-fee-step-indicator {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+#ba-feeEditModal .app-fee-step-indicator span {
+    color: var(--text-muted, #6b7280);
+    white-space: nowrap;
+}
+
+#ba-feeEditModal .app-fee-step-indicator span.is-active {
+    color: var(--text-color, inherit);
+    font-weight: 600;
+}
+
+#ba-feeEditModal .app-fee-simple-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+
+#ba-feeEditModal .app-fee-simple-radio {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    width: fit-content;
+}
+
+#ba-feeEditModal .app-fee-simple-radio input[type="radio"],
+#ba-feeEditModal .app-fee-simple-radio input[type="checkbox"] {
+    margin: 0;
+}
+
+#ba-feeEditModal .app-fee-confirm-row {
+    margin-top: 1rem;
+}
+
+#ba-feeEditModal .app-fee-step-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color, #e5e7eb);
+}
+
+#ba-feeEditModal .app-fee-step-total strong {
+    font-size: 1.05rem;
+}

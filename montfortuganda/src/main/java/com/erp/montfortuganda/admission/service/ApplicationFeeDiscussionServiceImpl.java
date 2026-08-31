@@ -604,8 +604,11 @@ public class ApplicationFeeDiscussionServiceImpl
         history.setUpdatedBy(userId.longValue());
         history.setUpdatedAt(LocalDateTime.now());
 
-        scholarshipHistoryRepository.saveAndFlush(history);
-
+        /*
+         * ErpScholarshipHistory has a non-nullable foreign key to
+         * ErpScholarshipApplication. Persist a new Scholarship Application
+         * first so Hibernate has its generated ID before the History insert.
+         */
         scholarship.setStatus("NOT_STARTED");
         scholarship.setPublicTokenHash(null);
         scholarship.setTokenExpiresAt(null);
@@ -617,7 +620,11 @@ public class ApplicationFeeDiscussionServiceImpl
         scholarship.setActive(true);
         scholarship.setUpdatedBy(userId.longValue());
 
-        scholarshipApplicationRepository.save(scholarship);
+        ErpScholarshipApplication savedScholarship =
+                scholarshipApplicationRepository.saveAndFlush(scholarship);
+
+        history.setScholarshipApplication(savedScholarship);
+        scholarshipHistoryRepository.saveAndFlush(history);
     }
 
     private boolean isScholarshipProgressLocked(
