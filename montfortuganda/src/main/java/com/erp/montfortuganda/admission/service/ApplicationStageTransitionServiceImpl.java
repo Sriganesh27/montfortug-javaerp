@@ -792,9 +792,26 @@ public class ApplicationStageTransitionServiceImpl
             }
 
             case PARENT_FEE_DISCUSSION -> {
-                application.setFeeDecisionStatus(
-                        ErpApplication.FeeDecisionStatus.DECISION_PENDING
-                );
+                /*
+                 * An edit from PAYMENT or SCHOLARSHIP has already persisted
+                 * the new Fee Discussion decision before returning here.
+                 * Preserve it so the existing Next / Finalize action can
+                 * continue to the selected next stage.
+                 *
+                 * A normal first entry remains DECISION_PENDING.
+                 */
+                ErpApplication.FeeDecisionStatus savedDecision =
+                        application.getFeeDecisionStatus();
+
+                if (savedDecision
+                        != ErpApplication.FeeDecisionStatus.FEE_ACCEPTED
+                        && savedDecision
+                        != ErpApplication.FeeDecisionStatus.SCHOLARSHIP_REQUESTED) {
+                    application.setFeeDecisionStatus(
+                            ErpApplication.FeeDecisionStatus.DECISION_PENDING
+                    );
+                }
+
                 application.setPaymentStatus(
                         ErpApplication.PaymentStatus.NOT_STARTED
                 );

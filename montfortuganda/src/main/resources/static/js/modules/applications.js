@@ -4351,9 +4351,8 @@ function formatBackendSubStage(value) {
         let scholarshipWindow = null;
 
         /*
-         * Prefer a separate tab. If the browser blocks it, do not stop the
-         * Scholarship process; after the secure key is generated we fall back
-         * to opening the Scholarship Application in the current tab.
+         * The Scholarship Application must always open in a separate tab.
+         * Never fall back to navigating the current application page.
          */
         try {
             scholarshipWindow =
@@ -4369,9 +4368,15 @@ function formatBackendSubStage(value) {
             scholarshipWindow = null;
 
             console.debug(
-                'Scholarship tab was blocked. Current-tab fallback will be used.',
+                'Scholarship tab was blocked. User must allow pop-ups.',
                 popupError
             );
+
+            notifyError(
+                'Your browser blocked the Scholarship tab. Please allow pop-ups for this site and click Fill in School again.'
+            );
+
+            return;
         }
 
         let loaderToken = null;
@@ -4476,36 +4481,13 @@ function formatBackendSubStage(value) {
             }
 
             /*
-             * Browser blocked the new tab. Fall back to the same tab rather
-             * than failing the Scholarship workflow.
+             * No current-tab fallback is allowed. If the browser did not
+             * provide a separate tab, stop here and ask the operator to allow
+             * pop-ups. The current application page must remain open.
              */
-            try {
-                sessionStorage.setItem(
-                    'erpScholarshipReturnUrl',
-                    window.location.href
-                );
-            } catch (storageError) {
-                console.debug(
-                    'Scholarship return URL could not be stored.',
-                    storageError
-                );
-            }
-
-            if (
-                loaderToken
-                && typeof hideLoader === 'function'
-            ) {
-                hideLoader(
-                    loaderToken
-                );
-                loaderToken = null;
-            }
-
-            window.location.assign(
-                targetUrl
+            throw new Error(
+                'Your browser blocked the Scholarship tab. Please allow pop-ups for this site and click Fill in School again.'
             );
-
-            return;
         } catch (error) {
             if (scholarshipWindow) {
                 try {

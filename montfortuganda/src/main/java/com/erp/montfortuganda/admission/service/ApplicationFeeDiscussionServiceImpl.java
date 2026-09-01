@@ -226,8 +226,7 @@ public class ApplicationFeeDiscussionServiceImpl
 
         /*
          * Capture the persisted decision before applying the edited value.
-         * This lets the service reopen Parent Fee Discussion only when the
-         * decision actually changes.
+         * This is used only to detect an actual decision change.
          */
         ErpApplicationFee.FeeDecision previousFeeDecision =
                 existingFee
@@ -347,24 +346,10 @@ public class ApplicationFeeDiscussionServiceImpl
                 applicationFeeRepository.saveAndFlush(fee);
 
         /*
-         * Editing an already-processed decision reopens Parent Fee Discussion.
-         *
-         * This is deliberately NOT:
-         *
-         *     SCHOLARSHIP -> PAYMENT
-         *     PAYMENT -> SCHOLARSHIP
-         *
-         * The edit only changes the saved Fee Discussion decision. The next
-         * workflow stage is Parent Fee Discussion, where the user can review
-         * the saved decision and then explicitly use the existing Process /
-         * Finalize action to continue to PAYMENT or SCHOLARSHIP.
-         *
-         * This also prevents Payment from starting merely because the parent
-         * changed the decision. The central RETURN transition resets the
-         * application payment status to NOT_STARTED while the application is
-         * in Parent Fee Discussion.
-         *
-         * Same-decision edits do not reopen the workflow.
+         * An existing processed decision may be changed in either direction.
+         * Saving the edit must reopen Parent Fee Discussion; it must not
+         * directly jump to Payment or Scholarship. The existing explicit
+         * Next / Finalize action performs that later transition.
          */
         boolean decisionChanged =
                 existingFee.isPresent()
@@ -555,9 +540,16 @@ public class ApplicationFeeDiscussionServiceImpl
                 scholarship.setSchoolAccessIssuedAt(null);
                 scholarship.setSchoolAccessIssuedBy(null);
                 scholarship.setStatus("CANCELLED_BY_FEE_DECISION");
+                scholarship.setActive(false);
                 scholarship.setUpdatedBy(userId.longValue());
 
-                scholarshipApplicationRepository.save(scholarship);
+                application.setScholarshipStatus(
+                        "CANCELLED_BY_FEE_DECISION"
+                );
+
+                scholarshipApplicationRepository.saveAndFlush(
+                        scholarship
+                );
 
                 scholarshipHistoryRepository
                         .findFirstByScholarshipApplicationScholarshipAppIdOrderByScholarshipHistoryIdDesc(
