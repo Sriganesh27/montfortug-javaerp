@@ -699,6 +699,97 @@ public class ScholarshipServiceImpl implements ScholarshipService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public ScholarshipApplicationStatus getApplicationStatus(
+            Long applicationId
+    ) {
+        if (applicationId == null || applicationId <= 0L) {
+            throw new BadRequestException(
+                    "A valid admission application ID is required."
+            );
+        }
+
+        Long branchId = currentBranchId();
+
+        ErpScholarshipApplication scholarship =
+                applicationRepo
+                        .findActiveByApplicationAndBranch(
+                                applicationId,
+                                branchId
+                        )
+                        .orElseThrow(
+                                () -> new BadRequestException(
+                                        "Scholarship application has not been created for this admission application."
+                                )
+                        );
+
+        LocalDateTime now = LocalDateTime.now();
+
+        LocalDateTime publicExpiresAt =
+                scholarship.getTokenExpiresAt();
+
+        LocalDateTime schoolExpiresAt =
+                scholarship.getSchoolAccessExpiresAt();
+
+        boolean publicLinkActive =
+                publicExpiresAt != null
+                && publicExpiresAt.isAfter(now)
+                && scholarship.getPublicTokenHash() != null
+                && !scholarship.getPublicTokenHash().isBlank();
+
+        boolean schoolAccessActive =
+                schoolExpiresAt != null
+                && schoolExpiresAt.isAfter(now)
+                && scholarship.getSchoolAccessTokenHash() != null
+                && !scholarship.getSchoolAccessTokenHash().isBlank();
+
+        String applicationMethod =
+                latestHistory(scholarship)
+                        .map(ErpScholarshipHistory::getApplicationMethod)
+                        .orElse(null);
+
+        String status =
+                normalizeScholarshipStatus(
+                        scholarship.getStatus()
+                );
+
+        if (publicLinkActive) {
+            status = "LINK_PENDING";
+        } else if (
+                "LINK_PENDING".equals(status)
+                && publicExpiresAt != null
+                && !publicExpiresAt.isAfter(now)
+        ) {
+            status = "LINK_EXPIRED";
+        } else if (
+                schoolAccessActive
+                && "SCHOOL_ASSISTED".equalsIgnoreCase(
+                        applicationMethod
+                )
+        ) {
+            status = "IN_PROGRESS";
+        } else if (
+                "IN_PROGRESS".equals(status)
+                && "SCHOOL_ASSISTED".equalsIgnoreCase(
+                        applicationMethod
+                )
+                && schoolExpiresAt != null
+                && !schoolExpiresAt.isAfter(now)
+        ) {
+            status = "SCHOOL_ACCESS_EXPIRED";
+        }
+
+        return new ScholarshipApplicationStatus(
+                status,
+                applicationMethod,
+                publicExpiresAt,
+                schoolExpiresAt,
+                publicLinkActive,
+                schoolAccessActive
+        );
+    }
+
+    @Override
     public PublicScholarshipLinkToken issuePublicApplicationToken(
             Long applicationId
     ) {

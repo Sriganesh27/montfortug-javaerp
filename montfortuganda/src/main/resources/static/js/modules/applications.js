@@ -608,9 +608,9 @@ const ApplicationsController = (() => {
                 localById('ba-editFeeBaseFeeAmount'),
             editFeeDecisionOptions:
                 Array.from(
-                    root.querySelectorAll(
-                        'input[name="ba-feeDecisionOption"]'
-                    )
+                        root.querySelectorAll(
+                            'input[name="ba-feeDecisionMainOption"]'
+                        )
                 ),
             editFeeContributionPanel:
                 localById('ba-editFeeContributionPanel'),
@@ -1397,6 +1397,13 @@ const ApplicationsController = (() => {
                         option.checked = false;
                     }
                 });
+
+                if (view.feeScholarshipMethodSchool) {
+                    view.feeScholarshipMethodSchool.checked = false;
+                }
+                if (view.feeScholarshipMethodEmail) {
+                    view.feeScholarshipMethodEmail.checked = false;
+                }
 
                 toggleElement(
                     view.feeStepIndicator3,
@@ -2374,7 +2381,7 @@ const ApplicationsController = (() => {
 
     function renderWorkflowProgress(profile) {
     const container =
-        document.getElementById('workflowProgress');
+        document.getElementById('ba-workflowProgress');
 
     if (!container) {
         return;
@@ -5035,6 +5042,10 @@ function formatBackendSubStage(value) {
             }
 
             view.feeEditNextButton.disabled = disabled;
+            view.feeEditNextButton.setAttribute(
+                'aria-disabled',
+                disabled ? 'true' : 'false'
+            );
         }
     }
 
@@ -5073,18 +5084,54 @@ function formatBackendSubStage(value) {
             showScholarshipStep
         );
 
-        view.feeStepIndicator1?.classList.toggle(
-            'is-active',
-            normalizedStep === 1
-        );
-        view.feeStepIndicator2?.classList.toggle(
-            'is-active',
-            normalizedStep === 2
-        );
-        view.feeStepIndicator3?.classList.toggle(
-            'is-active',
-            normalizedStep === 3 && scholarshipSelected
-        );
+        const indicators = [
+            view.feeStepIndicator1,
+            view.feeStepIndicator2,
+            view.feeStepIndicator3
+        ];
+
+        indicators.forEach((indicator, index) => {
+            if (!indicator) {
+                return;
+            }
+
+            const stepNumber = index + 1;
+            const isVisible =
+                stepNumber < 3
+                || showScholarshipStep;
+            const isCurrent =
+                stepNumber === normalizedStep
+                && isVisible;
+            const isCompleted =
+                isVisible
+                && stepNumber < normalizedStep;
+
+            indicator.classList.toggle(
+                'is-active',
+                isCurrent
+            );
+            indicator.classList.toggle(
+                'is-completed',
+                isCompleted
+            );
+            indicator.classList.toggle(
+                'is-upcoming',
+                isVisible
+                && !isCurrent
+                && !isCompleted
+            );
+
+            if (isCurrent) {
+                indicator.setAttribute(
+                    'aria-current',
+                    'step'
+                );
+            } else {
+                indicator.removeAttribute(
+                    'aria-current'
+                );
+            }
+        });
 
         if (view.feeEditBackButton) {
             view.feeEditBackButton.classList.toggle(
@@ -5435,9 +5482,20 @@ function formatBackendSubStage(value) {
             view.editFeeContributionPanel,
             scholarshipSelected
         );
+
+        /*
+         * Scholarship Application method belongs to Step 3.
+         * The previous implementation always hid this panel, including when
+         * Step 3 was active, which made Fill in School / Send Link impossible
+         * to select and caused the wizard to stop at the last step.
+         */
+        const scholarshipMethodVisible =
+            scholarshipSelected
+            && (state.feeDiscussionStep || 1) === 3;
+
         toggleElement(
             view.editFeeScholarshipMethodPanel,
-            false
+            scholarshipMethodVisible
         );
 
         if (view.editFeeParentCanPay) {

@@ -45,6 +45,20 @@ public interface ScholarshipService {
             String scholarshipStatus
     ) {
     }
+
+    /**
+     * Safe dashboard metadata for an existing Scholarship Application.
+     * Raw public/school tokens are never returned.
+     */
+    record ScholarshipApplicationStatus(
+            String status,
+            String applicationMethod,
+            LocalDateTime publicLinkExpiresAt,
+            LocalDateTime schoolAccessExpiresAt,
+            boolean publicLinkActive,
+            boolean schoolAccessActive
+    ) {
+    }
     FundsSummaryDTO getFundsSummary();
     List<DonorDTO> getAllDonors();
     List<PendingStudentDTO> getPendingStudents();
@@ -55,6 +69,14 @@ public interface ScholarshipService {
     void allocateToStudent(AllocationRequestDTO request);
 
     PublicScholarshipLinkToken issuePublicApplicationToken(
+            Long applicationId
+    );
+
+    /**
+     * Returns non-secret Scholarship Application status/expiry metadata for
+     * the authenticated Branch Admin Application Profile.
+     */
+    ScholarshipApplicationStatus getApplicationStatus(
             Long applicationId
     );
 

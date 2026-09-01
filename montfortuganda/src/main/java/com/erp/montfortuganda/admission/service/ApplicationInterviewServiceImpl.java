@@ -1581,7 +1581,36 @@ public class ApplicationInterviewServiceImpl
                         ? 2
                         : 1;
 
+        /*
+         * RETEST_REQUIRED is a result the employee must be able to select
+         * while completing the FIRST attempt.  The previous implementation
+         * only exposed canRequestRetest after the test was already completed
+         * with RETEST_REQUIRED, which made the RETEST_REQUIRED option
+         * impossible to select in the first-attempt marks modal.
+         *
+         * Keep the same DTO field for backward compatibility:
+         *   - first attempt scheduled/in-progress: allow selecting
+         *     RETEST_REQUIRED as the completion result;
+         *   - first attempt completed as RETEST_REQUIRED: allow scheduling
+         *     the one and only second attempt.
+         */
         boolean canRequestRetest =
+                editable
+                        && attemptNumber == 1
+                        && (
+                        status
+                                == ErpApplicationInterview.Status.SCHEDULED
+                                || status
+                                == ErpApplicationInterview.Status.IN_PROGRESS
+                                || (
+                                status
+                                        == ErpApplicationInterview.Status.COMPLETED
+                                        && interview.getResult()
+                                        == ErpApplicationInterview.Result.RETEST_REQUIRED
+                        )
+                );
+
+        boolean canScheduleRetest =
                 editable
                         && attemptNumber == 1
                         && status
@@ -1603,7 +1632,7 @@ public class ApplicationInterviewServiceImpl
                                                 == ErpApplicationInterview.Status.NO_SHOW
                                 )
                         )
-                                || canRequestRetest
+                                || canScheduleRetest
                 );
 
         boolean canReschedule =

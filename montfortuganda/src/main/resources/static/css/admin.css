@@ -12081,20 +12081,113 @@ body.erp-modal-open{
 /* Fee Discussion wizard — scoped only to the existing Fee Discussion modal. */
 #ba-feeEditModal .app-fee-step-indicator {
     display: flex;
-    gap: 1.25rem;
-    align-items: center;
-    margin-bottom: 1rem;
-    font-size: 0.9rem;
+    align-items: stretch;
+    width: 100%;
+    min-height: 56px;
+    margin-bottom: 1.25rem;
+    padding: 0;
+    border: 1px solid #dfe5ec;
+    border-radius: 12px;
+    background: #f8fafc;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
 #ba-feeEditModal .app-fee-step-indicator span {
-    color: var(--text-muted, #6b7280);
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    min-height: 56px;
+    height: auto;
+    padding: 0.75rem 1rem;
+    color: #64748b;
+    background: #f8fafc;
+    font-size: 0.82rem;
+    font-weight: 650;
+    line-height: 1.2;
+    text-align: center;
     white-space: nowrap;
+    box-sizing: border-box;
+    overflow: visible;
+    transition: background-color 160ms ease, color 160ms ease;
+}
+
+#ba-feeEditModal .app-fee-step-indicator span + span {
+    border-left: 1px solid #e2e8f0;
 }
 
 #ba-feeEditModal .app-fee-step-indicator span.is-active {
-    color: var(--text-color, inherit);
-    font-weight: 600;
+    color: #172033;
+    background: #ffffff;
+    font-weight: 750;
+}
+
+#ba-feeEditModal .app-fee-step-indicator span.is-active::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: #172033;
+}
+
+#ba-feeEditModal .app-fee-step-indicator span.is-completed {
+    color: #15803d;
+    background: #f0fdf4;
+    font-weight: 750;
+}
+
+#ba-feeEditModal .app-fee-step-indicator span.is-upcoming {
+    color: #94a3b8;
+    background: #f8fafc;
+    font-weight: 650;
+}
+
+#ba-feeEditModal .app-fee-step-indicator span.hidden {
+    display: none !important;
+}
+
+@media (max-width: 680px) {
+    #ba-feeEditModal .app-fee-step-indicator {
+        min-height: 50px;
+    }
+
+    #ba-feeEditModal .app-fee-step-indicator span {
+        min-height: 50px;
+        padding: 0.65rem 0.5rem;
+        font-size: 0.72rem;
+    }
+}
+
+#ba-feeEditModal #ba-editFeeScholarshipMethodPanel:not(.hidden) {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+#ba-feeEditModal #ba-feeEditNextBtn:disabled {
+    opacity: 0.48;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+}
+
+#ba-feeEditModal #ba-feeEditNextBtn:disabled:hover {
+    opacity: 0.48;
+    box-shadow: none;
+    transform: none;
+}
+
+@media (max-width: 680px) {
+    #ba-feeEditModal .app-fee-step-indicator span {
+        min-height: 48px;
+        padding: 0.65rem 0.5rem;
+        font-size: 0.72rem;
+    }
 }
 
 #ba-feeEditModal .app-fee-simple-radio-group {

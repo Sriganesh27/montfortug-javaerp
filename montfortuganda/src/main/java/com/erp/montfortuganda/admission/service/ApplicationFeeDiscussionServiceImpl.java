@@ -134,6 +134,15 @@ public class ApplicationFeeDiscussionServiceImpl
         );
         requireWorkflowEditable(application);
 
+        /*
+         * Keep the stage that was loaded under the application lock. Fee
+         * Structure Edit is allowed while PAYMENT is still unpaid, and a
+         * Scholarship decision in that situation must explicitly return the
+         * application to the Scholarship stage.
+         */
+        ErpApplication.CurrentStage stageBeforeEdit =
+                application.getCurrentStage();
+
         BigDecimal termFee =
                 amountOrZero(request.termFee());
         BigDecimal transportFee =
@@ -328,13 +337,42 @@ public class ApplicationFeeDiscussionServiceImpl
                 applicationFeeRepository.saveAndFlush(fee);
 
         /*
-         * Saving/updating Fee Discussion is deliberately non-transitional.
-         *
-         * Staff may keep entering or revising the fee discussion while the
-         * application remains in PARENT_FEE_DISCUSSION. Movement to PAYMENT
-         * or SCHOLARSHIP must happen only through an explicit Finalize /
-         * Continue workflow action.
+         * Fee Structure Edit is normally non-transitional. The one explicit
+         * exception is the controlled reverse path PAYMENT -> SCHOLARSHIP
+         * when the application is still unpaid and the edited decision is a
+         * scholarship decision. The existing workflow transition service
+         * records the application-history event with the current logged-in
+         * user and applies the existing RETURN rules.
          */
+        boolean scholarshipDecision =
+                feeDecision == ErpApplicationFee.FeeDecision.PARTIAL_ASSISTANCE
+                        || feeDecision == ErpApplicationFee.FeeDecision.FULL_ASSISTANCE;
+
+        if (stageBeforeEdit == ErpApplication.CurrentStage.PAYMENT
+                && scholarshipDecision) {
+
+            ApplicationStageTransitionRequestDTO transitionRequest =
+                    new ApplicationStageTransitionRequestDTO();
+
+            transitionRequest.setExpectedCurrentStage(
+                    ErpApplication.CurrentStage.PAYMENT
+            );
+            transitionRequest.setTargetStage(
+                    ErpApplication.CurrentStage.SCHOLARSHIP
+            );
+            transitionRequest.setAction(
+                    ApplicationStageTransitionRequestDTO
+                            .TransitionAction
+                            .RETURN
+            );
+            transitionRequest.setNotifyApplicant(false);
+
+            stageTransitionService.transition(
+                    context,
+                    safeApplicationId,
+                    transitionRequest
+            );
+        }
 
         return toResponse(saved);
     }
@@ -456,9 +494,17 @@ public class ApplicationFeeDiscussionServiceImpl
                 feeDecision == ErpApplicationFee.FeeDecision.PARTIAL_ASSISTANCE
                         || feeDecision == ErpApplicationFee.FeeDecision.FULL_ASSISTANCE;
 
+        /*
+         * The Scholarship Application master row is unique per admission
+         * application. Fee Discussion may cancel it when the decision changes
+         * to Full Payment, so a later Scholarship decision must reuse that
+         * inactive row instead of attempting a second INSERT.
+         *
+         * Other Scholarship flows continue to use their active-only lookups.
+         */
         var existing =
                 scholarshipApplicationRepository
-                        .findActiveByApplicationAndBranchForUpdate(
+                        .findByApplicationAndBranchForUpdate(
                                 application.getApplicationId(),
                                 branchId.longValue()
                         );
@@ -610,6 +656,7 @@ public class ApplicationFeeDiscussionServiceImpl
          * first so Hibernate has its generated ID before the History insert.
          */
         scholarship.setStatus("NOT_STARTED");
+        application.setScholarshipStatus("NOT_STARTED");
         scholarship.setPublicTokenHash(null);
         scholarship.setTokenExpiresAt(null);
         scholarship.setTokenUsedAt(null);

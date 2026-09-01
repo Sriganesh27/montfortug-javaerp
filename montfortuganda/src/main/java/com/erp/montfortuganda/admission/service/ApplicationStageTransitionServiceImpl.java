@@ -409,13 +409,33 @@ public class ApplicationStageTransitionServiceImpl
                             application
                     );
 
-            boolean paymentAllowed =
+            boolean approvedScholarship =
                     scholarshipStatus.equals("APPROVED")
                             || scholarshipStatus.equals(
                             "PARTIALLY_APPROVED"
                     );
 
-            if (!paymentAllowed) {
+            /*
+             * Fee Discussion may intentionally change an existing Scholarship
+             * decision to Full Payment. In that case the Fee Discussion
+             * service cancels/deactivates the Scholarship Application and
+             * marks the application-level Scholarship lifecycle state before
+             * invoking this central workflow transition.
+             *
+             * This exception does NOT weaken normal Scholarship approval
+             * requirements.
+             */
+            boolean cancelledByFeeDecision =
+                    "CANCELLED_BY_FEE_DECISION".equals(
+                            normalizeStatus(
+                                    application.getScholarshipStatus()
+                            )
+                    )
+                    && application.getFeeDecisionStatus()
+                    == ErpApplication.FeeDecisionStatus.FEE_ACCEPTED;
+
+            if (!approvedScholarship
+                    && !cancelledByFeeDecision) {
                 throw new BadRequestException(
                         "Scholarship must be approved or partially approved "
                                 + "before moving to payment."
@@ -1136,10 +1156,23 @@ public class ApplicationStageTransitionServiceImpl
                             application
                     );
 
-            return scholarshipStatus.equals("APPROVED")
-                    || scholarshipStatus.equals(
-                    "PARTIALLY_APPROVED"
-            );
+            boolean approvedScholarship =
+                    scholarshipStatus.equals("APPROVED")
+                            || scholarshipStatus.equals(
+                            "PARTIALLY_APPROVED"
+                    );
+
+            boolean cancelledByFeeDecision =
+                    "CANCELLED_BY_FEE_DECISION".equals(
+                            normalizeStatus(
+                                    application.getScholarshipStatus()
+                            )
+                    )
+                    && application.getFeeDecisionStatus()
+                    == ErpApplication.FeeDecisionStatus.FEE_ACCEPTED;
+
+            return approvedScholarship
+                    || cancelledByFeeDecision;
         }
 
         if (current

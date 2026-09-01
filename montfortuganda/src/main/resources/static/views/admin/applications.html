@@ -402,11 +402,6 @@
                             </div>
                         </div>
 
-                        <!-- Compact workflow progress -->
-                        <div id="ba-workflowProgress"
-                             class="app-workflow-progress"
-                             aria-label="Admission workflow progress">
-                        </div>
 
                         <!-- Operational summary -->
                         <div class="app-profile-quick-grid">
@@ -1659,15 +1654,17 @@
                             </label>
                         </div>
 
-                        <div id="ba-editFeeChangeReasonGroup" class="form-group hidden">
-                            <label for="ba-editFeeChangeReason">
-                                Reason for Change <span class="text-danger">*</span>
+                        <div id="ba-editFeeDiscussionRemarksGroup" class="form-group">
+                            <label for="ba-editFeeDiscussionRemarks">
+                                Discussion Remarks
+                                <span id="ba-editFeeDiscussionRemarksRequired"
+                                      class="text-danger hidden">*</span>
                             </label>
-                            <textarea id="ba-editFeeChangeReason"
+                            <textarea id="ba-editFeeDiscussionRemarks"
                                       class="detail-input w-100"
                                       rows="3"
                                       maxlength="500"
-                                      placeholder="Enter the reason for changing the saved fee structure"></textarea>
+                                      placeholder="Enter discussion remarks"></textarea>
                         </div>
                     </div>
 
@@ -1679,22 +1676,36 @@
 
                         <div class="form-group">
                             <label>Payment Decision</label>
+
                             <div class="app-fee-simple-radio-group">
-                                <label class="app-fee-simple-radio" for="ba-feeDecisionFullPayment">
+
+                                <label class="app-fee-simple-radio"
+                                       for="ba-feeDecisionFullPayment">
                                     <input type="radio"
                                            id="ba-feeDecisionFullPayment"
-                                           name="ba-feeDecisionOption"
+                                           name="ba-feeDecisionMainOption"
                                            value="FULL_PAYMENT">
                                     <span>Parents Pay</span>
                                 </label>
 
-                                <label class="app-fee-simple-radio" for="ba-feeDecisionScholarship">
+                                <label class="app-fee-simple-radio"
+                                       for="ba-feeDecisionDecideLater">
+                                    <input type="radio"
+                                           id="ba-feeDecisionDecideLater"
+                                           name="ba-feeDecisionMainOption"
+                                           value="DECIDE_LATER">
+                                    <span>Decide Later</span>
+                                </label>
+
+                                <label class="app-fee-simple-radio"
+                                       for="ba-feeDecisionScholarship">
                                     <input type="radio"
                                            id="ba-feeDecisionScholarship"
                                            name="ba-feeDecisionMainOption"
                                            value="SCHOLARSHIP">
                                     <span>Scholarship</span>
                                 </label>
+
                             </div>
                         </div>
                     </div>

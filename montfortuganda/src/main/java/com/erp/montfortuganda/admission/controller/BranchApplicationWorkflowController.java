@@ -517,6 +517,34 @@ public class BranchApplicationWorkflowController {
      * application, scholarship, branch, student, or employee ID is placed in
      * the Scholarship form URL.</p>
      */
+    /**
+     * Returns non-secret Scholarship Application status/expiry metadata for
+     * the Application Profile. Raw access tokens are never returned.
+     */
+    @GetMapping("/scholarship/application-status")
+    public ResponseEntity<
+            ApiResponse<ScholarshipService.ScholarshipApplicationStatus>>
+    getScholarshipApplicationStatus(
+            Authentication authentication,
+            @PathVariable Long applicationId
+    ) {
+        currentUserService.getCurrentUserContext(
+                authentication
+        );
+
+        ScholarshipService.ScholarshipApplicationStatus response =
+                scholarshipService.getApplicationStatus(
+                        applicationId
+                );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Scholarship application status fetched successfully",
+                        response
+                )
+        );
+    }
+
     @PostMapping("/scholarship/school-access")
     public ResponseEntity<
             ApiResponse<ScholarshipService.SchoolScholarshipAccessKey>>

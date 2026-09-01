@@ -231,6 +231,27 @@ public interface ErpScholarshipApplicationRepository
             @Param("branchId") Long branchId
     );
 
+    /**
+     * Branch-scoped locked lookup used by Fee Discussion when synchronizing
+     * the Scholarship Application master record.
+     *
+     * The application_id column is unique, so an existing inactive
+     * Scholarship Application must be reactivated rather than inserting a
+     * second row for the same admission application.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select s
+            from ErpScholarshipApplication s
+            where s.application.applicationId = :applicationId
+              and s.branchId = :branchId
+            """)
+    Optional<ErpScholarshipApplication>
+    findByApplicationAndBranchForUpdate(
+            @Param("applicationId") Long applicationId,
+            @Param("branchId") Long branchId
+    );
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
             select s
