@@ -87,6 +87,7 @@ const ApplicationsController = (() => {
         feeDiscussionModalMode: null,
         feeDiscussionStep: 1,
         feeDiscussionScholarshipSaved: false,
+        feeDiscussionOriginalFeeAmounts: null,
         feeCreateModalAutoOpenedForApplicationId: null,
         documentSyncTimer: null,
         documentSyncBusy: false,
@@ -472,6 +473,12 @@ const ApplicationsController = (() => {
                 localById('ba-feeBaseFeeAmount'),
             feeDiscussionRemarks:
                 localById('ba-feeDiscussionRemarks'),
+            feeDecisionMainOptions:
+                Array.from(
+                    root.querySelectorAll(
+                        'input[name="ba-feeDecisionMainOption"]'
+                    )
+                ),
             feeDecisionOptions:
                 Array.from(
                     root.querySelectorAll(
@@ -606,11 +613,17 @@ const ApplicationsController = (() => {
                 localById('ba-editFeeOtherFee'),
             editFeeBaseFeeAmount:
                 localById('ba-editFeeBaseFeeAmount'),
+            editFeeDecisionMainOptions:
+                Array.from(
+                    root.querySelectorAll(
+                        'input[name="ba-feeDecisionMainOption"]'
+                    )
+                ),
             editFeeDecisionOptions:
                 Array.from(
-                        root.querySelectorAll(
-                            'input[name="ba-feeDecisionMainOption"]'
-                        )
+                    root.querySelectorAll(
+                        'input[name="ba-feeDecisionOption"]'
+                    )
                 ),
             editFeeContributionPanel:
                 localById('ba-editFeeContributionPanel'),
@@ -1385,34 +1398,62 @@ const ApplicationsController = (() => {
             }
         );
 
-        view.feeDecisionScholarship?.addEventListener(
-            'change',
+        view.editFeeDiscussionRemarks?.addEventListener(
+            'input',
             () => {
-                if (!view.feeDecisionScholarship.checked) {
-                    return;
-                }
-
-                view.editFeeDecisionOptions.forEach(option => {
-                    if (String(option.value).toUpperCase() === 'FULL_PAYMENT') {
-                        option.checked = false;
-                    }
-                });
-
-                if (view.feeScholarshipMethodSchool) {
-                    view.feeScholarshipMethodSchool.checked = false;
-                }
-                if (view.feeScholarshipMethodEmail) {
-                    view.feeScholarshipMethodEmail.checked = false;
-                }
-
-                toggleElement(
-                    view.feeStepIndicator3,
-                    true
-                );
                 setFeeEditError('');
-                setFeeDiscussionStep(2);
+                updateFeeDiscussionWizardButtonState();
             }
         );
+
+        view.editFeeDecisionMainOptions.forEach(option => {
+            option.addEventListener(
+                'change',
+                () => {
+                    const selected =
+                        String(option.value || '').toUpperCase();
+
+                    if (selected === 'FULL_PAYMENT') {
+                        view.editFeeDecisionOptions.forEach(item => {
+                            item.checked = false;
+                        });
+
+                        if (view.feeScholarshipMethodSchool) {
+                            view.feeScholarshipMethodSchool.checked = false;
+                        }
+                        if (view.feeScholarshipMethodEmail) {
+                            view.feeScholarshipMethodEmail.checked = false;
+                        }
+                    } else if (selected === 'PENDING') {
+                        view.editFeeDecisionOptions.forEach(item => {
+                            item.checked = false;
+                        });
+
+                        if (view.feeScholarshipMethodSchool) {
+                            view.feeScholarshipMethodSchool.checked = false;
+                        }
+                        if (view.feeScholarshipMethodEmail) {
+                            view.feeScholarshipMethodEmail.checked = false;
+                        }
+                    } else if (selected === 'SCHOLARSHIP') {
+                        if (view.feeScholarshipMethodSchool) {
+                            view.feeScholarshipMethodSchool.checked = false;
+                        }
+                        if (view.feeScholarshipMethodEmail) {
+                            view.feeScholarshipMethodEmail.checked = false;
+                        }
+                    }
+
+                    renderFeeEditDecisionFields(
+                        getFeeEditDecision()
+                    );
+                    updateFeeEditAmounts();
+                    setFeeEditError('');
+                    updateFeeDiscussionWizardButtonState();
+                    setFeeDiscussionStep(2);
+                }
+            );
+        });
 
         view.editFeeDecisionOptions.forEach(option => {
             option.addEventListener(
@@ -1421,23 +1462,18 @@ const ApplicationsController = (() => {
                     const selected =
                         String(option.value || '').toUpperCase();
 
-                    if (selected === 'FULL_PAYMENT') {
-                        if (view.feeDecisionScholarship) {
-                            view.feeDecisionScholarship.checked = false;
-                        }
-                        view.editFeeDecisionOptions.forEach(item => {
-                            if (item !== option
-                                    && String(item.value).toUpperCase()
-                                        === 'FULL_PAYMENT') {
-                                item.checked = false;
-                            }
-                        });
-                    } else if (
+                    if (
                         selected === 'PARTIAL_ASSISTANCE'
                         || selected === 'FULL_ASSISTANCE'
                     ) {
-                        if (view.feeDecisionScholarship) {
-                            view.feeDecisionScholarship.checked = true;
+                        const scholarshipMain =
+                            view.editFeeDecisionMainOptions.find(item =>
+                                String(item.value || '').toUpperCase()
+                                    === 'SCHOLARSHIP'
+                            );
+
+                        if (scholarshipMain) {
+                            scholarshipMain.checked = true;
                         }
                     }
 
@@ -1505,26 +1541,37 @@ const ApplicationsController = (() => {
             event => {
                 event.preventDefault();
                 const step = state.feeDiscussionStep || 1;
-                const fullPaymentSelected =
-                    view.editFeeDecisionOptions.some(option =>
+                const mainDecision =
+                    view.editFeeDecisionMainOptions.find(option =>
                         option.checked
-                        && String(option.value).toUpperCase()
-                            === 'FULL_PAYMENT'
                     );
 
-                if (step === 2 && fullPaymentSelected) {
+                const mainValue =
+                    String(mainDecision?.value || '')
+                        .trim()
+                        .toUpperCase();
+
+                const saveAtStep2 =
+                    step === 2
+                    && (
+                        mainValue === 'FULL_PAYMENT'
+                        || (
+                            state.feeDiscussionModalMode === 'CREATE'
+                            && mainValue === 'DECIDE_LATER'
+                        )
+                    );
+
+                if (saveAtStep2) {
                     void saveFeeDiscussionModal();
                     return;
                 }
 
-                void handleFeeDiscussionWizardNext();
-            }
-        );
+                if (step === 3) {
+                    void processFeeDiscussionScholarshipStep();
+                    return;
+                }
 
-        view.feeEditSaveButton?.addEventListener(
-            'click',
-            () => {
-                void saveFeeDiscussionModal();
+                void handleFeeDiscussionWizardNext();
             }
         );
 
@@ -3569,6 +3616,7 @@ function formatBackendSubStage(value) {
         }
     }
 
+
     function renderFeeDiscussion(feeDiscussion) {
         const currentStage =
             state.currentApplication?.currentStage;
@@ -3901,10 +3949,27 @@ function formatBackendSubStage(value) {
     }
 
     function getFeeDecisionValue() {
-        const mainScholarship =
-            Boolean(view.feeDecisionScholarship?.checked);
+        const mainDecision =
+            view.feeDecisionMainOptions.find(option =>
+                option.checked
+            );
 
-        if (mainScholarship) {
+        const mainValue =
+            String(
+                mainDecision?.value || 'PENDING'
+            )
+                .trim()
+                .toUpperCase();
+
+        if (mainValue === 'DECIDE_LATER') {
+            return 'PENDING';
+        }
+
+        if (mainValue === 'FULL_PAYMENT') {
+            return 'FULL_PAYMENT';
+        }
+
+        if (mainValue === 'SCHOLARSHIP') {
             const scholarshipType =
                 view.feeDecisionOptions.find(option =>
                     option.checked
@@ -3919,14 +3984,7 @@ function formatBackendSubStage(value) {
             ).toUpperCase();
         }
 
-        const checked =
-            view.feeDecisionOptions.find(
-                option => option.checked
-            );
-
-        return String(
-            checked?.value || 'PENDING'
-        ).toUpperCase();
+        return 'PENDING';
     }
 
     function renderFeeDecisionFields(decision) {
@@ -4031,7 +4089,7 @@ function formatBackendSubStage(value) {
 
     function validateFeeDecision(amounts) {
         if (amounts.decision === 'PENDING') {
-            return 'Select the parent payment decision.';
+            return '';
         }
 
         if (
@@ -4102,15 +4160,41 @@ function formatBackendSubStage(value) {
          * Initiation is separately restricted below to the two states in which
          * the school is actually allowed to start/continue that route.
          */
+        /*
+         * If Parent Fee Discussion has explicitly selected Parents Pay
+         * (FULL_PAYMENT) or Decide Later (PENDING), an old Scholarship
+         * record/status must not keep the Scholarship initiation section
+         * visible. The current Fee Discussion decision is authoritative for
+         * this admission stage.
+         *
+         * Scholarship remains visible when:
+         *  1) the application is currently in SCHOLARSHIP, or
+         *  2) Parent Fee Discussion currently has a Scholarship decision, or
+         *  3) the application is outside Parent Fee Discussion and has an
+         *     existing Scholarship status to display.
+         */
+        const feeDecisionClosesScholarship =
+            feeDecision === 'FULL_PAYMENT'
+            || feeDecision === 'PENDING';
+
         const scholarshipRelevant =
-            currentStage === 'SCHOLARSHIP'
-            || (
-                currentStage === 'PARENT_FEE_DISCUSSION'
-                && Boolean(state.feeDiscussion?.feeId)
-                && assistanceSelected
-            )
-            || Boolean(rawStatus && rawStatus !== 'NOT_APPLIED'
-                && rawStatus !== 'NOT_STARTED');
+            !feeDecisionClosesScholarship
+            && (
+                currentStage === 'SCHOLARSHIP'
+                || (
+                    currentStage === 'PARENT_FEE_DISCUSSION'
+                    && Boolean(state.feeDiscussion?.feeId)
+                    && assistanceSelected
+                )
+                || (
+                    currentStage !== 'PARENT_FEE_DISCUSSION'
+                    && Boolean(
+                        rawStatus
+                        && rawStatus !== 'NOT_APPLIED'
+                        && rawStatus !== 'NOT_STARTED'
+                    )
+                )
+            );
 
         toggleElement(
             view.scholarshipSection,
@@ -4182,12 +4266,8 @@ function formatBackendSubStage(value) {
          * assistance route and is waiting for Scholarship initiation.
          */
         const scholarshipInitiationAllowed =
-            currentStage === 'SCHOLARSHIP'
-            || (
-                currentStage === 'PARENT_FEE_DISCUSSION'
-                && Boolean(state.feeDiscussion?.feeId)
-                && assistanceSelected
-            );
+            !feeDecisionClosesScholarship
+            && currentStage === 'SCHOLARSHIP';
 
         toggleElement(
             view.scholarshipStartPanel,
@@ -4207,13 +4287,19 @@ function formatBackendSubStage(value) {
                 .trim()
                 .toUpperCase();
 
-        if (currentStage === 'SCHOLARSHIP') {
-            return;
-        }
-
-        if (currentStage !== 'PARENT_FEE_DISCUSSION') {
+        /*
+         * Fee Discussion is saved separately from workflow movement.
+         * Scholarship initiation is allowed only after the existing
+         * Parent Fee Discussion -> Scholarship workflow action has been
+         * explicitly performed by the user.
+         *
+         * This function intentionally does NOT call the Fee Discussion
+         * finalize endpoint. That endpoint belongs to the explicit workflow
+         * Next/Process action, not to Fill in School or Send Link.
+         */
+        if (currentStage !== 'SCHOLARSHIP') {
             throw new Error(
-                'Scholarship Application can be started only from Parent Fee Discussion or Scholarship stage.'
+                'Move the application to the Scholarship stage using the Next action before starting the Scholarship Application.'
             );
         }
 
@@ -4230,7 +4316,7 @@ function formatBackendSubStage(value) {
 
         if (!fee?.feeId) {
             throw new Error(
-                'Save the Parent Fee Discussion before starting the Scholarship Application.'
+                'Save the Fee Discussion before starting the Scholarship Application.'
             );
         }
 
@@ -4239,30 +4325,7 @@ function formatBackendSubStage(value) {
             && decision !== 'FULL_ASSISTANCE'
         ) {
             throw new Error(
-                'Select and save a Scholarship / Assistance decision before continuing.'
-            );
-        }
-
-        await apiPatchJson(
-            `${API_ROOT}/${encodeURIComponent(
-                applicationId
-            )}/workflow/fee-discussion/finalize`,
-            {}
-        );
-
-        const refreshed =
-            await synchronizeCurrentApplicationAfterMutation(
-                'fee-discussion-scholarship-finalized',
-                applicationId
-            );
-
-        if (!refreshed
-                || !enumEquals(
-                    state.currentApplication?.currentStage,
-                    'SCHOLARSHIP'
-                )) {
-            throw new Error(
-                'Fee Discussion was finalized, but the application did not move to Scholarship.'
+                'The saved Fee Discussion does not contain a Scholarship / Assistance decision.'
             );
         }
     }
@@ -4494,7 +4557,7 @@ function formatBackendSubStage(value) {
 
         try {
             setButtonBusy(
-                view.scholarshipSendLinkButton,
+                view.feeEditSaveButton,
                 true,
                 'Sending...'
             );
@@ -4533,7 +4596,7 @@ function formatBackendSubStage(value) {
             );
         } finally {
             setButtonBusy(
-                view.scholarshipSendLinkButton,
+                view.feeEditSaveButton,
                 false
             );
 
@@ -4690,11 +4753,41 @@ function formatBackendSubStage(value) {
             !creating
         );
 
+        const decideLaterInput =
+            view.root?.querySelector(
+                '#ba-feeDecisionDecideLater'
+            );
+        const decideLaterLabel =
+            decideLaterInput?.closest(
+                '.app-fee-simple-radio'
+            );
+
+        toggleElement(
+            decideLaterLabel,
+            creating
+        );
+
+        if (decideLaterInput && !creating) {
+            decideLaterInput.checked = false;
+        }
+
         if (view.editFeeChangeReason) {
             view.editFeeChangeReason.value = '';
             view.editFeeChangeReason.required =
                 !creating;
         }
+
+        if (view.editFeeDiscussionRemarks) {
+            view.editFeeDiscussionRemarks.required =
+                !creating;
+        }
+
+        toggleElement(
+            view.root?.querySelector(
+                '#ba-editFeeDiscussionRemarksRequired'
+            ),
+            !creating
+        );
 
         setNodeText(
             view.feeEditSaveButtonLabel,
@@ -5005,30 +5098,101 @@ function formatBackendSubStage(value) {
         }
     }
 
+    function hasFeeStructureChanged() {
+        const original =
+            state.feeDiscussionOriginalFeeAmounts;
+
+        if (!original) {
+            return false;
+        }
+
+        const current = {
+            termFee: readFeeInputValue(view.editFeeTermFee),
+            transportFee: readFeeInputValue(view.editFeeTransportFee),
+            hostelFee: readFeeInputValue(view.editFeeHostelFee),
+            uniformFee: readFeeInputValue(view.editFeeUniformFee),
+            booksFee: readFeeInputValue(view.editFeeBooksFee),
+            admissionFee: readFeeInputValue(view.editFeeAdmissionFee),
+            otherFee: readFeeInputValue(view.editFeeOtherFee)
+        };
+
+        return Object.keys(current).some(key =>
+            Math.abs(
+                Number(current[key] || 0)
+                - Number(original[key] || 0)
+            ) > 0.000001
+        );
+    }
+
     function updateFeeDiscussionWizardButtonState() {
         const step = state.feeDiscussionStep || 1;
+        const creating =
+            state.feeDiscussionModalMode === 'CREATE';
 
         if (view.feeEditNextButton) {
             let disabled = false;
 
             if (step === 1) {
                 const amounts = updateFeeEditAmounts();
-                disabled =
-                    amounts.total <= 0
-                    || !Boolean(view.feeConfirmDetails?.checked);
-            } else if (step === 2) {
-                const scholarshipSelected =
-                    Boolean(view.feeDecisionScholarship?.checked);
-                const fullPaymentSelected =
-                    view.editFeeDecisionOptions.some(option =>
-                        option.checked
-                        && String(option.value).toUpperCase()
-                            === 'FULL_PAYMENT'
-                    );
+                const feeChanged =
+                    !creating && hasFeeStructureChanged();
+                const confirmationRequired =
+                    creating || feeChanged;
 
                 disabled =
-                    !scholarshipSelected
-                    && !fullPaymentSelected;
+                    amounts.total <= 0
+                    || (
+                        confirmationRequired
+                        && !Boolean(
+                            view.feeConfirmDetails?.checked
+                        )
+                    );
+            } else if (step === 2) {
+                const mainDecision =
+                    view.editFeeDecisionMainOptions.find(option =>
+                        option.checked
+                    );
+
+                const decision =
+                    String(mainDecision?.value || '')
+                        .trim()
+                        .toUpperCase();
+
+                const decisionSelected =
+                    decision === 'FULL_PAYMENT'
+                    || decision === 'DECIDE_LATER'
+                    || decision === 'SCHOLARSHIP';
+
+                const remarksElement =
+                    view.editFeeDiscussionRemarks
+                    || document.getElementById(
+                        'ba-editFeeDiscussionRemarks'
+                    );
+
+                const remarksEntered =
+                    Boolean(
+                        String(
+                            remarksElement?.value || ''
+                        ).trim()
+                    );
+
+                /*
+                 * CREATE:
+                 * Discussion Remarks are optional.
+                 *
+                 * EDIT:
+                 * Discussion Remarks are mandatory before Next.
+                 */
+                disabled =
+                    !decisionSelected
+                    || (
+                        !creating
+                        && !remarksEntered
+                    );
+
+                if (!creating && decision === 'DECIDE_LATER') {
+                    disabled = true;
+                }
             } else if (step === 3) {
                 const decision = getFeeEditDecision();
                 const methodSelected =
@@ -5047,6 +5211,87 @@ function formatBackendSubStage(value) {
                 disabled ? 'true' : 'false'
             );
         }
+
+        if (view.feeEditSaveButton) {
+            const mainDecision =
+                view.editFeeDecisionMainOptions.find(option =>
+                    option.checked
+                );
+
+            const mainValue =
+                String(mainDecision?.value || '')
+                    .trim()
+                    .toUpperCase();
+
+            const isStep2Save =
+                step === 2
+                && (
+                    mainValue === 'FULL_PAYMENT'
+                    || (
+                        creating
+                        && mainValue === 'DECIDE_LATER'
+                    )
+                );
+
+            const remarksElement =
+                view.editFeeDiscussionRemarks
+                || document.getElementById(
+                    'ba-editFeeDiscussionRemarks'
+                );
+
+            const remarksEntered =
+                Boolean(
+                    String(
+                        remarksElement?.value || ''
+                    ).trim()
+                );
+
+            const isStep3 = step === 3;
+
+            let saveDisabled =
+                (
+                    isStep3
+                    && (
+                        (
+                            !Boolean(
+                                view.feeScholarshipMethodSchool?.checked
+                            )
+                            && !Boolean(
+                                view.feeScholarshipMethodEmail?.checked
+                            )
+                        )
+                        || (
+                            getFeeEditDecision() !== 'PARTIAL_ASSISTANCE'
+                            && getFeeEditDecision() !== 'FULL_ASSISTANCE'
+                        )
+                    )
+                );
+
+            if (
+                !creating
+                && step === 2
+                && !remarksEntered
+            ) {
+                saveDisabled = true;
+            }
+
+            view.feeEditSaveButton.disabled = saveDisabled;
+            view.feeEditSaveButton.setAttribute(
+                'aria-disabled',
+                saveDisabled ? 'true' : 'false'
+            );
+
+            if (isStep2Save) {
+                view.feeEditSaveButton.disabled =
+                    !creating && !remarksEntered;
+                view.feeEditSaveButton.setAttribute(
+                    'aria-disabled',
+                    view.feeEditSaveButton.disabled
+                        ? 'true'
+                        : 'false'
+                );
+            }
+        }
     }
 
     function setFeeDiscussionStep(step) {
@@ -5054,7 +5299,11 @@ function formatBackendSubStage(value) {
             Math.max(1, Math.min(3, Number(step) || 1));
 
         const scholarshipSelected =
-            Boolean(view.feeDecisionScholarship?.checked);
+            view.editFeeDecisionMainOptions.some(option =>
+                option.checked
+                && String(option.value).toUpperCase()
+                    === 'SCHOLARSHIP'
+            );
 
         if (normalizedStep === 3 && !scholarshipSelected) {
             normalizedStep = 2;
@@ -5140,31 +5389,65 @@ function formatBackendSubStage(value) {
             );
         }
 
-        const fullPayment =
-            view.editFeeDecisionOptions.some(option =>
+        const mainDecision =
+            view.editFeeDecisionMainOptions.find(option =>
                 option.checked
-                && String(option.value).toUpperCase()
-                    === 'FULL_PAYMENT'
+            );
+
+        const mainValue =
+            String(mainDecision?.value || '')
+                .trim()
+                .toUpperCase();
+
+        const saveAndProcessAtStep2 =
+            normalizedStep === 2
+            && (
+                mainValue === 'FULL_PAYMENT'
+                || (
+                    state.feeDiscussionModalMode === 'CREATE'
+                    && mainValue === 'DECIDE_LATER'
+                )
             );
 
         if (view.feeEditNextButton) {
             const showNextButton =
-                normalizedStep !== 2
-                || !fullPayment;
+                normalizedStep === 1
+                || (
+                    normalizedStep === 2
+                    && !saveAndProcessAtStep2
+                );
 
             view.feeEditNextButton.classList.toggle(
                 'hidden',
                 !showNextButton
             );
+
             view.feeEditNextButton.querySelector('span')?.replaceChildren(
-                document.createTextNode('Next')
+                document.createTextNode(
+                    normalizedStep === 3
+                        ? 'Save & Process'
+                        : 'Next'
+                )
             );
         }
 
         if (view.feeEditSaveButton) {
+            const showSaveButton =
+                saveAndProcessAtStep2
+                || normalizedStep === 3;
+
             view.feeEditSaveButton.classList.toggle(
                 'hidden',
-                normalizedStep !== 2 || !fullPayment
+                !showSaveButton
+            );
+
+            setNodeText(
+                view.feeEditSaveButtonLabel,
+                normalizedStep === 3
+                    ? 'Save & Process'
+                    : state.feeDiscussionModalMode === 'CREATE'
+                        ? 'Save Details'
+                        : 'Save Changes'
             );
         }
 
@@ -5200,9 +5483,18 @@ function formatBackendSubStage(value) {
         if (view.feeConfirmDetails) {
             view.feeConfirmDetails.checked = false;
         }
-        if (view.feeDecisionScholarship) {
-            view.feeDecisionScholarship.checked = false;
-        }
+        view.editFeeDecisionMainOptions.forEach(option => {
+            option.checked = false;
+        });
+
+        view.editFeeDecisionMainOptions.forEach(option => {
+            option.checked = false;
+        });
+
+        view.editFeeDecisionOptions.forEach(option => {
+            option.checked = false;
+        });
+
         if (view.feeScholarshipMethodSchool) {
             view.feeScholarshipMethodSchool.checked = false;
         }
@@ -5229,8 +5521,20 @@ function formatBackendSubStage(value) {
                 return;
             }
 
-            if (!view.feeConfirmDetails?.checked) {
-                setFeeEditError('Confirm the fee details before continuing.');
+            const creating =
+                state.feeDiscussionModalMode === 'CREATE';
+            const feeChanged =
+                !creating && hasFeeStructureChanged();
+            const confirmationRequired =
+                creating || feeChanged;
+
+            if (
+                confirmationRequired
+                && !view.feeConfirmDetails?.checked
+            ) {
+                setFeeEditError(
+                    'Confirm the fee details because the fee structure was changed.'
+                );
                 updateFeeDiscussionWizardButtonState();
                 return;
             }
@@ -5241,25 +5545,57 @@ function formatBackendSubStage(value) {
         }
 
         if (step === 2) {
-            const fullPaymentSelected =
-                view.editFeeDecisionOptions.some(option =>
+            const mainDecision =
+                view.editFeeDecisionMainOptions.find(option =>
                     option.checked
-                    && String(option.value).toUpperCase()
-                        === 'FULL_PAYMENT'
                 );
 
-            const scholarshipSelected =
-                Boolean(view.feeDecisionScholarship?.checked);
+            const selected =
+                String(mainDecision?.value || '')
+                    .trim()
+                    .toUpperCase();
 
-            if (!fullPaymentSelected && !scholarshipSelected) {
+            if (
+                selected !== 'FULL_PAYMENT'
+                && selected !== 'DECIDE_LATER'
+                && selected !== 'SCHOLARSHIP'
+            ) {
                 setFeeEditError('Select the payment decision.');
+                updateFeeDiscussionWizardButtonState();
+                return;
+            }
+
+            if (
+                state.feeDiscussionModalMode === 'EDIT'
+                && selected === 'DECIDE_LATER'
+            ) {
+                setFeeEditError(
+                    'Decide Later is available only when creating the Fee Discussion.'
+                );
+                updateFeeDiscussionWizardButtonState();
+                return;
+            }
+
+            if (
+                state.feeDiscussionModalMode === 'EDIT'
+                && !String(
+                    view.editFeeDiscussionRemarks?.value || ''
+                ).trim()
+            ) {
+                setFeeEditError(
+                    'Discussion Remarks are required when editing the Fee Discussion.'
+                );
+                view.editFeeDiscussionRemarks?.focus();
                 updateFeeDiscussionWizardButtonState();
                 return;
             }
 
             setFeeEditError('');
 
-            if (fullPaymentSelected) {
+            if (
+                selected === 'FULL_PAYMENT'
+                || selected === 'DECIDE_LATER'
+            ) {
                 await saveFeeDiscussionModal();
                 return;
             }
@@ -5274,7 +5610,9 @@ function formatBackendSubStage(value) {
             decision !== 'PARTIAL_ASSISTANCE'
             && decision !== 'FULL_ASSISTANCE'
         ) {
-            setFeeEditError('Select Partial Scholarship or Full Scholarship.');
+            setFeeEditError(
+                'Select Partial Scholarship or Full Scholarship.'
+            );
             updateFeeDiscussionWizardButtonState();
             return;
         }
@@ -5287,7 +5625,9 @@ function formatBackendSubStage(value) {
                     : '';
 
         if (!method) {
-            setFeeEditError('Select the Scholarship Application method.');
+            setFeeEditError(
+                'Select the Scholarship Application method.'
+            );
             updateFeeDiscussionWizardButtonState();
             return;
         }
@@ -5312,11 +5652,131 @@ function formatBackendSubStage(value) {
 
         closeFeeEditModal();
 
+        const currentStage =
+            String(
+                state.currentApplication?.currentStage
+                || ''
+            )
+                .trim()
+                .toUpperCase();
+
+        if (currentStage === 'PARENT_FEE_DISCUSSION') {
+            notifyIntermediateSuccess(
+                'Fee Discussion saved. Use the Next action to continue to Scholarship.'
+            );
+            return;
+        }
+
+        if (currentStage !== 'SCHOLARSHIP') {
+            setFeeEditError(
+                'Fee Discussion was saved, but the application is not in the Scholarship stage yet.'
+            );
+            return;
+        }
+
         if (method === 'SCHOOL') {
             await openScholarshipFormAtSchool();
         } else {
             await sendScholarshipApplicationLink();
         }
+    }
+
+    /**
+     * Completes Fee Discussion Step 3 for a Scholarship decision.
+     * The Fee Discussion record is saved first; the selected Scholarship
+     * application method then performs the existing secure initiation flow.
+     */
+    async function processFeeDiscussionScholarshipStep() {
+        const decision =
+            getFeeEditDecision();
+
+        if (
+            decision !== 'PARTIAL_ASSISTANCE'
+            && decision !== 'FULL_ASSISTANCE'
+        ) {
+            setFeeEditError(
+                'Select Partial Scholarship or Full Scholarship.'
+            );
+            updateFeeDiscussionWizardButtonState();
+            return;
+        }
+
+        const method =
+            view.feeScholarshipMethodSchool?.checked
+                ? 'SCHOOL'
+                : view.feeScholarshipMethodEmail?.checked
+                    ? 'EMAIL'
+                    : '';
+
+        if (!method) {
+            setFeeEditError(
+                'Select the Scholarship Application method.'
+            );
+            updateFeeDiscussionWizardButtonState();
+            return;
+        }
+
+        const amounts =
+            updateFeeEditAmounts();
+
+        const validationMessage =
+            validateFeeDecision(amounts);
+
+        if (validationMessage) {
+            setFeeEditError(validationMessage);
+            updateFeeDiscussionWizardButtonState();
+            return;
+        }
+
+        const saved =
+            await saveFeeDiscussionModal({
+                keepOpen: true,
+                silentSuccess: true
+            });
+
+        if (!saved) {
+            return;
+        }
+
+        closeFeeEditModal();
+
+        /*
+         * When this was an EDIT of an existing Payment/Scholarship decision,
+         * the backend intentionally reopens Parent Fee Discussion. The
+         * application must remain there until the user explicitly uses the
+         * normal Next/Process workflow action.
+         *
+         * Do not finalize Fee Discussion or start Scholarship from this
+         * button while the application is still in Parent Fee Discussion.
+         */
+        const currentStage =
+            String(
+                state.currentApplication?.currentStage
+                || ''
+            )
+                .trim()
+                .toUpperCase();
+
+        if (currentStage === 'PARENT_FEE_DISCUSSION') {
+            notifyIntermediateSuccess(
+                'Fee Discussion saved. Use the Next action to continue to Scholarship.'
+            );
+            return;
+        }
+
+        if (currentStage !== 'SCHOLARSHIP') {
+            setFeeEditError(
+                'Fee Discussion was saved, but the application is not in the Scholarship stage yet.'
+            );
+            return;
+        }
+
+        if (method === 'SCHOOL') {
+            await openScholarshipFormAtSchool();
+            return;
+        }
+
+        await sendScholarshipApplicationLink();
     }
 
     function openFeeCreateModal() {
@@ -5333,6 +5793,7 @@ function formatBackendSubStage(value) {
         }
 
         configureFeeDiscussionModal('CREATE');
+        state.feeDiscussionOriginalFeeAmounts = null;
 
         [
             view.editFeeTermFee,
@@ -5387,10 +5848,35 @@ function formatBackendSubStage(value) {
         setFeeInputValue(view.editFeeOtherFee, fee.otherFee);
         setFeeInputValue(view.editFeeParentCanPay, fee.parentCanPay);
 
+        state.feeDiscussionOriginalFeeAmounts = {
+            termFee: Number(fee.termFee || 0),
+            transportFee: Number(fee.transportFee || 0),
+            hostelFee: Number(fee.hostelFee || 0),
+            uniformFee: Number(fee.uniformFee || 0),
+            booksFee: Number(fee.booksFee || 0),
+            admissionFee: Number(fee.admissionFee || 0),
+            otherFee: Number(fee.otherFee || 0)
+        };
+
         const decision =
             String(
                 fee.feeDecision || 'PENDING'
             ).toUpperCase();
+
+        view.editFeeDecisionMainOptions.forEach(option => {
+            option.checked =
+                (
+                    decision === 'FULL_PAYMENT'
+                    && String(option.value).toUpperCase() === 'FULL_PAYMENT'
+                )
+                || (
+                    (
+                        decision === 'PARTIAL_ASSISTANCE'
+                        || decision === 'FULL_ASSISTANCE'
+                    )
+                    && String(option.value).toUpperCase() === 'SCHOLARSHIP'
+                );
+        });
 
         view.editFeeDecisionOptions.forEach(option => {
             option.checked =
@@ -5412,12 +5898,26 @@ function formatBackendSubStage(value) {
         setFeeEditError('');
         resetFeeDiscussionWizard();
 
-        if (decision === 'PARTIAL_ASSISTANCE'
-                || decision === 'FULL_ASSISTANCE') {
-            if (view.feeDecisionScholarship) {
-                view.feeDecisionScholarship.checked = true;
-            }
-        }
+        view.editFeeDecisionMainOptions.forEach(option => {
+            option.checked =
+                (
+                    decision === 'FULL_PAYMENT'
+                    && String(option.value).toUpperCase() === 'FULL_PAYMENT'
+                )
+                || (
+                    (
+                        decision === 'PARTIAL_ASSISTANCE'
+                        || decision === 'FULL_ASSISTANCE'
+                    )
+                    && String(option.value).toUpperCase() === 'SCHOLARSHIP'
+                );
+        });
+
+        view.editFeeDecisionOptions.forEach(option => {
+            option.checked =
+                String(option.value).toUpperCase()
+                === decision;
+        });
 
         renderFeeEditDecisionFields(decision);
         updateFeeEditAmounts();
@@ -5439,6 +5939,7 @@ function formatBackendSubStage(value) {
         state.feeDiscussionModalMode = null;
         state.feeDiscussionStep = 1;
         state.feeDiscussionScholarshipSaved = false;
+        state.feeDiscussionOriginalFeeAmounts = null;
 
         closeModal(
             view.feeEditModal
@@ -5446,10 +5947,25 @@ function formatBackendSubStage(value) {
     }
 
     function getFeeEditDecision() {
-        const mainScholarship =
-            Boolean(view.feeDecisionScholarship?.checked);
+        const mainDecision =
+            view.editFeeDecisionMainOptions.find(option =>
+                option.checked
+            );
 
-        if (mainScholarship) {
+        const mainValue =
+            String(mainDecision?.value || '')
+                .trim()
+                .toUpperCase();
+
+        if (mainValue === 'FULL_PAYMENT') {
+            return 'FULL_PAYMENT';
+        }
+
+        if (mainValue === 'DECIDE_LATER') {
+            return 'PENDING';
+        }
+
+        if (mainValue === 'SCHOLARSHIP') {
             const subtype =
                 view.editFeeDecisionOptions.find(option =>
                     option.checked
@@ -5459,15 +5975,10 @@ function formatBackendSubStage(value) {
                     )
                 );
 
-            return String(subtype?.value || 'PENDING').toUpperCase();
+            return String(subtype?.value || 'SCHOLARSHIP').toUpperCase();
         }
 
-        const checked =
-            view.editFeeDecisionOptions.find(
-                option => option.checked
-            );
-
-        return String(checked?.value || 'PENDING').toUpperCase();
+        return 'PENDING';
     }
 
     function renderFeeEditDecisionFields(decision) {
@@ -5632,17 +6143,29 @@ function formatBackendSubStage(value) {
             return false;
         }
 
-        const changeReason =
+        const discussionRemarks =
             String(
-                view.editFeeChangeReason?.value
+                view.editFeeDiscussionRemarks?.value
                 || ''
             ).trim();
 
+        const changeReason =
+            creating
+                ? ''
+                : discussionRemarks;
+
         if (!creating && !changeReason) {
             setFeeEditError(
-                'Reason for Change is required.'
+                'Discussion Remarks are required when editing the Fee Discussion.'
             );
-            view.editFeeChangeReason?.focus();
+            view.editFeeDiscussionRemarks?.focus();
+            return false;
+        }
+
+        if (!creating && amounts.decision === 'PENDING') {
+            setFeeEditError(
+                'Decide Later is available only when creating the Fee Discussion.'
+            );
             return false;
         }
 
@@ -9092,6 +9615,7 @@ function formatBackendSubStage(value) {
         });
     }
 
+
     /**
      * Renders application workflow history.
      *
@@ -9167,12 +9691,7 @@ function formatBackendSubStage(value) {
         });
     }
 
-    /**
-     * Opens a secure document view or download endpoint.
-     *
-     * @param {number|string} documentId
-     * @param {'view'|'download'} action
-     */
+
     function openDocument(
         documentId,
         action

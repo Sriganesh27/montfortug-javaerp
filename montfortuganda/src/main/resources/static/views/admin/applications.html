@@ -1590,9 +1590,9 @@
                     <div id="ba-feeStepIndicator"
                          class="app-fee-step-indicator"
                          aria-label="Fee Discussion steps">
-                        <span id="ba-feeStepIndicator1" class="is-active">① Enter Fees</span>
-                        <span id="ba-feeStepIndicator2">② Payment Decision</span>
-                        <span id="ba-feeStepIndicator3" class="hidden">③ Scholarship</span>
+                        <span id="ba-feeStepIndicator1" class="is-active">Enter Fees</span>
+                        <span id="ba-feeStepIndicator2">Payment Decision</span>
+                        <span id="ba-feeStepIndicator3" class="hidden">Scholarship</span>
                     </div>
 
                     <div id="ba-feeStep1" class="app-fee-step">
@@ -1654,6 +1654,43 @@
                             </label>
                         </div>
 
+                    </div>
+
+                    <div id="ba-feeStep2" class="app-fee-step hidden">
+                        <div class="app-fee-step-total">
+                            <span>Total Fee</span>
+                            <strong id="ba-feeStep2Total">0.00</strong>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Payment Decision</label>
+                            <div class="app-fee-simple-radio-group">
+                                <label class="app-fee-simple-radio" for="ba-feeDecisionFullPayment">
+                                    <input type="radio"
+                                           id="ba-feeDecisionFullPayment"
+                                           name="ba-feeDecisionMainOption"
+                                           value="FULL_PAYMENT">
+                                    <span>Parents Pay</span>
+                                </label>
+
+                                <label class="app-fee-simple-radio" for="ba-feeDecisionDecideLater">
+                                    <input type="radio"
+                                           id="ba-feeDecisionDecideLater"
+                                           name="ba-feeDecisionMainOption"
+                                           value="DECIDE_LATER">
+                                    <span>Decide Later</span>
+                                </label>
+
+                                <label class="app-fee-simple-radio" for="ba-feeDecisionScholarship">
+                                    <input type="radio"
+                                           id="ba-feeDecisionScholarship"
+                                           name="ba-feeDecisionMainOption"
+                                           value="SCHOLARSHIP">
+                                    <span>Scholarship</span>
+                                </label>
+                            </div>
+                        </div>
+
                         <div id="ba-editFeeDiscussionRemarksGroup" class="form-group">
                             <label for="ba-editFeeDiscussionRemarks">
                                 Discussion Remarks
@@ -1665,48 +1702,6 @@
                                       rows="3"
                                       maxlength="500"
                                       placeholder="Enter discussion remarks"></textarea>
-                        </div>
-                    </div>
-
-                    <div id="ba-feeStep2" class="app-fee-step hidden">
-                        <div class="app-fee-step-total">
-                            <span>Total Fee</span>
-                            <strong id="ba-feeStep2Total">0.00</strong>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Payment Decision</label>
-
-                            <div class="app-fee-simple-radio-group">
-
-                                <label class="app-fee-simple-radio"
-                                       for="ba-feeDecisionFullPayment">
-                                    <input type="radio"
-                                           id="ba-feeDecisionFullPayment"
-                                           name="ba-feeDecisionMainOption"
-                                           value="FULL_PAYMENT">
-                                    <span>Parents Pay</span>
-                                </label>
-
-                                <label class="app-fee-simple-radio"
-                                       for="ba-feeDecisionDecideLater">
-                                    <input type="radio"
-                                           id="ba-feeDecisionDecideLater"
-                                           name="ba-feeDecisionMainOption"
-                                           value="DECIDE_LATER">
-                                    <span>Decide Later</span>
-                                </label>
-
-                                <label class="app-fee-simple-radio"
-                                       for="ba-feeDecisionScholarship">
-                                    <input type="radio"
-                                           id="ba-feeDecisionScholarship"
-                                           name="ba-feeDecisionMainOption"
-                                           value="SCHOLARSHIP">
-                                    <span>Scholarship</span>
-                                </label>
-
-                            </div>
                         </div>
                     </div>
 

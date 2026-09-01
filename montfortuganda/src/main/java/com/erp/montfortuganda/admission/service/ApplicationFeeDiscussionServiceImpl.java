@@ -224,6 +224,16 @@ public class ApplicationFeeDiscussionServiceImpl
                         )
                 );
 
+        /*
+         * Capture the persisted decision before applying the edited value.
+         * This lets the service reopen Parent Fee Discussion only when the
+         * decision actually changes.
+         */
+        ErpApplicationFee.FeeDecision previousFeeDecision =
+                existingFee
+                        .map(ErpApplicationFee::getFeeDecision)
+                        .orElse(null);
+
         if (
                 application.getCurrentStage()
                         == ErpApplication.CurrentStage.PAYMENT
@@ -337,28 +347,44 @@ public class ApplicationFeeDiscussionServiceImpl
                 applicationFeeRepository.saveAndFlush(fee);
 
         /*
-         * Fee Structure Edit is normally non-transitional. The one explicit
-         * exception is the controlled reverse path PAYMENT -> SCHOLARSHIP
-         * when the application is still unpaid and the edited decision is a
-         * scholarship decision. The existing workflow transition service
-         * records the application-history event with the current logged-in
-         * user and applies the existing RETURN rules.
+         * Editing an already-processed decision reopens Parent Fee Discussion.
+         *
+         * This is deliberately NOT:
+         *
+         *     SCHOLARSHIP -> PAYMENT
+         *     PAYMENT -> SCHOLARSHIP
+         *
+         * The edit only changes the saved Fee Discussion decision. The next
+         * workflow stage is Parent Fee Discussion, where the user can review
+         * the saved decision and then explicitly use the existing Process /
+         * Finalize action to continue to PAYMENT or SCHOLARSHIP.
+         *
+         * This also prevents Payment from starting merely because the parent
+         * changed the decision. The central RETURN transition resets the
+         * application payment status to NOT_STARTED while the application is
+         * in Parent Fee Discussion.
+         *
+         * Same-decision edits do not reopen the workflow.
          */
-        boolean scholarshipDecision =
-                feeDecision == ErpApplicationFee.FeeDecision.PARTIAL_ASSISTANCE
-                        || feeDecision == ErpApplicationFee.FeeDecision.FULL_ASSISTANCE;
+        boolean decisionChanged =
+                existingFee.isPresent()
+                        && previousFeeDecision != null
+                        && previousFeeDecision != feeDecision;
 
-        if (stageBeforeEdit == ErpApplication.CurrentStage.PAYMENT
-                && scholarshipDecision) {
+        boolean processedStage =
+                stageBeforeEdit == ErpApplication.CurrentStage.PAYMENT
+                        || stageBeforeEdit
+                        == ErpApplication.CurrentStage.SCHOLARSHIP;
 
+        if (decisionChanged && processedStage) {
             ApplicationStageTransitionRequestDTO transitionRequest =
                     new ApplicationStageTransitionRequestDTO();
 
             transitionRequest.setExpectedCurrentStage(
-                    ErpApplication.CurrentStage.PAYMENT
+                    stageBeforeEdit
             );
             transitionRequest.setTargetStage(
-                    ErpApplication.CurrentStage.SCHOLARSHIP
+                    ErpApplication.CurrentStage.PARENT_FEE_DISCUSSION
             );
             transitionRequest.setAction(
                     ApplicationStageTransitionRequestDTO
