@@ -13432,7 +13432,6 @@ function formatBackendSubStage(value) {
             return;
         }
 
-        console.log(message);
     }
 
     /**
@@ -13459,7 +13458,6 @@ function formatBackendSubStage(value) {
             return;
         }
 
-        console.log(message);
     }
 
     function notifyError(
