@@ -17,6 +17,7 @@ import com.erp.montfortuganda.exception.ResourceNotFoundException;
 import com.erp.montfortuganda.scholarship.entity.ErpScholarshipApplication;
 import com.erp.montfortuganda.scholarship.entity.ErpScholarshipHistory;
 import com.erp.montfortuganda.scholarship.repository.ErpScholarshipApplicationRepository;
+import com.erp.montfortuganda.scholarship.service.ScholarshipService;
 import com.erp.montfortuganda.scholarship.repository.ErpScholarshipHistoryRepository;
 import com.erp.montfortuganda.school.entity.ErpAcademicYear;
 import com.erp.montfortuganda.school.repository.AcademicYearRepository;
@@ -39,6 +40,7 @@ public class ApplicationFeeDiscussionServiceImpl
     private final AcademicYearRepository academicYearRepository;
     private final BranchAccessService branchAccessService;
     private final ApplicationStageTransitionService stageTransitionService;
+    private final ScholarshipService scholarshipService;
 
     public ApplicationFeeDiscussionServiceImpl(
             ErpApplicationRepository applicationRepository,
@@ -48,7 +50,8 @@ public class ApplicationFeeDiscussionServiceImpl
             ErpScholarshipHistoryRepository scholarshipHistoryRepository,
             AcademicYearRepository academicYearRepository,
             BranchAccessService branchAccessService,
-            ApplicationStageTransitionService stageTransitionService
+            ApplicationStageTransitionService stageTransitionService,
+            ScholarshipService scholarshipService
     ) {
         this.applicationRepository = applicationRepository;
         this.applicationFeeRepository = applicationFeeRepository;
@@ -64,6 +67,8 @@ public class ApplicationFeeDiscussionServiceImpl
                 branchAccessService;
         this.stageTransitionService =
                 stageTransitionService;
+        this.scholarshipService =
+                scholarshipService;
     }
 
     @Override
@@ -226,7 +231,8 @@ public class ApplicationFeeDiscussionServiceImpl
 
         /*
          * Capture the persisted decision before applying the edited value.
-         * This is used only to detect an actual decision change.
+         * This lets the service reopen Parent Fee Discussion only when the
+         * decision actually changes.
          */
         ErpApplicationFee.FeeDecision previousFeeDecision =
                 existingFee
@@ -346,10 +352,20 @@ public class ApplicationFeeDiscussionServiceImpl
                 applicationFeeRepository.saveAndFlush(fee);
 
         /*
-         * An existing processed decision may be changed in either direction.
-         * Saving the edit must reopen Parent Fee Discussion; it must not
-         * directly jump to Payment or Scholarship. The existing explicit
-         * Next / Finalize action performs that later transition.
+         * Editing an already-processed decision normally reopens Parent Fee
+         * Discussion first.
+         *
+         * Scholarship is the deliberate automatic exception:
+         *
+         *   CREATE:
+         *       PARENT_FEE_DISCUSSION -> SCHOLARSHIP
+         *
+         *   PAYMENT -> EDIT Scholarship:
+         *       PAYMENT -> PARENT_FEE_DISCUSSION -> SCHOLARSHIP
+         *
+         * The central stage-transition service remains authoritative for both
+         * moves. Payment-originated Scholarship also issues the existing
+         * secure parent email link after the application reaches Scholarship.
          */
         boolean decisionChanged =
                 existingFee.isPresent()
@@ -361,28 +377,89 @@ public class ApplicationFeeDiscussionServiceImpl
                         || stageBeforeEdit
                         == ErpApplication.CurrentStage.SCHOLARSHIP;
 
+        boolean scholarshipDecision =
+                feeDecision
+                        == ErpApplicationFee.FeeDecision.PARTIAL_ASSISTANCE
+                || feeDecision
+                        == ErpApplicationFee.FeeDecision.FULL_ASSISTANCE;
+
+        boolean scholarshipAutoFlow =
+                scholarshipDecision
+                        && (
+                            stageBeforeEdit
+                                == ErpApplication.CurrentStage.PARENT_FEE_DISCUSSION
+                            || stageBeforeEdit
+                                == ErpApplication.CurrentStage.PAYMENT
+                        );
+
         if (decisionChanged && processedStage) {
-            ApplicationStageTransitionRequestDTO transitionRequest =
+            ApplicationStageTransitionRequestDTO returnRequest =
                     new ApplicationStageTransitionRequestDTO();
 
-            transitionRequest.setExpectedCurrentStage(
+            returnRequest.setExpectedCurrentStage(
                     stageBeforeEdit
             );
-            transitionRequest.setTargetStage(
+            returnRequest.setTargetStage(
                     ErpApplication.CurrentStage.PARENT_FEE_DISCUSSION
             );
-            transitionRequest.setAction(
+            returnRequest.setAction(
                     ApplicationStageTransitionRequestDTO
                             .TransitionAction
                             .RETURN
             );
-            transitionRequest.setNotifyApplicant(false);
+            returnRequest.setNotifyApplicant(false);
 
             stageTransitionService.transition(
                     context,
                     safeApplicationId,
-                    transitionRequest
+                    returnRequest
             );
+        }
+
+        if (scholarshipAutoFlow) {
+            ApplicationStageTransitionRequestDTO scholarshipRequest =
+                    new ApplicationStageTransitionRequestDTO();
+
+            scholarshipRequest.setExpectedCurrentStage(
+                    ErpApplication.CurrentStage.PARENT_FEE_DISCUSSION
+            );
+            scholarshipRequest.setTargetStage(
+                    ErpApplication.CurrentStage.SCHOLARSHIP
+            );
+            scholarshipRequest.setAction(
+                    ApplicationStageTransitionRequestDTO
+                            .TransitionAction
+                            .ADVANCE
+            );
+            scholarshipRequest.setNotifyApplicant(false);
+            scholarshipRequest.setInternalRemarks(
+                    trimToNull(
+                            request.discussionRemarks()
+                    )
+            );
+
+            stageTransitionService.transition(
+                    context,
+                    safeApplicationId,
+                    scholarshipRequest
+            );
+
+            /*
+             * Payment -> Scholarship must automatically notify the registered
+             * parent through the existing secure Scholarship link flow.
+             * CREATE keeps the existing UI-selected SCHOOL/EMAIL behavior.
+             */
+            if (stageBeforeEdit == ErpApplication.CurrentStage.PAYMENT) {
+                if (trimToNull(application.getPrimaryEmail()) == null) {
+                    throw new BadRequestException(
+                            "A registered parent/applicant email address is required before moving from Payment to Scholarship."
+                    );
+                }
+
+                scholarshipService.issuePublicApplicationToken(
+                        safeApplicationId
+                );
+            }
         }
 
         return toResponse(saved);
@@ -543,13 +620,20 @@ public class ApplicationFeeDiscussionServiceImpl
                 scholarship.setActive(false);
                 scholarship.setUpdatedBy(userId.longValue());
 
+                /*
+                 * Keep the application-level workflow/status summary in sync
+                 * with the dedicated Scholarship Application row. Otherwise
+                 * the profile can continue to display the old PENDING status
+                 * even though the Scholarship request was cancelled.
+                 *
+                 * This status is also used by the controlled workflow exception
+                 * when Scholarship -> Parents Pay is selected.
+                 */
                 application.setScholarshipStatus(
                         "CANCELLED_BY_FEE_DECISION"
                 );
 
-                scholarshipApplicationRepository.saveAndFlush(
-                        scholarship
-                );
+                scholarshipApplicationRepository.saveAndFlush(scholarship);
 
                 scholarshipHistoryRepository
                         .findFirstByScholarshipApplicationScholarshipAppIdOrderByScholarshipHistoryIdDesc(

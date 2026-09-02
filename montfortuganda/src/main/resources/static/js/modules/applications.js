@@ -1070,6 +1070,20 @@ const ApplicationsController = (() => {
     /**
      * Connects all table, detail and modal actions.
      */
+    function handleFeeDiscussionCreateClick(event) {
+        const button =
+            event.target?.closest?.(
+                '#ba-openFeeDiscussionBtn'
+            );
+
+        if (!button) {
+            return;
+        }
+
+        event.preventDefault();
+        openFeeCreateModal();
+    }
+
     function bindEvents() {
         view.searchButton?.addEventListener(
             'click',
@@ -1304,9 +1318,25 @@ const ApplicationsController = (() => {
             );
         });
 
-        view.feeOpenDiscussionButton?.addEventListener(
+        /*
+         * Enter Fee Discussion is inside the application detail DOM.
+         * Use delegated click handling so the action remains bound even if
+         * the detail section is refreshed/re-rendered after initialization.
+         */
+        /*
+         * Enter Fee Discussion is rendered inside the profile after the
+         * application detail is loaded. Bind at document level so the click
+         * remains functional even when the profile/detail DOM is replaced.
+         * Remove the previous module handler first so navigation back to this
+         * view never creates duplicate handlers.
+         */
+        document.removeEventListener(
             'click',
-            openFeeCreateModal
+            handleFeeDiscussionCreateClick
+        );
+        document.addEventListener(
+            'click',
+            handleFeeDiscussionCreateClick
         );
 
         view.feeDiscussionEditButton?.addEventListener(
@@ -4351,8 +4381,9 @@ function formatBackendSubStage(value) {
         let scholarshipWindow = null;
 
         /*
-         * The Scholarship Application must always open in a separate tab.
-         * Never fall back to navigating the current application page.
+         * Prefer a separate tab. If the browser blocks it, do not stop the
+         * Scholarship process; after the secure key is generated we fall back
+         * to opening the Scholarship Application in the current tab.
          */
         try {
             scholarshipWindow =
@@ -4368,15 +4399,9 @@ function formatBackendSubStage(value) {
             scholarshipWindow = null;
 
             console.debug(
-                'Scholarship tab was blocked. User must allow pop-ups.',
+                'Scholarship tab was blocked. Current-tab fallback will be used.',
                 popupError
             );
-
-            notifyError(
-                'Your browser blocked the Scholarship tab. Please allow pop-ups for this site and click Fill in School again.'
-            );
-
-            return;
         }
 
         let loaderToken = null;
@@ -4481,13 +4506,36 @@ function formatBackendSubStage(value) {
             }
 
             /*
-             * No current-tab fallback is allowed. If the browser did not
-             * provide a separate tab, stop here and ask the operator to allow
-             * pop-ups. The current application page must remain open.
+             * Browser blocked the new tab. Fall back to the same tab rather
+             * than failing the Scholarship workflow.
              */
-            throw new Error(
-                'Your browser blocked the Scholarship tab. Please allow pop-ups for this site and click Fill in School again.'
+            try {
+                sessionStorage.setItem(
+                    'erpScholarshipReturnUrl',
+                    window.location.href
+                );
+            } catch (storageError) {
+                console.debug(
+                    'Scholarship return URL could not be stored.',
+                    storageError
+                );
+            }
+
+            if (
+                loaderToken
+                && typeof hideLoader === 'function'
+            ) {
+                hideLoader(
+                    loaderToken
+                );
+                loaderToken = null;
+            }
+
+            window.location.assign(
+                targetUrl
             );
+
+            return;
         } catch (error) {
             if (scholarshipWindow) {
                 try {
@@ -5614,6 +5662,14 @@ function formatBackendSubStage(value) {
             return;
         }
 
+        const stageBeforeSave =
+            String(
+                state.currentApplication?.currentStage
+                || ''
+            )
+                .trim()
+                .toUpperCase();
+
         const amounts = updateFeeEditAmounts();
         const validationMessage = validateFeeDecision(amounts);
 
@@ -5652,6 +5708,22 @@ function formatBackendSubStage(value) {
         if (currentStage !== 'SCHOLARSHIP') {
             setFeeEditError(
                 'Fee Discussion was saved, but the application is not in the Scholarship stage yet.'
+            );
+            return;
+        }
+
+        /*
+         * Payment -> Scholarship is completed automatically by the backend.
+         * The backend issues the secure public token and publishes the
+         * existing AFTER_COMMIT email event. Do not call the email endpoint
+         * again from the browser or the parent receives two links.
+         *
+         * Create/PFD-originated Scholarship keeps the existing selected
+         * SCHOOL/EMAIL initiation behavior.
+         */
+        if (stageBeforeSave === 'PAYMENT') {
+            notifyIntermediateSuccess(
+                'Scholarship selected. The secure Scholarship link has been sent to the registered email address.'
             );
             return;
         }
@@ -5697,6 +5769,14 @@ function formatBackendSubStage(value) {
             updateFeeDiscussionWizardButtonState();
             return;
         }
+
+        const stageBeforeSave =
+            String(
+                state.currentApplication?.currentStage
+                || ''
+            )
+                .trim()
+                .toUpperCase();
 
         const amounts =
             updateFeeEditAmounts();
@@ -5753,6 +5833,17 @@ function formatBackendSubStage(value) {
             return;
         }
 
+        /*
+         * Payment -> Scholarship already sends the secure link from the
+         * backend's automatic Scholarship transition. Avoid a second email.
+         */
+        if (stageBeforeSave === 'PAYMENT') {
+            notifyIntermediateSuccess(
+                'Scholarship selected. The secure Scholarship link has been sent to the registered email address.'
+            );
+            return;
+        }
+
         if (method === 'SCHOOL') {
             await openScholarshipFormAtSchool();
             return;
@@ -5762,13 +5853,13 @@ function formatBackendSubStage(value) {
     }
 
     function openFeeCreateModal() {
-        if (!enumEquals(
-            state.currentApplication?.currentStage,
-            'PARENT_FEE_DISCUSSION'
-        )) {
-            return;
-        }
-
+        /*
+         * This function is invoked only by the visible Enter Fee Discussion
+         * action in the Parent Fee Discussion section. The section itself is
+         * rendered only when the backend reports that stage. Do not perform
+         * a second client-side stage gate here because the profile DOM can be
+         * refreshed independently of the in-memory application object.
+         */
         if (state.feeDiscussion?.feeId) {
             openFeeEditModal();
             return;
@@ -6101,19 +6192,13 @@ function formatBackendSubStage(value) {
             state.feeDiscussionModalMode
                 === 'CREATE';
 
-        if (
-            creating
-            && !enumEquals(
-                state.currentApplication?.currentStage,
-                'PARENT_FEE_DISCUSSION'
-            )
-        ) {
-            setFeeEditError(
-                'Fee Discussion is not available at the current stage.'
-            );
-            return false;
-        }
-
+        /*
+         * Do not reject a Fee Discussion save using the client-side
+         * currentApplication snapshot. The profile DOM is refreshed
+         * independently and this snapshot can temporarily lag behind the
+         * authoritative backend stage. The backend endpoint is the workflow
+         * authority and validates the actual current stage.
+         */
         const amounts =
             updateFeeEditAmounts();
 
@@ -13054,6 +13139,19 @@ function formatBackendSubStage(value) {
         if (value == null
                 || String(value).trim() === '') {
             return '';
+        }
+
+        const normalized =
+            String(value)
+                .trim()
+                .toUpperCase();
+
+        /*
+         * Keep the backend status value unchanged for workflow logic,
+         * but use the requested human-readable wording in the frontend.
+         */
+        if (normalized === 'CANCELLED_BY_FEE_DECISION') {
+            return 'Cancelled at Fee Decision';
         }
 
         return String(value)

@@ -793,19 +793,18 @@ public class ApplicationStageTransitionServiceImpl
 
             case PARENT_FEE_DISCUSSION -> {
                 /*
-                 * An edit from PAYMENT or SCHOLARSHIP has already persisted
-                 * the new Fee Discussion decision before returning here.
-                 * Preserve it so the existing Next / Finalize action can
-                 * continue to the selected next stage.
-                 *
-                 * A normal first entry remains DECISION_PENDING.
+                 * When Fee Discussion intentionally returns an already
+                 * processed application to PFD, preserve the newly selected
+                 * decision so an immediate PFD -> Scholarship/Payment
+                 * continuation can validate correctly. A normal return with
+                 * no finalized decision remains DECISION_PENDING.
                  */
-                ErpApplication.FeeDecisionStatus savedDecision =
+                ErpApplication.FeeDecisionStatus currentDecision =
                         application.getFeeDecisionStatus();
 
-                if (savedDecision
+                if (currentDecision
                         != ErpApplication.FeeDecisionStatus.FEE_ACCEPTED
-                        && savedDecision
+                        && currentDecision
                         != ErpApplication.FeeDecisionStatus.SCHOLARSHIP_REQUESTED) {
                     application.setFeeDecisionStatus(
                             ErpApplication.FeeDecisionStatus.DECISION_PENDING
