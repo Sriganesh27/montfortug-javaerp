@@ -391,6 +391,57 @@
         };
     }
 
+    /**
+     * Replace the options in a select element.
+     *
+     * This helper intentionally lives in the Add Student module.
+     * students.js contains a separate Manage Students IIFE later in the
+     * file; functions declared there are not visible from this module.
+     */
+    function replaceSelectOptions(
+        select,
+        placeholder,
+        options = [],
+        selectedValue = ''
+    ) {
+        if (!(select instanceof HTMLSelectElement)) {
+            return;
+        }
+
+        const fragment = document.createDocumentFragment();
+        const placeholderOption = new Option(
+            String(placeholder ?? ''),
+            ''
+        );
+        fragment.appendChild(placeholderOption);
+
+        if (Array.isArray(options)) {
+            options.forEach(option => {
+                if (!option || typeof option !== 'object') {
+                    return;
+                }
+
+                const value =
+                    option.value ?? option.id ?? '';
+                const label =
+                    option.label ??
+                    option.name ??
+                    option.text ??
+                    value;
+
+                fragment.appendChild(
+                    new Option(
+                        String(label ?? ''),
+                        String(value ?? '')
+                    )
+                );
+            });
+        }
+
+        select.replaceChildren(fragment);
+        select.value = String(selectedValue ?? '');
+    }
+
     function populateAcademicYears(view, state) {
         const select = view.querySelector(
             '#add-studentAcademicYear'
