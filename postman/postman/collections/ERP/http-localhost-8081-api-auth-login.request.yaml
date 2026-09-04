@@ -1,0 +1,19 @@
+$kind: http-request
+name: http://localhost:8081/api/auth/login
+description: ""
+url: http://localhost:8081/api/auth/login
+method: POST
+body:
+  type: json
+  content: "\r
+
+    {\r
+
+    \  \"username\": \"ug11@montfort.ug\",\r
+
+    \  \"password\": \"ST.KIZ@U0112024\",\r
+
+    \  \"role\": \"SECURE_ADMIN_GATEWAY\"\r
+
+    }"
+order: 4485610034698049

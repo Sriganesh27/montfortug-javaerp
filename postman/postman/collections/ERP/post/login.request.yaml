@@ -1,6 +1,6 @@
 $kind: http-request
 name: login
-url: http://localhost:8080/api/auth/login
+url: http://localhost:8081/api/auth/login
 method: POST
 headers:
   Content-Type: " application/json"
@@ -8,13 +8,15 @@ body:
   type: json
   content: "{\r
 
-    \    \"username\": \"erpsadmin\",\r
+    \  \"username\": \"ug11@montfort.ug\",\r
 
-    \    \"password\": \"montfort@uganda2022\",\r
+    \  \"password\": \"ST.KIZ@U0112024\",\r
 
-    \    \"role\": \"SUPER_ADMIN\"\r
+    \  \"role\": \"School Admin\",\r
 
-    }"
+    \  \"branchId\": 1\r
+
+    }\r\n"
 settings:
   disableCookies: true
 order: 1387374183071030
