@@ -113,6 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("subjectsBody").addEventListener("input", calculateSubjectTotal);
     document.getElementById("admission-form").addEventListener("submit", handleFormSubmit);
     document.addEventListener("change", handleFileUploadUI);
+    initialisePrimaryContactSelection();
 
     // CSP-Compliant Event Delegation for Navigation
     document.addEventListener("click", function(e) {
@@ -250,6 +251,55 @@ function startJavascriptSlider() {
     }, 6000);
 }
 
+function initialisePrimaryContactSelection() {
+    const choices = document.querySelectorAll("input[name='primaryContactType']");
+    choices.forEach(choice => choice.addEventListener("change", updatePrimaryContactSelection));
+    updatePrimaryContactSelection();
+}
+
+function updatePrimaryContactSelection() {
+    const selected = document.querySelector("input[name='primaryContactType']:checked");
+    const contactType = selected ? selected.value : "";
+    const otherSection = document.getElementById("otherPrimaryContactSection");
+    const isOther = contactType === "OTHER";
+
+    if (otherSection) otherSection.classList.toggle("hidden-element", !isOther);
+
+    setRequired("fatherContact_display", contactType === "FATHER");
+    setRequiredByName("fatherEmail", contactType === "FATHER");
+    setRequired("motherContact_display", contactType === "MOTHER");
+    setRequiredByName("motherEmail", contactType === "MOTHER");
+    setRequiredByName("guardianName", isOther);
+    setRequired("guardianContact_display", isOther);
+    setRequiredByName("guardianEmail", isOther);
+    setRequiredByName("guardianRelation", isOther);
+
+    if (!isOther) clearGuardianFields();
+}
+
+function setRequired(id, required) {
+    const input = document.getElementById(id);
+    if (input) input.required = required;
+}
+
+function setRequiredByName(name, required) {
+    const input = document.querySelector(`[name='${name}']`);
+    if (input) input.required = required;
+}
+
+function clearGuardianFields() {
+    document.querySelectorAll("#otherPrimaryContactSection input, #otherPrimaryContactSection select").forEach(input => {
+        if (input.tagName === "SELECT") input.selectedIndex = 0;
+        else input.value = "";
+        input.classList.remove("error-border");
+    });
+}
+
+function getPrimaryContactType() {
+    const selected = document.querySelector("input[name='primaryContactType']:checked");
+    return selected ? selected.value : "";
+}
+
 // VALIDATION ENGINE
 function validateAndGoTo(targetStepNumber) {
     const activeStepDiv = document.querySelector(".form-step.active-step");
@@ -280,17 +330,16 @@ function validateAndGoTo(targetStepNumber) {
             input.classList.remove("error-border");
         }
     });
-    // CUSTOM LOGIC: Guardian Conditional Validation (Step 4)
+    // Step 4: the selected parent supplies the primary contact details;
+    // a separate guardian is required only when "Other" is selected.
     if (currentStep === 4) {
-        const guardianName = document.querySelector("[name='guardianName']");
-        const guardianRelation = document.querySelector("[name='guardianRelation']");
-
-        if (guardianName && guardianName.value.trim() !== "") {
-            if (!guardianRelation || guardianRelation.value === "") {
-                isValid = false;
-                guardianRelation.classList.add("error-border");
-                guardianRelation.addEventListener("change", function() { this.classList.remove("error-border"); }, { once: true });
-                if (!firstInvalid) firstInvalid = guardianRelation;
+        const contactType = getPrimaryContactType();
+        if (!contactType) {
+            const choice = document.querySelector("input[name='primaryContactType']");
+            isValid = false;
+            if (choice) {
+                choice.classList.add("error-border");
+                if (!firstInvalid) firstInvalid = choice;
             }
         }
     }
@@ -384,67 +433,110 @@ function buildReviewSummary() {
         const strong = document.createElement("strong");
         strong.textContent = label;
         const span = document.createElement("span");
-        span.textContent = value;
+        span.textContent = value || 'Not provided';
         div.appendChild(strong);
         div.appendChild(span);
         container.appendChild(div);
     };
 
-    appendSectionBreak("Enrollment");
-    appendItem("Branch", getSelectText('branchSelect'));
-    appendItem("Class", getSelectText('classSelect'));
-    appendItem(
-        "Year & Term",
-        `${getSelectText('academicYear')} - ${getSelectText('joiningTerm')}`
-    );
+    const displayValue = value => String(value || '').trim() || 'Not provided';
+    const formatDate = value => value
+        ? (window.erpDate ? window.erpDate.formatDate(value, 'N/A') : value)
+        : 'Not provided';
+    const getFileNames = name => {
+        const input = form.querySelector(`input[name="${name}"]`);
+        return input && input.files && input.files.length
+            ? Array.from(input.files).map(file => file.name).join(', ')
+            : 'Not provided';
+    };
+    const hasField = name => Boolean(form.querySelector(`[name="${name}"]`));
+    const appendPerson = (prefix, title) => {
+        appendSectionBreak(title);
+        appendItem('Full Name', getVal(`${prefix}Name`));
+        appendItem('Contact', getVal(`${prefix}Contact`));
+        appendItem('Email', getVal(`${prefix}Email`));
+        appendItem('Occupation', getVal(`${prefix}Occupation`));
+        appendItem('Education', getVal(`${prefix}Education`));
+        appendItem('Age', getVal(`${prefix}Age`));
+    };
 
-    appendSectionBreak("Student Info");
-    appendItem("Full Name", `${getVal('studentName')} ${getVal('middleName')} ${getVal('studentSurname')}`);
-    appendItem("Gender", getRadio('gender'));
-    appendItem(
-        "DOB & Nationality",
-        `${getVal('dob')
-            ? (window.erpDate
-                ? window.erpDate.formatDate(getVal('dob'), 'N/A')
-                : getVal('dob'))
-            : 'N/A'} | ${getVal('nationality')}`
-    );
+    appendSectionBreak('Enrollment Details');
+    appendItem('School Branch', getSelectText('branchSelect'));
+    appendItem('Education Level', getSelectText('level'));
+    appendItem('Applying For Class', getSelectText('classSelect'));
+    appendItem('Admission Year', getSelectText('academicYear'));
+    appendItem('Admission Term', getSelectText('joiningTerm'));
+    appendItem('Registration Date', formatDate(getVal('dateOfRegistration')));
 
-    appendSectionBreak("Residential Address");
-    appendItem("Full Address", addressString || 'Not Provided', true);
+    appendSectionBreak('Student Details');
+    appendItem('First Name', getVal('studentName'));
+    appendItem('Middle Name', getVal('middleName'));
+    appendItem('Surname', getVal('studentSurname'));
+    appendItem('Gender', getRadio('gender'));
+    appendItem('Date of Birth', formatDate(getVal('dob')));
+    appendItem('Nationality', getVal('nationality'));
 
-    appendSectionBreak("Family Contact");
-    appendItem("Father", `${getVal('fatherName') || 'N/A'} ${getVal('fatherContact') ? '('+getVal('fatherContact')+')' : ''}`);
-    appendItem("Mother", `${getVal('motherName') || 'N/A'} ${getVal('motherContact') ? '('+getVal('motherContact')+')' : ''}`);
-    appendItem("Guardian", `${getVal('guardianName') || 'N/A'} ${getVal('guardianContact') ? '('+getVal('guardianContact')+')' : ''} ${getVal('guardianLocation') ? '- '+getVal('guardianLocation') : ''}`);
+    appendSectionBreak('Residential Address');
+    appendItem('House / Plot No.', getVal('addressHouse'));
+    appendItem('Street / Zone', getVal('addressStreet'));
+    appendItem('Village / Town', getVal('addressVillage'));
+    appendItem('District', getVal('addressDistrict'));
+    appendItem('Region', getVal('addressState'));
+    appendItem('P.O. Box', getVal('addressPostal'));
+    appendItem('Complete Address', addressString || 'Not provided', true);
 
-    appendSectionBreak("Academic Details");
-    appendItem("Former School", `${getVal('formerSchool') || 'N/A'} ${getVal('formerSchoolLin') ? '(LIN: '+getVal('formerSchoolLin')+')' : ''}`);
+    appendPerson('father', "Father's Details");
+    appendPerson('mother', "Mother's Details");
 
-    const reviewSubjectMarks = collectSubjectMarks();
+    const primaryContactType = getPrimaryContactType();
+    const primaryContactLabel = primaryContactType
+        ? primaryContactType.charAt(0) + primaryContactType.slice(1).toLowerCase()
+        : 'Not provided';
+    const primaryPrefix = primaryContactType === 'FATHER'
+        ? 'father'
+        : primaryContactType === 'MOTHER'
+            ? 'mother'
+            : 'guardian';
+    appendSectionBreak('Primary Contact');
+    appendItem('Selected Contact', primaryContactLabel);
+    appendItem('Primary Mobile', getVal(`${primaryPrefix}Contact`));
+    appendItem('Primary Email', getVal(`${primaryPrefix}Email`));
 
-    if (reviewSubjectMarks.length > 0) {
-        const subjectSummary =
-            reviewSubjectMarks
-                .map(mark =>
-                    `${mark.subject}: ${mark.marks || '—'}${mark.grade ? ` (${mark.grade})` : ''}`
-                )
-                .join(" | ");
-
-        appendItem(
-            "Subject Marks",
-            subjectSummary,
-            true
-        );
-    } else {
-        appendItem(
-            "Subject Marks",
-            "Not Provided",
-            true
-        );
+    if (primaryContactType === 'OTHER') {
+        appendSectionBreak('Other Primary Contact / Guardian');
+        appendItem('Full Name', getVal('guardianName'));
+        appendItem('Contact', getVal('guardianContact'));
+        appendItem('Email', getVal('guardianEmail'));
+        appendItem('Relationship', getVal('guardianRelation'));
+        appendItem('Occupation', getVal('guardianOccupation'));
+        appendItem('Education', getVal('guardianEducation'));
+        appendItem('Age', getVal('guardianAge'));
+        appendItem('Location / Address', getVal('guardianLocation'));
     }
 
-    appendItem("Attachments", "Photo & Documents Ready for Upload");
+    appendSectionBreak('Academic Details');
+    appendItem('Former School Name', getVal('formerSchool'));
+    appendItem('Former School Code', getVal('formerSchoolCode'));
+    appendItem('Former School LIN', getVal('formerSchoolLin'));
+    if (hasField('pleRef')) {
+        appendItem('PLE Index Number', getVal('pleRef'));
+        appendItem('PLE Aggregate Score', getVal('pleScore'));
+    }
+    if (hasField('uceRef')) {
+        appendItem('UCE Index Number', getVal('uceRef'));
+        appendItem('UCE Aggregate Score', getVal('uceScore'));
+    }
+
+    const reviewSubjectMarks = collectSubjectMarks();
+    const subjectSummary = reviewSubjectMarks.length
+        ? reviewSubjectMarks.map(mark => `${mark.subject || 'Subject'}: ${mark.marks || '—'}${mark.grade ? ` (${mark.grade})` : ''}`).join(' | ')
+        : 'Not provided';
+    appendItem('Subject Marks', subjectSummary, true);
+
+    appendSectionBreak('Documents & Additional Information');
+    appendItem('Academic Results / Legal Documents', getFileNames('prevMarks'), true);
+    appendItem('Passport Photo', getFileNames('photo'));
+    appendItem('Medical / Additional Information', displayValue(getVal('moreInfo')), true);
 }
 
 function setupDefaultOption(selectElem, text="Select...") {
@@ -948,6 +1040,15 @@ async function handleFormSubmit(e) {
     const selectedClassCode = document.getElementById("classSelect").value;
     const selectedClassObj = classList.find(c => c.classCode === selectedClassCode);
     const trueClassId = selectedClassObj ? selectedClassObj.classId : null;
+    const primaryContactType = getPrimaryContactType();
+    const primaryPrefix = primaryContactType === "FATHER"
+        ? "father"
+        : primaryContactType === "MOTHER"
+            ? "mother"
+            : "guardian";
+    const primaryEmail = form.querySelector(`[name='${primaryPrefix}Email']`);
+    const primaryMobile = form.querySelector(`[name='${primaryPrefix}Contact']`);
+    const hasOtherPrimaryContact = primaryContactType === "OTHER";
 
     // MAPPING FRONTEND TO BACKEND: Create the clean ApplicationCreateDTO JSON payload
     const payload = {
@@ -968,8 +1069,9 @@ async function handleFormSubmit(e) {
                 : null,
         branchClassId: trueClassId,
 
-        primaryEmail: form.querySelector("[name='primaryEmail']") ? form.querySelector("[name='primaryEmail']").value : "",
-        primaryMobile: form.querySelector("[name='primaryMobile']") ? form.querySelector("[name='primaryMobile']").value : "",
+        // Keep the existing API fields: their values come from the chosen contact.
+        primaryEmail: primaryEmail ? primaryEmail.value : "",
+        primaryMobile: primaryMobile ? primaryMobile.value : "",
 
         firstName: form.querySelector("[name='studentName']").value,
         middleName: form.querySelector("[name='middleName']") ? form.querySelector("[name='middleName']").value : "",
@@ -1003,14 +1105,14 @@ async function handleFormSubmit(e) {
         motherOccupation: form.querySelector("[name='motherOccupation']") ? form.querySelector("[name='motherOccupation']").value : "",
         motherEmail: form.querySelector("[name='motherEmail']") ? form.querySelector("[name='motherEmail']").value : "",
 
-        guardianName: form.querySelector("[name='guardianName']") ? form.querySelector("[name='guardianName']").value : "",
-        guardianMobile: form.querySelector("[name='guardianContact']") ? form.querySelector("[name='guardianContact']").value : "",
-        guardianEmail: form.querySelector("[name='guardianEmail']") ? form.querySelector("[name='guardianEmail']").value : "",
-        guardianAge: form.querySelector("[name='guardianAge']") && form.querySelector("[name='guardianAge']").value ? parseInt(form.querySelector("[name='guardianAge']").value) : null,
-        guardianEducation: form.querySelector("[name='guardianEducation']") ? form.querySelector("[name='guardianEducation']").value : "",
-        guardianOccupation: form.querySelector("[name='guardianOccupation']") ? form.querySelector("[name='guardianOccupation']").value : "",
-        guardianRelation: form.querySelector("[name='guardianRelation']") ? form.querySelector("[name='guardianRelation']").value : "",
-        guardianLocation: form.querySelector("[name='guardianLocation']") ? form.querySelector("[name='guardianLocation']").value : "",
+        guardianName: hasOtherPrimaryContact && form.querySelector("[name='guardianName']") ? form.querySelector("[name='guardianName']").value : "",
+        guardianMobile: hasOtherPrimaryContact && form.querySelector("[name='guardianContact']") ? form.querySelector("[name='guardianContact']").value : "",
+        guardianEmail: hasOtherPrimaryContact && form.querySelector("[name='guardianEmail']") ? form.querySelector("[name='guardianEmail']").value : "",
+        guardianAge: hasOtherPrimaryContact && form.querySelector("[name='guardianAge']") && form.querySelector("[name='guardianAge']").value ? parseInt(form.querySelector("[name='guardianAge']").value) : null,
+        guardianEducation: hasOtherPrimaryContact && form.querySelector("[name='guardianEducation']") ? form.querySelector("[name='guardianEducation']").value : "",
+        guardianOccupation: hasOtherPrimaryContact && form.querySelector("[name='guardianOccupation']") ? form.querySelector("[name='guardianOccupation']").value : "",
+        guardianRelation: hasOtherPrimaryContact && form.querySelector("[name='guardianRelation']") ? form.querySelector("[name='guardianRelation']").value : "",
+        guardianLocation: hasOtherPrimaryContact && form.querySelector("[name='guardianLocation']") ? form.querySelector("[name='guardianLocation']").value : "",
 
         previousSchool: form.querySelector("[name='formerSchool']") ? form.querySelector("[name='formerSchool']").value : "",
         formerSchoolCode: form.querySelector("[name='formerSchoolCode']") ? form.querySelector("[name='formerSchoolCode']").value : "",

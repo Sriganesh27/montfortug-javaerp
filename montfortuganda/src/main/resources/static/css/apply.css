@@ -138,6 +138,50 @@ body{
 #montfort-portal-wrapper .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 20px; margin-bottom: 16px; }
 #montfort-portal-wrapper .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px 20px; margin-bottom: 16px; }
 
+/* Step 4: primary-contact choices */
+#montfort-portal-wrapper .primary-contact-options {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin: 10px 0 4px;
+}
+#montfort-portal-wrapper .form-group .primary-contact-option {
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 11px;
+    padding: 12px 16px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1.2;
+    text-transform: none;
+    margin-bottom: 0;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+#montfort-portal-wrapper .primary-contact-option:hover {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+}
+#montfort-portal-wrapper .primary-contact-option:has(input:checked) {
+    border-color: #1d4ed8;
+    background: #eff6ff;
+    box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.12);
+}
+#montfort-portal-wrapper .primary-contact-option input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    flex: 0 0 18px;
+    accent-color: #1d4ed8;
+}
+
 #montfort-portal-wrapper .form-group { margin-bottom: 16px; display: flex; flex-direction: column; justify-content: flex-end; }
 #montfort-portal-wrapper .grid-2 .form-group, #montfort-portal-wrapper .grid-3 .form-group { margin-bottom: 0; }
 
@@ -200,11 +244,12 @@ body{
 #montfort-portal-wrapper .btn-icon { background: #fef2f2; color: #ef4444; font-size: 0.95rem; padding: 6px; border-radius: 4px; }
 #montfort-portal-wrapper .btn-icon:hover { background: #fee2e2; color: #b91c1c; }
 
-#montfort-portal-wrapper .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 25px; border-left: 4px solid #d4af37; }
-#montfort-portal-wrapper .review-item { display: flex; flex-direction: column; }
-#montfort-portal-wrapper .review-item strong { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
-#montfort-portal-wrapper .review-item span { font-size: 0.95rem; color: #0f172a; font-weight: 600; }
-#montfort-portal-wrapper .review-section-break { grid-column: 1 / -1; margin-top: 15px; margin-bottom: 5px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; font-size: 1.05rem; font-weight: 700; color: #0f172a; }
+#montfort-portal-wrapper .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 24px; border-left: 4px solid #d4af37; }
+#montfort-portal-wrapper .review-item { display: flex; flex-direction: column; min-height: 72px; padding: 13px 15px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 7px; box-sizing: border-box; }
+#montfort-portal-wrapper .review-item strong { font-size: 0.72rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 5px; }
+#montfort-portal-wrapper .review-item span { font-size: 0.95rem; color: #0f172a; font-weight: 600; line-height: 1.45; overflow-wrap: anywhere; }
+#montfort-portal-wrapper .review-section-break { grid-column: 1 / -1; margin-top: 16px; padding: 10px 12px; border-left: 3px solid #d4af37; border-bottom: 1px solid #e2e8f0; background: #f1f5f9; border-radius: 4px; font-size: 1rem; font-weight: 700; color: #0f172a; }
+#montfort-portal-wrapper .review-section-break:first-child { margin-top: 0; }
 
 #montfort-portal-wrapper .success-screen { padding: 30px 20px; }
 #montfort-portal-wrapper .success-icon-wrapper { margin-bottom: 20px; }
@@ -250,6 +295,7 @@ body{
     #montfort-portal-wrapper .form-document-card { padding: 25px 20px; border-radius: 0; }
     #montfort-portal-wrapper .grid-2, #montfort-portal-wrapper .grid-3, #montfort-portal-wrapper .review-grid { grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px;}
     #montfort-portal-wrapper .step-name { display: none; }
+    #montfort-portal-wrapper .primary-contact-options { grid-template-columns: 1fr; }
 }
 
 
