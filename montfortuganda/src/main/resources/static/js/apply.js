@@ -1069,7 +1069,10 @@ async function handleFormSubmit(e) {
                 : null,
         branchClassId: trueClassId,
 
-        // Keep the existing API fields: their values come from the chosen contact.
+        // Primary contact selection is persisted by the backend.
+        primaryContactType: primaryContactType,
+        // Keep the existing API fields for compatibility; the backend derives
+        // them again from the selected contact to prevent mismatched data.
         primaryEmail: primaryEmail ? primaryEmail.value : "",
         primaryMobile: primaryMobile ? primaryMobile.value : "",
 

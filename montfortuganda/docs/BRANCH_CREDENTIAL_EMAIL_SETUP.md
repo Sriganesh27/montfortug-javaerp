@@ -32,7 +32,7 @@ For existing branches:
 ```text
 BRANCH_U011_MAIL_PASSWORD=<Google App Password>
 BRANCH_U021_MAIL_PASSWORD=<Google App Password>
-BRANCH_U031_MAIL_PASSWORD=<Google App Password>
+BRANCH_U032_MAIL_PASSWORD=<Google App Password>
 ```
 
 For a newly onboarded branch, use the same pattern. Example for school code

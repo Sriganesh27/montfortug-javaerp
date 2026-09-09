@@ -26,6 +26,13 @@ public class ApplicationCreateDTO {
 
     @NotNull(message = "Class ID is required")
     private Long branchClassId;
+    /**
+     * Primary contact selected by the applicant.
+     * Allowed values: FATHER, MOTHER, OTHER.
+     */
+    @NotBlank(message = "Primary Contact Type is required")
+    private String primaryContactType;
+
     @NotBlank(message = "Primary Email is required for notifications")
     private String primaryEmail;
 

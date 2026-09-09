@@ -199,7 +199,8 @@ public class ErpApplication {
     // =====================================================================
     // 3. PRIMARY CONTACT AND STUDENT DETAILS
     // =====================================================================
-
+    @Column(name = "primary_contact_type", length = 20)
+    private String primaryContactType;
     @Column(name = "primary_email", length = 100)
     private String primaryEmail;
 

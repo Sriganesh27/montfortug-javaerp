@@ -299,7 +299,7 @@ public class FileStorageService {
          * The remaining values make the folder readable.
          *
          * Example:
-         * 3-U031-Mpala-Primary-School-Mpala-Entebbe
+         * 3-U032-Mpala-Primary-School-Mpala-Entebbe
          */
         return branchId
                 + "-"

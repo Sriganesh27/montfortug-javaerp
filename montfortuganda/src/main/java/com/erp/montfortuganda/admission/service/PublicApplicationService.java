@@ -355,15 +355,132 @@ public class PublicApplicationService {
         app.setSubjectMarks(dto.getSubjectMarks());
         app.setScholarshipStatus(dto.getScholarshipStatus());
         app.setMoreInfo(dto.getMoreInfo());
+        /*
+         * Resolve and persist the selected Primary Contact.
+         *
+         * FATHER  -> father email/mobile become the primary contact.
+         * MOTHER  -> mother email/mobile become the primary contact.
+         * OTHER   -> guardian email/mobile become the primary contact.
+         *
+         * For FATHER/MOTHER, guardian details are cleared because the
+         * guardian section is only applicable when OTHER is selected.
+         */
+        String primaryContactType = dto.getPrimaryContactType();
+
+        if (primaryContactType == null
+                || primaryContactType.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "Primary Contact Type is required."
+            );
+        }
+
+        primaryContactType =
+                primaryContactType.trim().toUpperCase();
+
+        switch (primaryContactType) {
+            case "FATHER" -> {
+                if (dto.getFatherEmail() == null
+                        || dto.getFatherEmail().trim().isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Father email is required when Father is the Primary Contact."
+                    );
+                }
+
+                if (dto.getFatherContact() == null
+                        || dto.getFatherContact().trim().isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Father mobile number is required when Father is the Primary Contact."
+                    );
+                }
+
+                app.setPrimaryContactType("FATHER");
+                app.setPrimaryEmail(dto.getFatherEmail().trim());
+                app.setPrimaryMobile(dto.getFatherContact().trim());
+
+                app.setGuardianName("");
+                app.setGuardianMobile("");
+                app.setGuardianEmail("");
+                app.setGuardianAge(null);
+                app.setGuardianEducation("");
+                app.setGuardianOccupation("");
+                app.setGuardianRelation("");
+                app.setGuardianLocation("");
+            }
+
+            case "MOTHER" -> {
+                if (dto.getMotherEmail() == null
+                        || dto.getMotherEmail().trim().isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Mother email is required when Mother is the Primary Contact."
+                    );
+                }
+
+                if (dto.getMotherContact() == null
+                        || dto.getMotherContact().trim().isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Mother mobile number is required when Mother is the Primary Contact."
+                    );
+                }
+
+                app.setPrimaryContactType("MOTHER");
+                app.setPrimaryEmail(dto.getMotherEmail().trim());
+                app.setPrimaryMobile(dto.getMotherContact().trim());
+
+                app.setGuardianName("");
+                app.setGuardianMobile("");
+                app.setGuardianEmail("");
+                app.setGuardianAge(null);
+                app.setGuardianEducation("");
+                app.setGuardianOccupation("");
+                app.setGuardianRelation("");
+                app.setGuardianLocation("");
+            }
+
+            case "OTHER" -> {
+                if (dto.getGuardianName() == null
+                        || dto.getGuardianName().trim().isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Guardian name is required when Other is the Primary Contact."
+                    );
+                }
+
+                if (dto.getGuardianMobile() == null
+                        || dto.getGuardianMobile().trim().isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Guardian mobile number is required when Other is the Primary Contact."
+                    );
+                }
+
+                if (dto.getGuardianEmail() == null
+                        || dto.getGuardianEmail().trim().isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Guardian email is required when Other is the Primary Contact."
+                    );
+                }
+
+                if (dto.getGuardianRelation() == null
+                        || dto.getGuardianRelation().trim().isEmpty()) {
+                    throw new IllegalArgumentException(
+                            "Guardian relationship is required when Other is the Primary Contact."
+                    );
+                }
+
+                app.setPrimaryContactType("OTHER");
+                app.setPrimaryEmail(dto.getGuardianEmail().trim());
+                app.setPrimaryMobile(dto.getGuardianMobile().trim());
+            }
+
+            default -> throw new IllegalArgumentException(
+                    "Primary Contact Type must be FATHER, MOTHER, or OTHER."
+            );
+        }
+
         app.setApplicationStatus(ErpApplication.ApplicationStatus.SUBMITTED);
 
         ErpApplicationStatusHistory history = new ErpApplicationStatusHistory();
         history.setNewStatus(ErpApplication.ApplicationStatus.SUBMITTED);
         history.setRemarks("Application submitted by user");
         app.addHistory(history);
-        app.setPrimaryEmail(dto.getPrimaryEmail());
-        app.setPrimaryMobile(dto.getPrimaryMobile());
-
         ErpApplication savedApp = applicationRepository.save(app);
         // Fire and forget the background email task
         emailService.sendApplicationReceipt(savedApp);
@@ -1004,9 +1121,14 @@ public class PublicApplicationService {
                 app.getPhotoPath()
         );
 
+                data.put(
+            "primary_contact_type",
+            app.getPrimaryContactType()
+        );
+
         data.put(
-                "primary_email",
-                app.getPrimaryEmail()
+            "primary_email",
+            app.getPrimaryEmail()
         );
 
         data.put(

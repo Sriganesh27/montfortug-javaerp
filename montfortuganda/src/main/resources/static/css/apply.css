@@ -146,12 +146,12 @@ body{
     margin: 10px 0 4px;
 }
 #montfort-portal-wrapper .form-group .primary-contact-option {
-    min-height: 54px;
+    min-height: 20px;
     display: flex;
     align-items: center;
     justify-content: flex-start;
     gap: 11px;
-    padding: 12px 16px;
+    padding: 8px 12px;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
     background: #f8fafc;

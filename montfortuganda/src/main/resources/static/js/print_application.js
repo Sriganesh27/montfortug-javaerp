@@ -37,6 +37,7 @@
  * @property {string} [class_code]
  * @property {string} [level]
  * @property {string} [photo_path]
+ * @property {string} [primary_contact_type]
  * @property {string} [primary_email]
  * @property {string} [primary_mobile]
  * @property {string} [father_name]
@@ -156,8 +157,8 @@ function displayField(
     value
 ) {
     if (value === null
-            || value === undefined
-            || value === '') {
+        || value === undefined
+        || value === '') {
         return '-';
     }
 
@@ -173,9 +174,9 @@ function displayAgeField(
     value
 ) {
     if (value === null
-            || value === undefined
-            || String(value).trim() === ''
-            || String(value).trim() === '0') {
+        || value === undefined
+        || String(value).trim() === ''
+        || String(value).trim() === '0') {
         return '-';
     }
 
@@ -186,8 +187,8 @@ function formatReceiptDate(
     value
 ) {
     if (value === null
-            || value === undefined
-            || String(value).trim() === '') {
+        || value === undefined
+        || String(value).trim() === '') {
         return '-';
     }
 
@@ -259,7 +260,7 @@ function renderSubjectsSecurely(
     }
 
     if (!jsonValue
-            || String(jsonValue).trim() === '') {
+        || String(jsonValue).trim() === '') {
         appendSubjectMessage(
             container,
             'No specific subjects declared.'
@@ -274,7 +275,7 @@ function renderSubjectsSecurely(
                 : jsonValue;
 
         if (!Array.isArray(parsed)
-                || parsed.length === 0) {
+            || parsed.length === 0) {
             appendSubjectMessage(
                 container,
                 'No subjects declared.'
@@ -463,8 +464,8 @@ async function loadReceipt() {
             await response.json();
 
         if (!payload
-                || payload.success !== true
-                || !payload.data) {
+            || payload.success !== true
+            || !payload.data) {
             throw new Error(
                 payload?.message
                 || 'Could not load application receipt.'
@@ -490,7 +491,7 @@ async function loadReceipt() {
         finishReceiptLoading();
 
         if (error.message
-                === 'SESSION_EXPIRED') {
+            === 'SESSION_EXPIRED') {
             showReceiptError(
                 'Session Expired',
                 'Your secure session has expired. Please verify your application again.'
@@ -512,8 +513,8 @@ function finishReceiptLoading() {
     );
 
     if (receiptLoaderToken
-            && typeof window.hideLoader
-            === 'function') {
+        && typeof window.hideLoader
+        === 'function') {
         window.hideLoader(
             receiptLoaderToken
         );
@@ -673,9 +674,9 @@ function renderScholarshipStatus(
         scholarship.toLowerCase();
 
     if (!scholarship
-            || normalized === 'none'
-            || normalized === 'not_applied'
-            || normalized === 'not applied') {
+        || normalized === 'none'
+        || normalized === 'not_applied'
+        || normalized === 'not applied') {
         container.classList.add(
             'hidden-element'
         );
@@ -727,13 +728,13 @@ function renderWorkflowStatus(
         'status-pending';
 
     if (normalized === 'ENROLLED'
-            || normalized === 'ADMITTED'
-            || normalized === 'FINAL_ADMISSION'
-            || normalized === 'APPROVED') {
+        || normalized === 'ADMITTED'
+        || normalized === 'FINAL_ADMISSION'
+        || normalized === 'APPROVED') {
         statusClass =
             'status-admitted';
     } else if (normalized === 'REJECTED'
-            || normalized === 'CLOSED') {
+        || normalized === 'CLOSED') {
         statusClass =
             'status-rejected';
     }
@@ -910,6 +911,28 @@ function renderPhoto(
 function renderContacts(
     app
 ) {
+    const primaryContactType =
+        String(
+            app.primary_contact_type
+            || ''
+        ).trim().toUpperCase();
+
+    const primaryContactLabel =
+        primaryContactType === 'FATHER'
+            ? 'Father'
+            : primaryContactType === 'MOTHER'
+                ? 'Mother'
+                : primaryContactType === 'OTHER'
+                    ? 'Other'
+                    : '';
+
+    setElementText(
+        'primary_contact_type',
+        displayField(
+            primaryContactLabel
+        )
+    );
+
     setElementText(
         'primary_email',
         displayField(
@@ -1158,7 +1181,7 @@ function showReceiptError(
     message
 ) {
     if (typeof window.showSessionTimeoutModal
-            === 'function') {
+        === 'function') {
         window.showSessionTimeoutModal(
             {
                 title,
