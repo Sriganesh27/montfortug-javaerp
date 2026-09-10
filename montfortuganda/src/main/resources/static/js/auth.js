@@ -240,12 +240,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function redirectAuthenticatedUser(role) {
-        window.setTimeout(() => {
-            window.location.href =
-                role === 'SUPER_ADMIN'
-                    ? '/superadmin'
-                    : '/dashboard';
-        }, 900);
+        window.location.href =
+            role === 'SUPER_ADMIN'
+                ? '/superadmin'
+                : '/dashboard';
     }
 
     function formatExpiry(expiryValue) {
@@ -605,13 +603,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     showMessage(
                         loginMessage,
-                        'Login successful. Redirecting...',
+                        'Login successful.',
                         'success'
                     );
 
-                    redirectAuthenticatedUser(
-                        role
-                    );
+                    redirectAuthenticatedUser(role);
 
                 } catch (error) {
                     console.error(

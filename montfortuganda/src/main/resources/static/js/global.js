@@ -1,4 +1,67 @@
 // ========================================================
+// GLOBAL ERP STARTUP COORDINATOR
+// ========================================================
+
+(function initializeErpStartupCoordinator() {
+    let startupActive = true;
+
+    function getStartupElement() {
+        let element = document.getElementById('erp-startup-screen');
+        if (element) return element;
+
+        document.body.classList.add('erp-startup-loading');
+
+        element = document.createElement('div');
+        element.id = 'erp-startup-screen';
+        element.className = 'erp-startup-screen';
+        element.setAttribute('role', 'status');
+        element.setAttribute('aria-live', 'polite');
+        element.setAttribute('aria-atomic', 'true');
+        element.innerHTML =
+            '<div class="bg-glow glow-1" aria-hidden="true"></div>' +
+            '<div class="bg-glow glow-2" aria-hidden="true"></div>' +
+            '<div class="erp-startup-content">' +
+                '<img class="erp-startup-logo" src="/assets/Images/logo_MBSG_UG_8.webp" alt="Montfort Brothers of St. Gabriel Uganda">' +
+                '<div class="erp-startup-brand">Montfort Brothers of St. Gabriel</div>' +
+                '<div class="erp-startup-country">UGANDA : ERP</div>' +
+                '<div class="erp-startup-spinner" aria-hidden="true"></div>' +
+                '<div class="erp-startup-message">Loading account information...</div>' +
+                '<div class="erp-startup-submessage">Please wait while we prepare your dashboard.</div>' +
+            '</div>';
+        document.body.appendChild(element);
+        return element;
+    }
+
+    window.erpInitialLoadInProgress = true;
+
+    // Create the startup screen immediately so the destination page never
+    // becomes visible before the single startup loader takes ownership.
+    getStartupElement();
+
+    window.erpStartupLoading = {
+        setMessage(message) {
+            if (!startupActive) return;
+            const element = getStartupElement();
+            const messageElement = element.querySelector('.erp-startup-message');
+            if (messageElement) {
+                messageElement.textContent = String(message || 'Starting ERP...');
+            }
+        },
+        finish() {
+            if (!startupActive) return;
+            startupActive = false;
+            window.erpInitialLoadInProgress = false;
+            document.body.classList.remove('erp-startup-loading');
+            const element = document.getElementById('erp-startup-screen');
+            if (element) {
+                element.classList.add('is-hidden');
+                window.setTimeout(() => element.remove(), 220);
+            }
+        }
+    };
+})();
+
+// ========================================================
 // GLOBAL ACTION FEEDBACK
 // ========================================================
 
@@ -165,6 +228,16 @@
     window.showLoader = function showLoader(
         message = 'Processing...'
     ) {
+        /*
+         * During the initial page bootstrap, erp-startup-screen is the only
+         * visible loading owner. Existing module calls to showLoader() must
+         * not create a second loading layer. The operation itself is still
+         * awaited by the module, so this only removes the duplicate UI.
+         */
+        if (window.erpInitialLoadInProgress) {
+            return null;
+        }
+
         const token = start(message);
         legacyTokens.push(token);
         return token;
@@ -422,9 +495,12 @@
         const readableViewName = normalizedView
             .replace(/-/g, ' ')
             .replace(/\b\w/g, letter => letter.toUpperCase());
-        const feedbackToken = window.erpActionFeedback.start(
-            `Loading ${readableViewName}...`
-        );
+        const feedbackToken =
+            window.erpInitialLoadInProgress
+                ? null
+                : window.erpActionFeedback.start(
+                    `Loading ${readableViewName}...`
+                );
 
         container.setAttribute('aria-busy', 'true');
         container.classList.add('erp-navigation-busy');
@@ -561,7 +637,9 @@
             }
             return false;
         } finally {
-            window.erpActionFeedback.end(feedbackToken);
+            if (feedbackToken) {
+                window.erpActionFeedback.end(feedbackToken);
+            }
 
             if (requestId === latestViewRequestId) {
                 container.removeAttribute('aria-busy');
@@ -632,7 +710,14 @@
                 '#sidebarMenu a:not(.dropdown-toggle)'
             )
         ).find(link => {
-            return getSidebarViewName(link) === normalizedView;
+            if (
+                getSidebarViewName(link) !== normalizedView
+            ) {
+                return false;
+            }
+
+            const ownerItem = link.closest('li[data-role]');
+            return !ownerItem?.classList.contains('hidden');
         }) || null;
     }
 

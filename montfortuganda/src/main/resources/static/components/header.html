@@ -1,20 +1,44 @@
 <header class="top-header" id="header-container">
-    <div class="header-left-group">
-        <i class="bi bi-chevron-left menu-toggle" id="sidebarToggle"></i>
-        <div class="logo-wrapper">
-            <img src="/assets/Images/logo_MBSG_UG_8.webp" alt="Logo">
-            <h3 class="logo-text">MBSG:UGANDA ERP</h3>
-        </div>
+    <div class="header-left-zone">
+        <i
+            class="bi bi-chevron-left menu-toggle"
+            id="sidebarToggle"
+            role="button"
+            tabindex="0"
+            aria-label="Toggle sidebar"
+        ></i>
 
+        <div class="brand-identity" id="brandIdentity" aria-label="School identity">
+            <div class="brand-logo-frame">
+                <img
+                    id="brandLogo"
+                    class="brand-logo"
+                    src="/assets/Images/logo_MBSG_UG_8.webp"
+                    alt="MBSG:UGANDA ERP"
+                >
+            </div>
+
+            <div class="brand-details">
+                <div id="brandName" class="brand-name">MBSG:UGANDA ERP</div>
+                <div id="brandMeta" class="brand-meta">School Code: Loading... | Location: Loading... | Role: Loading...</div>
+                <div id="brandRole" class="brand-role" aria-hidden="true"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-page-zone">
         <h4 id="pageTitle" class="page-title">Dashboard</h4>
     </div>
+
     <div class="header-user">
-        <span id="welcomeUser" class="welcome-user">
+        <span id="welcomeUser" class="welcome-user" title="">
             <i class="bi bi-person-circle"></i>
             <span id="userNameText">Loading...</span>
         </span>
-        <button id="logoutBtn" class="logout-btn">
-            <i class="bi bi-box-arrow-right"></i> Logout
+
+        <button id="logoutBtn" class="logout-btn" type="button">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Logout</span>
         </button>
     </div>
 </header>

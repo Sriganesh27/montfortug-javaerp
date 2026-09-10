@@ -277,6 +277,107 @@ window.renderFetchingMessage = function(tbody, colSpan, message) {
     tbody.appendChild(clone);
 };
 
+
+function waitForHeaderLogo() {
+    const logo = document.getElementById('brandLogo');
+
+    if (!(logo instanceof HTMLImageElement)) {
+        return Promise.resolve();
+    }
+
+    if (logo.complete && logo.naturalWidth > 0) {
+        return Promise.resolve();
+    }
+
+    return new Promise(resolve => {
+        let settled = false;
+
+        const finish = () => {
+            if (settled) return;
+            settled = true;
+            logo.removeEventListener('load', finish);
+            logo.removeEventListener('error', finish);
+            resolve();
+        };
+
+        logo.addEventListener('load', finish, { once: true });
+        logo.addEventListener('error', finish, { once: true });
+
+        window.setTimeout(finish, 5000);
+    });
+}
+
+async function loadHeaderContext() {
+    const response = await fetch(
+        '/api/auth/header-context',
+        {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Accept': 'application/json'
+            },
+            cache: 'no-store'
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            `Header context request failed with status ${response.status}.`
+        );
+    }
+
+    const payload = await response.json();
+    const context = payload?.data || payload;
+
+    if (!context) {
+        throw new Error('Header context response is empty.');
+    }
+
+    const brandLogo = document.getElementById('brandLogo');
+    const brandName = document.getElementById('brandName');
+    const brandMeta = document.getElementById('brandMeta');
+    const userNameElement =
+        document.getElementById('userNameText');
+
+    if (brandLogo && context.logoUrl) {
+        brandLogo.src = context.logoUrl;
+        brandLogo.alt =
+            context.branchName ||
+            'ERP logo';
+    }
+
+    if (brandName) {
+        brandName.textContent =
+            context.branchName || '';
+    }
+
+    if (brandMeta) {
+        const schoolCode =
+            String(context.schoolCode || '').trim();
+        const location =
+            String(context.branchLocation || '').trim();
+        const role =
+            String(context.role || '').trim();
+
+        if (schoolCode || location) {
+            brandMeta.textContent =
+                `School Code: ${schoolCode || 'Loading...'} | ` +
+                `Location: ${location || 'Loading...'} | ` +
+                `Role: ${role || 'Loading...'}`;
+        } else {
+            brandMeta.textContent =
+                `Role: ${role || 'Loading...'}`;
+        }
+    }
+
+    if (userNameElement) {
+        userNameElement.textContent =
+            context.username || '';
+    }
+
+    return context;
+}
+
 document.addEventListener('DOMContentLoaded', async function() {
     // 1. Strict Security Check
     const storedUserRole =
@@ -301,16 +402,43 @@ document.addEventListener('DOMContentLoaded', async function() {
         userRole
     );
     initializeErpIdleTracking();
+    window.erpStartupLoading?.setMessage('Loading ERP workspace...');
     const urlRole =
         resolvePortalRole(userRole);
 
     // 2. Load Core Layout Components
     try {
-        const sidebarRes = await fetch('/components/sidebar.html');
-        document.getElementById('sidebar-container').innerHTML = await sidebarRes.text();
+        const [
+            sidebarRes,
+            headerRes
+        ] = await Promise.all([
+            fetch('/components/sidebar.html'),
+            fetch('/components/header.html')
+        ]);
 
-        const headerRes = await fetch('/components/header.html');
-        document.getElementById('header-container').innerHTML = await headerRes.text();
+        if (!sidebarRes.ok || !headerRes.ok) {
+            throw new Error(
+                'Core layout components could not be loaded.'
+            );
+        }
+
+        document.getElementById('sidebar-container').innerHTML =
+            await sidebarRes.text();
+
+        document.getElementById('header-container').innerHTML =
+            await headerRes.text();
+
+        /*
+         * Keep the startup screen visible while both independent bootstrap
+         * paths run. Header/account preparation and the initial dashboard
+         * route must not be exposed as separate loading stages.
+         */
+        window.erpStartupLoading?.setMessage('Loading account information...');
+
+        const headerInitialization = (async () => {
+            await loadHeaderContext();
+            await waitForHeaderLogo();
+        })();
 
         // Enforce Role-Based Visibility in Sidebar (Uses Pure CSS Class)
         document.querySelectorAll('#sidebarMenu li').forEach(li => {
@@ -327,11 +455,6 @@ document.addEventListener('DOMContentLoaded', async function() {
                 li.classList.remove('hidden');
             }
         });
-
-        const userNameElement = document.getElementById('userNameText');
-        if (userNameElement) {
-            userNameElement.textContent = localStorage.getItem('username') || userRole;
-        }
 
         document.getElementById('logoutBtn').addEventListener('click', async function() {
             // 1. Tell the backend to destroy the secure cookie securely
@@ -378,8 +501,16 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
         }
 
-        // 3. Initialize the Router
-        setupRouter(urlRole);
+        // 3. Start the initial route while header/account preparation is
+        // already running. setupRouter() resolves only after the initial view
+        // and all initialization promises registered by that view are ready.
+        window.erpStartupLoading?.setMessage('Preparing your dashboard...');
+        const initialRouteInitialization = setupRouter(urlRole);
+
+        await Promise.all([
+            headerInitialization,
+            initialRouteInitialization
+        ]);
 
         // 4. Initialize Smart Sidebar Clicks (Auto-Expand & Dropdowns)
         document.querySelectorAll('.sidebar-nav > li > a').forEach(link => {
@@ -427,12 +558,27 @@ document.addEventListener('DOMContentLoaded', async function() {
             });
         });
 
+        // Release the single startup loader only after the header/account
+        // path and the complete initial dashboard route have both finished.
+        // Two animation frames allow the prepared DOM and updated values to
+        // reach the browser before the overlay is removed.
+        await new Promise(resolve => {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(resolve);
+            });
+        });
+
+        window.erpStartupLoading?.finish();
+
     } catch (error) {
         console.error("Critical Failure: Unable to load base components", error);
+        window.erpStartupLoading?.setMessage(
+            'ERP could not be started. Please refresh and try again.'
+        );
     }
 });
 
-function setupRouter(urlRole) {
+async function setupRouter(urlRole) {
     const mainContent =
         document.getElementById('main-content-area');
     const sidebarLinks = () => Array.from(
@@ -511,6 +657,12 @@ function setupRouter(urlRole) {
 
     function findLinkForView(viewName) {
         return sidebarLinks().find(link => {
+            const item = link.closest('li');
+
+            if (item?.classList.contains('hidden')) {
+                return false;
+            }
+
             return window.getSidebarViewName?.(link) === viewName;
         }) || null;
     }
@@ -586,12 +738,18 @@ function setupRouter(urlRole) {
         matchedLink
     );
 
-    void window.erpNavigate({
+    const initialLoaded = await window.erpNavigate({
         ...initialRoute,
         historyMode: 'replace',
         container: mainContent,
         sidebarLink: matchedLink
     });
+
+    if (!initialLoaded) {
+        throw new Error('Initial ERP view could not be prepared.');
+    }
+
+    return true;
 }
 
 // ==========================================

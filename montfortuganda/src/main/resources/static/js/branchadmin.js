@@ -14,7 +14,13 @@ document.addEventListener('viewLoaded', function (event) {
     const view = event.detail.view;
 
     if (view === 'home' || view === 'dashboard') {
-        void initBranchDashboardView();
+        if (typeof event.detail.waitUntil === 'function') {
+            event.detail.waitUntil(
+                initBranchDashboardView()
+            );
+        } else {
+            void initBranchDashboardView();
+        }
         return;
     }
 
@@ -192,6 +198,84 @@ async function loadBranchDashboardStats() {
     }
 }
 
+
+function animateBranchAdminCounter(element, endValue, duration) {
+    if (!element) {
+        return;
+    }
+
+    const target = Number(endValue);
+    if (!Number.isFinite(target)) {
+        element.textContent = '0';
+        return;
+    }
+
+    const dashboardVisible = () => {
+        let node = element;
+
+        while (node && node !== document.body) {
+            const style = window.getComputedStyle(node);
+
+            if (
+                style.visibility === 'hidden' ||
+                style.display === 'none' ||
+                style.opacity === '0'
+            ) {
+                return false;
+            }
+
+            node = node.parentElement;
+        }
+
+        return true;
+    };
+
+    const startAnimation = () => {
+        const start = 0;
+        const startTime = performance.now();
+
+        const step = (now) => {
+            const progress = Math.min(
+                (now - startTime) / duration,
+                1
+            );
+
+            const eased =
+                1 - Math.pow(1 - progress, 4);
+
+            const current =
+                Math.floor(
+                    start +
+                    ((target - start) * eased)
+                );
+
+            element.textContent =
+                current.toLocaleString();
+
+            if (progress < 1) {
+                requestAnimationFrame(step);
+            } else {
+                element.textContent =
+                    target.toLocaleString();
+            }
+        };
+
+        element.textContent = '0';
+        requestAnimationFrame(step);
+    };
+
+    const waitUntilVisible = () => {
+        if (dashboardVisible()) {
+            startAnimation();
+            return;
+        }
+
+        requestAnimationFrame(waitUntilVisible);
+    };
+
+    waitUntilVisible();
+}
+
 function updateDashboardNumber(
     elementId,
     value
@@ -206,20 +290,11 @@ function updateDashboardNumber(
     const finalValue =
         Number(value || 0);
 
-    if (typeof animateValue === 'function') {
-        animateValue(
-            element,
-            0,
-            finalValue,
-            1200,
-            false
-        );
-
-        return;
-    }
-
-    element.textContent =
-        String(finalValue);
+    animateBranchAdminCounter(
+        element,
+        finalValue,
+        1200
+    );
 }
 
 async function loadRecentBranchApplications() {

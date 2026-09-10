@@ -171,7 +171,11 @@ document.addEventListener('viewLoaded', function(e) {
         if (e.detail.view === 'branches') {
             void initBranchesView();
         } else if (e.detail.view === 'home') {
-            void initHomeView();
+            if (typeof e.detail.waitUntil === 'function') {
+                e.detail.waitUntil(initHomeView());
+            } else {
+                void initHomeView();
+            }
         } else if (e.detail.view === 'add-branch') {
             void initAddBranchView();
         } else if (e.detail.view === 'system-stats') {

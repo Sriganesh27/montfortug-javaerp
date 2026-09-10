@@ -3,15 +3,24 @@ package com.erp.montfortuganda.auth.controller;
 import com.erp.montfortuganda.auth.dto.AuthRequest;
 import com.erp.montfortuganda.auth.dto.AuthResponse;
 import com.erp.montfortuganda.auth.dto.ChangeTemporaryPasswordRequest;
+import com.erp.montfortuganda.auth.dto.HeaderContextResponse;
 import com.erp.montfortuganda.auth.entity.CredentialDeliveryStatus;
 import com.erp.montfortuganda.auth.entity.User;
 import com.erp.montfortuganda.auth.jwt.JwtUtil;
 import com.erp.montfortuganda.auth.repository.UserRepository;
 import com.erp.montfortuganda.auth.service.UserCredentialService;
+import com.erp.montfortuganda.auth.service.CurrentUserContext;
+import com.erp.montfortuganda.auth.service.CurrentUserService;
+import com.erp.montfortuganda.school.entity.Branch;
+import com.erp.montfortuganda.school.repository.BranchRepository;
+import com.erp.montfortuganda.school.service.FileStorageService;
 import jakarta.validation.Valid;
+import org.springframework.core.io.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -20,12 +29,15 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Locale;
@@ -47,12 +59,18 @@ public class AuthController {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
     private final UserCredentialService userCredentialService;
+    private final CurrentUserService currentUserService;
+    private final BranchRepository branchRepository;
+    private final FileStorageService fileStorageService;
 
     public AuthController(
             AuthenticationManager authenticationManager,
             JwtUtil jwtUtil,
             UserRepository userRepository,
-            UserCredentialService userCredentialService
+            UserCredentialService userCredentialService,
+            CurrentUserService currentUserService,
+            BranchRepository branchRepository,
+            FileStorageService fileStorageService
     ) {
         this.authenticationManager =
                 authenticationManager;
@@ -61,6 +79,199 @@ public class AuthController {
         this.userRepository = userRepository;
         this.userCredentialService =
                 userCredentialService;
+        this.currentUserService =
+                currentUserService;
+        this.branchRepository =
+                branchRepository;
+        this.fileStorageService =
+                fileStorageService;
+    }
+
+    @GetMapping("/header-context")
+    public ResponseEntity<HeaderContextResponse> getHeaderContext() {
+        CurrentUserContext context =
+                currentUserService.getCurrentUserContext();
+
+        String displayRole =
+                resolveHeaderRole(context);
+
+        // Super Admin keeps the existing central ERP identity.
+        if ("Super Admin".equals(displayRole)) {
+            return ResponseEntity.ok(
+                    new HeaderContextResponse(
+                            context.getUsername(),
+                            displayRole,
+                            "MBSG:UGANDA ERP",
+                            null,
+                            null,
+                            "/assets/Images/logo_MBSG_UG_8.webp"
+                    )
+            );
+        }
+
+        Branch branch =
+                findCurrentBranch(context);
+
+        String logoUrl =
+                branch.getBranchLogoUrl() != null
+                        && !branch.getBranchLogoUrl().isBlank()
+                        ? "/api/auth/header-logo"
+                        : "/assets/Images/logo_MBSG_UG_8.webp";
+
+        return ResponseEntity.ok(
+                new HeaderContextResponse(
+                        context.getUsername(),
+                        displayRole,
+                        branch.getBranchName(),
+                        branch.getSchoolCode(),
+                        branch.getBranchLocation(),
+                        logoUrl
+                )
+        );
+    }
+
+    @GetMapping("/header-logo")
+    @PreAuthorize("hasRole('BRANCH_ADMIN')")
+    public ResponseEntity<Resource> getHeaderLogo() {
+        CurrentUserContext context =
+                currentUserService.getCurrentUserContext();
+
+        Branch branch =
+                findCurrentBranch(context);
+
+        String relativePath =
+                branch.getBranchLogoUrl();
+
+        if (relativePath == null
+                || relativePath.isBlank()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Resource resource =
+                fileStorageService.loadPrivateFile(
+                        relativePath
+                );
+
+        String contentType =
+                fileStorageService.detectContentType(
+                        relativePath
+                );
+
+        String filename =
+                Path.of(relativePath)
+                        .getFileName()
+                        .toString();
+
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.noStore())
+                .contentType(toMediaType(contentType))
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\""
+                                + filename
+                                + "\""
+                )
+                .body(resource);
+    }
+
+    private Branch findCurrentBranch(
+            CurrentUserContext context
+    ) {
+        if (context.getBranchId() == null) {
+            throw new IllegalStateException(
+                    "Authenticated user is not assigned to a branch."
+            );
+        }
+
+        return branchRepository
+                .findById(context.getBranchId())
+                .orElseThrow(
+                        () -> new IllegalStateException(
+                                "Assigned branch was not found."
+                        )
+                );
+    }
+
+    private String resolveHeaderRole(
+            CurrentUserContext context
+    ) {
+        if (context.getRoles() == null
+                || context.getRoles().isEmpty()) {
+            return "";
+        }
+
+        for (String role : context.getRoles()) {
+            String normalized = normalizeRole(role);
+
+            if ("SUPER_ADMIN".equals(normalized)
+                    || "SUPER_USER".equals(normalized)) {
+                return "Super Admin";
+            }
+        }
+
+        for (String role : context.getRoles()) {
+            String normalized = normalizeRole(role);
+
+            if ("BRANCH_ADMIN".equals(normalized)
+                    || "SCHOOL_ADMIN".equals(normalized)) {
+                return "Branch Admin";
+            }
+        }
+
+        return normalizeHeaderRole(
+                context.getRoles().get(0)
+        );
+    }
+
+    private String normalizeRole(String role) {
+        String normalized =
+                role == null
+                        ? ""
+                        : role.trim()
+                        .toUpperCase(Locale.ROOT);
+
+        while (normalized.startsWith("ROLE_")) {
+            normalized = normalized.substring(5);
+        }
+
+        return normalized;
+    }
+
+    private MediaType toMediaType(
+            String contentType
+    ) {
+        try {
+            return MediaType.parseMediaType(
+                    contentType
+            );
+        } catch (IllegalArgumentException exception) {
+            return MediaType.APPLICATION_OCTET_STREAM;
+        }
+    }
+
+    private String normalizeHeaderRole(String role) {
+        String normalized =
+                role == null
+                        ? ""
+                        : role.trim()
+                        .toUpperCase(Locale.ROOT);
+
+        while (normalized.startsWith("ROLE_")) {
+            normalized = normalized.substring(5);
+        }
+
+        if ("SCHOOL_ADMIN".equals(normalized)
+                || "BRANCH_ADMIN".equals(normalized)) {
+            return "Branch Admin";
+        }
+
+        if ("SUPER_USER".equals(normalized)
+                || "SUPER_ADMIN".equals(normalized)) {
+            return "Super Admin";
+        }
+
+        return normalized
+                .replace('_', ' ');
     }
 
     @PostMapping("/login")

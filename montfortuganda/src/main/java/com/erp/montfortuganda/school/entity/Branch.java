@@ -153,6 +153,11 @@ public class Branch extends AuditableEntity {
     private List<ErpSection> sections =
             new ArrayList<>();
 
+    public boolean hasLogo() {
+        return branchLogoUrl != null
+                && !branchLogoUrl.isBlank();
+    }
+
     public void addLevel(
             Level level,
             String createdBy
