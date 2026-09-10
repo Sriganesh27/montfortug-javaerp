@@ -363,8 +363,19 @@ public class BranchApplicationDetailsMapper {
         response.setGuardianMobile(
                 application.getGuardianMobile()
         );
+        /*
+         * guardian_mobile is the canonical Guardian phone field for
+         * public applications. Preserve legacy guardian_contact when it
+         * exists, otherwise expose guardian_mobile as the contact value.
+         * No existing database values are changed.
+         */
+        String guardianContact = application.getGuardianContact();
+        if (guardianContact == null || guardianContact.trim().isEmpty()) {
+            guardianContact = application.getGuardianMobile();
+        }
+
         response.setGuardianContact(
-                application.getGuardianContact()
+                guardianContact
         );
         response.setGuardianEmail(
                 application.getGuardianEmail()

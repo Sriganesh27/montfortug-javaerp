@@ -1206,9 +1206,20 @@ public class PublicApplicationService {
                 app.getGuardianRelation()
         );
 
+        /*
+         * guardian_mobile is the canonical Guardian phone field for
+         * public applications. guardian_contact is retained for legacy
+         * compatibility, so use it when populated and otherwise fall back
+         * to guardian_mobile. Existing database data is not modified.
+         */
+        String guardianContact = app.getGuardianContact();
+        if (guardianContact == null || guardianContact.trim().isEmpty()) {
+            guardianContact = app.getGuardianMobile();
+        }
+
         data.put(
                 "guardian_contact",
-                app.getGuardianContact()
+                guardianContact
         );
 
         data.put(
