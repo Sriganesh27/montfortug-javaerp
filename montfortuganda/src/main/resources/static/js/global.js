@@ -3,6 +3,32 @@
 // ========================================================
 
 (function initializeErpStartupCoordinator() {
+    /*
+     * The public admission portal also loads global.js because it uses
+     * shared ERP utilities such as createErpCalendar().
+     *
+     * The startup overlay belongs only to authenticated ERP shell pages.
+     * Public Apply URLs must never create or activate that overlay.
+     */
+    const currentPath =
+        window.location.pathname.replace(/\/+$/, '') || '/';
+
+    const isPublicApplyPage =
+        currentPath === '/apply' ||
+        currentPath === '/apply.html' ||
+        currentPath === '/apply/status' ||
+        currentPath === '/apply/status.html';
+
+    const isErpShellPage =
+        currentPath === '/dashboard' ||
+        currentPath === '/dashboard.html' ||
+        currentPath === '/superadmin' ||
+        currentPath === '/superadmin.html';
+
+    if (!isErpShellPage || isPublicApplyPage) {
+        return;
+    }
+
     let startupActive = true;
 
     function getStartupElement() {
@@ -33,10 +59,6 @@
     }
 
     window.erpInitialLoadInProgress = true;
-
-    // Create the startup screen immediately so the destination page never
-    // becomes visible before the single startup loader takes ownership.
-    getStartupElement();
 
     window.erpStartupLoading = {
         setMessage(message) {
@@ -228,16 +250,6 @@
     window.showLoader = function showLoader(
         message = 'Processing...'
     ) {
-        /*
-         * During the initial page bootstrap, erp-startup-screen is the only
-         * visible loading owner. Existing module calls to showLoader() must
-         * not create a second loading layer. The operation itself is still
-         * awaited by the module, so this only removes the duplicate UI.
-         */
-        if (window.erpInitialLoadInProgress) {
-            return null;
-        }
-
         const token = start(message);
         legacyTokens.push(token);
         return token;
