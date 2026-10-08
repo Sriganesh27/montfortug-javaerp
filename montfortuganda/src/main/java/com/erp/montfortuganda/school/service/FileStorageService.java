@@ -83,6 +83,24 @@ public class FileStorageService {
         );
     }
 
+    public String saveBranchQrCode(
+            Integer branchId,
+            String schoolCode,
+            String branchName,
+            String branchLocation,
+            MultipartFile qrCode
+    ) {
+        return saveBranchFile(
+                branchId,
+                schoolCode,
+                branchName,
+                branchLocation,
+                "qr-code",
+                "qr-code",
+                qrCode
+        );
+    }
+
     public List<String> saveBranchDocuments(
             Integer branchId,
             String schoolCode,

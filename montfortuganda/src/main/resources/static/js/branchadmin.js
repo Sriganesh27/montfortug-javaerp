@@ -29,6 +29,19 @@ document.addEventListener('viewLoaded', function (event) {
         view === 'view-applications'
     ) {
         initApplicationsView();
+        return;
+    }
+
+    if (view === 'branch-profile') {
+        if (typeof event.detail.waitUntil === 'function') {
+            event.detail.waitUntil(
+                initBranchProfile()
+            );
+        } else {
+            void initBranchProfile();
+        }
+
+        return;
     }
 });
 

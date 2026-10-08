@@ -134,6 +134,32 @@ public class Branch extends AuditableEntity {
     @Column(name = "branch_logo_url", length = 500)
     private String branchLogoUrl;
 
+    /*
+     * Branch payment collection details.
+     * Each branch maintains one configured bank account, one Airtel Pay
+     * number and one QR code reference.
+     */
+    @Column(name = "bank_name", length = 150)
+    private String bankName;
+
+    @Column(name = "bank_account_name", length = 150)
+    private String bankAccountName;
+
+    @Column(name = "bank_account_number", length = 100)
+    private String bankAccountNumber;
+
+    @Column(name = "bank_branch", length = 150)
+    private String bankBranch;
+
+    @Column(name = "airtel_pay_number", length = 30)
+    private String airtelPayNumber;
+
+    @Column(name = "airtel_pay_name", length = 150)
+    private String airtelPayName;
+
+    @Column(name = "qr_code_url", length = 500)
+    private String qrCodeUrl;
+
     @Column(
             name = "is_active",
             columnDefinition = "integer default 1"

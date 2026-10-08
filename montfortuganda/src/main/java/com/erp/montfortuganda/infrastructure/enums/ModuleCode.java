@@ -4,8 +4,8 @@ import lombok.Getter;
 
 @Getter
 public enum ModuleCode {
-    STUDENT("STD", "Student", 6, true),
     ADMISSION("ADM", "Admission", 5, true),
+    APPLICATION("APP", "Application", 6, true),
     INVOICE("INV", "Invoice", 8, true),
     RECEIPT("REC", "Receipt", 8, true),
     LIBRARY("LIB", "Library", 6, true);
@@ -15,7 +15,12 @@ public enum ModuleCode {
     private final int padding;
     private final boolean yearlyReset;
 
-    ModuleCode(String code, String description, int padding, boolean yearlyReset) {
+    ModuleCode(
+            String code,
+            String description,
+            int padding,
+            boolean yearlyReset
+    ) {
         this.code = code;
         this.description = description;
         this.padding = padding;

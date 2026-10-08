@@ -97,5 +97,20 @@ public class BranchDTO {
 
     private String branchLogoUrl;
 
+    /* Branch payment collection details. */
+    private String bankName;
+
+    private String bankAccountName;
+
+    private String bankAccountNumber;
+
+    private String bankBranch;
+
+    private String airtelPayNumber;
+
+    private String airtelPayName;
+
+    private String qrCodeUrl;
+
     private Integer isActive = 1;
 }

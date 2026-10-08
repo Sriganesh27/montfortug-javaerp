@@ -64,7 +64,8 @@ public class BranchServiceImpl implements BranchService {
             BranchDTO branchDTO,
             MultipartFile logo,
             MultipartFile photo,
-            List<MultipartFile> documents
+            List<MultipartFile> documents,
+            MultipartFile qrCode
     ) {
         Branch branch =
                 mapToEntity(branchDTO);
@@ -87,7 +88,8 @@ public class BranchServiceImpl implements BranchService {
                 savedBranch,
                 logo,
                 photo,
-                documents
+                documents,
+                qrCode
         );
 
         savedBranch =
@@ -124,7 +126,8 @@ public class BranchServiceImpl implements BranchService {
             BranchDTO branchDTO,
             MultipartFile logo,
             MultipartFile photo,
-            List<MultipartFile> documents
+            List<MultipartFile> documents,
+            MultipartFile qrCode
     ) {
         Branch branch =
                 findBranch(branchId);
@@ -143,7 +146,8 @@ public class BranchServiceImpl implements BranchService {
                 branch,
                 logo,
                 photo,
-                documents
+                documents,
+                qrCode
         );
 
         return mapToDTO(
@@ -226,7 +230,8 @@ public class BranchServiceImpl implements BranchService {
             Branch branch,
             MultipartFile logo,
             MultipartFile photo,
-            List<MultipartFile> documents
+            List<MultipartFile> documents,
+            MultipartFile qrCode
     ) {
         if (logo != null && !logo.isEmpty()) {
             branch.setBranchLogoUrl(
@@ -248,6 +253,18 @@ public class BranchServiceImpl implements BranchService {
                             branch.getBranchName(),
                             branch.getBranchLocation(),
                             photo
+                    )
+            );
+        }
+
+        if (qrCode != null && !qrCode.isEmpty()) {
+            branch.setQrCodeUrl(
+                    fileStorageService.saveBranchQrCode(
+                            branch.getBranchId(),
+                            branch.getSchoolCode(),
+                            branch.getBranchName(),
+                            branch.getBranchLocation(),
+                            qrCode
                     )
             );
         }
@@ -424,6 +441,27 @@ public class BranchServiceImpl implements BranchService {
         dto.setBranchLogoUrl(
                 branch.getBranchLogoUrl()
         );
+        dto.setBankName(
+                branch.getBankName()
+        );
+        dto.setBankAccountName(
+                branch.getBankAccountName()
+        );
+        dto.setBankAccountNumber(
+                branch.getBankAccountNumber()
+        );
+        dto.setBankBranch(
+                branch.getBankBranch()
+        );
+        dto.setAirtelPayNumber(
+                branch.getAirtelPayNumber()
+        );
+        dto.setAirtelPayName(
+                branch.getAirtelPayName()
+        );
+        dto.setQrCodeUrl(
+                branch.getQrCodeUrl()
+        );
         dto.setSchoolPhotoUrl(
                 branch.getSchoolPhotoUrl()
         );
@@ -544,6 +582,27 @@ public class BranchServiceImpl implements BranchService {
         );
         branch.setInchargeDetails(
                 dto.getInchargeDetails()
+        );
+        branch.setBankName(
+                dto.getBankName()
+        );
+        branch.setBankAccountName(
+                dto.getBankAccountName()
+        );
+        branch.setBankAccountNumber(
+                dto.getBankAccountNumber()
+        );
+        branch.setBankBranch(
+                dto.getBankBranch()
+        );
+        branch.setAirtelPayNumber(
+                dto.getAirtelPayNumber()
+        );
+        branch.setAirtelPayName(
+                dto.getAirtelPayName()
+        );
+        branch.setQrCodeUrl(
+                dto.getQrCodeUrl()
         );
     }
 }

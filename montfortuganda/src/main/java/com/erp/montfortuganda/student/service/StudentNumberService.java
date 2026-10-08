@@ -2,6 +2,7 @@ package com.erp.montfortuganda.student.service;
 
 import com.erp.montfortuganda.exception.BadRequestException;
 import com.erp.montfortuganda.exception.ResourceNotFoundException;
+import com.erp.montfortuganda.infrastructure.sequence.student.service.StudentSequenceService;
 import com.erp.montfortuganda.school.entity.Branch;
 import jakarta.persistence.EntityManager;
 import org.springframework.stereotype.Service;
@@ -26,8 +27,8 @@ import java.util.Objects;
 @Service
 public class StudentNumberService {
 
-    private static final String STUDENT_MODULE_CODE =
-            "STUDENT";
+    private static final String ADMISSION_MODULE_CODE =
+            "ADMISSION";
 
     private static final int STUDENT_SEQUENCE_PADDING =
             4;
@@ -36,11 +37,14 @@ public class StudentNumberService {
             9_999L;
 
     private final EntityManager entityManager;
+    private final StudentSequenceService studentSequenceService;
 
     public StudentNumberService(
-            EntityManager entityManager
+            EntityManager entityManager,
+            StudentSequenceService studentSequenceService
     ) {
         this.entityManager = entityManager;
+        this.studentSequenceService = studentSequenceService;
     }
 
     /**
@@ -97,9 +101,9 @@ public class StudentNumberService {
                 ) + 1L;
 
         long sequence =
-                nextSequence(
+                studentSequenceService.nextSequence(
                         context.branchId(),
-                        STUDENT_MODULE_CODE,
+                        ADMISSION_MODULE_CODE,
                         validatedAdmissionYear,
                         context.actor(),
                         firstSequence
@@ -287,172 +291,12 @@ public class StudentNumberService {
     // SEQUENCE
     // =====================================================================
 
-    private long nextSequence(
-            Integer branchId,
-            String moduleCode,
-            int runningYear,
-            String actor,
-            long firstSequence
-    ) {
-        List<?> sequenceResults =
-                entityManager
-                        .createNativeQuery(
-                                """
-                                select current_sequence
-                                from erp_document_sequences
-                                where branch_id = :branchId
-                                  and module_code = :moduleCode
-                                  and running_year = :runningYear
-                                for update
-                                """
-                        )
-                        .setParameter(
-                                "branchId",
-                                branchId
-                        )
-                        .setParameter(
-                                "moduleCode",
-                                moduleCode
-                        )
-                        .setParameter(
-                                "runningYear",
-                                runningYear
-                        )
-                        .getResultList();
-
-        if (sequenceResults.isEmpty()) {
-            return createInitialSequence(
-                    branchId,
-                    moduleCode,
-                    runningYear,
-                    actor,
-                    Math.max(firstSequence, 1L)
-            );
-        }
-
-        Object result =
-                sequenceResults.getFirst();
-
-        if (!(result instanceof Number number)) {
-            throw new IllegalStateException(
-                    "Student identifier sequence contains an invalid value."
-            );
-        }
-
-        long nextSequence =
-                number.longValue() + 1L;
-
-        int updatedRows =
-                entityManager
-                        .createNativeQuery(
-                                """
-                                update erp_document_sequences
-                                set current_sequence = :nextSequence,
-                                    deleted = 0,
-                                    active = 1,
-                                    updated_by = :actor,
-                                    updated_at = current_timestamp,
-                                    version = version + 1
-                                where branch_id = :branchId
-                                  and module_code = :moduleCode
-                                  and running_year = :runningYear
-                                """
-                        )
-                        .setParameter(
-                                "nextSequence",
-                                nextSequence
-                        )
-                        .setParameter(
-                                "actor",
-                                actor
-                        )
-                        .setParameter(
-                                "branchId",
-                                branchId
-                        )
-                        .setParameter(
-                                "moduleCode",
-                                moduleCode
-                        )
-                        .setParameter(
-                                "runningYear",
-                                runningYear
-                        )
-                        .executeUpdate();
-
-        if (updatedRows != 1) {
-            throw new IllegalStateException(
-                    "Student identifier sequence could not be updated."
-            );
-        }
-
-        return nextSequence;
-    }
-
-    private long createInitialSequence(
-            Integer branchId,
-            String moduleCode,
-            int runningYear,
-            String actor,
-            long initialSequence
-    ) {
-        entityManager
-                .createNativeQuery(
-                        """
-                        insert into erp_document_sequences
-                        (
-                            branch_id,
-                            module_code,
-                            running_year,
-                            current_sequence,
-                            deleted,
-                            created_by,
-                            created_at,
-                            updated_by,
-                            updated_at,
-                            active,
-                            version
-                        )
-                        values
-                        (
-                            :branchId,
-                            :moduleCode,
-                            :runningYear,
-                            :initialSequence,
-                            0,
-                            :actor,
-                            current_timestamp,
-                            :actor,
-                            current_timestamp,
-                            1,
-                            0
-                        )
-                        """
-                )
-                .setParameter(
-                        "branchId",
-                        branchId
-                )
-                .setParameter(
-                        "moduleCode",
-                        moduleCode
-                )
-                .setParameter(
-                        "runningYear",
-                        runningYear
-                )
-                .setParameter(
-                        "initialSequence",
-                        initialSequence
-                )
-                .setParameter(
-                        "actor",
-                        actor
-                )
-                .executeUpdate();
-
-        return initialSequence;
-    }
+    /*
+     * Sequence persistence is handled by StudentSequenceService.
+     *
+     * This service remains responsible for admission-number validation,
+     * formatting, historical-number baseline detection and branch locking.
+     */
 
     /**
      * Protects a branch if the sequence table is missing but Student rows

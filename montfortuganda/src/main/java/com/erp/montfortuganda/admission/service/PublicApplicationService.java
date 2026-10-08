@@ -37,6 +37,7 @@ import java.util.Optional;
 public class PublicApplicationService {
 
     private final ErpApplicationRepository applicationRepository;
+    private final ApplicationNumberService applicationNumberService;
     private final BranchRepository branchRepository;
     private final AcademicYearRepository academicYearRepository;
     private final AcademicTermRepository academicTermRepository;
@@ -237,17 +238,17 @@ public class PublicApplicationService {
                                 .getYear()
                 );
 
-        long currentCount =
-                applicationRepository
-                        .countApplicationsByBranchAndAcademicYear(
-                                branch.getBranchId(),
-                                academicYear.getAcademicYearId()
-                        );
+        long nextSequence =
+                applicationNumberService.nextSequence(
+                        branch.getBranchId(),
+                        Integer.parseInt(yearString),
+                        "PUBLIC_APPLICATION"
+                );
 
         String sequence =
                 String.format(
                         "%04d",
-                        currentCount + 1
+                        nextSequence
                 );
 
         String applicationNo =
@@ -256,33 +257,6 @@ public class PublicApplicationService {
                         + yearString
                         + "-"
                         + sequence;
-
-        /*
-         * Defensive uniqueness check in case imported/historic rows make
-         * the branch/year count differ from the highest existing sequence.
-         */
-        while (
-                applicationRepository
-                        .findByApplicationNo(
-                                applicationNo
-                        )
-                        .isPresent()
-        ) {
-            currentCount++;
-
-            sequence =
-                    String.format(
-                            "%04d",
-                            currentCount + 1
-                    );
-
-            applicationNo =
-                    branch.getSchoolCode()
-                            + "-"
-                            + yearString
-                            + "-"
-                            + sequence;
-        }
 
         ErpApplication app = new ErpApplication();
         app.setApplicationNo(applicationNo);

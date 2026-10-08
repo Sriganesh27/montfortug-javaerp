@@ -2,12 +2,9 @@
     <div class="view-header">
         <div>
             <h2>Add New Branch</h2>
-            <p class="text-muted branch-page-subtitle">
-                Create the branch profile, official address, communication details and assigned education levels.
-            </p>
         </div>
 
-        <button id="backToBranchesBtn" type="button" class="btn-secondary">
+        <button id="backToBranchesBtn" type="button" class="btn btn-secondary">
             <i class="bi bi-arrow-left" aria-hidden="true"></i>
             Back to Branches
         </button>
@@ -31,14 +28,10 @@
             <div class="branch-card-heading-row">
                 <div>
                     <h3 id="branch-general-heading" class="card-header">General Information</h3>
-                    <p class="branch-card-description">
-                        Enter the official school identity and assign the education levels offered by this branch.
-                    </p>
                 </div>
-                <span class="branch-required-note">Fields marked * are required</span>
             </div>
 
-            <div class="branch-form-grid branch-form-grid--2">
+            <div class="emp-grid emp-grid-2 branch-form-grid branch-form-grid--2">
                 <div class="form-group branch-form-field branch-span-2">
                     <label for="add-schoolName" class="branch-required-label">School Name</label>
                     <input
@@ -48,7 +41,7 @@
                             placeholder="Example: St. Montfort Nursery and Primary School"
                             maxlength="200"
                             required
-                    >
+                     class="detail-input w-100">
                 </div>
 
                 <div class="form-group branch-form-field">
@@ -60,13 +53,12 @@
                             maxlength="20"
                             autocomplete="off"
                             required
-                    >
-                    <small class="branch-field-hint">Use a unique short code without spaces.</small>
+                     class="detail-input w-100">
                 </div>
 
                 <div class="form-group branch-form-field">
                     <label for="add-foundationDate" class="branch-required-label">Foundation Date</label>
-                    <input type="date" id="add-foundationDate" required>
+                    <input type="date" id="add-foundationDate" required class="detail-input w-100">
                 </div>
 
                 <div class="form-group branch-form-field branch-span-2">
@@ -79,7 +71,6 @@
                     >
                         <span class="loading-text">Loading database levels...</span>
                     </div>
-                    <small class="branch-field-hint">Select at least one education level.</small>
                 </div>
             </div>
         </section>
@@ -88,21 +79,10 @@
             <div class="branch-card-heading-row">
                 <div>
                     <h3 id="branch-address-heading" class="card-header">Official Address</h3>
-                    <p class="branch-card-description">
-                        These structured details will appear on emails, receipts, reports and official letters.
-                    </p>
                 </div>
-                <i class="bi bi-geo-alt-fill branch-card-heading-icon" aria-hidden="true"></i>
             </div>
 
-            <div class="branch-address-example" aria-label="Address example">
-                <i class="bi bi-info-circle" aria-hidden="true"></i>
-                <span>
-                    Example: Mpala Catholic Church Campus, P.O. Box 51, Mpala, Entebbe, Uganda
-                </span>
-            </div>
-
-            <div class="branch-form-grid branch-form-grid--2">
+            <div class="emp-grid emp-grid-2 branch-form-grid branch-form-grid--2">
                 <div class="form-group branch-form-field">
                     <label for="add-shortLocation" class="branch-required-label">Short Location</label>
                     <input
@@ -111,8 +91,7 @@
                             placeholder="Example: Mpala, Entebbe"
                             maxlength="255"
                             required
-                    >
-                    <small class="branch-field-hint">Used in tables and branch dropdowns.</small>
+                     class="detail-input w-100">
                 </div>
 
                 <div class="form-group branch-form-field">
@@ -124,7 +103,7 @@
                             maxlength="255"
                             autocomplete="address-line1"
                             required
-                    >
+                     class="detail-input w-100">
                 </div>
 
                 <div class="form-group branch-form-field">
@@ -135,7 +114,7 @@
                             placeholder="Building, road or nearby landmark"
                             maxlength="255"
                             autocomplete="address-line2"
-                    >
+                     class="detail-input w-100">
                 </div>
 
                 <div class="form-group branch-form-field">
@@ -145,7 +124,7 @@
                             id="add-poBox"
                             placeholder="Example: P.O. Box 51"
                             maxlength="100"
-                    >
+                     class="detail-input w-100">
                 </div>
 
                 <div class="form-group branch-form-field">
@@ -156,7 +135,7 @@
                             placeholder="Example: Mpala"
                             maxlength="150"
                             autocomplete="address-level3"
-                    >
+                     class="detail-input w-100">
                 </div>
 
                 <div class="form-group branch-form-field">
@@ -167,7 +146,7 @@
                             placeholder="Example: Entebbe"
                             maxlength="150"
                             autocomplete="address-level2"
-                    >
+                     class="detail-input w-100">
                 </div>
 
                 <div class="form-group branch-form-field">
@@ -178,12 +157,12 @@
                             placeholder="Enter district"
                             maxlength="150"
                             autocomplete="address-level1"
-                    >
+                     class="detail-input w-100">
                 </div>
 
                 <div class="form-group branch-form-field">
                     <label for="add-region">Region</label>
-                    <select id="add-region">
+                    <select id="add-region" class="detail-input w-100">
                         <option value="">-- Select Region --</option>
                         <option value="CENTRAL">Central</option>
                         <option value="EASTERN">Eastern</option>
@@ -201,7 +180,7 @@
                             maxlength="100"
                             autocomplete="country-name"
                             required
-                    >
+                     class="detail-input w-100">
                 </div>
 
                 <div class="form-group branch-form-field">
@@ -212,7 +191,7 @@
                             placeholder="Enter postal code when available"
                             maxlength="30"
                             autocomplete="postal-code"
-                    >
+                     class="detail-input w-100">
                 </div>
             </div>
         </section>
@@ -221,14 +200,10 @@
             <div class="branch-card-heading-row">
                 <div>
                     <h3 id="branch-communication-heading" class="card-header">Communication and Email Identity</h3>
-                    <p class="branch-card-description">
-                        These details will be used for employee credentials, admission notices, receipts and branch communication.
-                    </p>
                 </div>
-                <i class="bi bi-envelope-at-fill branch-card-heading-icon" aria-hidden="true"></i>
             </div>
 
-            <div class="branch-form-grid branch-form-grid--2">
+            <div class="emp-grid emp-grid-2 branch-form-grid branch-form-grid--2">
                 <div class="form-group branch-form-field">
                     <label for="add-primaryPhone" class="branch-required-label">Phone Number 1</label>
                     <div class="branch-input-with-icon">
@@ -240,9 +215,8 @@
                                 maxlength="30"
                                 autocomplete="tel"
                                 required
-                        >
+                         class="detail-input w-100">
                     </div>
-                    <small class="branch-field-hint">This is the primary public contact number.</small>
                 </div>
 
                 <div class="form-group branch-form-field">
@@ -255,7 +229,7 @@
                                 placeholder="Example: +256 750 000 002"
                                 maxlength="30"
                                 autocomplete="tel"
-                        >
+                         class="detail-input w-100">
                     </div>
                 </div>
 
@@ -263,14 +237,13 @@
                     <label for="add-whatsappPhone">Which Number Has WhatsApp?</label>
                     <div class="branch-input-with-icon branch-whatsapp-select">
                         <i class="bi bi-whatsapp" aria-hidden="true"></i>
-                        <select id="add-whatsappPhone">
+                        <select id="add-whatsappPhone" class="detail-input w-100">
                             <option value="NONE">No WhatsApp number</option>
                             <option value="PRIMARY">Phone Number 1</option>
                             <option value="SECONDARY">Phone Number 2</option>
                             <option value="BOTH">Both phone numbers</option>
                         </select>
                     </div>
-                    <small class="branch-field-hint">The selected number can be displayed as the branch WhatsApp contact.</small>
                 </div>
 
                 <div class="form-group branch-form-field">
@@ -284,19 +257,8 @@
                                 maxlength="150"
                                 autocomplete="email"
                                 required
-                        >
+                         class="detail-input w-100">
                     </div>
-                    <small class="branch-field-hint">Used as the Reply-To address for branch emails.</small>
-                </div>
-            </div>
-
-            <div class="branch-email-identity-note">
-                <i class="bi bi-shield-check" aria-hidden="true"></i>
-                <div>
-                    <strong>Email sending identity</strong>
-                    <p>
-                        The system will use the school name as the sender display name and this branch email as the Reply-To address. SMTP passwords will not be stored in the branch table.
-                    </p>
                 </div>
             </div>
         </section>
@@ -305,7 +267,6 @@
             <div class="branch-card-heading-row">
                 <div>
                     <h3 id="branch-incharge-heading" class="card-header">Incharge Details</h3>
-                    <p class="branch-card-description">Add the principal, head teacher, administrator or other responsible persons.</p>
                 </div>
             </div>
 
@@ -323,37 +284,153 @@
                 </table>
             </div>
 
-            <button type="button" id="addInchargeRowBtn" class="btn-outline-primary branch-add-person-btn">
+            <button type="button" id="addInchargeRowBtn" class="btn btn-outline-primary branch-add-person-btn">
                 <i class="bi bi-plus-circle" aria-hidden="true"></i>
                 Add Another Person
             </button>
+        </section>
+
+        <section class="card add-branch-card" aria-labelledby="branch-payment-heading">
+            <div class="branch-card-heading-row">
+                <div>
+                    <h3 id="branch-payment-heading" class="card-header">Payment / Bank Details</h3>
+                </div>
+            </div>
+
+            <div class="emp-grid emp-grid-2 branch-form-grid branch-form-grid--2">
+                <div class="form-group branch-form-field">
+                    <label for="add-bankName">Bank Name</label>
+                    <input
+                            type="text"
+                            id="add-bankName"
+                            placeholder="Enter bank name"
+                            maxlength="150"
+                            autocomplete="organization"
+                     class="detail-input w-100">
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-bankAccountName">Bank Account Name</label>
+                    <input
+                            type="text"
+                            id="add-bankAccountName"
+                            placeholder="Enter account holder name"
+                            maxlength="150"
+                            autocomplete="name"
+                     class="detail-input w-100">
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-bankAccountNumber">Bank Account Number</label>
+                    <input
+                            type="text"
+                            id="add-bankAccountNumber"
+                            placeholder="Enter bank account number"
+                            maxlength="100"
+                            inputmode="numeric"
+                            autocomplete="off"
+                     class="detail-input w-100">
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-bankBranch">Bank Branch</label>
+                    <input
+                            type="text"
+                            id="add-bankBranch"
+                            placeholder="Enter bank branch"
+                            maxlength="150"
+                     class="detail-input w-100">
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-airtelPayNumber">Airtel Pay Number</label>
+                    <div class="branch-input-with-icon">
+                        <i class="bi bi-phone" aria-hidden="true"></i>
+                        <input
+                                type="tel"
+                                id="add-airtelPayNumber"
+                                placeholder="Example: +256 700 000 000"
+                                maxlength="30"
+                                autocomplete="tel"
+                         class="detail-input w-100">
+                    </div>
+                </div>
+
+                <div class="form-group branch-form-field">
+                    <label for="add-airtelPayName">Airtel Pay Name</label>
+                    <input
+                            type="text"
+                            id="add-airtelPayName"
+                            placeholder="Enter Airtel Pay registered name"
+                            maxlength="150"
+                     class="detail-input w-100">
+                </div>
+
+                <div class="form-group branch-form-field branch-span-2">
+                    <label for="add-qrCode">QR Code</label>
+
+                    <div class="branch-qr-upload">
+                        <input
+                                type="file"
+                                id="add-qrCode"
+                                name="qrCode"
+                                class="file-hidden-input branch-qr-file-input"
+                                accept="image/png,image/jpeg"
+                        >
+
+                        <label for="add-qrCode" class="branch-qr-upload-box">
+                            <i class="bi bi-qr-code" aria-hidden="true"></i>
+                            <span class="branch-qr-upload-title">Upload QR Code</span>
+                            <span class="branch-qr-upload-help">PNG or JPG · Maximum 500 KB</span>
+                        </label>
+
+                        <div id="add-qrCode-preview" class="branch-qr-preview hidden">
+                            <img
+                                    id="add-qrCode-preview-image"
+                                    alt="Selected QR code preview"
+                            >
+
+                            <div class="branch-qr-preview-info">
+                                <strong id="add-qrCode-file-name">QR Code selected</strong>
+                                <span>QR code ready to upload</span>
+                            </div>
+
+                            <button
+                                    type="button"
+                                    id="add-qrCode-remove"
+                                    class="branch-qr-remove"
+                                    aria-label="Remove QR code"
+                            >
+                                <i class="bi bi-trash3" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </section>
 
         <section class="card add-branch-card" aria-labelledby="branch-documents-heading">
             <div class="branch-card-heading-row">
                 <div>
                     <h3 id="branch-documents-heading" class="card-header">Documents and Media</h3>
-                    <p class="branch-card-description">Upload the school photograph and available government or registration documents.</p>
                 </div>
             </div>
 
-            <div class="branch-form-grid branch-form-grid--3">
+            <div class="emp-grid emp-grid-3 branch-form-grid branch-form-grid--3">
                 <div class="form-group branch-form-field">
                     <label for="add-logo">Branch Logo</label>
                     <div class="upload-zone branch-upload-zone branch-logo-upload-zone">
                         <input
                                 type="file"
                                 id="add-logo"
-                                class="file-hidden-input"
+                                class="file-hidden-input detail-input w-100"
                                 accept="image/png,image/jpeg"
                         >
                         <div class="upload-content">
                             <i class="bi bi-building text-blue" aria-hidden="true"></i>
                             <span class="upload-title">Click or drag logo here</span>
-                            <span class="upload-subtitle">Transparent PNG preferred; JPG or PNG, maximum 500 KB</span>
                         </div>
                     </div>
-                    <small class="branch-field-note">Used in emails, receipts, reports, letters and branch documents.</small>
                 </div>
 
                 <div class="form-group branch-form-field">
@@ -362,13 +439,12 @@
                         <input
                                 type="file"
                                 id="add-photo"
-                                class="file-hidden-input"
+                                class="file-hidden-input detail-input w-100"
                                 accept="image/png,image/jpeg"
                         >
                         <div class="upload-content">
                             <i class="bi bi-image text-blue" aria-hidden="true"></i>
                             <span class="upload-title">Click or drag photo here</span>
-                            <span class="upload-subtitle">JPG or PNG, maximum 100 KB</span>
                         </div>
                     </div>
                 </div>
@@ -379,14 +455,13 @@
                         <input
                                 type="file"
                                 id="add-doc"
-                                class="file-hidden-input"
+                                class="file-hidden-input detail-input w-100"
                                 accept="image/png,image/jpeg,application/pdf"
                                 multiple
                         >
                         <div class="upload-content">
                             <i class="bi bi-file-earmark-pdf text-orange" aria-hidden="true"></i>
                             <span class="upload-title">Click or drag documents here</span>
-                            <span class="upload-subtitle">PDF up to 2 MB; JPG or PNG up to 100 KB each</span>
                         </div>
                     </div>
                 </div>
@@ -394,12 +469,12 @@
         </section>
 
         <div class="form-actions add-branch-actions branch-sticky-actions">
-            <button type="button" id="cancelAddBranchBtn" class="btn-secondary btn-large">
+            <button type="button" id="cancelAddBranchBtn" class="btn btn-secondary btn-large">
                 <i class="bi bi-x-circle" aria-hidden="true"></i>
                 Cancel
             </button>
 
-            <button type="submit" class="btn-primary btn-large">
+            <button type="submit" class="btn btn-primary btn-large">
                 <i class="bi bi-save" aria-hidden="true"></i>
                 Save New Branch
             </button>

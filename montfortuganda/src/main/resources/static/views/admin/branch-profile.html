@@ -1,0 +1,435 @@
+<div id="ba-branch-profile-view" class="erp-record-detail-view" data-mode="view">
+
+    <!-- PAGE HEADER -->
+    <div class="view-header ba-branch-profile-toolbar">
+        <div>
+            <h2>Branch Profile</h2>
+            <p class="text-muted">Manage your school's profile, contact, banking and documents.</p>
+        </div>
+
+        <div class="action-btn-group ba-branch-profile-actions">
+            <button class="btn-primary ba-profile-view-control" id="ba-branchProfileEditBtn" type="button">
+                <i class="bi bi-pencil"></i>
+                Edit Profile
+            </button>
+
+            <button class="btn-secondary hidden ba-profile-edit-control" id="ba-branchProfileCancelBtn" type="button">
+                <i class="bi bi-x-lg"></i>
+                Cancel
+            </button>
+
+            <button class="btn-success hidden ba-profile-edit-control" id="ba-branchProfileSaveBtn" type="button">
+                <i class="bi bi-save"></i>
+                Save Changes
+            </button>
+        </div>
+    </div>
+
+    <!-- VALIDATION SUMMARY -->
+    <div
+            aria-live="assertive"
+            class="ba-profile-validation-summary hidden ba-profile-edit-control"
+            id="ba-branchProfileValidationSummary"
+            role="alert">
+        <strong>Please correct the highlighted fields.</strong>
+        <p id="ba-branchProfileValidationText"></p>
+    </div>
+
+    <form id="ba-branchProfileForm" class="ba-branch-profile-form" novalidate>
+
+        <!-- ===================================================== -->
+        <!-- PROFILE SUMMARY                                       -->
+        <!-- ===================================================== -->
+        <div class="card ba-profile-summary-card">
+            <div class="ba-profile-summary-layout">
+
+                <div class="ba-profile-logo-panel">
+                    <div class="ba-profile-logo-box">
+                        <img
+                                id="ba-profileLogo"
+                                class="ba-profile-logo hidden"
+                                src=""
+                                alt="School logo">
+
+                        <div id="ba-profileLogoPlaceholder" class="ba-profile-logo-placeholder">
+                            <i class="bi bi-building"></i>
+                            <span>No logo available</span>
+                        </div>
+                    </div>
+
+                    <div class="ba-profile-logo-editor hidden ba-profile-edit-control" id="ba-profileLogoEditor">
+                        <input
+                                id="ba-profileLogoInput"
+                                class="hidden"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp">
+                        <label class="btn-secondary btn-sm" for="ba-profileLogoInput">
+                            <i class="bi bi-camera-fill"></i>
+                            Change Logo
+                        </label>
+                        <span id="ba-profileLogoFileName" class="text-muted">No new logo selected</span>
+                    </div>
+                </div>
+
+                <div class="ba-profile-summary-content">
+                    <h3 id="ba-profileSchoolName">—</h3>
+
+                    <div class="ba-profile-summary-grid">
+                        <div>
+                            <span class="text-muted">School Code</span>
+                            <strong id="ba-profileSchoolCode" class="font-monospace">—</strong>
+                        </div>
+
+                        <div>
+                            <span class="text-muted">Username</span>
+                            <strong id="ba-profileUsername" class="font-monospace">—</strong>
+                        </div>
+
+                        <div>
+                            <span class="text-muted">Status</span>
+                            <span id="ba-profileStatus" class="status-badge badge">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===================================================== -->
+        <!-- BRANCH PROFILE                                        -->
+        <!-- ===================================================== -->
+        <fieldset class="ba-profile-section">
+            <legend class="ba-profile-section-header">
+                <i class="bi bi-building"></i>
+                Branch Profile
+            </legend>
+
+            <div class="ba-profile-section-body">
+                <div class="ba-profile-grid ba-profile-grid-3">
+                    <div class="form-group">
+                        <label for="ba-editFoundationDate">Foundation Date</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewFoundationDate">—</span>
+                        <input
+                                id="ba-editFoundationDate"
+                                class="detail-input hidden w-100 ba-profile-edit-control"
+                                type="date">
+                    </div>
+
+                    <div class="form-group ba-profile-level-field">
+                        <label>Education Levels</label>
+                        <div id="ba-viewEducationLevels" class="detail-text ba-profile-view-control">—</div>
+                        <div id="ba-editEducationLevels" class="ba-profile-level-list hidden ba-profile-edit-control">
+                            <!-- Levels populated by JavaScript -->
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>School Name</label>
+                        <span class="detail-text">—</span>
+                        <small class="text-muted">Managed by Super Admin</small>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- ===================================================== -->
+        <!-- ADDRESS                                                 -->
+        <!-- ===================================================== -->
+        <fieldset class="ba-profile-section">
+            <legend class="ba-profile-section-header">
+                <i class="bi bi-geo-alt"></i>
+                Address
+            </legend>
+
+            <div class="ba-profile-section-body">
+                <div class="ba-profile-grid ba-profile-grid-2">
+                    <div class="form-group">
+                        <label for="ba-editBranchLocation">Short Location</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewBranchLocation">—</span>
+                        <input id="ba-editBranchLocation" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="255">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editPoBox">P.O. Box</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewPoBox">—</span>
+                        <input id="ba-editPoBox" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="100">
+                    </div>
+                </div>
+
+                <div class="ba-profile-grid ba-profile-grid-2">
+                    <div class="form-group">
+                        <label for="ba-editAddressLine1">Address Line 1</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewAddressLine1">—</span>
+                        <input id="ba-editAddressLine1" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="255">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editAddressLine2">Address Line 2</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewAddressLine2">—</span>
+                        <input id="ba-editAddressLine2" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="255">
+                    </div>
+                </div>
+
+                <div class="ba-profile-grid ba-profile-grid-4">
+                    <div class="form-group">
+                        <label for="ba-editLocality">Locality</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewLocality">—</span>
+                        <input id="ba-editLocality" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="150">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editCity">City</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewCity">—</span>
+                        <input id="ba-editCity" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="150">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editDistrict">District</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewDistrict">—</span>
+                        <input id="ba-editDistrict" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="150">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editRegion">Region</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewRegion">—</span>
+                        <input id="ba-editRegion" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="150">
+                    </div>
+                </div>
+
+                <div class="ba-profile-grid ba-profile-grid-2">
+                    <div class="form-group">
+                        <label for="ba-editCountry">Country</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewCountry">—</span>
+                        <input id="ba-editCountry" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editPostalCode">Postal Code</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewPostalCode">—</span>
+                        <input id="ba-editPostalCode" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="30">
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- ===================================================== -->
+        <!-- CONTACT & EMAIL                                       -->
+        <!-- ===================================================== -->
+        <fieldset class="ba-profile-section">
+            <legend class="ba-profile-section-header">
+                <i class="bi bi-telephone"></i>
+                Contact &amp; Email
+            </legend>
+
+            <div class="ba-profile-section-body">
+                <div class="ba-profile-grid ba-profile-grid-3">
+                    <div class="form-group">
+                        <label for="ba-editPrimaryPhone">Primary Phone</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewPrimaryPhone">—</span>
+                        <input id="ba-editPrimaryPhone" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="50">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editSecondaryPhone">Secondary Phone</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewSecondaryPhone">—</span>
+                        <input id="ba-editSecondaryPhone" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="50">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editWhatsappPhone">WhatsApp</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewWhatsappPhone">—</span>
+                        <input id="ba-editWhatsappPhone" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="50">
+                    </div>
+                </div>
+
+                <div class="ba-profile-grid ba-profile-grid-3">
+                    <div class="form-group">
+                        <label for="ba-editBranchEmail">Official Email</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewBranchEmail">—</span>
+                        <input id="ba-editBranchEmail" class="detail-input hidden w-100 ba-profile-edit-control" type="email" maxlength="255">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editEmailFromName">Email Sender Name</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewEmailFromName">—</span>
+                        <input id="ba-editEmailFromName" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="255">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editEmailReplyTo">Reply-To</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewEmailReplyTo">—</span>
+                        <input id="ba-editEmailReplyTo" class="detail-input hidden w-100 ba-profile-edit-control" type="email" maxlength="255">
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- ===================================================== -->
+        <!-- INCHARGE                                                 -->
+        <!-- ===================================================== -->
+        <fieldset class="ba-profile-section">
+            <legend class="ba-profile-section-header">
+                <i class="bi bi-person-badge"></i>
+                Incharge
+            </legend>
+
+            <div class="ba-profile-section-body">
+                <div class="table-responsive">
+                    <table class="data-table ba-profile-incharge-table">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Phone</th>
+                            <th class="ba-profile-incharge-action-column">Action</th>
+                        </tr>
+                        </thead>
+                        <tbody id="ba-profileInchargeBody">
+                        <!-- Rows populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="ba-profile-incharge-editor hidden ba-profile-edit-control" id="ba-profileInchargeEditor">
+                    <!-- Editable rows populated by JavaScript -->
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- ===================================================== -->
+        <!-- PAYMENT                                                  -->
+        <!-- ===================================================== -->
+        <fieldset class="ba-profile-section">
+            <legend class="ba-profile-section-header">
+                <i class="bi bi-bank"></i>
+                Payment
+            </legend>
+
+            <div class="ba-profile-section-body">
+                <div class="ba-profile-grid ba-profile-grid-4">
+                    <div class="form-group">
+                        <label for="ba-editBankName">Bank Name</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewBankName">—</span>
+                        <input id="ba-editBankName" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="255">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editBankAccountName">Account Name</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewBankAccountName">—</span>
+                        <input id="ba-editBankAccountName" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="255">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editBankAccountNumber">Account Number</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewBankAccountNumber">—</span>
+                        <input id="ba-editBankAccountNumber" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editBankBranch">Bank Branch</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewBankBranch">—</span>
+                        <input id="ba-editBankBranch" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="255">
+                    </div>
+                </div>
+
+                <div class="ba-profile-grid ba-profile-grid-2">
+                    <div class="form-group">
+                        <label for="ba-editAirtelPayNumber">Airtel Pay Number</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewAirtelPayNumber">—</span>
+                        <input id="ba-editAirtelPayNumber" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="50">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-editAirtelPayName">Airtel Pay Name</label>
+                        <span class="detail-text ba-profile-view-control" id="ba-viewAirtelPayName">—</span>
+                        <input id="ba-editAirtelPayName" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="255">
+                    </div>
+                </div>
+
+                <div class="ba-profile-payment-qr">
+                    <div class="form-group">
+                        <label>QR Code</label>
+                        <div class="ba-profile-qr-box">
+                            <img id="ba-profileQrImage" class="ba-profile-qr-image hidden" src="" alt="School payment QR code">
+                            <div id="ba-profileQrPlaceholder" class="ba-profile-qr-placeholder">
+                                <i class="bi bi-qr-code"></i>
+                                <span>No QR code available</span>
+                            </div>
+                        </div>
+
+                        <div class="ba-profile-qr-editor hidden ba-profile-edit-control" id="ba-profileQrEditor">
+                            <input
+                                    id="ba-profileQrInput"
+                                    class="hidden"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp">
+                            <label class="btn-secondary btn-sm" for="ba-profileQrInput">
+                                <i class="bi bi-upload"></i>
+                                Replace QR
+                            </label>
+                            <span id="ba-profileQrFileName" class="text-muted">No new QR selected</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+        <!-- ===================================================== -->
+        <!-- DOCUMENTS & MEDIA                                       -->
+        <!-- ===================================================== -->
+        <fieldset class="ba-profile-section">
+            <legend class="ba-profile-section-header">
+                <i class="bi bi-folder2-open"></i>
+                Documents &amp; Media
+            </legend>
+
+            <div class="ba-profile-section-body">
+                <div class="ba-profile-grid ba-profile-grid-2">
+                    <div class="form-group">
+                        <label>School Photo</label>
+                        <div class="ba-profile-school-photo-box">
+                            <img id="ba-profileSchoolPhoto" class="ba-profile-school-photo hidden" src="" alt="School photo">
+                            <div id="ba-profileSchoolPhotoPlaceholder" class="ba-profile-school-photo-placeholder">
+                                <i class="bi bi-image"></i>
+                                <span>No school photo available</span>
+                            </div>
+                        </div>
+
+                        <div class="ba-profile-media-editor hidden ba-profile-edit-control" id="ba-profileSchoolPhotoEditor">
+                            <input
+                                    id="ba-profileSchoolPhotoInput"
+                                    class="hidden"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp">
+                            <label class="btn-secondary btn-sm" for="ba-profileSchoolPhotoInput">
+                                <i class="bi bi-camera-fill"></i>
+                                Change Photo
+                            </label>
+                            <span id="ba-profileSchoolPhotoFileName" class="text-muted">No new photo selected</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Government Documents</label>
+
+                        <div id="ba-profileDocumentsList" class="ba-profile-documents-list">
+                            <!-- Existing documents populated by JavaScript -->
+                        </div>
+
+                        <div class="ba-profile-documents-editor hidden ba-profile-edit-control" id="ba-profileDocumentsEditor">
+                            <input
+                                    id="ba-profileDocumentsInput"
+                                    class="detail-input w-100"
+                                    type="file"
+                                    accept="application/pdf,image/jpeg,image/png"
+                                    multiple>
+                            <small class="text-muted">
+                                New documents are added to the existing document list.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+
+    </form>
+</div>

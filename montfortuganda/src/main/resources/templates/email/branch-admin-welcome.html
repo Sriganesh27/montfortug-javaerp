@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Branch Administrator Account</title>
     <th:block th:replace="~{email/email-theme :: styles}"></th:block>
+    <style>
+        .email-header-branch-title {
+            margin: 6px 0 0;
+            color: #ffffff;
+            font-size: 18px;
+            line-height: 1.3;
+            font-weight: 600;
+            letter-spacing: 0.2px;
+        }
+    </style>
 </head>
 <body>
 
@@ -18,22 +28,23 @@
                         <table border="0" cellspacing="0" cellpadding="0" width="100%">
                             <tr>
                                 <td width="100" align="center" valign="middle">
-                                    <!-- Existing Montfort Brothers logo -->
+                                    <!-- Central Montfort Brothers organisation logo -->
                                     <img th:src="${schoolLogo}"
                                          alt="Montfort Brothers Logo"
                                          class="email-header-logo">
                                 </td>
 
                                 <td align="left" valign="middle" class="email-header-text-container">
-                                    <p class="email-header-supertitle">
+                                    <h1 class="email-header-title">
                                         Montfort Brothers of St. Gabriel, Uganda
-                                    </p>
-                                    <h1 class="email-header-title"
-                                        th:text="${schoolName}">
-                                        Montfort School
                                     </h1>
-                                    <p class="email-header-subtitle">
+
+                                    <p class="email-header-branch-title">
                                         Branch Administrator Account
+                                    </p>
+
+                                    <p class="email-header-subtitle">
+                                        ERP Account Credentials
                                     </p>
                                 </td>
                             </tr>

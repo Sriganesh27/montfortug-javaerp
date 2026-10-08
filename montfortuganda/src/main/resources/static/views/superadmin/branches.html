@@ -9,15 +9,70 @@
             </div>
         </div>
 
-        <div class="card">
+        <div class="card branch-list-filter-card">
+            <div class="branch-list-filter-panel">
+                <div class="form-group">
+                    <label for="sa-branch-search">Search Branches</label>
+                    <input
+                            type="search"
+                            id="sa-branch-search"
+                            class="detail-input"
+                            maxlength="150"
+                            autocomplete="off"
+                            placeholder="Search by school name or code"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="sa-branch-level-filter">Education Level</label>
+                    <select id="sa-branch-level-filter" class="detail-input">
+                        <option value="">All Levels</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="sa-branch-status-filter">Status</label>
+                    <select id="sa-branch-status-filter" class="detail-input">
+                        <option value="">All Statuses</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="INACTIVE">Inactive</option>
+                    </select>
+                </div>
+
+                <div class="ba-pagination-controls branch-filter-actions">
+                    <button type="button" id="sa-branch-search-btn" class="btn-primary">
+                        <i class="bi bi-search" aria-hidden="true"></i>
+                        Search
+                    </button>
+                    <button type="button" id="sa-branch-reset-btn" class="btn-secondary">
+                        <i class="bi bi-arrow-counterclockwise" aria-hidden="true"></i>
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="card branch-list-table-card">
             <div class="table-responsive">
                 <table class="data-table" id="sa-branchesTable">
+                    <colgroup>
+                        <col class="col-logo">
+                        <col class="col-code">
+                        <col class="col-name">
+                        <col class="col-contact">
+                        <col class="col-location">
+                        <col class="col-levels">
+                        <col class="col-status">
+                        <col class="col-actions">
+                    </colgroup>
                     <thead>
                     <tr>
-                        <th>ID</th>
+                        <th class="col-logo-heading">Logo</th>
+                        <th>School Code</th>
                         <th>School Name</th>
-                        <th>Code</th>
-                        <th>Assigned Levels</th>
+                        <th>Contact</th>
+                        <th>Location</th>
+                        <th>Levels</th>
                         <th>Status</th>
                         <th>Actions</th>
                     </tr>
@@ -25,57 +80,65 @@
                     <tbody id="sa-branchesTableBody"></tbody>
                 </table>
             </div>
+
+            <div class="ba-pagination-footer">
+                <div class="ba-pagination-controls">
+                    <label for="sa-branch-page-size">Rows</label>
+                    <select id="sa-branch-page-size" class="detail-input w-auto">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    <span id="sa-branch-page-info" class="text-muted">
+                        Showing page 1 of 1
+                    </span>
+                </div>
+
+                <div class="ba-pagination-controls">
+                    <button type="button" id="sa-branch-prev" class="btn-secondary btn-sm" disabled>
+                        <i class="bi bi-chevron-left" aria-hidden="true"></i>
+                        Previous
+                    </button>
+                    <button type="button" id="sa-branch-next" class="btn-secondary btn-sm" disabled>
+                        Next
+                        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div id="sa-branchDetailView" class="hidden">
-        <div class="view-header branch-detail-header">
+    <div id="sa-branchDetailView" class="hidden branch-detail-page" data-mode="view">
+        <div class="view-header branch-modern-toolbar">
             <div>
-                <h2>Branch Details: <span id="detail-schoolNameHeader"></span></h2>
-                <p class="text-muted branch-page-subtitle">
-                    Review the branch profile or use Edit Mode to update existing information.
-                </p>
+                <h2>Branch Profile</h2>
+                <p class="text-muted branch-page-subtitle">View and manage the selected school branch.</p>
             </div>
-
-            <div class="action-btn-group branch-detail-actions">
-                <button id="sa-printBranchBtn" type="button" class="btn-secondary">
-                    <i class="bi bi-printer" aria-hidden="true"></i>
-                    Print
-                </button>
-
+            <div class="action-btn-group">
                 <button id="sa-backToTableBtn" type="button" class="btn-secondary">
-                    <i class="bi bi-arrow-left" aria-hidden="true"></i>
-                    Back
+                    <i class="bi bi-arrow-left" aria-hidden="true"></i> Back
                 </button>
-
+                <button id="sa-printBranchBtn" type="button" class="btn-secondary">
+                    <i class="bi bi-printer" aria-hidden="true"></i> Print
+                </button>
                 <button type="button" class="btn-primary" id="sa-backupBranchBtn">
-                    <i class="bi bi-cloud-download" aria-hidden="true"></i>
-                    Export Data
+                    <i class="bi bi-cloud-download" aria-hidden="true"></i> Export Data
                 </button>
-
                 <button id="sa-editBranchBtn" type="button" class="btn-primary">
-                    <i class="bi bi-pencil" aria-hidden="true"></i>
-                    Edit Mode
+                    <i class="bi bi-pencil" aria-hidden="true"></i> Edit
                 </button>
-
+                <button type="button" class="btn-secondary btn-sm branch-reset-admin-btn" id="sa-resetBranchAdminPwdBtn">Reset Admin Password</button>
                 <button id="sa-cancelEditBtn" type="button" class="btn-secondary hidden">
-                    <i class="bi bi-x-circle" aria-hidden="true"></i>
-                    Cancel
+                    <i class="bi bi-x-circle" aria-hidden="true"></i> Cancel
                 </button>
-
                 <button id="sa-saveBranchBtn" type="button" class="btn-success hidden">
-                    <i class="bi bi-save" aria-hidden="true"></i>
-                    Save Changes
+                    <i class="bi bi-check2-circle" aria-hidden="true"></i> Save Changes
                 </button>
             </div>
         </div>
 
-        <div
-                id="edit-branch-validation-summary"
-                class="branch-edit-validation-summary hidden"
-                role="alert"
-                aria-live="assertive"
-        >
+        <div id="edit-branch-validation-summary" class="branch-edit-validation-summary hidden" role="alert" aria-live="assertive">
             <div class="branch-edit-validation-heading">
                 <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
                 <strong>Please correct the highlighted branch information.</strong>
@@ -83,330 +146,157 @@
             <ul id="edit-branch-validation-list"></ul>
         </div>
 
-        <div class="stats-grid branch-stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon icon-blue"><i class="bi bi-people" aria-hidden="true"></i></div>
-                <div class="stat-details">
-                    <h3>Total Students</h3>
-                    <h1 id="view-statStudents">0</h1>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon icon-orange"><i class="bi bi-person-badge" aria-hidden="true"></i></div>
-                <div class="stat-details">
-                    <h3>Total Staff</h3>
-                    <h1 id="view-statStaff">0</h1>
-                </div>
-            </div>
-
-            <div class="stat-card">
-                <div class="stat-icon icon-green"><i class="bi bi-check2-circle" aria-hidden="true"></i></div>
-                <div class="stat-details">
-                    <h3>Average Attendance</h3>
-                    <h1 id="view-statAttendance">0%</h1>
-                </div>
-            </div>
-        </div>
-
-        <div id="printable-area" class="branch-detail-print-area">
-            <section class="card branch-detail-section" aria-labelledby="branch-identity-heading">
-                <div class="branch-detail-section-header">
-                    <div>
-                        <h3 id="branch-identity-heading">Branch Identity</h3>
-                        <p>Official branch name, code, education levels and administrator identity.</p>
-                    </div>
-                    <i class="bi bi-building" aria-hidden="true"></i>
-                </div>
-
-                <div class="branch-detail-grid branch-detail-grid--2">
-                    <div class="form-group branch-detail-field branch-detail-span-full">
-                        <label for="edit-branchName">School Name</label>
-                        <span class="detail-text" id="view-branchName"></span>
-                        <input type="text" class="detail-input hidden" id="edit-branchName" maxlength="200">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-schoolCode">School Code</label>
-                        <span class="detail-text" id="view-schoolCode"></span>
-                        <input type="text" class="detail-input hidden" id="edit-schoolCode" maxlength="20">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label>Admin Credentials</label>
-                        <div class="inline-action-group branch-admin-credential-row">
-                            <span class="detail-text highlighted-username readonly-always" id="view-adminUsername"></span>
-                            <button type="button" class="btn-secondary btn-nowrap" id="sa-resetBranchAdminPwdBtn">
-                                <i class="bi bi-key" aria-hidden="true"></i>
-                                Reset Password
-                            </button>
+        <div id="printable-area" class="branch-modern-content">
+            <section class="branch-modern-profile" aria-labelledby="detail-schoolNameHeader">
+                <div class="branch-modern-logo-panel" aria-label="School logo">
+                    <div class="branch-modern-logo-wrap">
+                        <img id="view-branchLogo" class="branch-modern-logo hidden" alt="Branch logo">
+                        <div id="view-branchLogoEmpty" class="branch-modern-logo-placeholder">
+                            <i class="bi bi-building" aria-hidden="true"></i>
+                            <span>No logo</span>
                         </div>
                     </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-foundationDate">Foundation Date</label>
-                        <span class="detail-text" id="view-foundationDate"></span>
-                        <input type="date" class="detail-input hidden" id="edit-foundationDate">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label>Assigned Levels</label>
-                        <span class="detail-text" id="view-branchType"></span>
-                        <div class="detail-input hidden level-checkbox-group branch-edit-level-options" id="edit-branchLevels">
-                            <span class="loading-text">Loading database levels...</span>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section class="card branch-detail-section" aria-labelledby="branch-address-detail-heading">
-                <div class="branch-detail-section-header">
-                    <div>
-                        <h3 id="branch-address-detail-heading">Official Address</h3>
-                        <p>Structured address used on emails, receipts, reports and official letters.</p>
-                    </div>
-                    <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
-                </div>
-
-                <div class="branch-address-preview-card">
-                    <span class="branch-address-preview-label">Formatted Address</span>
-                    <strong id="view-fullAddress"></strong>
-                </div>
-
-                <div class="branch-detail-grid branch-detail-grid--2">
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-branchLocation">Short Location</label>
-                        <span class="detail-text" id="view-branchLocation"></span>
-                        <input type="text" class="detail-input hidden" id="edit-branchLocation" maxlength="255" placeholder="Example: Mpala, Entebbe">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-addressLine1">Campus / Address Line 1</label>
-                        <span class="detail-text" id="view-addressLine1"></span>
-                        <input type="text" class="detail-input hidden" id="edit-addressLine1" maxlength="255" placeholder="Example: Mpala Catholic Church Campus">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-addressLine2">Address Line 2</label>
-                        <span class="detail-text" id="view-addressLine2"></span>
-                        <input type="text" class="detail-input hidden" id="edit-addressLine2" maxlength="255" placeholder="Building, road or landmark">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-poBox">P.O. Box</label>
-                        <span class="detail-text" id="view-poBox"></span>
-                        <input type="text" class="detail-input hidden" id="edit-poBox" maxlength="100" placeholder="Example: P.O. Box 51">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-locality">Locality / Town</label>
-                        <span class="detail-text" id="view-locality"></span>
-                        <input type="text" class="detail-input hidden" id="edit-locality" maxlength="150">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-city">City / Municipality</label>
-                        <span class="detail-text" id="view-city"></span>
-                        <input type="text" class="detail-input hidden" id="edit-city" maxlength="150">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-district">District</label>
-                        <span class="detail-text" id="view-district"></span>
-                        <input type="text" class="detail-input hidden" id="edit-district" maxlength="150">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-region">Region</label>
-                        <span class="detail-text" id="view-region"></span>
-                        <select class="detail-input hidden" id="edit-region">
-                            <option value="">-- Select Region --</option>
-                            <option value="CENTRAL">Central</option>
-                            <option value="EASTERN">Eastern</option>
-                            <option value="NORTHERN">Northern</option>
-                            <option value="WESTERN">Western</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-country">Country</label>
-                        <span class="detail-text" id="view-country"></span>
-                        <input type="text" class="detail-input hidden" id="edit-country" maxlength="100">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-postalCode">Postal Code</label>
-                        <span class="detail-text" id="view-postalCode"></span>
-                        <input type="text" class="detail-input hidden" id="edit-postalCode" maxlength="30">
-                    </div>
-                </div>
-            </section>
-
-            <section class="card branch-detail-section branch-communication-detail-section" aria-labelledby="branch-contact-detail-heading">
-                <div class="branch-detail-section-header">
-                    <div>
-                        <h3 id="branch-contact-detail-heading">Communication and Email Identity</h3>
-                        <p>Public contacts and branch identity used by the common email service.</p>
-                    </div>
-                    <i class="bi bi-envelope-at-fill" aria-hidden="true"></i>
-                </div>
-
-                <div class="branch-detail-grid branch-detail-grid--2">
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-primaryPhone">Phone Number 1</label>
-                        <span class="detail-text" id="view-primaryPhone"></span>
-                        <input type="tel" class="detail-input hidden" id="edit-primaryPhone" maxlength="30" placeholder="+256...">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-secondaryPhone">Phone Number 2</label>
-                        <span class="detail-text" id="view-secondaryPhone"></span>
-                        <input type="tel" class="detail-input hidden" id="edit-secondaryPhone" maxlength="30" placeholder="+256...">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-whatsappPhone">WhatsApp Number</label>
-                        <span class="detail-text branch-whatsapp-value" id="view-whatsappPhone"></span>
-                        <select class="detail-input hidden" id="edit-whatsappPhone">
-                            <option value="NONE">No WhatsApp number</option>
-                            <option value="PRIMARY">Phone Number 1</option>
-                            <option value="SECONDARY">Phone Number 2</option>
-                            <option value="BOTH">Both phone numbers</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-branchEmail">Official Branch Email</label>
-                        <span class="detail-text" id="view-branchEmail"></span>
-                        <input type="email" class="detail-input hidden" id="edit-branchEmail" maxlength="150" placeholder="branch@example.org">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-emailFromName">Email Sender Name</label>
-                        <span class="detail-text" id="view-emailFromName"></span>
-                        <input type="text" class="detail-input hidden" id="edit-emailFromName" maxlength="150" placeholder="Branch display name">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-emailReplyTo">Email Reply-To</label>
-                        <span class="detail-text" id="view-emailReplyTo"></span>
-                        <input type="email" class="detail-input hidden" id="edit-emailReplyTo" maxlength="150" placeholder="reply@example.org">
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label for="edit-emailEnabled">Branch Email Status</label>
-                        <span class="detail-text branch-email-status" id="view-emailEnabled"></span>
-                        <label class="detail-input hidden branch-email-toggle-row" for="edit-emailEnabled">
-                            <input type="checkbox" id="edit-emailEnabled">
-                            <span>Allow the system to send branch emails</span>
+                    <div class="branch-modern-logo-editor hidden" data-edit-only="logo">
+                        <label for="edit-branchLogo" class="btn-secondary btn-sm">
+                            <i class="bi bi-upload" aria-hidden="true"></i> Change Logo
                         </label>
-                    </div>
-
-                    <div class="form-group branch-detail-field">
-                        <label>Legacy Contact Details</label>
-                        <span class="detail-text" id="view-contactDetails"></span>
-                        <small class="branch-field-note">
-                            Kept temporarily for old records. It is rebuilt automatically from the structured contact fields when saved.
-                        </small>
-                    </div>
-                </div>
-            </section>
-
-            <section class="card branch-detail-section" aria-labelledby="branch-incharge-heading">
-                <div class="branch-detail-section-header">
-                    <div>
-                        <h3 id="branch-incharge-heading">Incharge Details</h3>
-                        <p>People responsible for the branch and their current contact information.</p>
-                    </div>
-                    <i class="bi bi-person-vcard" aria-hidden="true"></i>
-                </div>
-
-                <div class="form-group full-width-group branch-detail-field">
-                    <div class="detail-text json-detail-box" id="view-inchargeDetails"></div>
-
-                    <div class="detail-input edit-incharge-container hidden" id="edit-inchargeDetails-container">
-                        <div class="table-responsive">
-                            <table class="data-table edit-incharge-table">
-                                <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Role</th>
-                                    <th>Phone</th>
-                                    <th class="col-action align-center">Action</th>
-                                </tr>
-                                </thead>
-                                <tbody id="edit-incharge-tbody"></tbody>
-                            </table>
-                        </div>
-
-                        <button type="button" class="btn-secondary btn-add-incharge" id="edit-addInchargeRowBtn">
-                            <i class="bi bi-plus-circle" aria-hidden="true"></i>
-                            Add Person
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <section class="card branch-detail-section" aria-labelledby="branch-media-heading">
-                <div class="branch-detail-section-header">
-                    <div>
-                        <h3 id="branch-media-heading">Documents and Media</h3>
-                        <p>Current school photograph and government or registration document.</p>
-                    </div>
-                    <i class="bi bi-folder2-open" aria-hidden="true"></i>
-                </div>
-
-                <div class="branch-detail-grid branch-detail-grid--3">
-                    <div class="form-group branch-detail-field branch-media-field branch-logo-field">
-                        <label for="edit-branchLogo">Branch Logo</label>
-                        <img id="view-branchLogo" class="preview-image branch-logo-preview hidden" alt="Branch Logo">
-                        <div id="view-branchLogoEmpty" class="branch-media-empty detail-text">No branch logo uploaded.</div>
                         <input type="file" class="detail-input hidden" id="edit-branchLogo" accept="image/png,image/jpeg">
-                        <small class="branch-field-note">Transparent PNG preferred; JPG or PNG, maximum 500 KB.</small>
+                        <small class="branch-field-note">JPG or PNG, maximum 500 KB.</small>
                     </div>
-
-                    <div class="form-group branch-detail-field branch-media-field">
-                        <label for="edit-schoolPhoto">School Photo</label>
-                        <img id="view-schoolPhoto" class="preview-image hidden" alt="School Photo">
-                        <input type="file" class="detail-input hidden" id="edit-schoolPhoto" accept="image/png,image/jpeg">
-                        <small class="branch-field-note">JPG or PNG, maximum 100 KB.</small>
+                </div>
+                <div class="branch-modern-profile-main">
+                    <div class="branch-modern-title-row">
+                        <div class="w-100">
+                            <h3 id="detail-schoolNameHeader" class="detail-text"></h3>
+                            <label class="branch-profile-edit-label hidden" for="edit-branchName">School Name</label>
+                            <input type="text" class="detail-input hidden branch-profile-edit-name w-100" id="edit-branchName" maxlength="150" aria-label="School name">
+                            <div class="branch-modern-code">
+                                <span id="view-schoolCode" class="detail-text"></span>
+                                <label class="branch-profile-edit-label hidden" for="edit-schoolCode">School Code</label>
+                                <input type="text" class="detail-input hidden branch-profile-edit-code w-auto" id="edit-schoolCode" maxlength="50" aria-label="School code">
+                            </div>
+                        </div>
+                        <span id="view-branchStatus" class="branch-modern-status"></span><span id="view-emailEnabled" class="hidden"></span>
                     </div>
-
-                    <div class="form-group branch-detail-field branch-media-field">
-                        <label for="edit-govDocument">Government Document</label>
-                        <div id="view-govDocument" class="document-container detail-text"></div>
-                        <input type="file" class="detail-input hidden" id="edit-govDocument" accept="image/png,image/jpeg,application/pdf">
-                        <small class="branch-field-note">PDF up to 2 MB; JPG or PNG up to 100 KB.</small>
+                    <div class="branch-modern-facts branch-profile-facts">
+                        <div>
+                            <span>Education Levels</span>
+                            <strong id="view-branchType" class="detail-text"></strong>
+                            <div id="edit-branchLevels" class="detail-input hidden level-checkbox-group branch-edit-level-options" aria-label="Education levels"></div>
+                        </div>
+                        <div>
+                            <span>Foundation Date</span>
+                            <strong id="view-foundationDate" class="detail-text"></strong>
+                            <input type="date" class="detail-input hidden" id="edit-foundationDate" aria-label="Foundation date">
+                        </div>
+                        <div>
+                            <span>Admin User ID</span>
+                            <strong id="view-adminUsername" class="detail-text readonly-always"></strong>
+                        </div>
                     </div>
                 </div>
             </section>
-        </div>
 
-        <div class="card audit-logs-card">
-            <div class="audit-card-header">
-                <h3>Recent Activity Logs</h3>
-            </div>
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                    <tr>
-                        <th>Date and Time</th>
-                        <th>User / Role</th>
-                        <th>Action Performed</th>
-                    </tr>
-                    </thead>
-                    <tbody id="view-auditLogTbody"></tbody>
-                </table>
-            </div>
+            <section class="branch-modern-section">
+                <div class="branch-modern-section-header"><h3>Address</h3><i class="bi bi-geo-alt" aria-hidden="true"></i></div>
+                <div class="branch-modern-grid branch-modern-grid-3">
+                    <div class="branch-modern-field branch-modern-span-2 branch-short-location-field">
+                        <label for="edit-branchLocation">Short Location</label>
+                        <span class="detail-text" id="view-branchLocation-field"></span>
+                        <input type="text" class="detail-input hidden" id="edit-branchLocation" maxlength="255">
+                    </div>
+                    <div class="branch-modern-field"><label for="edit-country">Country</label><span class="detail-text" id="view-country"></span><input type="text" class="detail-input hidden" id="edit-country" maxlength="100"></div>
+                    <div class="branch-modern-field branch-modern-span-2"><label for="edit-addressLine1">Address Line 1</label><span class="detail-text" id="view-addressLine1"></span><input type="text" class="detail-input hidden" id="edit-addressLine1" maxlength="255"></div>
+                    <div class="branch-modern-field"><label for="edit-poBox">P.O. Box</label><span class="detail-text" id="view-poBox"></span><input type="text" class="detail-input hidden" id="edit-poBox" maxlength="50"></div>
+                    <div class="branch-modern-field"><label for="edit-addressLine2">Address Line 2</label><span class="detail-text" id="view-addressLine2"></span><input type="text" class="detail-input hidden" id="edit-addressLine2" maxlength="255"></div>
+                    <div class="branch-modern-field"><label for="edit-locality">Locality</label><span class="detail-text" id="view-locality"></span><input type="text" class="detail-input hidden" id="edit-locality" maxlength="150"></div>
+                    <div class="branch-modern-field"><label for="edit-city">City</label><span class="detail-text" id="view-city"></span><input type="text" class="detail-input hidden" id="edit-city" maxlength="100"></div>
+                    <div class="branch-modern-field"><label for="edit-district">District</label><span class="detail-text" id="view-district"></span><input type="text" class="detail-input hidden" id="edit-district" maxlength="100"></div>
+                    <div class="branch-modern-field"><label for="edit-region">Region</label><span class="detail-text" id="view-region"></span><input type="text" class="detail-input hidden" id="edit-region" maxlength="100"></div>
+                    <div class="branch-modern-field"><label for="edit-postalCode">Postal Code</label><span class="detail-text" id="view-postalCode"></span><input type="text" class="detail-input hidden" id="edit-postalCode" maxlength="30"></div>
+                </div>
+            </section>
+
+            <section class="branch-modern-section">
+                <div class="branch-modern-section-header"><h3>Contact &amp; Email</h3><i class="bi bi-telephone" aria-hidden="true"></i></div>
+                <div class="branch-modern-grid branch-modern-grid-3">
+                    <div class="branch-modern-field"><label for="edit-primaryPhone">Primary</label><span class="detail-text" id="view-primaryPhone"></span><input type="tel" class="detail-input hidden" id="edit-primaryPhone" maxlength="30" placeholder="+256..."></div>
+                    <div class="branch-modern-field"><label for="edit-secondaryPhone">Secondary</label><span class="detail-text" id="view-secondaryPhone"></span><input type="tel" class="detail-input hidden" id="edit-secondaryPhone" maxlength="30" placeholder="+256..."></div>
+                    <div class="branch-modern-field"><label for="edit-whatsappPhone">WhatsApp</label><span class="detail-text branch-whatsapp-value" id="view-whatsappPhone"></span><select class="detail-input hidden" id="edit-whatsappPhone"><option value="NONE">None</option><option value="PRIMARY">Primary</option><option value="SECONDARY">Secondary</option><option value="BOTH">Both</option></select></div>
+                    <div class="branch-modern-field"><label for="edit-branchEmail">Official Email</label><span class="detail-text" id="view-branchEmail"></span><input type="email" class="detail-input hidden" id="edit-branchEmail" maxlength="150"></div>
+                    <div class="branch-modern-field"><label for="edit-emailFromName">Email Sender Name</label><span class="detail-text" id="view-emailFromName"></span><input type="text" class="detail-input hidden" id="edit-emailFromName" maxlength="150"></div>
+                    <div class="branch-modern-field"><label for="edit-emailReplyTo">Email Reply-To</label><span class="detail-text" id="view-emailReplyTo"></span><input type="email" class="detail-input hidden" id="edit-emailReplyTo" maxlength="150"></div>
+                </div>
+                <label class="detail-input hidden branch-email-toggle-row branch-modern-checkbox" for="edit-emailEnabled"><input type="checkbox" id="edit-emailEnabled"><span>Allow the system to send branch emails</span></label>
+            </section>
+
+            <section class="branch-modern-section">
+                <div class="branch-modern-section-header"><h3>Incharge</h3><i class="bi bi-person-vcard" aria-hidden="true"></i></div>
+                <div class="branch-modern-view-content" id="view-inchargeDetails"></div>
+                <div class="detail-input hidden" id="edit-inchargeDetails-container">
+                    <div class="table-responsive"><table class="data-table edit-incharge-table"><thead><tr><th>Name</th><th>Role</th><th>Phone</th><th>Action</th></tr></thead><tbody id="edit-incharge-tbody"></tbody></table></div>
+                    <button type="button" class="btn-secondary btn-add-incharge" id="edit-addInchargeRowBtn"><i class="bi bi-plus-circle" aria-hidden="true"></i> Add Person</button>
+                </div>
+            </section>
+
+            <section class="branch-modern-section">
+                <div class="branch-modern-section-header"><h3>Payment</h3><i class="bi bi-credit-card" aria-hidden="true"></i></div>
+                <div class="branch-payment-layout">
+                    <div class="branch-payment-details">
+                        <div class="branch-payment-block"><h4>Bank Transfer</h4><div class="branch-modern-grid branch-modern-grid-2">
+                            <div class="branch-modern-field"><label>Bank Name</label><span class="detail-text" id="view-bankName"></span><input type="text" class="detail-input hidden" id="edit-bankName" maxlength="150"></div>
+                            <div class="branch-modern-field"><label>Account Name</label><span class="detail-text" id="view-bankAccountName"></span><input type="text" class="detail-input hidden" id="edit-bankAccountName" maxlength="150"></div>
+                            <div class="branch-modern-field"><label>Account Number</label><span class="detail-text" id="view-bankAccountNumber"></span><input type="text" class="detail-input hidden" id="edit-bankAccountNumber" maxlength="100"></div>
+                            <div class="branch-modern-field"><label>Bank Branch</label><span class="detail-text" id="view-bankBranch"></span><input type="text" class="detail-input hidden" id="edit-bankBranch" maxlength="150"></div>
+                        </div></div>
+                        <div class="branch-payment-block"><h4>Airtel</h4><div class="branch-modern-grid branch-modern-grid-2">
+                            <div class="branch-modern-field"><label>Airtel Number</label><span class="detail-text" id="view-airtelPayNumber"></span><input type="text" class="detail-input hidden" id="edit-airtelPayNumber" maxlength="30"></div>
+                            <div class="branch-modern-field"><label>Airtel Name</label><span class="detail-text" id="view-airtelPayName"></span><input type="text" class="detail-input hidden" id="edit-airtelPayName" maxlength="150"></div>
+                        </div></div>
+                    </div>
+                    <div class="branch-payment-qr">
+                        <div class="branch-payment-qr-inner">
+                            <div class="branch-payment-qr-title">QR Code</div>
+                            <div class="branch-payment-qr-box">
+                                <img id="view-qrCode" class="branch-payment-qr-image hidden" alt="Branch payment QR code">
+                                <div id="view-qrCodeEmpty" class="branch-payment-qr-empty"><i class="bi bi-qr-code" aria-hidden="true"></i><span>No QR uploaded</span></div>
+                            </div>
+                            <div class="branch-payment-qr-editor hidden">
+                                <label for="edit-qrCode" class="btn-secondary btn-sm"><i class="bi bi-upload" aria-hidden="true"></i> Replace QR</label>
+                                <input type="file" class="detail-input hidden" id="edit-qrCode" accept="image/png,image/jpeg">
+                                <small class="branch-field-note">PNG or JPG, maximum 500 KB.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="branch-modern-section branch-documents-section">
+                <div class="branch-modern-section-header"><h3>Documents &amp; Media</h3><i class="bi bi-folder2-open" aria-hidden="true"></i></div>
+                <div class="branch-modern-grid branch-modern-grid-2">
+                    <div class="branch-modern-field"><label>School Photo</label><img id="view-schoolPhoto" class="preview-image branch-school-photo-preview hidden" alt="School Photo"><div class="branch-media-editor hidden"><label for="edit-schoolPhoto" class="btn-secondary btn-sm"><i class="bi bi-upload" aria-hidden="true"></i> Change Photo</label><input type="file" class="detail-input hidden" id="edit-schoolPhoto" accept="image/png,image/jpeg"><small class="branch-field-note">JPG or PNG, maximum 100 KB.</small></div></div>
+                    <div class="branch-modern-field branch-government-documents-field"><label>Government Documents</label><div id="view-govDocuments" class="branch-government-documents" aria-live="polite"></div><div class="branch-government-documents-editor hidden"><label for="edit-govDocument" class="btn-secondary btn-sm"><i class="bi bi-upload" aria-hidden="true"></i> Add Documents</label><input type="file" class="detail-input hidden" id="edit-govDocument" accept="image/png,image/jpeg,application/pdf" multiple><small class="branch-field-note">PDF up to 2 MB; JPG or PNG up to 100 KB per file.</small></div></div>
+                </div>
+            </section>
+
         </div>
     </div>
 
     <template id="branch-row-template">
         <tr>
-            <td class="col-id"></td>
-            <td class="col-name"><strong></strong></td>
+            <td class="col-logo">
+                <div class="branch-list-logo-wrap">
+                    <img class="branch-list-logo hidden" alt="Branch logo">
+                    <span class="branch-list-logo-fallback" aria-hidden="true">
+                        <i class="bi bi-building" aria-hidden="true"></i>
+                    </span>
+                </div>
+            </td>
             <td class="col-code"></td>
-            <td class="col-type"></td>
+            <td class="col-name"><strong></strong></td>
+            <td class="col-contact"></td>
+            <td class="col-location"></td>
+            <td class="col-levels"></td>
             <td class="col-status">
                 <label class="switch">
                     <input type="checkbox" class="status-toggle" aria-label="Change branch status">
@@ -414,9 +304,9 @@
                 </label>
             </td>
             <td class="col-actions">
-                <button type="button" class="action-btn view-more-btn">
+                <button type="button" class="action-btn view-more-btn" aria-label="View branch">
                     <i class="bi bi-eye" aria-hidden="true"></i>
-                    View More
+                    View
                 </button>
             </td>
         </tr>
@@ -479,11 +369,4 @@
         </div>
     </template>
 
-    <template id="audit-log-row-template">
-        <tr>
-            <td class="log-date"></td>
-            <td class="log-user"></td>
-            <td class="log-action"></td>
-        </tr>
-    </template>
 </div>

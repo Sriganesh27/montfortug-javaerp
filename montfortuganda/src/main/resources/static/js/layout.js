@@ -278,35 +278,6 @@ window.renderFetchingMessage = function(tbody, colSpan, message) {
 };
 
 
-function waitForHeaderLogo() {
-    const logo = document.getElementById('brandLogo');
-
-    if (!(logo instanceof HTMLImageElement)) {
-        return Promise.resolve();
-    }
-
-    if (logo.complete && logo.naturalWidth > 0) {
-        return Promise.resolve();
-    }
-
-    return new Promise(resolve => {
-        let settled = false;
-
-        const finish = () => {
-            if (settled) return;
-            settled = true;
-            logo.removeEventListener('load', finish);
-            logo.removeEventListener('error', finish);
-            resolve();
-        };
-
-        logo.addEventListener('load', finish, { once: true });
-        logo.addEventListener('error', finish, { once: true });
-
-        window.setTimeout(finish, 5000);
-    });
-}
-
 async function loadHeaderContext() {
     const response = await fetch(
         '/api/auth/header-context',
@@ -435,10 +406,71 @@ document.addEventListener('DOMContentLoaded', async function() {
          */
         window.erpStartupLoading?.setMessage('Loading account information...');
 
-        const headerInitialization = (async () => {
-            await loadHeaderContext();
-            await waitForHeaderLogo();
-        })();
+        /*
+         * Start the private branch logo request immediately for Branch Admin.
+         * It must load independently of the header-context request. The
+         * context request still supplies the authenticated school name,
+         * school code, location, role and the final logo URL/fallback.
+         *
+         * Do not await the image: the logo is a visual asset and must never
+         * block header/account initialization or the initial dashboard.
+         */
+        const startBranchLogoLoad = () => {
+            const brandLogo = document.getElementById('brandLogo');
+
+            if (!(brandLogo instanceof HTMLImageElement)) {
+                return;
+            }
+
+            if (userRole !== 'BRANCH_ADMIN') {
+                return;
+            }
+
+            brandLogo.src = '/api/auth/header-logo';
+            brandLogo.alt = 'School logo';
+        };
+
+        startBranchLogoLoad();
+
+        const headerInitialization = loadHeaderContext();
+
+        // Branch Admin user identity in the header is a shortcut to the
+        // authenticated branch's own Branch Profile. The branch is resolved
+        // server-side by the Branch Profile API; no branch ID is taken from
+        // the URL or from the clicked element. Other roles keep the existing
+        // header behaviour unchanged.
+        const welcomeUser = document.getElementById('welcomeUser');
+        if (welcomeUser && userRole === 'BRANCH_ADMIN') {
+            welcomeUser.setAttribute('role', 'button');
+            welcomeUser.setAttribute('tabindex', '0');
+            welcomeUser.setAttribute(
+                'aria-label',
+                'Open Branch Profile'
+            );
+            welcomeUser.style.cursor = 'pointer';
+
+            const openBranchProfile = event => {
+                if (event?.type === 'keydown' &&
+                    event.key !== 'Enter' &&
+                    event.key !== ' ') {
+                    return;
+                }
+
+                event?.preventDefault();
+
+                void window.erpNavigate({
+                    role: 'admin',
+                    view: 'branch-profile',
+                    routeParams: [],
+                    title: 'Branch Profile',
+                    historyMode: 'push',
+                    container: document.getElementById('main-content-area')
+                });
+            };
+
+            welcomeUser.addEventListener('click', openBranchProfile);
+            welcomeUser.addEventListener('keydown', openBranchProfile);
+        }
 
         // Enforce Role-Based Visibility in Sidebar (Uses Pure CSS Class)
         document.querySelectorAll('#sidebarMenu li').forEach(li => {
@@ -636,7 +668,7 @@ async function setupRouter(urlRole) {
             viewName = 'home';
         }
 
-        const routeParams = Array.isArray(
+        let routeParams = Array.isArray(
             historyState?.routeParams
         )
             ? historyState.routeParams.map(String)
@@ -646,6 +678,24 @@ async function setupRouter(urlRole) {
                     ? pathSegments.slice(2)
                     : []
             );
+
+        // Branch View keeps its record id in the query string as a durable
+        // browser route. history.state is preserved by normal navigation,
+        // but the query parameter also lets a hard refresh reconstruct the
+        // same Branch View when the browser/server does not retain state.
+        if (
+            routeParams.length === 0 &&
+            routeRole === 'superadmin' &&
+            viewName === 'branches'
+        ) {
+            const branchId = new URLSearchParams(
+                window.location.search
+            ).get('branchId');
+
+            if (branchId) {
+                routeParams = [String(branchId)];
+            }
+        }
 
         return {
             role: routeRole,

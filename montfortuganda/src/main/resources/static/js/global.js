@@ -23,7 +23,9 @@
         currentPath === '/dashboard' ||
         currentPath === '/dashboard.html' ||
         currentPath === '/superadmin' ||
-        currentPath === '/superadmin.html';
+        currentPath === '/superadmin.html' ||
+        currentPath.startsWith('/dashboard/') ||
+        currentPath.startsWith('/superadmin/');
 
     if (!isErpShellPage || isPublicApplyPage) {
         return;

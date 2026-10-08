@@ -59,6 +59,17 @@ public class BranchPrivateFileController {
         );
     }
 
+    @GetMapping("/{branchId}/files/qr-code")
+    public ResponseEntity<Resource> viewQrCode(
+            @PathVariable Integer branchId
+    ) {
+        Branch branch = findBranch(branchId);
+
+        return servePrivateFile(
+                branch.getQrCodeUrl()
+        );
+    }
+
     @GetMapping("/{branchId}/files/documents/{documentIndex}")
     public ResponseEntity<Resource> viewGovernmentDocument(
             @PathVariable Integer branchId,

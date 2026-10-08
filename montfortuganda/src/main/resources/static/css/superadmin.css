@@ -227,6 +227,13 @@
 /* 1. DASHBOARD HOME CARDS                   */
 /* ----------------------------------------- */
 
+/* Page-level dashboard shell: no outer card border. Individual stat cards retain their own design. */
+#superadmin-home-view > .card {
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+}
+
 #superadmin-home-view .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -5338,4 +5345,2388 @@ body.erp-modal-open {
         margin-left: 0.75rem;
         margin-right: 0.75rem;
     }
+}
+
+/* =========================================================
+   SUPER ADMIN — COMMON ERP UI ALIGNMENT (STEP 1B)
+   Reference: current shared ERP/Branch Admin UI patterns.
+   Scope: Super Admin views only.
+   This block intentionally does not modify global/layout/sidebar JS.
+   Fixed: view IDs are scoped to their intended child components so the
+   complete Super Admin view is not accidentally styled as a card/button/input.
+   ========================================================= */
+
+#superadmin-home-view .view-header,
+#superadmin-branches-view .view-header,
+#superadmin-add-branch-view .view-header,
+#superadmin-users-view .view-header,
+#superadmin-audit-view .view-header,
+#superadmin-backups-view .view-header,
+#superadmin-stats-view .view-header,
+#superadmin-funds-got-view .view-header,
+#superadmin-global-search-view .view-header,
+#superadmin-bulk-distribution-view .view-header,
+#superadmin-1to1-view .view-header,
+#superadmin-partial-fund-view .view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+#superadmin-home-view .view-header h2,
+#superadmin-branches-view .view-header h2,
+#superadmin-add-branch-view .view-header h2,
+#superadmin-users-view .view-header h2,
+#superadmin-audit-view .view-header h2,
+#superadmin-backups-view .view-header h2,
+#superadmin-stats-view .view-header h2,
+#superadmin-funds-got-view .view-header h2,
+#superadmin-global-search-view .view-header h2,
+#superadmin-bulk-distribution-view .view-header h2,
+#superadmin-1to1-view .view-header h2,
+#superadmin-partial-fund-view .view-header h2,
+#superadmin-home-view .view-header .view-title,
+#superadmin-branches-view .view-header .view-title,
+#superadmin-add-branch-view .view-header .view-title,
+#superadmin-users-view .view-header .view-title,
+#superadmin-audit-view .view-header .view-title,
+#superadmin-backups-view .view-header .view-title,
+#superadmin-stats-view .view-header .view-title,
+#superadmin-funds-got-view .view-header .view-title,
+#superadmin-global-search-view .view-header .view-title,
+#superadmin-bulk-distribution-view .view-header .view-title,
+#superadmin-1to1-view .view-header .view-title,
+#superadmin-partial-fund-view .view-header .view-title {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.5rem;
+    line-height: 1.25;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+}
+
+#superadmin-home-view .view-header p,
+#superadmin-branches-view .view-header p,
+#superadmin-add-branch-view .view-header p,
+#superadmin-users-view .view-header p,
+#superadmin-audit-view .view-header p,
+#superadmin-backups-view .view-header p,
+#superadmin-stats-view .view-header p,
+#superadmin-funds-got-view .view-header p,
+#superadmin-global-search-view .view-header p,
+#superadmin-bulk-distribution-view .view-header p,
+#superadmin-1to1-view .view-header p,
+#superadmin-partial-fund-view .view-header p {
+    margin: 0.35rem 0 0;
+    color: #64748b;
+    font-size: 0.95rem;
+}
+
+#superadmin-home-view > .card,
+#superadmin-branches-view > .card,
+#superadmin-add-branch-view > .card,
+#superadmin-users-view > .card,
+#superadmin-audit-view > .card,
+#superadmin-backups-view > .card,
+#superadmin-stats-view > .card,
+#superadmin-funds-got-view > .card,
+#superadmin-global-search-view > .card,
+#superadmin-bulk-distribution-view > .card,
+#superadmin-1to1-view > .card,
+#superadmin-partial-fund-view > .card,
+#superadmin-home-view .view-section.card,
+#superadmin-branches-view .view-section.card,
+#superadmin-add-branch-view .view-section.card,
+#superadmin-users-view .view-section.card,
+#superadmin-audit-view .view-section.card,
+#superadmin-backups-view .view-section.card,
+#superadmin-stats-view .view-section.card,
+#superadmin-funds-got-view .view-section.card,
+#superadmin-global-search-view .view-section.card,
+#superadmin-bulk-distribution-view .view-section.card,
+#superadmin-1to1-view .view-section.card,
+#superadmin-partial-fund-view .view-section.card,
+#superadmin-home-view .table-card,
+#superadmin-branches-view .table-card,
+#superadmin-add-branch-view .table-card,
+#superadmin-users-view .table-card,
+#superadmin-audit-view .table-card,
+#superadmin-backups-view .table-card,
+#superadmin-stats-view .table-card,
+#superadmin-funds-got-view .table-card,
+#superadmin-global-search-view .table-card,
+#superadmin-bulk-distribution-view .table-card,
+#superadmin-1to1-view .table-card,
+#superadmin-partial-fund-view .table-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+#superadmin-home-view .card-header,
+#superadmin-branches-view .card-header,
+#superadmin-add-branch-view .card-header,
+#superadmin-users-view .card-header,
+#superadmin-audit-view .card-header,
+#superadmin-backups-view .card-header,
+#superadmin-stats-view .card-header,
+#superadmin-funds-got-view .card-header,
+#superadmin-global-search-view .card-header,
+#superadmin-bulk-distribution-view .card-header,
+#superadmin-1to1-view .card-header,
+#superadmin-partial-fund-view .card-header {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+#superadmin-home-view .card-header h3,
+#superadmin-branches-view .card-header h3,
+#superadmin-add-branch-view .card-header h3,
+#superadmin-users-view .card-header h3,
+#superadmin-audit-view .card-header h3,
+#superadmin-backups-view .card-header h3,
+#superadmin-stats-view .card-header h3,
+#superadmin-funds-got-view .card-header h3,
+#superadmin-global-search-view .card-header h3,
+#superadmin-bulk-distribution-view .card-header h3,
+#superadmin-1to1-view .card-header h3,
+#superadmin-partial-fund-view .card-header h3,
+#superadmin-home-view .card-header h4,
+#superadmin-branches-view .card-header h4,
+#superadmin-add-branch-view .card-header h4,
+#superadmin-users-view .card-header h4,
+#superadmin-audit-view .card-header h4,
+#superadmin-backups-view .card-header h4,
+#superadmin-stats-view .card-header h4,
+#superadmin-funds-got-view .card-header h4,
+#superadmin-global-search-view .card-header h4,
+#superadmin-bulk-distribution-view .card-header h4,
+#superadmin-1to1-view .card-header h4,
+#superadmin-partial-fund-view .card-header h4 {
+    margin: 0;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+#superadmin-home-view .table-responsive,
+#superadmin-branches-view .table-responsive,
+#superadmin-add-branch-view .table-responsive,
+#superadmin-users-view .table-responsive,
+#superadmin-audit-view .table-responsive,
+#superadmin-backups-view .table-responsive,
+#superadmin-stats-view .table-responsive,
+#superadmin-funds-got-view .table-responsive,
+#superadmin-global-search-view .table-responsive,
+#superadmin-bulk-distribution-view .table-responsive,
+#superadmin-1to1-view .table-responsive,
+#superadmin-partial-fund-view .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#superadmin-home-view .data-table,
+#superadmin-branches-view .data-table,
+#superadmin-add-branch-view .data-table,
+#superadmin-users-view .data-table,
+#superadmin-audit-view .data-table,
+#superadmin-backups-view .data-table,
+#superadmin-stats-view .data-table,
+#superadmin-funds-got-view .data-table,
+#superadmin-global-search-view .data-table,
+#superadmin-bulk-distribution-view .data-table,
+#superadmin-1to1-view .data-table,
+#superadmin-partial-fund-view .data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#superadmin-home-view .data-table th,
+#superadmin-branches-view .data-table th,
+#superadmin-add-branch-view .data-table th,
+#superadmin-users-view .data-table th,
+#superadmin-audit-view .data-table th,
+#superadmin-backups-view .data-table th,
+#superadmin-stats-view .data-table th,
+#superadmin-funds-got-view .data-table th,
+#superadmin-global-search-view .data-table th,
+#superadmin-bulk-distribution-view .data-table th,
+#superadmin-1to1-view .data-table th,
+#superadmin-partial-fund-view .data-table th {
+    padding: 0.75rem 1rem;
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: left;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+#superadmin-home-view .data-table td,
+#superadmin-branches-view .data-table td,
+#superadmin-add-branch-view .data-table td,
+#superadmin-users-view .data-table td,
+#superadmin-audit-view .data-table td,
+#superadmin-backups-view .data-table td,
+#superadmin-stats-view .data-table td,
+#superadmin-funds-got-view .data-table td,
+#superadmin-global-search-view .data-table td,
+#superadmin-bulk-distribution-view .data-table td,
+#superadmin-1to1-view .data-table td,
+#superadmin-partial-fund-view .data-table td {
+    padding: 0.75rem 1rem;
+    color: #334155;
+    font-size: 0.875rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+}
+
+#superadmin-home-view .data-table tbody tr:hover,
+#superadmin-branches-view .data-table tbody tr:hover,
+#superadmin-add-branch-view .data-table tbody tr:hover,
+#superadmin-users-view .data-table tbody tr:hover,
+#superadmin-audit-view .data-table tbody tr:hover,
+#superadmin-backups-view .data-table tbody tr:hover,
+#superadmin-stats-view .data-table tbody tr:hover,
+#superadmin-funds-got-view .data-table tbody tr:hover,
+#superadmin-global-search-view .data-table tbody tr:hover,
+#superadmin-bulk-distribution-view .data-table tbody tr:hover,
+#superadmin-1to1-view .data-table tbody tr:hover,
+#superadmin-partial-fund-view .data-table tbody tr:hover {
+    background: #f8fafc;
+}
+
+#superadmin-home-view .btn-primary,
+#superadmin-branches-view .btn-primary,
+#superadmin-add-branch-view .btn-primary,
+#superadmin-users-view .btn-primary,
+#superadmin-audit-view .btn-primary,
+#superadmin-backups-view .btn-primary,
+#superadmin-stats-view .btn-primary,
+#superadmin-funds-got-view .btn-primary,
+#superadmin-global-search-view .btn-primary,
+#superadmin-bulk-distribution-view .btn-primary,
+#superadmin-1to1-view .btn-primary,
+#superadmin-partial-fund-view .btn-primary,
+#superadmin-home-view .btn-secondary,
+#superadmin-branches-view .btn-secondary,
+#superadmin-add-branch-view .btn-secondary,
+#superadmin-users-view .btn-secondary,
+#superadmin-audit-view .btn-secondary,
+#superadmin-backups-view .btn-secondary,
+#superadmin-stats-view .btn-secondary,
+#superadmin-funds-got-view .btn-secondary,
+#superadmin-global-search-view .btn-secondary,
+#superadmin-bulk-distribution-view .btn-secondary,
+#superadmin-1to1-view .btn-secondary,
+#superadmin-partial-fund-view .btn-secondary,
+#superadmin-home-view .btn-success,
+#superadmin-branches-view .btn-success,
+#superadmin-add-branch-view .btn-success,
+#superadmin-users-view .btn-success,
+#superadmin-audit-view .btn-success,
+#superadmin-backups-view .btn-success,
+#superadmin-stats-view .btn-success,
+#superadmin-funds-got-view .btn-success,
+#superadmin-global-search-view .btn-success,
+#superadmin-bulk-distribution-view .btn-success,
+#superadmin-1to1-view .btn-success,
+#superadmin-partial-fund-view .btn-success,
+#superadmin-home-view .btn-danger,
+#superadmin-branches-view .btn-danger,
+#superadmin-add-branch-view .btn-danger,
+#superadmin-users-view .btn-danger,
+#superadmin-audit-view .btn-danger,
+#superadmin-backups-view .btn-danger,
+#superadmin-stats-view .btn-danger,
+#superadmin-funds-got-view .btn-danger,
+#superadmin-global-search-view .btn-danger,
+#superadmin-bulk-distribution-view .btn-danger,
+#superadmin-1to1-view .btn-danger,
+#superadmin-partial-fund-view .btn-danger {
+    min-height: 38px;
+    padding: 0.55rem 1rem;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease,
+                color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+#superadmin-home-view .btn-primary,
+#superadmin-branches-view .btn-primary,
+#superadmin-add-branch-view .btn-primary,
+#superadmin-users-view .btn-primary,
+#superadmin-audit-view .btn-primary,
+#superadmin-backups-view .btn-primary,
+#superadmin-stats-view .btn-primary,
+#superadmin-funds-got-view .btn-primary,
+#superadmin-global-search-view .btn-primary,
+#superadmin-bulk-distribution-view .btn-primary,
+#superadmin-1to1-view .btn-primary,
+#superadmin-partial-fund-view .btn-primary {
+    background: #0f172a;
+    color: #ffffff;
+    border: 1px solid #0f172a;
+}
+
+#superadmin-home-view .btn-secondary,
+#superadmin-branches-view .btn-secondary,
+#superadmin-add-branch-view .btn-secondary,
+#superadmin-users-view .btn-secondary,
+#superadmin-audit-view .btn-secondary,
+#superadmin-backups-view .btn-secondary,
+#superadmin-stats-view .btn-secondary,
+#superadmin-funds-got-view .btn-secondary,
+#superadmin-global-search-view .btn-secondary,
+#superadmin-bulk-distribution-view .btn-secondary,
+#superadmin-1to1-view .btn-secondary,
+#superadmin-partial-fund-view .btn-secondary {
+    background: #ffffff;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+}
+
+#superadmin-home-view .btn-success,
+#superadmin-branches-view .btn-success,
+#superadmin-add-branch-view .btn-success,
+#superadmin-users-view .btn-success,
+#superadmin-audit-view .btn-success,
+#superadmin-backups-view .btn-success,
+#superadmin-stats-view .btn-success,
+#superadmin-funds-got-view .btn-success,
+#superadmin-global-search-view .btn-success,
+#superadmin-bulk-distribution-view .btn-success,
+#superadmin-1to1-view .btn-success,
+#superadmin-partial-fund-view .btn-success {
+    background: #10b981;
+    color: #ffffff;
+    border: 1px solid #10b981;
+}
+
+#superadmin-home-view .btn-danger,
+#superadmin-branches-view .btn-danger,
+#superadmin-add-branch-view .btn-danger,
+#superadmin-users-view .btn-danger,
+#superadmin-audit-view .btn-danger,
+#superadmin-backups-view .btn-danger,
+#superadmin-stats-view .btn-danger,
+#superadmin-funds-got-view .btn-danger,
+#superadmin-global-search-view .btn-danger,
+#superadmin-bulk-distribution-view .btn-danger,
+#superadmin-1to1-view .btn-danger,
+#superadmin-partial-fund-view .btn-danger {
+    background: #dc2626;
+    color: #ffffff;
+    border: 1px solid #dc2626;
+}
+
+#superadmin-home-view .btn-primary:hover,
+#superadmin-branches-view .btn-primary:hover,
+#superadmin-add-branch-view .btn-primary:hover,
+#superadmin-users-view .btn-primary:hover,
+#superadmin-audit-view .btn-primary:hover,
+#superadmin-backups-view .btn-primary:hover,
+#superadmin-stats-view .btn-primary:hover,
+#superadmin-funds-got-view .btn-primary:hover,
+#superadmin-global-search-view .btn-primary:hover,
+#superadmin-bulk-distribution-view .btn-primary:hover,
+#superadmin-1to1-view .btn-primary:hover,
+#superadmin-partial-fund-view .btn-primary:hover {
+    background: #1e293b;
+    border-color: #1e293b;
+    transform: translateY(-1px);
+}
+
+#superadmin-home-view .btn-secondary:hover,
+#superadmin-branches-view .btn-secondary:hover,
+#superadmin-add-branch-view .btn-secondary:hover,
+#superadmin-users-view .btn-secondary:hover,
+#superadmin-audit-view .btn-secondary:hover,
+#superadmin-backups-view .btn-secondary:hover,
+#superadmin-stats-view .btn-secondary:hover,
+#superadmin-funds-got-view .btn-secondary:hover,
+#superadmin-global-search-view .btn-secondary:hover,
+#superadmin-bulk-distribution-view .btn-secondary:hover,
+#superadmin-1to1-view .btn-secondary:hover,
+#superadmin-partial-fund-view .btn-secondary:hover {
+    background: #f8fafc;
+    color: #0f172a;
+    border-color: #94a3b8;
+}
+
+#superadmin-home-view .btn-success:hover,
+#superadmin-branches-view .btn-success:hover,
+#superadmin-add-branch-view .btn-success:hover,
+#superadmin-users-view .btn-success:hover,
+#superadmin-audit-view .btn-success:hover,
+#superadmin-backups-view .btn-success:hover,
+#superadmin-stats-view .btn-success:hover,
+#superadmin-funds-got-view .btn-success:hover,
+#superadmin-global-search-view .btn-success:hover,
+#superadmin-bulk-distribution-view .btn-success:hover,
+#superadmin-1to1-view .btn-success:hover,
+#superadmin-partial-fund-view .btn-success:hover {
+    background: #059669;
+    border-color: #059669;
+}
+
+#superadmin-home-view .btn-danger:hover,
+#superadmin-branches-view .btn-danger:hover,
+#superadmin-add-branch-view .btn-danger:hover,
+#superadmin-users-view .btn-danger:hover,
+#superadmin-audit-view .btn-danger:hover,
+#superadmin-backups-view .btn-danger:hover,
+#superadmin-stats-view .btn-danger:hover,
+#superadmin-funds-got-view .btn-danger:hover,
+#superadmin-global-search-view .btn-danger:hover,
+#superadmin-bulk-distribution-view .btn-danger:hover,
+#superadmin-1to1-view .btn-danger:hover,
+#superadmin-partial-fund-view .btn-danger:hover {
+    background: #b91c1c;
+    border-color: #b91c1c;
+}
+
+#superadmin-home-view .form-group,
+#superadmin-branches-view .form-group,
+#superadmin-add-branch-view .form-group,
+#superadmin-users-view .form-group,
+#superadmin-audit-view .form-group,
+#superadmin-backups-view .form-group,
+#superadmin-stats-view .form-group,
+#superadmin-funds-got-view .form-group,
+#superadmin-global-search-view .form-group,
+#superadmin-bulk-distribution-view .form-group,
+#superadmin-1to1-view .form-group,
+#superadmin-partial-fund-view .form-group {
+    margin-bottom: 1rem;
+}
+
+#superadmin-home-view .form-group > label,
+#superadmin-branches-view .form-group > label,
+#superadmin-add-branch-view .form-group > label,
+#superadmin-users-view .form-group > label,
+#superadmin-audit-view .form-group > label,
+#superadmin-backups-view .form-group > label,
+#superadmin-stats-view .form-group > label,
+#superadmin-funds-got-view .form-group > label,
+#superadmin-global-search-view .form-group > label,
+#superadmin-bulk-distribution-view .form-group > label,
+#superadmin-1to1-view .form-group > label,
+#superadmin-partial-fund-view .form-group > label {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: #334155;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+#superadmin-home-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea,
+#superadmin-branches-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea,
+#superadmin-add-branch-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea,
+#superadmin-users-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea,
+#superadmin-audit-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea,
+#superadmin-backups-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea,
+#superadmin-stats-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea,
+#superadmin-funds-got-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea,
+#superadmin-global-search-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea,
+#superadmin-bulk-distribution-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea,
+#superadmin-1to1-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea,
+#superadmin-partial-fund-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 40px;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+}
+
+#superadmin-home-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus,
+#superadmin-branches-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus,
+#superadmin-add-branch-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus,
+#superadmin-users-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus,
+#superadmin-audit-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus,
+#superadmin-backups-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus,
+#superadmin-stats-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus,
+#superadmin-funds-got-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus,
+#superadmin-global-search-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus,
+#superadmin-bulk-distribution-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus,
+#superadmin-1to1-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus,
+#superadmin-partial-fund-view input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #64748b;
+    box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.12);
+}
+
+@media (max-width: 768px) {
+#superadmin-home-view .view-header,
+#superadmin-branches-view .view-header,
+#superadmin-add-branch-view .view-header,
+#superadmin-users-view .view-header,
+#superadmin-audit-view .view-header,
+#superadmin-backups-view .view-header,
+#superadmin-stats-view .view-header,
+#superadmin-funds-got-view .view-header,
+#superadmin-global-search-view .view-header,
+#superadmin-bulk-distribution-view .view-header,
+#superadmin-1to1-view .view-header,
+#superadmin-partial-fund-view .view-header {
+    align-items: flex-start;
+}
+
+#superadmin-home-view .view-header > *,
+#superadmin-branches-view .view-header > *,
+#superadmin-add-branch-view .view-header > *,
+#superadmin-users-view .view-header > *,
+#superadmin-audit-view .view-header > *,
+#superadmin-backups-view .view-header > *,
+#superadmin-stats-view .view-header > *,
+#superadmin-funds-got-view .view-header > *,
+#superadmin-global-search-view .view-header > *,
+#superadmin-bulk-distribution-view .view-header > *,
+#superadmin-1to1-view .view-header > *,
+#superadmin-partial-fund-view .view-header > * {
+    max-width: 100%;
+}
+
+#superadmin-home-view .action-btn-group,
+#superadmin-branches-view .action-btn-group,
+#superadmin-add-branch-view .action-btn-group,
+#superadmin-users-view .action-btn-group,
+#superadmin-audit-view .action-btn-group,
+#superadmin-backups-view .action-btn-group,
+#superadmin-stats-view .action-btn-group,
+#superadmin-funds-got-view .action-btn-group,
+#superadmin-global-search-view .action-btn-group,
+#superadmin-bulk-distribution-view .action-btn-group,
+#superadmin-1to1-view .action-btn-group,
+#superadmin-partial-fund-view .action-btn-group {
+    width: 100%;
+}
+
+#superadmin-home-view .action-btn-group > button,
+#superadmin-branches-view .action-btn-group > button,
+#superadmin-add-branch-view .action-btn-group > button,
+#superadmin-users-view .action-btn-group > button,
+#superadmin-audit-view .action-btn-group > button,
+#superadmin-backups-view .action-btn-group > button,
+#superadmin-stats-view .action-btn-group > button,
+#superadmin-funds-got-view .action-btn-group > button,
+#superadmin-global-search-view .action-btn-group > button,
+#superadmin-bulk-distribution-view .action-btn-group > button,
+#superadmin-1to1-view .action-btn-group > button,
+#superadmin-partial-fund-view .action-btn-group > button,
+#superadmin-home-view .action-btn-group > a,
+#superadmin-branches-view .action-btn-group > a,
+#superadmin-add-branch-view .action-btn-group > a,
+#superadmin-users-view .action-btn-group > a,
+#superadmin-audit-view .action-btn-group > a,
+#superadmin-backups-view .action-btn-group > a,
+#superadmin-stats-view .action-btn-group > a,
+#superadmin-funds-got-view .action-btn-group > a,
+#superadmin-global-search-view .action-btn-group > a,
+#superadmin-bulk-distribution-view .action-btn-group > a,
+#superadmin-1to1-view .action-btn-group > a,
+#superadmin-partial-fund-view .action-btn-group > a {
+    flex: 1 1 auto;
+}
+}
+
+/* =========================================================
+   ADD BRANCH — TEXT FORMAT MATCH WITH ADD STUDENT
+   STEP: TYPOGRAPHY ONLY
+   Scope: #superadmin-add-branch-view
+   ========================================================= */
+
+#superadmin-add-branch-view .branch-card-heading-row .card-header {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #475569;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: normal;
+}
+
+#superadmin-add-branch-view .branch-form-field > label {
+    display: block;
+    margin: 0 0 0.25rem;
+    color: #475569;
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+#superadmin-add-branch-view .branch-required-label::after {
+    content: " *";
+    color: #ef4444;
+    font-weight: 700;
+}
+
+#superadmin-add-branch-view .branch-form-field input:not([type="checkbox"]):not([type="file"]),
+#superadmin-add-branch-view .branch-form-field select,
+#superadmin-add-branch-view .incharge-input {
+    font-family: inherit;
+    font-size: 0.85rem;
+    font-weight: 400;
+    line-height: 1.35;
+}
+
+#superadmin-add-branch-view .branch-form-field input:not([type="checkbox"]):not([type="file"])::placeholder,
+#superadmin-add-branch-view .incharge-input::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+    font-weight: 400;
+}
+
+#superadmin-add-branch-view .branch-field-hint,
+#superadmin-add-branch-view .branch-field-note {
+    margin-top: 0.3rem;
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+#superadmin-add-branch-view .branch-card-description {
+    margin: 0.2rem 0 0;
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+#superadmin-add-branch-view .branch-required-note {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+#superadmin-add-branch-view .upload-title {
+    color: #0f172a;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+#superadmin-add-branch-view .upload-subtitle {
+    color: #64748b;
+    font-size: 0.7rem;
+    font-weight: 400;
+    line-height: 1.4;
+}
+
+#superadmin-add-branch-view .data-table th {
+    font-size: 0.74rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+#superadmin-add-branch-view .data-table td {
+    font-size: 0.82rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+
+/* =========================================================
+   ADD BRANCH — QR CODE UPLOAD
+   Step 1: compact upload + visible selected-file preview.
+   Does not alter the existing Add Branch grid/layout.
+   ========================================================= */
+
+#superadmin-add-branch-view .branch-qr-upload {
+    width: 100%;
+}
+
+#superadmin-add-branch-view .branch-qr-file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+#superadmin-add-branch-view .branch-qr-upload-box {
+    width: 100%;
+    min-height: 78px;
+    box-sizing: border-box;
+    padding: 10px 14px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 7px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+#superadmin-add-branch-view .branch-qr-upload-box:hover {
+    border-color: #94a3b8;
+    background: #f1f5f9;
+}
+
+#superadmin-add-branch-view .branch-qr-upload-box > i {
+    color: #64748b;
+    font-size: 1.45rem;
+    flex: 0 0 auto;
+}
+
+#superadmin-add-branch-view .branch-qr-upload-title {
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+#superadmin-add-branch-view .branch-qr-upload-help {
+    color: #64748b;
+    font-size: 0.7rem;
+}
+
+#superadmin-add-branch-view .branch-qr-upload-box.hidden {
+    display: none;
+}
+
+#superadmin-add-branch-view .branch-qr-preview {
+    width: 100%;
+    min-height: 78px;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#superadmin-add-branch-view .branch-qr-preview.hidden {
+    display: none;
+}
+
+#superadmin-add-branch-view .branch-qr-preview img {
+    width: 62px;
+    height: 62px;
+    flex: 0 0 62px;
+    object-fit: contain;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    background: #ffffff;
+}
+
+#superadmin-add-branch-view .branch-qr-preview-info {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#superadmin-add-branch-view .branch-qr-preview-info strong {
+    color: #334155;
+    font-size: 0.8rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#superadmin-add-branch-view .branch-qr-preview-info span {
+    color: #64748b;
+    font-size: 0.7rem;
+}
+
+#superadmin-add-branch-view .branch-qr-remove {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #dc2626;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+#superadmin-add-branch-view .branch-qr-remove:hover {
+    background: #fef2f2;
+}
+
+/* =========================================
+   BRANCH LIST - ERP STUDENTS UI ALIGNMENT
+   Strictly scoped to Branch List only.
+   ========================================= */
+#superadmin-branches-view #sa-branchTableView {
+    max-width: 1600px;
+    min-width: 0;
+    margin: 0 auto;
+    padding: 0.75rem;
+}
+
+#superadmin-branches-view #sa-branchTableView > .view-header {
+    margin-top: 0;
+}
+
+#superadmin-branches-view #sa-branchTableView .view-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+#superadmin-branches-view #sa-branchTableView .view-header h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(1.2rem, 2vw, 1.55rem);
+    font-weight: 750;
+    line-height: 1.25;
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-page-subtitle {
+    margin: 0.3rem 0 0;
+    line-height: 1.45;
+}
+
+/* Filter card follows the existing Students page pattern. */
+#superadmin-branches-view #sa-branchTableView .branch-list-filter-card {
+    margin: 0 0 1rem;
+    padding: 0.9rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-list-filter-panel {
+    display: grid;
+    grid-template-columns:
+        minmax(250px, 1.7fr)
+        minmax(165px, 1fr)
+        minmax(165px, 1fr)
+        auto;
+    gap: 0.8rem;
+    align-items: end;
+    margin: 0;
+}
+
+#superadmin-branches-view #sa-branchTableView .form-group {
+    min-width: 0;
+    margin-bottom: 0;
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-list-filter-panel label {
+    display: block;
+    margin-bottom: 0.3rem;
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 650;
+    line-height: 1.35;
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-list-filter-panel .detail-input {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 36px;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    font-size: 0.84rem;
+    line-height: 1.35;
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-list-filter-panel .detail-input:focus {
+    border-color: #d4af37;
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+    outline: none;
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-filter-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* Table card: bordered like Students, but no extra page-level border. */
+#superadmin-branches-view #sa-branchTableView .branch-list-table-card {
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+#superadmin-branches-view #sa-branchTableView .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable {
+    width: 100%;
+    min-width: 1095px;
+    table-layout: auto;
+    border-collapse: collapse;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable th,
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable td {
+    padding: 0.7rem 0.75rem;
+    border-bottom: 1px solid #e2e8f0;
+    vertical-align: middle;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable th {
+    background: #f8fafc;
+    color: #475569;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.015em;
+    text-align: left;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable td {
+    color: #334155;
+    font-size: 0.79rem;
+    line-height: 1.4;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable tbody tr {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable tbody tr:hover td {
+    background: #f8fafc;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+/* Explicit column widths prevent the overlap seen in the previous version. */
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable .col-logo,
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable .col-logo-heading {
+    width: 62px;
+    min-width: 62px;
+    max-width: 62px;
+    text-align: center;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable .col-code {
+    width: 105px;
+    min-width: 105px;
+    white-space: nowrap;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1d4ed8;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable .col-name {
+    width: 230px;
+    min-width: 210px;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable .col-name strong {
+    display: block;
+    color: #1d4ed8;
+    font-size: 0.86rem;
+    font-weight: 650;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable .col-contact {
+    width: 175px;
+    min-width: 175px;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable .col-location {
+    width: 145px;
+    min-width: 145px;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable .col-levels {
+    width: 190px;
+    min-width: 180px;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable .col-status {
+    width: 95px;
+    min-width: 95px;
+    white-space: nowrap;
+    text-align: center;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branchesTable .col-actions {
+    width: 95px;
+    min-width: 95px;
+    white-space: nowrap;
+    text-align: center;
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-list-logo-wrap {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 50px;
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-list-logo {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    padding: 5px;
+    box-sizing: border-box;
+    object-fit: contain;
+    object-position: center;
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-list-logo-fallback {
+    width: 100%;
+    height: 100%;
+    color: #94a3b8;
+    font-size: 1.25rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-list-logo.hidden,
+#superadmin-branches-view #sa-branchTableView .branch-list-logo-fallback.hidden {
+    display: none !important;
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-contact-line {
+    display: block;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+#superadmin-branches-view #sa-branchTableView .branch-contact-line + .branch-contact-line {
+    margin-top: 0.12rem;
+}
+
+#superadmin-branches-view #sa-branchTableView .view-more-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 72px;
+    padding: 0.42rem 0.62rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    background: #ffffff;
+    color: #334155;
+    font-size: 0.76rem;
+    font-weight: 650;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+#superadmin-branches-view #sa-branchTableView .view-more-btn:hover {
+    color: #1d4ed8;
+    border-color: #93c5fd;
+    background: #eff6ff;
+}
+
+#superadmin-branches-view #sa-branchTableView .ba-pagination-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem;
+    background: #ffffff;
+}
+
+#superadmin-branches-view #sa-branchTableView .ba-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+#superadmin-branches-view #sa-branchTableView .ba-pagination-footer label,
+#superadmin-branches-view #sa-branchTableView .ba-pagination-footer .text-muted {
+    color: #64748b;
+    font-size: 0.78rem;
+    font-weight: 550;
+}
+
+#superadmin-branches-view #sa-branchTableView #sa-branch-page-size {
+    width: auto;
+    min-width: 70px;
+}
+
+@media (max-width: 1200px) {
+    #superadmin-branches-view #sa-branchTableView .branch-list-filter-panel {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    #superadmin-branches-view #sa-branchTableView .branch-filter-actions {
+        grid-column: 1 / -1;
+        justify-content: flex-end;
+    }
+}
+
+@media (max-width: 767.98px) {
+    #superadmin-branches-view #sa-branchTableView {
+        padding: 0.5rem;
+    }
+
+    #superadmin-branches-view #sa-branchTableView .branch-list-filter-panel {
+        grid-template-columns: 1fr;
+    }
+
+    #superadmin-branches-view #sa-branchTableView .branch-filter-actions {
+        grid-column: auto;
+        justify-content: stretch;
+    }
+
+    #superadmin-branches-view #sa-branchTableView .branch-filter-actions button {
+        flex: 1;
+    }
+
+    #superadmin-branches-view #sa-branchTableView .ba-pagination-footer {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #superadmin-branches-view #sa-branchTableView .ba-pagination-footer .ba-pagination-controls {
+        justify-content: space-between;
+    }
+}
+/* =========================================================
+   SUPER ADMIN - BRANCH LIST PAGE BORDER FIX
+   Scoped ONLY to the Branch List view.
+   Do not apply this globally.
+   ========================================================= */
+
+/* The page itself must NOT look like one large card. */
+#superadmin-branches-view,
+#superadmin-branches-view #sa-branchTableView {
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
+
+/* Remove any inherited card treatment from the page wrapper only. */
+#superadmin-branches-view #sa-branchTableView > .card {
+    box-shadow: none;
+}
+
+/* Keep the FILTER section as a small Students-style card. */
+#superadmin-branches-view #sa-branchTableView > .branch-list-filter-card {
+    border: 1px solid #dbe3ec !important;
+    border-radius: 7px;
+    background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* Keep ONLY the table itself as a card. */
+#superadmin-branches-view #sa-branchTableView > .branch-list-table-card {
+    border: 1px solid #dbe3ec !important;
+    border-radius: 7px;
+    background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06) !important;
+}
+
+/* No border around the complete branch page content. */
+#superadmin-branches-view #sa-branchTableView > .branch-list-filter-card,
+#superadmin-branches-view #sa-branchTableView > .branch-list-table-card {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+/* The table keeps its own row/header separators only. */
+#superadmin-branches-view #sa-branchTableView .table-responsive {
+    border: 0 !important;
+    outline: 0 !important;
+    box-shadow: none !important;
+}
+
+/* ============================================================
+   BRANCH VIEW / EDIT — STUDENT-STYLE DETAIL UI
+   Scoped only to .branch-detail-page so Manage Branches list
+   remains unchanged.
+   ============================================================ */
+#superadmin-branches-view .branch-detail-page {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+#superadmin-branches-view .branch-modern-toolbar {
+    margin-bottom: 1rem;
+}
+
+#superadmin-branches-view .branch-modern-content {
+    width: 100%;
+}
+
+#superadmin-branches-view .branch-modern-profile {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding: 1.1rem;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+#superadmin-branches-view .branch-modern-logo-panel {
+    min-width: 0;
+    padding-right: 1.1rem;
+    border-right: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+#superadmin-branches-view .branch-modern-logo-wrap {
+    width: 112px;
+    height: 112px;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#superadmin-branches-view .branch-modern-logo {
+    width: 88%;
+    height: 88%;
+    object-fit: contain;
+    object-position: center;
+    border-radius: 0;
+    background: #fff;
+    display: block;
+}
+
+#superadmin-branches-view .branch-modern-logo-placeholder {
+    min-height: 100%;
+    color: #94a3b8;
+    font-size: .74rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+}
+
+#superadmin-branches-view .branch-modern-logo-placeholder i {
+    font-size: 1.9rem;
+}
+
+#superadmin-branches-view .branch-modern-logo-editor {
+    margin-top: .65rem;
+}
+
+#superadmin-branches-view .branch-modern-profile-main {
+    min-width: 0;
+}
+
+#superadmin-branches-view .branch-modern-title-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .9rem;
+}
+
+#superadmin-branches-view .branch-modern-title-row h3 {
+    margin: 0 0 .25rem;
+    color: #0f172a;
+    font-size: clamp(1.2rem, 2vw, 1.5rem);
+    font-weight: 750;
+    line-height: 1.3;
+}
+
+#superadmin-branches-view .branch-modern-code {
+    color: #2563eb;
+    font-size: .98rem;
+    font-weight: 750;
+    letter-spacing: .02em;
+}
+
+#superadmin-branches-view .branch-modern-status {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: .25rem .65rem;
+    border-radius: 999px;
+    font-size: .72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+#superadmin-branches-view .branch-modern-status.is-active {
+    color: #166534;
+    background: #dcfce7;
+}
+
+#superadmin-branches-view .branch-modern-status.is-inactive {
+    color: #991b1b;
+    background: #fee2e2;
+}
+
+#superadmin-branches-view .branch-modern-facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .7rem;
+}
+
+#superadmin-branches-view .branch-modern-facts > div {
+    min-width: 0;
+    min-height: 68px;
+    padding: .65rem .75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#superadmin-branches-view .branch-modern-facts span {
+    margin-bottom: .25rem;
+    color: #64748b;
+    font-size: .69rem;
+    font-weight: 600;
+}
+
+#superadmin-branches-view .branch-modern-facts strong {
+    color: #1e293b;
+    font-size: .82rem;
+    font-weight: 650;
+    overflow-wrap: anywhere;
+}
+
+#superadmin-branches-view .branch-modern-section {
+    min-width: 0;
+    margin: 0 0 1rem;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, .035);
+}
+
+#superadmin-branches-view .branch-modern-section-header {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin: 0;
+    padding: .72rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #334155;
+}
+
+#superadmin-branches-view .branch-modern-section-header h3 {
+    margin: 0;
+    font-size: .88rem;
+    font-weight: 750;
+}
+
+#superadmin-branches-view .branch-modern-section-header i {
+    color: #64748b;
+}
+
+#superadmin-branches-view .branch-modern-section > .branch-modern-grid,
+#superadmin-branches-view .branch-modern-section > .branch-modern-view-content,
+#superadmin-branches-view .branch-modern-section > .detail-input,
+#superadmin-branches-view .branch-modern-section > .branch-payment-layout,
+#superadmin-branches-view .branch-modern-section > .table-responsive {
+    padding: 1rem;
+}
+
+#superadmin-branches-view .branch-modern-grid {
+    display: grid;
+    gap: .9rem 1rem;
+    min-width: 0;
+}
+
+#superadmin-branches-view .branch-modern-grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+#superadmin-branches-view .branch-modern-grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+#superadmin-branches-view .branch-modern-field {
+    min-width: 0;
+}
+
+#superadmin-branches-view .branch-modern-field > label {
+    display: block;
+    margin-bottom: .3rem;
+    color: #64748b;
+    font-size: .7rem;
+    font-weight: 650;
+}
+
+#superadmin-branches-view .branch-modern-field .detail-text {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-height: 38px;
+    padding: .52rem .65rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    background: #f8fafc;
+    color: #1e293b;
+    font-size: .82rem;
+    font-weight: 550;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+#superadmin-branches-view .branch-modern-field .detail-input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#superadmin-branches-view .branch-modern-code-field {
+    color: #2563eb !important;
+    font-weight: 750 !important;
+}
+
+#superadmin-branches-view .branch-modern-span-2 { grid-column: span 2; }
+#superadmin-branches-view .branch-modern-span-3 { grid-column: 1 / -1; }
+
+#superadmin-branches-view .branch-modern-checkbox {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin: 0 1rem 1rem;
+    color: #334155;
+    font-size: .8rem;
+}
+
+#superadmin-branches-view .branch-modern-view-content {
+    min-height: 40px;
+}
+
+#superadmin-branches-view .branch-modern-view-content table {
+    width: 100%;
+}
+
+#superadmin-branches-view .branch-payment-layout {
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+}
+
+#superadmin-branches-view .branch-payment-details {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+#superadmin-branches-view .branch-payment-block {
+    padding: .85rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #fff;
+}
+
+#superadmin-branches-view .branch-payment-block + .branch-payment-block {
+    margin-top: .85rem;
+}
+
+#superadmin-branches-view .branch-payment-block h4 {
+    margin: 0 0 .75rem;
+    color: #334155;
+    font-size: .82rem;
+    font-weight: 750;
+}
+
+#superadmin-branches-view .branch-payment-qr {
+    flex: 0 0 260px;
+    min-width: 0;
+}
+
+#superadmin-branches-view .branch-payment-qr-inner {
+    height: 100%;
+    min-height: 280px;
+    padding: .85rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#superadmin-branches-view .branch-payment-qr-title {
+    width: 100%;
+    margin-bottom: .7rem;
+    color: #334155;
+    font-size: .82rem;
+    font-weight: 750;
+    text-align: left;
+}
+
+#superadmin-branches-view .branch-payment-qr-box {
+    width: 190px;
+    height: 190px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#superadmin-branches-view .branch-payment-qr-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #fff;
+}
+
+#superadmin-branches-view .branch-payment-qr-empty {
+    color: #94a3b8;
+    font-size: .75rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .4rem;
+}
+
+#superadmin-branches-view .branch-payment-qr-empty i {
+    font-size: 2rem;
+}
+
+#superadmin-branches-view .branch-payment-qr-editor {
+    margin-top: .75rem;
+    text-align: center;
+}
+
+#superadmin-branches-view .branch-school-photo-preview {
+    display: block;
+    width: 220px;
+    max-width: 100%;
+    max-height: 170px;
+    object-fit: contain;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #f8fafc;
+}
+
+#superadmin-branches-view .branch-field-note {
+    display: block;
+    margin-top: .35rem;
+    color: #64748b;
+    font-size: .68rem;
+    line-height: 1.35;
+}
+
+#superadmin-branches-view .branch-modern-section .document-container {
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+
+#superadmin-branches-view .branch-government-documents {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
+    margin-top: .5rem;
+}
+
+#superadmin-branches-view .branch-government-document-card {
+    min-width: 0;
+    padding: .85rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+}
+
+#superadmin-branches-view .branch-government-document-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+#superadmin-branches-view .branch-government-document-title-block {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+}
+
+#superadmin-branches-view .branch-government-document-name {
+    color: #0f172a;
+    font-size: .84rem;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+#superadmin-branches-view .branch-government-document-type {
+    width: fit-content;
+    padding: .15rem .4rem;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: .66rem;
+    font-weight: 700;
+    letter-spacing: .02em;
+}
+
+#superadmin-branches-view .branch-government-document-meta {
+    color: #64748b;
+    font-size: .72rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+#superadmin-branches-view .branch-government-document-actions {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: auto;
+}
+
+#superadmin-branches-view .branch-government-document-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#superadmin-branches-view .branch-government-documents-empty {
+    grid-column: 1 / -1;
+    padding: .9rem;
+    border: 1px dashed #cbd5e1;
+    border-radius: 6px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: .78rem;
+    text-align: center;
+}
+
+#superadmin-branches-view .branch-government-documents-editor {
+    margin-top: .75rem;
+}
+
+#superadmin-branches-view .branch-modern-section .hidden {
+    display: none !important;
+}
+
+@media (max-width: 1200px) {
+    #superadmin-branches-view .branch-modern-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #superadmin-branches-view .branch-modern-grid-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #superadmin-branches-view .branch-modern-span-3 { grid-column: 1 / -1; }
+}
+
+@media (max-width: 900px) {
+    #superadmin-branches-view .branch-modern-profile { grid-template-columns: 1fr; }
+    #superadmin-branches-view .branch-modern-logo-panel { padding-right: 0; padding-bottom: 1rem; border-right: 0; border-bottom: 1px solid #e2e8f0; }
+    #superadmin-branches-view .branch-payment-layout { flex-direction: column; }
+    #superadmin-branches-view .branch-payment-qr { flex: 1 1 auto; }
+    #superadmin-branches-view .branch-payment-qr-inner { min-height: 0; }
+}
+
+@media (max-width: 900px) {
+    #superadmin-branches-view .branch-government-documents {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 700px) {
+    #superadmin-branches-view .branch-modern-facts,
+    #superadmin-branches-view .branch-modern-grid-2,
+    #superadmin-branches-view .branch-modern-grid-3 { grid-template-columns: 1fr; }
+    #superadmin-branches-view .branch-modern-span-2,
+    #superadmin-branches-view .branch-modern-span-3 { grid-column: auto; }
+    #superadmin-branches-view .branch-modern-title-row { flex-direction: column; }
+}
+
+
+
+
+/* ============================================================
+   Branch View — refined profile/edit UI
+   Scope: #superadmin-branches-view only.
+   Does not alter other Super Admin screens.
+   ============================================================ */
+
+#superadmin-branches-view .branch-modern-toolbar {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+#superadmin-branches-view .branch-modern-toolbar .action-btn-group {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: .55rem;
+}
+
+#superadmin-branches-view .branch-modern-toolbar .action-btn-group > button {
+    min-height: 40px;
+    white-space: nowrap;
+}
+
+#superadmin-branches-view .branch-modern-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+#superadmin-branches-view .branch-modern-profile {
+    grid-template-columns: 150px minmax(0, 1fr);
+    gap: 1.5rem;
+    margin: 0;
+    padding: 1.35rem 1.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, .045);
+}
+
+#superadmin-branches-view .branch-modern-logo-panel {
+    padding-right: 1.5rem;
+    border-right: 1px solid #e2e8f0;
+}
+
+#superadmin-branches-view .branch-modern-logo-wrap {
+    width: 120px;
+    height: 120px;
+    border: 1px solid #dbe3ec;
+    background: #f8fafc;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, .04);
+}
+
+#superadmin-branches-view .branch-modern-logo-editor {
+    display: flex;
+    justify-content: center;
+    margin-top: .8rem;
+}
+
+#superadmin-branches-view .branch-modern-logo-editor .btn-secondary,
+#superadmin-branches-view .branch-media-editor .btn-secondary,
+#superadmin-branches-view .branch-government-documents-editor .btn-secondary,
+#superadmin-branches-view .branch-payment-qr-editor .btn-secondary {
+    min-height: 36px;
+    border-radius: 7px;
+}
+
+#superadmin-branches-view .branch-modern-profile-main {
+    min-width: 0;
+}
+
+#superadmin-branches-view .branch-modern-title-row {
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+#superadmin-branches-view .branch-modern-title-row > div:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+#superadmin-branches-view .branch-modern-title-row h3 {
+    margin: 0 0 .5rem;
+    max-width: 100%;
+    font-size: clamp(1.35rem, 2vw, 1.75rem);
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+#superadmin-branches-view .branch-modern-code {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: .3rem .65rem;
+    border-radius: 7px;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: .82rem;
+    font-weight: 750;
+}
+
+#superadmin-branches-view .branch-modern-title-row .branch-modern-status {
+    flex: 0 0 auto;
+    margin-top: .1rem;
+}
+
+#superadmin-branches-view .branch-profile-facts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .75rem;
+}
+
+#superadmin-branches-view .branch-profile-facts > div {
+    min-height: 76px;
+    padding: .8rem .9rem;
+    border: 1px solid #e5eaf0;
+    border-radius: 9px;
+    background: #f8fafc;
+}
+
+#superadmin-branches-view .branch-profile-facts span {
+    margin-bottom: .35rem;
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .035em;
+}
+
+#superadmin-branches-view .branch-profile-facts strong {
+    font-size: .84rem;
+}
+
+#superadmin-branches-view .branch-profile-edit-label {
+    display: block;
+    margin: 0 0 .35rem;
+    color: #64748b;
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .035em;
+}
+
+#superadmin-branches-view .branch-profile-edit-name {
+    min-height: 44px;
+    font-size: 1.15rem;
+    font-weight: 650;
+}
+
+#superadmin-branches-view .branch-profile-edit-code {
+    min-height: 34px;
+    max-width: 180px;
+    font-weight: 750;
+}
+
+#superadmin-branches-view .branch-profile-facts .detail-input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#superadmin-branches-view .branch-profile-facts .level-checkbox-group {
+    min-height: 44px;
+    padding: .55rem .65rem;
+    border: 1px solid #dbe3ec;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+#superadmin-branches-view .branch-modern-section {
+    margin: 0;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, .035);
+}
+
+#superadmin-branches-view .branch-modern-section-header {
+    min-height: 48px;
+    padding: .75rem 1rem;
+    background: #f8fafc;
+}
+
+#superadmin-branches-view .branch-modern-section-header h3 {
+    font-size: .9rem;
+    color: #1e293b;
+}
+
+#superadmin-branches-view .branch-modern-section-header i {
+    font-size: 1rem;
+}
+
+#superadmin-branches-view .branch-modern-section > .branch-modern-grid,
+#superadmin-branches-view .branch-modern-section > .branch-modern-view-content,
+#superadmin-branches-view .branch-modern-section > .detail-input,
+#superadmin-branches-view .branch-modern-section > .branch-payment-layout,
+#superadmin-branches-view .branch-modern-section > .table-responsive {
+    padding: 1.15rem;
+}
+
+#superadmin-branches-view .branch-modern-grid {
+    gap: 1rem;
+}
+
+#superadmin-branches-view .branch-modern-field > label {
+    margin-bottom: .38rem;
+    color: #475569;
+    font-size: .69rem;
+    font-weight: 700;
+}
+
+#superadmin-branches-view .branch-modern-field .detail-text {
+    min-height: 42px;
+    padding: .62rem .72rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 7px;
+    background: #f8fafc;
+    color: #172033;
+}
+
+#superadmin-branches-view .branch-modern-field .detail-input {
+    min-height: 42px;
+    border-radius: 7px;
+}
+
+#superadmin-branches-view .branch-payment-layout {
+    gap: 1.15rem;
+}
+
+#superadmin-branches-view .branch-payment-block {
+    border: 1px solid #e5eaf0;
+    border-radius: 9px;
+    background: #fbfcfe;
+    padding: .9rem;
+}
+
+#superadmin-branches-view .branch-payment-block h4 {
+    margin: 0 0 .8rem;
+    font-size: .8rem;
+    color: #334155;
+}
+
+#superadmin-branches-view .branch-payment-qr-inner {
+    border: 1px solid #e5eaf0;
+    border-radius: 9px;
+    background: #fbfcfe;
+    padding: 1rem;
+}
+
+#superadmin-branches-view .branch-government-documents {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
+}
+
+#superadmin-branches-view .branch-government-document-card {
+    min-width: 0;
+    padding: .8rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+#superadmin-branches-view .branch-government-document-meta {
+    overflow-wrap: anywhere;
+}
+
+#superadmin-branches-view .branch-media-editor,
+#superadmin-branches-view .branch-government-documents-editor,
+#superadmin-branches-view .branch-payment-qr-editor,
+#superadmin-branches-view .branch-modern-logo-editor {
+    margin-top: .7rem;
+}
+
+#superadmin-branches-view .branch-field-note {
+    display: block;
+    margin-top: .35rem;
+    color: #64748b;
+    font-size: .68rem;
+    line-height: 1.4;
+}
+
+#superadmin-branches-view .branch-modern-section .hidden {
+    display: none !important;
+}
+
+@media (max-width: 980px) {
+    #superadmin-branches-view .branch-modern-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #superadmin-branches-view .branch-modern-toolbar .action-btn-group {
+        justify-content: flex-start;
+    }
+
+    #superadmin-branches-view .branch-modern-profile {
+        grid-template-columns: 120px minmax(0, 1fr);
+    }
+
+    #superadmin-branches-view .branch-profile-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 720px) {
+    #superadmin-branches-view .branch-modern-profile {
+        grid-template-columns: 1fr;
+    }
+
+    #superadmin-branches-view .branch-modern-logo-panel {
+        padding-right: 0;
+        padding-bottom: 1rem;
+        border-right: 0;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    #superadmin-branches-view .branch-profile-facts,
+    #superadmin-branches-view .branch-modern-grid-2,
+    #superadmin-branches-view .branch-modern-grid-3,
+    #superadmin-branches-view .branch-government-documents {
+        grid-template-columns: 1fr;
+    }
+
+    #superadmin-branches-view .branch-modern-span-2,
+    #superadmin-branches-view .branch-modern-span-3 {
+        grid-column: auto;
+    }
+}
+/* Branch View final UI refinement. Scope: #superadmin-branches-view only. */
+#superadmin-branches-view .branch-modern-content{width:100%;}
+
+#superadmin-branches-view .branch-modern-profile{
+    display:grid;
+    grid-template-columns:150px minmax(0,1fr);
+    gap:28px;
+    align-items:stretch;
+    margin:0 0 18px;
+    padding:22px 24px;
+    border:1px solid #e3e8ef;
+    border-radius:14px;
+    background:#fff;
+    box-shadow:0 2px 10px rgba(15,23,42,.035);
+}
+
+#superadmin-branches-view .branch-modern-logo-panel{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:12px;
+    padding-right:24px;
+    border-right:1px solid #e7ebf0;
+}
+
+#superadmin-branches-view .branch-modern-logo-wrap{
+    width:116px;
+    height:116px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+    border:1px solid #dce3eb;
+    border-radius:14px;
+    background:#fff;
+}
+
+#superadmin-branches-view .branch-modern-logo{
+    width:100%;
+    height:100%;
+    padding:8px;
+    object-fit:contain;
+    background:#fff;
+}
+
+#superadmin-branches-view .branch-modern-logo-placeholder{
+    width:100%;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:5px;
+    color:#94a3b8;
+    font-size:.72rem;
+}
+
+#superadmin-branches-view .branch-modern-logo-placeholder i{font-size:1.8rem;}
+
+#superadmin-branches-view .branch-modern-logo-editor,
+#superadmin-branches-view .branch-media-editor,
+#superadmin-branches-view .branch-government-documents-editor,
+#superadmin-branches-view .branch-payment-qr-editor{
+    margin-top:8px;
+}
+
+#superadmin-branches-view .branch-modern-logo-editor .btn-secondary,
+#superadmin-branches-view .branch-media-editor .btn-secondary,
+#superadmin-branches-view .branch-government-documents-editor .btn-secondary,
+#superadmin-branches-view .branch-payment-qr-editor .btn-secondary{
+    min-height:36px;
+    border-radius:8px;
+}
+
+/* Edit-only controls must remain hidden until JS explicitly enters edit mode. */
+#superadmin-branches-view .branch-modern-logo-editor.hidden,
+#superadmin-branches-view .branch-media-editor.hidden,
+#superadmin-branches-view .branch-government-documents-editor.hidden,
+#superadmin-branches-view .branch-payment-qr-editor.hidden,
+#superadmin-branches-view .branch-profile-edit-label.hidden,
+#superadmin-branches-view .detail-input.hidden,
+#superadmin-branches-view .detail-text.hidden{display:none!important;}
+
+#superadmin-branches-view .branch-modern-profile-main{min-width:0;}
+
+#superadmin-branches-view .branch-modern-title-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:18px;
+    margin:0 0 18px;
+}
+
+#superadmin-branches-view .branch-modern-title-row>div:first-child{min-width:0;flex:1;}
+
+#superadmin-branches-view #detail-schoolNameHeader{
+    margin:0 0 7px;
+    color:#10213b;
+    font-size:clamp(1.35rem,2.1vw,1.8rem);
+    font-weight:750;
+    line-height:1.25;
+}
+
+#superadmin-branches-view .branch-modern-code{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:#2563eb;
+    font-size:.9rem;
+    font-weight:750;
+}
+
+#superadmin-branches-view .branch-profile-edit-label{
+    display:block;
+    margin:0 0 5px;
+    color:#64748b;
+    font-size:.67rem;
+    font-weight:700;
+}
+
+#superadmin-branches-view .branch-profile-edit-name{
+    min-height:44px;
+    margin:0 0 8px;
+    border-radius:8px;
+}
+
+#superadmin-branches-view .branch-profile-edit-code{
+    min-height:38px;
+    border-radius:8px;
+}
+
+#superadmin-branches-view .branch-modern-status{
+    flex:0 0 auto;
+    margin-top:2px;
+}
+
+#superadmin-branches-view .branch-profile-facts{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:12px;
+}
+
+#superadmin-branches-view .branch-profile-facts>div{
+    min-width:0;
+    min-height:74px;
+    padding:12px 14px;
+    border:1px solid #e5eaf0;
+    border-radius:10px;
+    background:#f8fafc;
+}
+
+#superadmin-branches-view .branch-profile-facts>div>span{
+    display:block;
+    margin:0 0 7px;
+    color:#64748b;
+    font-size:.66rem;
+    font-weight:750;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+}
+
+#superadmin-branches-view .branch-profile-facts strong.detail-text{
+    display:block;
+    min-height:0;
+    padding:0;
+    border:0;
+    background:transparent;
+    color:#172033;
+    font-size:.84rem;
+    line-height:1.4;
+}
+
+#superadmin-branches-view .branch-profile-facts .detail-input{
+    min-height:40px;
+    margin:0;
+}
+
+#superadmin-branches-view .branch-edit-level-options{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:7px 14px;
+    padding:4px 0 0;
+}
+
+#superadmin-branches-view .branch-edit-level-options label{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    color:#334155;
+    font-size:.8rem;
+    font-weight:600;
+}
+
+#superadmin-branches-view .branch-modern-section{
+    margin:0 0 16px;
+    overflow:hidden;
+    border:1px solid #e3e8ef;
+    border-radius:12px;
+    background:#fff;
+    box-shadow:0 1px 7px rgba(15,23,42,.025);
+}
+
+#superadmin-branches-view .branch-modern-section-header{
+    min-height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 16px;
+    border-bottom:1px solid #e5eaf0;
+    background:#f8fafc;
+}
+
+#superadmin-branches-view .branch-modern-section-header h3{
+    margin:0;
+    color:#1e293b;
+    font-size:.9rem;
+    font-weight:750;
+}
+
+#superadmin-branches-view .branch-modern-section-header i{color:#64748b;}
+
+#superadmin-branches-view .branch-modern-section>.branch-modern-grid,
+#superadmin-branches-view .branch-modern-section>.branch-modern-view-content,
+#superadmin-branches-view .branch-modern-section>.branch-payment-layout,
+#superadmin-branches-view .branch-modern-section>.table-responsive{
+    padding:18px;
+}
+
+#superadmin-branches-view .branch-modern-grid{min-width:0;}
+#superadmin-branches-view .branch-modern-field{min-width:0;}
+
+#superadmin-branches-view .branch-modern-field>label{
+    display:block;
+    margin:0 0 6px;
+    color:#526176;
+    font-size:.68rem;
+    font-weight:700;
+}
+
+#superadmin-branches-view .branch-modern-field .detail-text{
+    display:block;
+    width:100%;
+    min-height:42px;
+    box-sizing:border-box;
+    padding:10px 12px;
+    border:1px solid #e3e8ef;
+    border-radius:8px;
+    background:#fbfcfe;
+    color:#172033;
+    font-size:.82rem;
+    line-height:1.4;
+    overflow-wrap:anywhere;
+}
+
+#superadmin-branches-view .branch-modern-field .detail-input{
+    width:100%;
+    min-height:42px;
+    box-sizing:border-box;
+    border-radius:8px;
+}
+
+#superadmin-branches-view .branch-short-location-field .detail-text:empty::after{content:'-';color:#94a3b8;}
+
+#superadmin-branches-view .branch-payment-layout{gap:16px;}
+#superadmin-branches-view .branch-payment-qr{flex:0 0 260px;}
+#superadmin-branches-view .branch-payment-qr-inner{border-radius:10px;}
+#superadmin-branches-view .branch-payment-qr-box{border-radius:8px;}
+
+#superadmin-branches-view .branch-government-documents{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+}
+
+#superadmin-branches-view .branch-government-document-card{border-radius:9px;}
+
+@media (max-width:1050px){
+    #superadmin-branches-view .branch-modern-profile{grid-template-columns:125px minmax(0,1fr);gap:20px;padding:20px;}
+    #superadmin-branches-view .branch-modern-logo-panel{padding-right:20px;}
+    #superadmin-branches-view .branch-modern-logo-wrap{width:100px;height:100px;}
+}
+
+@media (max-width:850px){
+    #superadmin-branches-view .branch-modern-profile{grid-template-columns:1fr;}
+    #superadmin-branches-view .branch-modern-logo-panel{padding:0 0 18px;border-right:0;border-bottom:1px solid #e7ebf0;}
+    #superadmin-branches-view .branch-profile-facts{grid-template-columns:repeat(2,minmax(0,1fr));}
+    #superadmin-branches-view .branch-payment-layout{flex-direction:column;}
+    #superadmin-branches-view .branch-payment-qr{flex:1 1 auto;}
+}
+
+@media (max-width:650px){
+    #superadmin-branches-view .branch-modern-profile{padding:16px;}
+    #superadmin-branches-view .branch-modern-title-row{flex-direction:column;}
+    #superadmin-branches-view .branch-profile-facts,
+    #superadmin-branches-view .branch-government-documents{grid-template-columns:1fr;}
 }

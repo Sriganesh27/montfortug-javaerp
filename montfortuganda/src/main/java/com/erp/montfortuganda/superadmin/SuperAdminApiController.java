@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-
+import com.erp.montfortuganda.superadmin.service.BranchViewReferenceService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,15 +35,18 @@ public class SuperAdminApiController {
     private final BranchService branchService;
     private final UserService userService;
     private final SiteSettingService siteSettingService;
+    private final BranchViewReferenceService branchViewReferenceService;
 
     public SuperAdminApiController(
             BranchService branchService,
             UserService userService,
-            SiteSettingService siteSettingService
+            SiteSettingService siteSettingService,
+            BranchViewReferenceService branchViewReferenceService
     ) {
         this.branchService = branchService;
         this.userService = userService;
         this.siteSettingService = siteSettingService;
+        this.branchViewReferenceService = branchViewReferenceService;
     }
 
     // ==========================================
@@ -57,6 +60,32 @@ public class SuperAdminApiController {
                 ApiResponse.success(
                         "Branches fetched successfully",
                         branchService.getAllBranches()
+                )
+        );
+    }
+
+    @GetMapping("/branches/{id}/view-reference")
+    public ResponseEntity<ApiResponse<String>>
+    createBranchViewReference(
+            @PathVariable Integer id
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Branch View reference created successfully",
+                        branchViewReferenceService.createReference(id)
+                )
+        );
+    }
+
+    @GetMapping("/branches/view-reference")
+    public ResponseEntity<ApiResponse<Integer>>
+    resolveBranchViewReference(
+            @RequestParam("ref") String reference
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        "Branch View reference resolved successfully",
+                        branchViewReferenceService.resolveReference(reference)
                 )
         );
     }
@@ -95,14 +124,20 @@ public class SuperAdminApiController {
                     value = "documents",
                     required = false
             )
-            List<MultipartFile> documents
+            List<MultipartFile> documents,
+            @RequestParam(
+                    value = "qrCode",
+                    required = false
+            )
+            MultipartFile qrCode
     ) {
         BranchDTO createdBranch =
                 branchService.createBranch(
                         branchDTO,
                         logo,
                         photo,
-                        documents
+                        documents,
+                        qrCode
                 );
 
         return ResponseEntity.ok(
@@ -135,7 +170,12 @@ public class SuperAdminApiController {
                     value = "documents",
                     required = false
             )
-            List<MultipartFile> documents
+            List<MultipartFile> documents,
+            @RequestParam(
+                    value = "qrCode",
+                    required = false
+            )
+            MultipartFile qrCode
     ) {
         BranchDTO updatedBranch =
                 branchService.updateBranch(
@@ -143,7 +183,8 @@ public class SuperAdminApiController {
                         branchDTO,
                         logo,
                         photo,
-                        documents
+                        documents,
+                        qrCode
                 );
 
         return ResponseEntity.ok(

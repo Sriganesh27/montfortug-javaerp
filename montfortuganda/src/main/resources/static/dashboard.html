@@ -14,7 +14,7 @@
     <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
 
     <!-- Strict CSP -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data: blob:; frame-src 'self' blob:;">
 
     <title>ERP Dashboard | MBSG</title>
 
@@ -347,6 +347,7 @@
 <script defer src="/js/global.js"></script>
 <script defer src="/js/layout.js"></script>
 <script defer src="/js/superadmin.js"></script>
+<script defer src="/js/modules/superadmin/branch.js"></script>
 <script defer src="/js/framework/crud-table.js"></script>
 <script defer src="/js/framework/importer.js"></script>
 <script defer src="/js/branchadmin.js"></script>
@@ -367,6 +368,7 @@
 <script defer src="/js/modules/sections.js"></script>
 <script defer src="/js/modules/subjects.js"></script>
 <script defer src="/js/modules/scholarship.js"></script>
+<script defer src="/js/modules/branch-profile.js"></script>
 <!-- Vendor Libraries -->
 <script defer src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 </body>

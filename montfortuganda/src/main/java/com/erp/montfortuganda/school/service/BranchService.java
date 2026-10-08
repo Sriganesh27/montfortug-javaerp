@@ -17,7 +17,8 @@ public interface BranchService {
             BranchDTO branchDTO,
             MultipartFile logo,
             MultipartFile photo,
-            List<MultipartFile> documents
+            List<MultipartFile> documents,
+            MultipartFile qrCode
     );
 
     BranchDTO updateBranch(
@@ -25,7 +26,8 @@ public interface BranchService {
             BranchDTO branchDTO,
             MultipartFile logo,
             MultipartFile photo,
-            List<MultipartFile> documents
+            List<MultipartFile> documents,
+            MultipartFile qrCode
     );
 
     void toggleBranchActive(
