@@ -77,59 +77,39 @@
                     <div class="ba-profile-summary-grid">
                         <div>
                             <span class="text-muted">School Code</span>
-                            <strong id="ba-profileSchoolCode" class="font-monospace">—</strong>
+                            <strong id="ba-profileSchoolCode" class="font-monospace ba-profile-summary-value">—</strong>
                         </div>
 
                         <div>
                             <span class="text-muted">Username</span>
-                            <strong id="ba-profileUsername" class="font-monospace">—</strong>
+                            <strong id="ba-profileUsername" class="font-monospace ba-profile-summary-value">—</strong>
                         </div>
 
                         <div>
                             <span class="text-muted">Status</span>
-                            <span id="ba-profileStatus" class="status-badge badge">—</span>
+                            <span id="ba-profileStatus" class="status-badge badge ba-profile-summary-value">—</span>
+                        </div>
+
+                        <div class="ba-profile-summary-field">
+                            <span class="text-muted">Foundation Date</span>
+                            <strong id="ba-viewFoundationDate" class="ba-profile-view-control ba-profile-summary-value">—</strong>
+                            <input
+                                    id="ba-editFoundationDate"
+                                    class="detail-input hidden w-100 ba-profile-edit-control"
+                                    type="date">
+                        </div>
+
+                        <div class="ba-profile-summary-field ba-profile-level-field">
+                            <span class="text-muted">Education Levels</span>
+                            <div id="ba-viewEducationLevels" class="ba-profile-view-control ba-profile-summary-value">—</div>
+                            <div id="ba-editEducationLevels" class="ba-profile-level-list hidden ba-profile-edit-control">
+                                <!-- Levels populated by JavaScript; remains read-only for Branch Admin -->
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
-        <!-- ===================================================== -->
-        <!-- BRANCH PROFILE                                        -->
-        <!-- ===================================================== -->
-        <fieldset class="ba-profile-section">
-            <legend class="ba-profile-section-header">
-                <i class="bi bi-building"></i>
-                Branch Profile
-            </legend>
-
-            <div class="ba-profile-section-body">
-                <div class="ba-profile-grid ba-profile-grid-3">
-                    <div class="form-group">
-                        <label for="ba-editFoundationDate">Foundation Date</label>
-                        <span class="detail-text ba-profile-view-control" id="ba-viewFoundationDate">—</span>
-                        <input
-                                id="ba-editFoundationDate"
-                                class="detail-input hidden w-100 ba-profile-edit-control"
-                                type="date">
-                    </div>
-
-                    <div class="form-group ba-profile-level-field">
-                        <label>Education Levels</label>
-                        <div id="ba-viewEducationLevels" class="detail-text ba-profile-view-control">—</div>
-                        <div id="ba-editEducationLevels" class="ba-profile-level-list hidden ba-profile-edit-control">
-                            <!-- Levels populated by JavaScript -->
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>School Name</label>
-                        <span class="detail-text">—</span>
-                        <small class="text-muted">Managed by Super Admin</small>
-                    </div>
-                </div>
-            </div>
-        </fieldset>
 
         <!-- ===================================================== -->
         <!-- ADDRESS                                                 -->
@@ -305,7 +285,11 @@
             </legend>
 
             <div class="ba-profile-section-body">
-                <div class="ba-profile-grid ba-profile-grid-4">
+                <div class="ba-profile-payment-layout">
+                    <div class="ba-profile-payment-details">
+                        <div class="ba-profile-payment-block">
+                            <h4>Bank Details</h4>
+                            <div class="ba-profile-grid ba-profile-grid-2">
                     <div class="form-group">
                         <label for="ba-editBankName">Bank Name</label>
                         <span class="detail-text ba-profile-view-control" id="ba-viewBankName">—</span>
@@ -329,9 +313,12 @@
                         <span class="detail-text ba-profile-view-control" id="ba-viewBankBranch">—</span>
                         <input id="ba-editBankBranch" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="255">
                     </div>
-                </div>
+                            </div>
+                        </div>
 
-                <div class="ba-profile-grid ba-profile-grid-2">
+                        <div class="ba-profile-payment-block">
+                            <h4>Airtel Pay</h4>
+                            <div class="ba-profile-grid ba-profile-grid-2">
                     <div class="form-group">
                         <label for="ba-editAirtelPayNumber">Airtel Pay Number</label>
                         <span class="detail-text ba-profile-view-control" id="ba-viewAirtelPayNumber">—</span>
@@ -343,11 +330,13 @@
                         <span class="detail-text ba-profile-view-control" id="ba-viewAirtelPayName">—</span>
                         <input id="ba-editAirtelPayName" class="detail-input hidden w-100 ba-profile-edit-control" type="text" maxlength="255">
                     </div>
-                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                <div class="ba-profile-payment-qr">
-                    <div class="form-group">
-                        <label>QR Code</label>
+                    <div class="ba-profile-payment-qr">
+                        <div class="ba-profile-payment-qr-inner">
+                        <label class="ba-profile-payment-qr-title">QR Code</label>
                         <div class="ba-profile-qr-box">
                             <img id="ba-profileQrImage" class="ba-profile-qr-image hidden" src="" alt="School payment QR code">
                             <div id="ba-profileQrPlaceholder" class="ba-profile-qr-placeholder">
@@ -368,7 +357,44 @@
                             </label>
                             <span id="ba-profileQrFileName" class="text-muted">No new QR selected</span>
                         </div>
+                        </div>
                     </div>
+                </div>
+            </div>
+        </fieldset>
+
+
+
+        <!-- ===================================================== -->
+        <!-- ACCOUNT SECURITY                                      -->
+        <!-- ===================================================== -->
+        <fieldset class="ba-profile-section">
+            <legend class="ba-profile-section-header">
+                <i class="bi bi-shield-lock"></i>
+                Account Security
+            </legend>
+
+            <div class="ba-profile-section-body">
+                <div class="ba-profile-security-grid">
+                    <div class="form-group">
+                        <label>Password Reset</label>
+                        <p class="ba-profile-security-description">If you need to reset your account password, submit a request to the Super Admin for review.</p>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ba-profilePasswordResetBtn">Account Action</label>
+                        <div class="ba-profile-security-action">
+                            <button class="btn-secondary ba-profile-password-reset-btn" id="ba-profilePasswordResetBtn" type="button">
+                                <i class="bi bi-shield-lock"></i> Request Password Reset
+                            </button>
+                            <small class="text-muted">Your current password will never be displayed.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group ba-profile-security-status-row">
+                    <label>Password Reset Request Status</label>
+                    <span id="ba-profilePasswordResetStatus" class="detail-text">No request submitted</span>
                 </div>
             </div>
         </fieldset>

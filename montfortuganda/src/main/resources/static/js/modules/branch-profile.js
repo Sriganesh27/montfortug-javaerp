@@ -17,6 +17,10 @@
     'use strict';
 
     const PROFILE_ENDPOINT = '/branchadmin/profile';
+    const PROFILE_MEDIA_ENDPOINT = '/api/branchadmin/profile/files';
+    let initializationInProgress = false;
+    let profileLogoRequestUrl = null;
+    let profileLogoPreloadPromise = null;
 
     const state = {
         profile: null,
@@ -172,6 +176,94 @@
         );
     }
 
+    function formatDisplayDate(value) {
+        if (!value) return '—';
+        const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+        return String(value);
+    }
+
+    function preloadProfileLogo() {
+        // Start the private logo request as soon as Branch Profile initializes,
+        // in parallel with the profile API request. Reuse this exact URL below
+        // so the browser can use the already-loaded image instead of requesting
+        // the logo a second time.
+        if (profileLogoPreloadPromise) {
+            return profileLogoPreloadPromise;
+        }
+
+        profileLogoRequestUrl = `${PROFILE_MEDIA_ENDPOINT}/logo?v=${Date.now()}`;
+        profileLogoPreloadPromise = new Promise(resolve => {
+            const preloader = new Image();
+            preloader.decoding = 'async';
+            preloader.onload = () => resolve(true);
+            preloader.onerror = () => resolve(false);
+            preloader.src = profileLogoRequestUrl;
+        });
+
+        return profileLogoPreloadPromise;
+    }
+
+    function renderImage(imageId, placeholderId, endpoint, storedPath) {
+        const image = getElement(imageId);
+        const placeholder = getElement(placeholderId);
+        if (!image || !placeholder) return;
+
+        image.onerror = () => {
+            image.classList.add('hidden');
+            image.removeAttribute('src');
+            placeholder.classList.remove('hidden');
+        };
+        image.onload = () => {
+            image.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+        };
+
+        if (!storedPath || !String(storedPath).trim()) {
+            image.classList.add('hidden');
+            image.removeAttribute('src');
+            placeholder.classList.remove('hidden');
+            return;
+        }
+
+        // Private media is served by an authenticated endpoint scoped to the
+        // current Branch Admin's branch. Never put stored filesystem paths in URLs.
+        // The logo reuses the preloaded URL to avoid a second late request.
+        image.src = endpoint === 'logo' && profileLogoRequestUrl
+            ? profileLogoRequestUrl
+            : `${PROFILE_MEDIA_ENDPOINT}/${endpoint}?v=${Date.now()}`;
+    }
+
+    function renderGovernmentDocuments(profile) {
+        const container = getElement('ba-profileDocumentsList');
+        if (!container) return;
+        container.replaceChildren();
+
+        const stored = typeof profile?.govDocumentUrl === 'string'
+            ? profile.govDocumentUrl.split(',').map(path => path.trim()).filter(Boolean)
+            : [];
+
+        if (!stored.length) {
+            const empty = document.createElement('p');
+            empty.className = 'text-muted';
+            empty.textContent = 'No government documents available.';
+            container.appendChild(empty);
+            return;
+        }
+
+        stored.forEach((_, index) => {
+            const row = document.createElement('div');
+            row.className = 'ba-profile-document-item';
+            const link = document.createElement('a');
+            link.href = `${PROFILE_MEDIA_ENDPOINT}/documents/${index}`;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.textContent = `Government document ${index + 1}`;
+            row.appendChild(link);
+            container.appendChild(row);
+        });
+    }
+
     function populateView(profile) {
         setText('ba-profileSchoolName', profile?.branchName);
         setText('ba-profileSchoolCode', profile?.schoolCode);
@@ -181,7 +273,12 @@
             Number(profile?.isActive) === 1 ? 'Active' : 'Inactive'
         );
 
-        setText('ba-viewFoundationDate', profile?.foundationDate);
+        setText('ba-viewFoundationDate', formatDisplayDate(profile?.foundationDate));
+
+        renderImage('ba-profileLogo', 'ba-profileLogoPlaceholder', 'logo', profile?.branchLogoUrl);
+        renderImage('ba-profileQrImage', 'ba-profileQrPlaceholder', 'qr-code', profile?.qrCodeUrl);
+        renderImage('ba-profileSchoolPhoto', 'ba-profileSchoolPhotoPlaceholder', 'photo', profile?.schoolPhotoUrl);
+        renderGovernmentDocuments(profile);
 
         setText('ba-viewBranchLocation', profile?.branchLocation);
         setText('ba-viewPoBox', profile?.poBox);
@@ -677,6 +774,10 @@
     }
 
     function wireEditControls() {
+        const root = getElement('ba-branch-profile-view');
+        if (root?.dataset.profileEventsBound === 'true') return;
+        if (root) root.dataset.profileEventsBound = 'true';
+
         getElement('ba-branchProfileEditBtn')
             ?.addEventListener('click', () => {
                 if (!state.canEdit) {
@@ -802,20 +903,26 @@
             'ba-branch-profile-view'
         );
 
-        if (!root) {
+        if (!root || initializationInProgress) {
             return;
         }
 
+        initializationInProgress = true;
         root.setAttribute('aria-busy', 'true');
 
         wireEditControls();
 
         try {
+            // Begin loading the Branch Profile header logo immediately, in
+            // parallel with fetching the profile data. A logo failure is handled
+            // by the existing placeholder and must not block the page.
+            preloadProfileLogo();
             await loadProfile();
         } catch (error) {
             showProfileLoadError(error);
         } finally {
             root.setAttribute('aria-busy', 'false');
+            initializationInProgress = false;
         }
     }
 
