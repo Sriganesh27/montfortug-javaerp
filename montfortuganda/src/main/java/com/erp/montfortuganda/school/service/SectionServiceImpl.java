@@ -81,6 +81,8 @@ public class SectionServiceImpl
                 requireActiveClass(
                         request.classId()
                 );
+        requireClassAvailableForAcademicYear(
+                schoolClass, academicYear.getAcademicYearId(), context.branchId());
 
         String sectionCode =
                 normalizeCode(
@@ -167,6 +169,8 @@ public class SectionServiceImpl
                 requireActiveClass(
                         request.classId()
                 );
+        requireClassAvailableForAcademicYear(
+                schoolClass, academicYear.getAcademicYearId(), context.branchId());
 
         String sectionCode =
                 normalizeCode(
@@ -350,14 +354,14 @@ public class SectionServiceImpl
         UserBranchContext context =
                 requireAuthenticatedBranch();
 
-        requireOwnedAcademicYear(
+        ErpAcademicYear selectedYear = requireOwnedAcademicYear(
                 academicYearId,
                 context.branchId()
         );
 
-        requireActiveClass(
-                classId
-        );
+        SchoolClass selectedClass = requireActiveClass(classId);
+        requireClassAvailableForAcademicYear(
+                selectedClass, selectedYear.getAcademicYearId(), context.branchId());
 
         return sectionRepository
                 .findAllConsistentActiveByBranchYearAndClass(
@@ -419,10 +423,12 @@ public class SectionServiceImpl
                     section.getAcademicYear()
             );
 
-            requireActiveClass(
-                    section.getSchoolClass()
-                            .getClassId()
-            );
+            SchoolClass sectionClass = requireActiveClass(
+                    section.getSchoolClass().getClassId());
+            requireClassAvailableForAcademicYear(
+                    sectionClass,
+                    section.getAcademicYear().getAcademicYearId(),
+                    context.branchId());
 
             section.setActive(
                     true
@@ -623,6 +629,17 @@ public class SectionServiceImpl
                                 "Selected Class was not found."
                         )
                 );
+    }
+
+    private void requireClassAvailableForAcademicYear(
+            SchoolClass schoolClass, Long academicYearId, Integer branchId) {
+        if (schoolClass.getBranch() == null
+                || !branchId.equals(schoolClass.getBranch().getBranchId())
+                || !schoolClassRepository.existsAvailableForBranchAndAcademicYear(
+                        schoolClass.getClassId(), branchId, academicYearId, 1)) {
+            throw new BadRequestException(
+                    "Selected Class is not available for the selected Academic Year.");
+        }
     }
 
     private SchoolClass requireActiveClass(

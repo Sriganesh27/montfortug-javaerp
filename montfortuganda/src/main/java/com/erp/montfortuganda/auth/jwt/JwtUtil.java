@@ -25,6 +25,9 @@ public class JwtUtil {
     private static final String CREDENTIAL_VERSION_CLAIM =
             "credential_version";
 
+    private static final String SESSION_ID_CLAIM =
+            "session_id";
+
     @Value("${jwt.secret}")
     private String secret;
 
@@ -83,6 +86,13 @@ public class JwtUtil {
         }
     }
 
+    public String extractSessionId(String token) {
+        return extractClaim(
+                token,
+                claims -> claims.get(SESSION_ID_CLAIM, String.class)
+        );
+    }
+
     public Integer extractCredentialVersion(
             String token
     ) {
@@ -128,6 +138,13 @@ public class JwtUtil {
     public String generateToken(
             UserDetails userDetails
     ) {
+        return generateToken(userDetails, null);
+    }
+
+    public String generateToken(
+            UserDetails userDetails,
+            String sessionId
+    ) {
         Map<String, Object> claims =
                 new HashMap<>();
 
@@ -135,6 +152,10 @@ public class JwtUtil {
                 TOKEN_TYPE_CLAIM,
                 TokenType.ACCESS.name()
         );
+
+        if (sessionId != null && !sessionId.isBlank()) {
+            claims.put(SESSION_ID_CLAIM, sessionId);
+        }
 
         return createToken(
                 claims,

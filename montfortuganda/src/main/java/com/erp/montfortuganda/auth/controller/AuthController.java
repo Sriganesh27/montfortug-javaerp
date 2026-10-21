@@ -9,12 +9,14 @@ import com.erp.montfortuganda.auth.entity.User;
 import com.erp.montfortuganda.auth.jwt.JwtUtil;
 import com.erp.montfortuganda.auth.repository.UserRepository;
 import com.erp.montfortuganda.auth.service.UserCredentialService;
+import com.erp.montfortuganda.auth.service.SessionManagementService;
 import com.erp.montfortuganda.auth.service.CurrentUserContext;
 import com.erp.montfortuganda.auth.service.CurrentUserService;
 import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.repository.BranchRepository;
 import com.erp.montfortuganda.school.service.FileStorageService;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.io.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +32,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,6 +44,7 @@ import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.Map;
 
 @RestController
@@ -62,6 +66,7 @@ public class AuthController {
     private final CurrentUserService currentUserService;
     private final BranchRepository branchRepository;
     private final FileStorageService fileStorageService;
+    private final SessionManagementService sessionManagementService;
 
     public AuthController(
             AuthenticationManager authenticationManager,
@@ -70,7 +75,8 @@ public class AuthController {
             UserCredentialService userCredentialService,
             CurrentUserService currentUserService,
             BranchRepository branchRepository,
-            FileStorageService fileStorageService
+            FileStorageService fileStorageService,
+            SessionManagementService sessionManagementService
     ) {
         this.authenticationManager =
                 authenticationManager;
@@ -85,6 +91,8 @@ public class AuthController {
                 branchRepository;
         this.fileStorageService =
                 fileStorageService;
+        this.sessionManagementService =
+                sessionManagementService;
     }
 
     @GetMapping("/header-context")
@@ -276,7 +284,8 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> login(
-            @RequestBody AuthRequest request
+            @RequestBody AuthRequest request,
+            HttpServletRequest httpRequest
     ) {
         try {
             Authentication authentication =
@@ -364,7 +373,8 @@ public class AuthController {
             return createAuthenticatedResponse(
                     dbUser,
                     userDetails,
-                    branchId
+                    branchId,
+                    httpRequest
             );
 
         } catch (AuthenticationException exception) {
@@ -483,22 +493,92 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
-        ResponseCookie cookie =
-                expiredJwtCookie();
+    public ResponseEntity<?> logout(
+            @CookieValue(name = "jwt_token", required = false) String jwtCookie,
+            HttpServletRequest request
+    ) {
+        // Keep the existing endpoint contract. Session revocation is best-effort here
+        // because this endpoint is intentionally permitted for unauthenticated requests.
+        String sessionId = extractSessionIdSafely(jwtCookie);
+        if (sessionId != null) {
+            try {
+                sessionManagementService.revokeSession(sessionId, request);
+            } catch (RuntimeException exception) {
+                LOGGER.error("Unable to record server-side logout for the supplied session.", exception);
+            }
+        }
 
+        ResponseCookie cookie = expiredJwtCookie();
         return ResponseEntity
                 .ok()
-                .header(
-                        HttpHeaders.SET_COOKIE,
-                        cookie.toString()
-                )
-                .body(
-                        Map.of(
-                                "message",
-                                "Logged out successfully"
-                        )
-                );
+                .header(HttpHeaders.SET_COOKIE, cookie.toString())
+                .body(Map.of("message", "Logged out successfully"));
+    }
+
+    @PostMapping("/logout-other-devices")
+    public ResponseEntity<?> logoutOtherDevices(
+            @CookieValue(name = "jwt_token", required = false) String jwtCookie,
+            Authentication authentication,
+            HttpServletRequest request
+    ) {
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getPrincipal())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Authentication is required."));
+        }
+
+        User authenticatedUser = userRepository.findByUsername(authentication.getName())
+                .orElse(null);
+        if (authenticatedUser == null || authenticatedUser.getId() == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "Authenticated user could not be resolved."));
+        }
+
+        String tokenUsername = null;
+        String currentSessionId = null;
+        try {
+            if (jwtCookie != null && !jwtCookie.isBlank()) {
+                tokenUsername = jwtUtil.extractUsername(jwtCookie);
+                currentSessionId = jwtUtil.extractSessionId(jwtCookie);
+            }
+        } catch (RuntimeException exception) {
+            LOGGER.debug("Could not extract current session from JWT cookie.", exception);
+        }
+
+        if (tokenUsername == null || !tokenUsername.equalsIgnoreCase(authenticatedUser.getUsername())) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("message", "The current authenticated session could not be verified."));
+        }
+        if (currentSessionId == null || currentSessionId.isBlank()) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(Map.of("message", "This session cannot be identified. Please sign in again."));
+        }
+
+        try {
+            int revokedCount = sessionManagementService.revokeOtherSessions(
+                    authenticatedUser.getId(), currentSessionId, request);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Other active sessions have been logged out.",
+                    "revokedCount", revokedCount));
+        } catch (IllegalArgumentException exception) {
+            return ResponseEntity.badRequest().body(Map.of("message", exception.getMessage()));
+        } catch (RuntimeException exception) {
+            LOGGER.error("Unable to revoke other sessions for the authenticated user.", exception);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Other sessions could not be logged out."));
+        }
+    }
+
+    private String extractSessionIdSafely(String token) {
+        if (token == null || token.isBlank()) {
+            return null;
+        }
+        try {
+            return jwtUtil.extractSessionId(token);
+        } catch (RuntimeException exception) {
+            LOGGER.debug("Could not extract session ID from JWT during logout.", exception);
+            return null;
+        }
     }
 
     private ResponseEntity<AuthResponse>
@@ -568,10 +648,25 @@ public class AuthController {
     createAuthenticatedResponse(
             User dbUser,
             UserDetails userDetails,
-            Integer branchId
+            Integer branchId,
+            HttpServletRequest httpRequest
     ) {
+        String sessionKey = UUID.randomUUID().toString();
+        LocalDateTime issuedAt = LocalDateTime.now(ZoneOffset.UTC);
+        LocalDateTime expiryTime = issuedAt.plusNanos(
+                jwtUtil.getJwtExpirationInMs() * 1_000_000L
+        );
+
+        sessionManagementService.registerSuccessfulLogin(
+                dbUser,
+                sessionKey,
+                expiryTime,
+                httpRequest
+        );
+
+        // Keep the server-side session key and JWT session_id claim identical.
         String token =
-                jwtUtil.generateToken(userDetails);
+                jwtUtil.generateToken(userDetails, sessionKey);
 
         ResponseCookie jwtCookie =
                 ResponseCookie

@@ -2870,6 +2870,11 @@ function formatBackendSubStage(value) {
         );
 
         setText(
+            'view-schoolDayType',
+            (String(application.schoolDayType || application.school_day_type || 'FULL_DAY').toUpperCase() === 'HALF_DAY' ? 'Half Day' : 'Full Day')
+        );
+
+        setText(
             'view-scholarshipStatus',
             application.scholarshipStatus
         );

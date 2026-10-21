@@ -267,9 +267,8 @@ public class ErpParent implements Serializable {
         if (feeResponsibility == null) {
             feeResponsibility = FeeResponsibility.FATHER;
         }
-        if (parentsLivingTogether == null) {
-            parentsLivingTogether = true;
-        }
+        // Preserve null when the parents' living-arrangement question is unanswered.
+        // The database column is nullable; do not silently convert no answer to 'Yes'.
         if (version == null) {
             version = 0L;
         }

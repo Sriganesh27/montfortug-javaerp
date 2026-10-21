@@ -315,11 +315,8 @@ public class StudentBulkImportTransactionService {
             );
         }
 
-        if (parent.parentsLivingTogether() == null) {
-            throw new BadRequestException(
-                    "Parents-living-together selection is required after bulk defaults are applied."
-            );
-        }
+        // Parents Living Together is optional. Preserve null when the Excel
+        // cell is blank; do not force the user to answer or invent a value.
 
         if (enrollment.admissionType() == null) {
             throw new BadRequestException(

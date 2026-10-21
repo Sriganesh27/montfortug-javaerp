@@ -428,6 +428,14 @@ public class StudentMapper {
         enrollment.setClassId(
                 request.classId()
         );
+
+        String requestedSchoolDayType = request.schoolDayType();
+        String normalizedSchoolDayType = requestedSchoolDayType == null
+                || requestedSchoolDayType.isBlank()
+                ? "FULL_DAY"
+                : requestedSchoolDayType.trim().toUpperCase(Locale.ROOT);
+        enrollment.setSchoolDayType(normalizedSchoolDayType);
+
         enrollment.setSectionId(
                 request.sectionId()
         );
@@ -1394,6 +1402,7 @@ public class StudentMapper {
                 trimToNull(academicYearName),
                 enrollment.getClassId(),
                 trimToNull(className),
+                enrollment.getSchoolDayType(),
                 enrollment.getSectionId(),
                 trimToNull(sectionName),
                 enrollment.getStreamId(),

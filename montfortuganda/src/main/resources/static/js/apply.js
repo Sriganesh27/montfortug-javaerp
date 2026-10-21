@@ -53,6 +53,8 @@ let branchList = [];
 
 /** @type {SchoolClass[]} */
 let classList = [];
+let classFetchSequence = 0;
+let classResponseMetadata = {};
 
 // Helper to safely trigger SweetAlert without ARIA focus-retention violations
 function showAlert(title, text, icon) {
@@ -101,8 +103,8 @@ document.addEventListener("DOMContentLoaded", () => {
         footerActions: ['today', 'clear', 'close']
     });
 
-    // Fetch both branches and classes simultaneously on page load
-    Promise.all([fetchBranches(), fetchClasses()]).catch(e => console.error("Initialization error:", e));
+    // Classes are loaded only after a branch and academic year are selected.
+    fetchBranches().catch(e => console.error("Initialization error:", e));
 
     document.getElementById("branchSelect").addEventListener("change", handleBranchChange);
     document.getElementById("academicYear").addEventListener("change", handleAcademicYearChange);
@@ -115,15 +117,24 @@ document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("change", handleFileUploadUI);
     initialisePrimaryContactSelection();
 
-    // CSP-Compliant Event Delegation for Navigation
+    // Navigation is synchronous in this wizard. Do not show a fake loading
+    // state: validate first, then display the requested step immediately.
     document.addEventListener("click", function(e) {
         const targetElement = e.target.closest('[data-step-target]');
-        if (targetElement) {
-            const stepNum = parseInt(targetElement.getAttribute('data-step-target'), 10);
-            if (!isNaN(stepNum)) {
-                validateAndGoTo(stepNum);
-            }
+        if (!targetElement) return;
+
+        const stepNum = Number.parseInt(targetElement.getAttribute('data-step-target'), 10);
+        if (!Number.isInteger(stepNum)) return;
+
+        // Ignore repeat clicks only while a future async transition explicitly owns the button.
+        if (targetElement.dataset.navigationBusy === "true") {
+            e.preventDefault();
+            return;
         }
+
+        const moved = validateAndGoTo(stepNum);
+        if (targetElement.tagName === "BUTTON") e.preventDefault();
+        if (!moved) return;
     });
 });
 // ========================================================
@@ -303,11 +314,11 @@ function getPrimaryContactType() {
 // VALIDATION ENGINE
 function validateAndGoTo(targetStepNumber) {
     const activeStepDiv = document.querySelector(".form-step.active-step");
-    if (!activeStepDiv) { goToStep(targetStepNumber); return; }
+    if (!activeStepDiv) { goToStep(targetStepNumber); return true; }
     const currentStep = parseInt(activeStepDiv.id.replace("step-", ""));
     if (targetStepNumber < currentStep) {
         goToStep(targetStepNumber);
-        return;
+        return true;
     }
     const requiredInputs = activeStepDiv.querySelectorAll("input[required], select[required]");
     let isValid = true;
@@ -346,13 +357,14 @@ function validateAndGoTo(targetStepNumber) {
     if (!isValid) {
         showAlert('Missing Fields', 'Please fill in all required fields marked in red.', 'warning')
             .then(() => { if (firstInvalid && firstInvalid.focus) firstInvalid.focus(); });
-        return;
+        return false;
     }
     if (targetStepNumber > currentStep + 1) {
         validateAndGoTo(currentStep + 1);
-        if (document.querySelector(".form-step.active-step").id !== "step-" + (currentStep + 1)) return;
+        if (document.querySelector(".form-step.active-step").id !== "step-" + (currentStep + 1)) return false;
     }
     goToStep(targetStepNumber);
+    return true;
 }
 
 function goToStep(targetStepNumber) {
@@ -548,33 +560,196 @@ function setupDefaultOption(selectElem, text="Select...") {
 
 // API FETCH CALLS
 async function fetchBranches() {
-    setupDefaultOption(document.getElementById("branchSelect"), "Select Branch");
-    const response = await fetch("/api/public/branches");
-    const result = await response.json();
+    const branchSelect = document.getElementById("branchSelect");
+    const levelSelect = document.getElementById("level");
+    const classSelect = document.getElementById("classSelect");
+    branchSelect.disabled = true;
+    branchSelect.setAttribute("aria-busy", "true");
+    setupDefaultOption(branchSelect, "Loading branches…");
+    levelSelect.disabled = true;
+    classSelect.disabled = true;
+    setupDefaultOption(levelSelect, "Select Branch First");
+    setupDefaultOption(classSelect, "Select Level First");
 
-    if (result.success && result.data) {
+    try {
+        const response = await fetch("/api/public/branches", {
+            headers: { "Accept": "application/json" },
+            cache: "no-store"
+        });
+        const result = await response.json();
+        if (!response.ok || !result.success || !Array.isArray(result.data)) {
+            throw new Error(result.message || "Unable to load school branches.");
+        }
+
         branchList = result.data;
-        result.data.forEach(branch => {
+        if (branchList.length === 0) {
+            setupDefaultOption(branchSelect, "No branches available");
+            return;
+        }
+
+        setupDefaultOption(branchSelect, "Select Branch");
+        branchList.forEach(branch => {
             const opt = document.createElement("option");
             opt.value = String(branch.branchId);
-
-            // Format requested: (code)name, location
             const codeStr = branch.schoolCode ? `(${branch.schoolCode})` : '';
             const locationStr = branch.branchLocation ? `, ${branch.branchLocation}` : '';
-
             opt.textContent = `${codeStr}${branch.branchName}${locationStr}`;
-
-            document.getElementById("branchSelect").appendChild(opt);
+            branchSelect.appendChild(opt);
         });
+        branchSelect.disabled = false;
+    } catch (error) {
+        branchList = [];
+        setupDefaultOption(branchSelect, "Branches unavailable — retry");
+        branchSelect.disabled = true;
+        showAlert("Unable to Load Branches", error.message || "Please refresh and try again.", "warning");
+        throw error;
+    } finally {
+        branchSelect.removeAttribute("aria-busy");
     }
 }
 
-async function fetchClasses() {
-    const response = await fetch("/api/public/classes");
-    const result = await response.json();
-    if (result.success && result.data) {
-        classList = result.data;
+async function fetchClasses(branchId, academicYearId, levelId = null) {
+    const requestSequence = ++classFetchSequence;
+    classList = [];
+    const classSelect = document.getElementById("classSelect");
+    const hasLevel = Number.isInteger(Number(levelId)) && Number(levelId) > 0;
+    classSelect.disabled = true;
+    classSelect.setAttribute("aria-busy", "true");
+    setupDefaultOption(classSelect, hasLevel ? "Loading classes…" : "Select Level First");
+
+    if (!Number.isInteger(Number(branchId)) || Number(branchId) <= 0
+            || !Number.isInteger(Number(academicYearId)) || Number(academicYearId) <= 0) {
+        classSelect.removeAttribute("aria-busy");
+        classSelect.disabled = true;
+        return;
     }
+
+    const params = new URLSearchParams({
+        branchId: String(branchId),
+        academicYearId: String(academicYearId)
+    });
+    if (hasLevel) params.set("levelId", String(levelId));
+
+    try {
+        const response = await fetch(`/api/public/admission-classes?${params.toString()}`, {
+            headers: { "Accept": "application/json" },
+            cache: "no-store"
+        });
+        const result = await response.json();
+        if (requestSequence !== classFetchSequence) return;
+        if (!response.ok || !result.success) {
+            throw new Error(result.message || "Unable to load classes for the selected academic year.");
+        }
+
+        const uniqueById = new Map();
+        (Array.isArray(result.data) ? result.data : []).forEach(item => {
+            const id = Number(item && item.classId);
+            if (Number.isInteger(id) && id > 0 && !uniqueById.has(id)) uniqueById.set(id, item);
+        });
+        classList = Array.from(uniqueById.values());
+        classResponseMetadata = result.data && !Array.isArray(result.data) && typeof result.data === "object"
+            ? result.data : result;
+        syncSchoolDayTypeField();
+
+        if (!hasLevel) {
+            // This request preloads response metadata only. Do not expose all classes
+            // before the user selects a level.
+            setupDefaultOption(classSelect, "Select Level First");
+            classSelect.disabled = true;
+            return;
+        }
+
+        setupDefaultOption(classSelect, classList.length ? "Select Class" : "No classes available");
+        classList.forEach(item => classSelect.appendChild(new Option(
+            `[${item.classCode}] ${item.className}`, String(item.classId)
+        )));
+        classSelect.disabled = classList.length === 0;
+    } catch (error) {
+        if (requestSequence !== classFetchSequence) return;
+        classList = [];
+        setupDefaultOption(classSelect, "Classes unavailable — retry selection");
+        classSelect.disabled = true;
+        throw error;
+    } finally {
+        if (requestSequence === classFetchSequence) classSelect.removeAttribute("aria-busy");
+    }
+}
+
+// School Day Type is shown only for Nursery. Its selectable options are
+// rendered exclusively from the backend response for the selected class.
+function syncSchoolDayTypeField() {
+    const levelSelect = document.getElementById("level");
+    const group = document.getElementById("schoolDayTypeGroup");
+    const optionsContainer = document.getElementById("schoolDayTypeOptions");
+    const valueInput = document.getElementById("schoolDayType");
+    if (!levelSelect || !group || !optionsContainer || !valueInput) return;
+
+    const selectedLevel = String(levelSelect.value || "").trim().toUpperCase();
+    const isNursery = selectedLevel === "NURSERY";
+    if (!isNursery) {
+        group.hidden = true;
+        group.classList.add("hidden-element");
+        valueInput.value = "FULL_DAY";
+        valueInput.disabled = true;
+        optionsContainer.replaceChildren();
+        return;
+    }
+
+    const classSelect = document.getElementById("classSelect");
+    const selectedClassId = Number(classSelect && classSelect.value);
+    if (!classSelect || !classSelect.value || !Number.isInteger(selectedClassId) || selectedClassId <= 0) {
+        group.hidden = true;
+        group.classList.add("hidden-element");
+        valueInput.value = "FULL_DAY";
+        valueInput.disabled = true;
+        optionsContainer.replaceChildren();
+        return;
+    }
+
+    group.hidden = false;
+    group.classList.remove("hidden-element");
+    const selectedClass = classList.find(item => Number(item.classId) === selectedClassId);
+    const optionSource = selectedClass || classResponseMetadata;
+    const options = Array.isArray(optionSource.schoolDayTypeOptions)
+        ? optionSource.schoolDayTypeOptions
+        : Array.isArray(classResponseMetadata.schoolDayTypeOptions)
+            ? classResponseMetadata.schoolDayTypeOptions
+            : [];
+    const defaultValue = String(optionSource.defaultSchoolDayType || classResponseMetadata.defaultSchoolDayType || "FULL_DAY");
+    const currentValue = valueInput.value || defaultValue;
+    optionsContainer.replaceChildren();
+
+    if (!options.length) {
+        const note = document.createElement("span");
+        note.className = "school-day-type-message";
+        note.textContent = "School day options are temporarily unavailable. Please try selecting the class again.";
+        optionsContainer.appendChild(note);
+        valueInput.value = "FULL_DAY";
+        valueInput.disabled = true;
+        return;
+    }
+
+    const allowed = options.filter(option => option && option.value != null && option.label != null);
+    allowed.forEach((option, index) => {
+        const value = String(option.value);
+        const label = document.createElement("label");
+        label.className = "school-day-type-option";
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "schoolDayTypeChoice";
+        radio.value = value;
+        radio.checked = value === currentValue || (!allowed.some(item => String(item.value) === currentValue) && value === defaultValue);
+        radio.addEventListener("change", () => {
+            if (radio.checked) valueInput.value = radio.value;
+        });
+        const text = document.createElement("span");
+        text.textContent = String(option.label);
+        label.append(radio, text);
+        optionsContainer.appendChild(label);
+    });
+    const checked = optionsContainer.querySelector('input[type="radio"]:checked');
+    valueInput.value = checked ? checked.value : defaultValue;
+    valueInput.disabled = false;
 }
 
 // DYNAMIC CASCADING LOGIC
@@ -589,8 +764,12 @@ function handleBranchChange() {
     const academicYearSelect = document.getElementById("academicYear");
     const joiningTermSelect = document.getElementById("joiningTerm");
 
-    setupDefaultOption(levelSelect, "Select Level");
-    setupDefaultOption(classSelect, "Select Class");
+    levelSelect.disabled = true;
+    classSelect.disabled = true;
+    setupDefaultOption(levelSelect, branch ? "Select Level" : "Select Branch First");
+    setupDefaultOption(classSelect, "Select Level First");
+    classList = [];
+    syncSchoolDayTypeField();
     setupDefaultOption(
         academicYearSelect,
         "Select Admission Year"
@@ -625,6 +804,7 @@ function handleBranchChange() {
                 );
             }
         });
+        levelSelect.disabled = levelSelect.options.length <= 1;
     }
 
     populateAcademicYears(
@@ -732,16 +912,34 @@ function populateAcademicYears(
         branch,
         preferredAcademicYearId
     );
+
+    void fetchClasses(Number(branch.branchId), preferredAcademicYearId)
+        .catch(error => console.error("Unable to load admission classes:", error));
 }
 
 function handleAcademicYearChange() {
     const branch = getSelectedBranch();
+    const academicYearId = Number(this.value);
+    const selectedLevelName = String(document.getElementById("level").value || "");
+    const branchLevel = branch && Array.isArray(branch.branchLevels)
+        ? branch.branchLevels.find(item => item.level
+            && String(item.level.levelName || "").trim().toUpperCase() === selectedLevelName.trim().toUpperCase())
+        : null;
+    const levelId = branchLevel && branchLevel.level ? Number(branchLevel.level.levelId) : null;
 
     populateTermsForAcademicYear(
         document.getElementById("joiningTerm"),
         branch,
-        Number(this.value)
+        academicYearId
     );
+
+    // If the user already chose a level, reload that level's classes for the
+    // newly selected academic year. Otherwise this request only refreshes metadata.
+    void fetchClasses(branch ? Number(branch.branchId) : null, academicYearId, levelId)
+        .catch(error => {
+            console.error("Unable to load classes for the selected academic year:", error);
+            showAlert("Unable to Load Classes", error.message || "Please try again.", "warning");
+        });
 }
 
 function populateTermsForAcademicYear(
@@ -862,6 +1060,8 @@ function getSelectedBranch() {
 function handleLevelChange() {
     const classSelect = document.getElementById("classSelect");
     setupDefaultOption(classSelect, "Select Class");
+    classList = [];
+    syncSchoolDayTypeField();
     document.getElementById("dynamic-exam-container").textContent = '';
     document.getElementById("dynamic-subjects-container").classList.add("hidden-element");
 
@@ -870,31 +1070,44 @@ function handleLevelChange() {
     if (hiddenCode) hiddenCode.value = "";
     if (hiddenApplied) hiddenApplied.value = "";
 
+    const branchId = Number(document.getElementById("branchSelect").value);
+    const academicYearId = Number(document.getElementById("academicYear").value);
     const selectedLevelName = this.value;
-    const selectedBranchId = parseInt(document.getElementById("branchSelect").value);
-    const branch = branchList.find(b => b.branchId === selectedBranchId);
+    const branch = branchList.find(b => Number(b.branchId) === branchId);
+    const branchLevel = branch && Array.isArray(branch.branchLevels)
+        ? branch.branchLevels.find(item => item.level
+            && String(item.level.levelName || "").trim().toUpperCase() === String(selectedLevelName || "").trim().toUpperCase())
+        : null;
+    const levelId = branchLevel && branchLevel.level
+        ? Number(branchLevel.level.levelId)
+        : null;
 
-    if (branch && branch.branchLevels) {
-        const blObj = branch.branchLevels.find(bl => bl.level.levelName === selectedLevelName);
-        if (blObj) {
-            const levelObj = blObj.level;
-            // Filter dynamic classList by mapped Level ID
-            const filteredClasses = classList.filter(c => c.levelId === levelObj.levelId);
-            filteredClasses.forEach(c => {
-                classSelect.appendChild(new Option('[' + c.classCode + '] ' + c.className, c.classCode));
-            });
-        }
+    if (!levelId || !Number.isInteger(branchId) || branchId <= 0
+            || !Number.isInteger(academicYearId) || academicYearId <= 0) {
+        classList = [];
+        return;
     }
+
+    void fetchClasses(branchId, academicYearId, levelId).catch(error => {
+        console.error("Unable to load classes for the selected level:", error);
+        setupDefaultOption(classSelect, "Classes unavailable — retry selection");
+        syncSchoolDayTypeField();
+    });
 }
 
 function handleClassChange() {
-    const code = this.value;
+    syncSchoolDayTypeField();
+    const selectedClassId = Number(this.value);
+    const selectedClass = classList.find(c => Number(c.classId) === selectedClassId);
+    const code = selectedClass ? selectedClass.classCode : "";
 
     const hiddenCode = document.getElementById("hiddenClassCode");
     const hiddenApplied = document.getElementById("hiddenAppliedClass");
 
     if (hiddenCode) hiddenCode.value = code;
-    if (hiddenApplied) hiddenApplied.value = this.options[this.selectedIndex].text;
+    if (hiddenApplied) hiddenApplied.value = selectedClass
+        ? `[${selectedClass.classCode}] ${selectedClass.className}`
+        : "";
 
     const dynExam = document.getElementById("dynamic-exam-container");
     const dynSubj = document.getElementById("dynamic-subjects-container");
@@ -1036,9 +1249,9 @@ async function handleFormSubmit(e) {
     if (btnText) btnText.classList.add("hidden-element");
     if (btnSpinner) btnSpinner.classList.remove("hidden-element");
 
-    // Look up the TRUE classId from the selected classCode
-    const selectedClassCode = document.getElementById("classSelect").value;
-    const selectedClassObj = classList.find(c => c.classCode === selectedClassCode);
+    // The option value is the branch/year-specific class ID (class codes repeat across schools).
+    const selectedClassId = Number(document.getElementById("classSelect").value);
+    const selectedClassObj = classList.find(c => Number(c.classId) === selectedClassId);
     const trueClassId = selectedClassObj ? selectedClassObj.classId : null;
     const primaryContactType = getPrimaryContactType();
     const primaryPrefix = primaryContactType === "FATHER"
@@ -1068,6 +1281,9 @@ async function handleFormSubmit(e) {
                 )
                 : null,
         branchClassId: trueClassId,
+        schoolDayType: String(document.getElementById("level").value || "").trim().toUpperCase() === "NURSERY"
+            ? (document.getElementById("schoolDayType").value || "FULL_DAY")
+            : "FULL_DAY",
 
         // Primary contact selection is persisted by the backend.
         primaryContactType: primaryContactType,

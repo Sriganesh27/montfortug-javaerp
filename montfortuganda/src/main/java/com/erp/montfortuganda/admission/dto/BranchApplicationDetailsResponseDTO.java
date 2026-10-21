@@ -37,6 +37,9 @@ public class BranchApplicationDetailsResponseDTO {
     private String classCode;
     private String className;
 
+    /** Saved school-day selection for the applicant; defaults to FULL_DAY for legacy records. */
+    private String schoolDayType = "FULL_DAY";
+
     /**
      * Legacy term text submitted by the existing public portal.
      */

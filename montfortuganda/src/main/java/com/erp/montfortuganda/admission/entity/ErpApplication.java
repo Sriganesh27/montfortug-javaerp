@@ -164,6 +164,13 @@ public class ErpApplication {
     @Column(name = "branch_class_id", nullable = false)
     private Integer branchClassId;
 
+    /**
+     * Day arrangement selected for this application.
+     * Eligibility (Nursery-only HALF_DAY) is validated by the admission service.
+     */
+    @Column(name = "school_day_type", nullable = false, length = 20)
+    private String schoolDayType = "FULL_DAY";
+
     @Column(name = "term", nullable = false, length = 20)
     private String term = "";
 

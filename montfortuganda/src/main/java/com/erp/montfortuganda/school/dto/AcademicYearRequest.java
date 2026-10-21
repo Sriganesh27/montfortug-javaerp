@@ -1,6 +1,7 @@
 package com.erp.montfortuganda.school.dto;
 
 import com.erp.montfortuganda.school.entity.ErpAcademicYear;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -42,15 +43,19 @@ public record AcademicYearRequest(
         @NotNull(
                 message = "Academic Year start date is required."
         )
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
         LocalDate startDate,
 
         @NotNull(
                 message = "Academic Year end date is required."
         )
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
         LocalDate endDate,
 
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
         LocalDate admissionStartDate,
 
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
         LocalDate admissionEndDate,
 
         @NotNull(
@@ -91,31 +96,4 @@ public record AcademicYearRequest(
         );
     }
 
-    @AssertTrue(
-            message = "Admission dates must fall within the Academic Year."
-    )
-    public boolean areAdmissionDatesInsideAcademicYear() {
-        if (
-                startDate == null
-                        || endDate == null
-        ) {
-            return true;
-        }
-
-        if (
-                admissionStartDate != null
-                        && (
-                        admissionStartDate.isBefore(startDate)
-                                || admissionStartDate.isAfter(endDate)
-                )
-        ) {
-            return false;
-        }
-
-        return admissionEndDate == null
-                || (
-                !admissionEndDate.isBefore(startDate)
-                        && !admissionEndDate.isAfter(endDate)
-        );
-    }
 }

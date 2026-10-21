@@ -44,6 +44,15 @@ public class ApplicationMapper {
                 resolveClassName(schoolClass)
         );
 
+        // Expose the saved School Day Type to the internal Applications list.
+        // Older applications with a missing value remain Full Day.
+        String schoolDayType = application.getSchoolDayType();
+        response.setSchoolDayType(
+                StringUtils.hasText(schoolDayType)
+                        ? schoolDayType.trim().toUpperCase()
+                        : "FULL_DAY"
+        );
+
         response.setApplicationStatus(
                 application.getApplicationStatus()
         );

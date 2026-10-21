@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -195,10 +196,51 @@ public class PublicApplicationService {
             );
         }
 
+        if (selectedClass.getBranch() == null
+                || selectedClass.getBranch().getBranchId() == null
+                || !branchId.equals(selectedClass.getBranch().getBranchId())) {
+            throw new IllegalArgumentException(
+                    "Selected Class does not belong to the selected Branch."
+            );
+        }
+
+        if (!classRepository.existsAvailableForBranchAndAcademicYear(
+                requestedClassId, branchId, academicYear.getAcademicYearId(), 1)) {
+            throw new IllegalArgumentException(
+                    "Selected Class is not available for the selected Academic Year.");
+        }
+
         if (selectedClass.getLevel() == null
                 || selectedClass.getLevel().getLevelId() == null) {
             throw new IllegalArgumentException(
                     "Selected Class is not linked to a valid Level."
+            );
+        }
+
+        /*
+         * The backend owns day-type eligibility. The browser only displays the
+         * options returned by the API and cannot authorize HALF_DAY itself.
+         */
+        String requestedDayType = dto.getSchoolDayType();
+        String schoolDayType = requestedDayType == null
+                || requestedDayType.isBlank()
+                ? "FULL_DAY"
+                : requestedDayType.trim().toUpperCase(java.util.Locale.ROOT);
+
+        if (!"FULL_DAY".equals(schoolDayType)
+                && !"HALF_DAY".equals(schoolDayType)) {
+            throw new IllegalArgumentException(
+                    "School day type must be FULL_DAY or HALF_DAY."
+            );
+        }
+
+        String selectedLevelName = selectedClass.getLevel().getLevelName();
+        boolean isNursery = selectedLevelName != null
+                && "NURSERY".equalsIgnoreCase(selectedLevelName.trim());
+
+        if ("HALF_DAY".equals(schoolDayType) && !isNursery) {
+            throw new IllegalArgumentException(
+                    "Half Day is available only for Nursery classes."
             );
         }
 
@@ -265,6 +307,7 @@ public class PublicApplicationService {
                 academicYear.getAcademicYearId()
         );
         app.setBranchClassId(dto.getBranchClassId());
+        app.setSchoolDayType(schoolDayType);
         app.setJoiningTermId(
                 academicTerm.getTermId()
         );
@@ -753,6 +796,11 @@ public class PublicApplicationService {
         dto.setApplicationNo(app.getApplicationNo());
         dto.setApplicationStatus(app.getApplicationStatus());
         dto.setBranchName(app.getBranch().getBranchName());
+        dto.setSchoolDayType(
+                app.getSchoolDayType() == null || app.getSchoolDayType().isBlank()
+                        ? "FULL_DAY"
+                        : app.getSchoolDayType().trim().toUpperCase(Locale.ROOT)
+        );
         dto.setFirstName(app.getFirstName());
         dto.setMiddleName(app.getMiddleName());
         dto.setLastName(app.getLastName());
@@ -1053,6 +1101,9 @@ public class PublicApplicationService {
         data.put("applied_class", "");
         data.put("class_code", "");
         data.put("level", "");
+        data.put("school_day_type", app.getSchoolDayType() != null
+                ? app.getSchoolDayType()
+                : "FULL_DAY");
 
         if (app.getBranchClassId() != null) {
             Optional<SchoolClass> schoolClassOpt =
@@ -1644,6 +1695,90 @@ public class PublicApplicationService {
             if (sc.getLevel() != null) {
                 classMap.put("levelId", sc.getLevel().getLevelId());
             }
+            classList.add(classMap);
+        }
+        return classList;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getPublicAdmissionClasses(
+            Integer branchId,
+            Long academicYearId,
+            Integer levelId) {
+        if (branchId == null || branchId <= 0 || academicYearId == null || academicYearId <= 0) {
+            throw new IllegalArgumentException("A valid Branch and Academic Year are required.");
+        }
+        if (levelId != null && levelId <= 0) {
+            throw new IllegalArgumentException("A valid Education Level is required.");
+        }
+
+        academicYearRepository
+                .findByAcademicYearIdAndBranchBranchIdAndActiveTrue(academicYearId, branchId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Selected Academic Year is inactive or does not belong to the selected Branch."));
+
+        // A level filter must also be one that this branch offers. Do not rely
+        // on the browser to enforce the branch-to-level relationship.
+        if (levelId != null) {
+            Branch selectedBranch = branchRepository.findById(branchId)
+                    .orElseThrow(() -> new IllegalArgumentException("Selected Branch was not found."));
+            boolean levelOfferedByBranch = selectedBranch.getBranchLevels() != null
+                    && selectedBranch.getBranchLevels().stream()
+                    .anyMatch(branchLevel -> branchLevel.getLevel() != null
+                            && levelId.equals(branchLevel.getLevel().getLevelId()));
+            if (!levelOfferedByBranch) {
+                throw new IllegalArgumentException(
+                        "Selected Education Level is not offered by the selected Branch.");
+            }
+        }
+
+        // Class definitions are reusable, but a class is selectable only
+        // from its introduction academic year onward. This is enforced here
+        // and again during application submission.
+        List<SchoolClass> scopedClasses =
+                classRepository.findAvailableForBranchAndAcademicYear(
+                        branchId, academicYearId, levelId, 1);
+
+        // Use class_id as the identity key so a repeated row can never produce
+        // duplicate options in the public admission dropdown.
+        Map<Integer, SchoolClass> uniqueClasses = new java.util.LinkedHashMap<>();
+        for (SchoolClass schoolClass : scopedClasses) {
+            if (schoolClass != null && schoolClass.getClassId() != null
+                    && Integer.valueOf(1).equals(schoolClass.getStatus())) {
+                uniqueClasses.putIfAbsent(schoolClass.getClassId(), schoolClass);
+            }
+        }
+
+        List<Map<String, Object>> classList = new ArrayList<>();
+        for (SchoolClass sc : uniqueClasses.values()) {
+            Map<String, Object> classMap = new HashMap<>();
+            classMap.put("classId", sc.getClassId());
+            classMap.put("classCode", sc.getClassCode());
+            classMap.put("className", sc.getClassName());
+            String levelName = sc.getLevel() != null && sc.getLevel().getLevelName() != null
+                    ? sc.getLevel().getLevelName().trim()
+                    : "";
+            if (sc.getLevel() != null) {
+                classMap.put("levelId", sc.getLevel().getLevelId());
+                classMap.put("levelName", levelName);
+            }
+
+            // Keep the UI data-driven: the browser renders only the options
+            // supplied here. Half Day is permitted only for Nursery classes.
+            List<Map<String, String>> schoolDayTypeOptions = new ArrayList<>();
+            Map<String, String> fullDayOption = new HashMap<>();
+            fullDayOption.put("value", "FULL_DAY");
+            fullDayOption.put("label", "Full Day");
+            schoolDayTypeOptions.add(fullDayOption);
+
+            if ("NURSERY".equalsIgnoreCase(levelName)) {
+                Map<String, String> halfDayOption = new HashMap<>();
+                halfDayOption.put("value", "HALF_DAY");
+                halfDayOption.put("label", "Half Day");
+                schoolDayTypeOptions.add(halfDayOption);
+            }
+            classMap.put("schoolDayTypeOptions", schoolDayTypeOptions);
+            classMap.put("defaultSchoolDayType", "FULL_DAY");
             classList.add(classMap);
         }
         return classList;

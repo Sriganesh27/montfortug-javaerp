@@ -73,6 +73,28 @@ public class PublicApplicationController {
         }
     }
 
+    /**
+     * Returns only active classes configured for the selected branch and
+     * academic year. The legacy /public/classes endpoint remains available
+     * for previous-school-history fields, which are not branch-specific.
+     */
+    @GetMapping("/public/admission-classes")
+    public ResponseEntity<Map<String, Object>> getPublicAdmissionClasses(
+            @RequestParam("branchId") Integer branchId,
+            @RequestParam("academicYearId") Long academicYearId,
+            @RequestParam(value = "levelId", required = false) Integer levelId) {
+        Map<String, Object> response = new HashMap<>();
+        try {
+            response.put("success", true);
+            response.put("data", applicationService.getPublicAdmissionClasses(branchId, academicYearId, levelId));
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
     // Public Endpoint: Submission
     @PostMapping("/public/applications/submit")
     public ResponseEntity<ApplicationResponseDTO> submitApplication(@Valid @RequestBody ApplicationCreateDTO dto) {

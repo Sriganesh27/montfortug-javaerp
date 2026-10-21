@@ -189,6 +189,13 @@ public class BranchApplicationDetailsMapper {
                 application.getBranchClassId()
         );
 
+        response.setSchoolDayType(
+                application.getSchoolDayType() == null
+                        || application.getSchoolDayType().isBlank()
+                        ? "FULL_DAY"
+                        : application.getSchoolDayType().trim().toUpperCase(java.util.Locale.ROOT)
+        );
+
         if (schoolClass != null) {
             response.setClassCode(
                     schoolClass.getClassCode()

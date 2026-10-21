@@ -2,6 +2,7 @@ package com.erp.montfortuganda.school.dto;
 
 import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.entity.ErpAcademicYear;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,12 +25,16 @@ public record AcademicYearResponse(
 
         String academicYearName,
 
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
         LocalDate startDate,
 
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
         LocalDate endDate,
 
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
         LocalDate admissionStartDate,
 
+        @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd-MM-yyyy")
         LocalDate admissionEndDate,
 
         ErpAcademicYear.Status status,

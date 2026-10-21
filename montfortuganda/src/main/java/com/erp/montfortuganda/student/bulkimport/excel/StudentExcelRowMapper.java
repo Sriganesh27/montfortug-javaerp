@@ -24,9 +24,6 @@ public class StudentExcelRowMapper
     private static final String DEFAULT_ADMISSION_TYPE =
             "NEW";
 
-    private static final String DEFAULT_PARENTS_LIVING_TOGETHER =
-            "YES";
-
     private static final Pattern EXACT_FOUR_DIGIT_YEAR =
             Pattern.compile("^(19\\d{2}|20\\d{2}|2100)$");
 
@@ -139,7 +136,10 @@ public class StudentExcelRowMapper
                 .preferredContact(responsiblePerson)
                 .feeResponsibility(responsiblePerson)
                 .parentsLivingTogether(
-                        DEFAULT_PARENTS_LIVING_TOGETHER
+                        value(
+                                rawRow,
+                                StudentExcelHeaders.PARENTS_LIVING_TOGETHER
+                        )
                 )
                 .nationality(
                         value(rawRow, StudentExcelHeaders.NATIONALITY)

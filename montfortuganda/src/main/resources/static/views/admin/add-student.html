@@ -223,16 +223,7 @@
                 <legend class="emp-legend">Admission and Enrollment</legend>
 
                 <div class="emp-grid emp-grid-4 mb-3">
-                    <div class="form-group">
-                        <label for="add-studentApplicationId">Application ID</label>
-                        <input
-                                type="number"
-                                id="add-studentApplicationId"
-                                class="detail-input w-100"
-                                min="1"
-                                placeholder="Optional application ID"
-                        >
-                    </div>
+                    
 
                     <div class="form-group emp-required-field">
                         <label for="add-studentAcademicYear">Academic Year</label>
@@ -248,11 +239,19 @@
                     </div>
 
                     <div class="form-group emp-required-field">
+                        <label for="add-studentLevel">Level</label>
+                        <select id="add-studentLevel" class="detail-input w-100" required aria-required="true" data-validation-label="Level">
+                            <option value="">-- Select Level --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group emp-required-field">
                         <label for="add-studentClass">Class</label>
                         <select
                                 id="add-studentClass"
                                 class="detail-input w-100"
                                 required
+                                disabled
                                 aria-required="true"
                                 data-validation-label="Class"
                         >
@@ -285,6 +284,14 @@
                         </select>
                     </div>
 
+                    <div class="form-group" id="add-studentSchoolDayTypeGroup" hidden>
+                        <label for="add-studentSchoolDayType">School Day Type</label>
+                        <select id="add-studentSchoolDayType" class="detail-input w-100" data-validation-label="School Day Type" disabled>
+                            <option value="FULL_DAY" selected>Full Day</option>
+                            <option value="HALF_DAY">Half Day</option>
+                        </select>
+                    </div>
+
                     <div class="form-group emp-required-field">
                         <label for="add-studentAdmissionType">Admission Type</label>
                         <select
@@ -310,28 +317,35 @@
                         >
                     </div>
 
-                    <div class="form-group">
-                        <label for="add-studentRollNo">Roll Number</label>
-                        <input
-                                type="text"
-                                id="add-studentRollNo"
-                                class="detail-input w-100"
-                                maxlength="20"
-                                placeholder="Enter roll number"
-                        >
-                    </div>
+                    
 
-                    <div class="form-group">
-                        <label for="add-studentEnrollmentRemarks">Enrollment Remarks</label>
-                        <textarea
-                                id="add-studentEnrollmentRemarks"
-                                class="detail-input w-100"
-                                rows="3"
-                                maxlength="5000"
-                                placeholder="Enter enrollment remarks"
-                        ></textarea>
-                    </div>
                 </div>
+
+                <details class="mb-3">
+                    <summary class="emp-legend">Additional enrollment details</summary>
+                    <div class="emp-grid emp-grid-4 mt-3">
+                        <div class="form-group">
+                            <label for="add-studentApplicationId">Application ID</label>
+                            <input
+                                    type="number"
+                                    id="add-studentApplicationId"
+                                    class="detail-input w-100"
+                                    min="1"
+                                    placeholder="Optional application ID"
+                            >
+                        </div>
+                        <div class="form-group">
+                            <label for="add-studentEnrollmentRemarks">Enrollment Remarks</label>
+                            <textarea
+                                    id="add-studentEnrollmentRemarks"
+                                    class="detail-input w-100"
+                                    rows="2"
+                                    maxlength="5000"
+                                    placeholder="Enter enrollment remarks"
+                            ></textarea>
+                        </div>
+                    </div>
+                </details>
             </fieldset>
 
             <!-- ===================================================== -->
@@ -771,11 +785,11 @@
                         </div>
                     </div>
 
-                    <div class="form-group emp-required-field" data-validation-group="parentsLivingTogether">
+                    <div class="form-group" data-validation-group="parentsLivingTogether">
                         <label>Parents Living Together</label>
 
                         <div class="emp-checkbox-row">
-                            <input type="radio" id="add-studentParentsTogetherYes" name="add-studentParentsTogether" value="true" required>
+                            <input type="radio" id="add-studentParentsTogetherYes" name="add-studentParentsTogether" value="true">
                             <label for="add-studentParentsTogetherYes">Yes</label>
                         </div>
 
@@ -786,23 +800,7 @@
                     </div>
                 </div>
 
-                <div class="emp-grid emp-grid-3 mb-3">
-                    <div class="form-group">
-                        <label for="add-studentEmergencyName">Emergency Contact Name</label>
-                        <input type="text" id="add-studentEmergencyName" class="detail-input w-100" maxlength="150" placeholder="Optional contact name">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="add-studentEmergencyPhone">Emergency Contact Phone</label>
-                        <input type="tel" id="add-studentEmergencyPhone" class="detail-input w-100" maxlength="30" placeholder="Optional contact phone">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="add-studentEmergencyRelationship">Relationship</label>
-                        <input type="text" id="add-studentEmergencyRelationship" class="detail-input w-100" maxlength="100" placeholder="Optional relationship">
-                    </div>
-                </div>
-
+                
                 <div class="emp-grid emp-grid-2 mb-2">
                     <div class="form-group">
                         <label for="add-studentParentRemarks">Parent / Guardian Remarks</label>
@@ -811,8 +809,7 @@
                 </div>
 
                 <small class="text-muted">
-                    Enter a name and phone number for at least one Father, Mother or Guardian.
-                    Emergency-contact details are optional, but when used all three fields must be completed.
+                    Enter a name and phone number for at least one parent or guardian.
                 </small>
             </fieldset>
 

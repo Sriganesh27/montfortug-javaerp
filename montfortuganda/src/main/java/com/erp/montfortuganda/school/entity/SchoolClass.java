@@ -14,15 +14,33 @@ public class SchoolClass {
     @Column(name = "class_id")
     private Integer classId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "level_id", nullable = false)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
 
     private Level level;
 
-    @Column(name = "class_code", nullable = false, unique = true)
+    /*
+     * Class codes are unique within a branch and academic year, not globally.
+     * The database migration will replace the legacy global unique index.
+     */
+    @Column(name = "class_code", nullable = false)
     private String classCode;
+
+    /* Nullable during the staged migration so existing rows remain readable.
+       The backfill must complete before these columns become NOT NULL. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "branch_id", foreignKey = @ForeignKey(name = "fk_school_class_branch"))
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Branch branch;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "academic_year_id", foreignKey = @ForeignKey(name = "fk_school_class_academic_year"))
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private ErpAcademicYear academicYear;
 
     @Column(name = "class_name", nullable = false)
     private String className;

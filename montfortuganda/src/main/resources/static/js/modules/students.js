@@ -213,6 +213,7 @@
         bindSubjectResults(view);
         bindPreviousEducation(view, state);
         bindCurrentPlacement(view, state);
+        bindSchoolDayType(view, state);
         bindNavigation(view, state);
         bindStudentBulkImport(view);
         bindFormReset(view, form, state);
@@ -224,10 +225,61 @@
         resetConditionalSections(view);
         updateSubjectSummary(view);
 
-        await loadStudentReferenceData(
-            view,
-            state
+        let referenceLoaderToken = null;
+        const referenceControls = [
+            '#add-studentAcademicYear',
+            '#add-studentLevel',
+            '#add-studentClass',
+            '#add-studentSection',
+            '#add-studentJoiningTerm'
+        ]
+            .map(selector => view.querySelector(selector))
+            .filter(control => control instanceof HTMLSelectElement);
+        const previousDisabledStates = referenceControls.map(
+            control => control.disabled
         );
+
+        view.setAttribute('aria-busy', 'true');
+        view.classList.add('student-reference-data-loading');
+
+        if (typeof showLoader === 'function') {
+            referenceLoaderToken = showLoader(
+                'Loading branch-specific student form data...'
+            );
+        }
+
+        referenceControls.forEach(control => {
+            control.disabled = true;
+        });
+
+        try {
+            await loadStudentReferenceData(view, state);
+        } finally {
+            view.removeAttribute('aria-busy');
+            view.classList.remove('student-reference-data-loading');
+
+            referenceControls.forEach((control, index) => {
+                control.disabled = previousDisabledStates[index];
+            });
+
+            if (
+                referenceLoaderToken !== null &&
+                typeof hideLoader === 'function'
+            ) {
+                hideLoader(referenceLoaderToken);
+            }
+        }
+
+        updateSchoolDayTypeVisibility(view, state);
+        view.querySelector('#add-studentLevel')?.addEventListener('change', () => {
+            populateCurrentClasses(view, state);
+        });
+        view.querySelector('#add-studentAcademicYear')?.addEventListener('change', () => {
+            populateCurrentClasses(view, state);
+        });
+        view.querySelector('#add-studentClass')?.addEventListener('change', () => {
+            updateSchoolDayTypeVisibility(view, state);
+        });
     }
 
     function createEmptyReferenceData() {
@@ -293,7 +345,7 @@
             );
 
             if (publicLevels.length > 0) {
-                referenceData.levels = publicLevels;
+                referenceData.previousLevels = publicLevels;
             }
 
             referenceData.previousClasses =
@@ -314,6 +366,7 @@
         state.referenceData = referenceData;
 
         populateAcademicYears(view, state);
+        populateCurrentLevels(view, state);
         populateCurrentClasses(view, state);
         populateJoiningTerms(view, state);
         populatePreviousLevels(view, state);
@@ -646,72 +699,119 @@
 
         select.disabled = terms.length === 0;
 
-        if (
-            previousValue &&
+        const previousOptionExists = previousValue &&
             Array.from(select.options).some(
                 option => option.value === previousValue
-            )
-        ) {
+            );
+
+        // Preserve a valid user selection when terms are refreshed.
+        if (previousOptionExists) {
             select.value = previousValue;
-        }
-    }
-
-    function populateCurrentClasses(view, state) {
-        const select = view.querySelector(
-            '#add-studentClass'
-        );
-
-        if (!(select instanceof HTMLSelectElement)) {
             return;
         }
 
-        replaceSelectOptions(
-            select,
-            '-- Select Class --'
-        );
+        // The backend supplies branch-scoped terms and marks the current term.
+        // Keep every returned term selectable, including upcoming terms.
+        const currentTerm = terms.find(term => {
+            const flag = readProperty(term, 'currentTerm');
+            return flag === true || flag === 1 ||
+                String(flag).toLowerCase() === 'true' ||
+                String(flag) === '1';
+        });
 
-        sortClasses(
-            state.referenceData.classes
-        ).forEach(classItem => {
-            const classId = firstDefined(
-                readProperty(classItem, 'classId'),
-                readProperty(classItem, 'id')
-            );
-
-            if (!isPositiveInteger(classId)) {
-                return;
-            }
-
-            const classCode = firstNonBlank(
-                readProperty(classItem, 'classCode'),
-                readProperty(classItem, 'code')
-            );
-            const className = firstNonBlank(
-                readProperty(classItem, 'className'),
-                readProperty(classItem, 'name'),
-                classCode,
-                String(classId)
-            );
-            const optionLabel = classCode
-                ? `[${classCode}] ${className}`
-                : className;
-            const option = new Option(
-                optionLabel,
-                String(classId)
-            );
-
-            option.dataset.classCode = classCode;
-            option.dataset.className = className;
-            option.dataset.levelId = String(
+        if (currentTerm) {
+            const currentTermId = positiveIntegerOrNull(
                 firstDefined(
-                    readProperty(classItem, 'levelId'),
-                    readNestedProperty(classItem, 'level', 'levelId'),
-                    ''
+                    readProperty(currentTerm, 'termId'),
+                    readProperty(currentTerm, 'id')
                 )
             );
 
+            if (currentTermId !== null) {
+                select.value = String(currentTermId);
+            }
+        }
+    }
+
+    function bindSchoolDayType(view, state) {
+        const select = view.querySelector('#add-studentSchoolDayType');
+        if (select instanceof HTMLSelectElement) {
+            select.value = 'FULL_DAY';
+        }
+    }
+
+    function updateSchoolDayTypeVisibility(view, state) {
+        const classSelect = view.querySelector('#add-studentClass');
+        const group = view.querySelector('#add-studentSchoolDayTypeGroup');
+        const dayType = view.querySelector('#add-studentSchoolDayType');
+        if (!(classSelect instanceof HTMLSelectElement) || !(group instanceof HTMLElement) || !(dayType instanceof HTMLSelectElement)) return;
+
+        const selected = classSelect.selectedOptions[0];
+        const levelId = selected?.dataset.levelId || '';
+        const level = (state.referenceData.levels || []).find(item => {
+            const id = String(firstDefined(readProperty(item, 'levelId'), readProperty(item, 'id'), ''));
+            return id && id === levelId;
+        });
+        const levelName = firstNonBlank(
+            readProperty(level, 'levelName'), readProperty(level, 'name'),
+            readProperty(level, 'levelCode'), readProperty(level, 'code')
+        ).toLowerCase();
+        const isNursery = levelName.includes('nursery');
+        group.hidden = !isNursery;
+        dayType.disabled = !isNursery;
+        if (!isNursery) dayType.value = 'FULL_DAY';
+    }
+
+    function populateCurrentLevels(view, state) {
+        const select = view.querySelector('#add-studentLevel');
+        if (!(select instanceof HTMLSelectElement)) return;
+        replaceSelectOptions(select, '-- Select Level --');
+        const seen = new Set();
+        [...(state.referenceData.levels || [])]
+            .sort((a, b) => Number(readProperty(a, 'displayOrder') || 0) - Number(readProperty(b, 'displayOrder') || 0))
+            .forEach(level => {
+                const id = firstDefined(readProperty(level, 'levelId'), readProperty(level, 'id'));
+                if (!isPositiveInteger(id) || seen.has(String(id))) return;
+                seen.add(String(id));
+                const name = firstNonBlank(readProperty(level, 'levelName'), readProperty(level, 'name'), readProperty(level, 'levelCode'), readProperty(level, 'code'));
+                if (name) select.add(new Option(name, String(id)));
+            });
+    }
+
+    function populateCurrentClasses(view, state) {
+        const select = view.querySelector('#add-studentClass');
+        const levelSelect = view.querySelector('#add-studentLevel');
+        const yearSelect = view.querySelector('#add-studentAcademicYear');
+        if (!(select instanceof HTMLSelectElement)) return;
+
+        const selectedLevelId = levelSelect instanceof HTMLSelectElement ? levelSelect.value : '';
+        const selectedYearId = yearSelect instanceof HTMLSelectElement ? yearSelect.value : '';
+        replaceSelectOptions(select, !selectedYearId ? '-- Select Academic Year First --' : !selectedLevelId ? '-- Select Level First --' : '-- Select Class --');
+        select.disabled = !selectedYearId || !selectedLevelId;
+        if (select.disabled) {
+            updateSchoolDayTypeVisibility(view, state);
+            return;
+        }
+
+        const seen = new Set();
+        sortClasses(state.referenceData.classes).forEach(classItem => {
+            const classId = firstDefined(readProperty(classItem, 'classId'), readProperty(classItem, 'id'));
+            const classLevelId = firstDefined(readProperty(classItem, 'levelId'), readNestedProperty(classItem, 'level', 'levelId'));
+            const classYearId = firstDefined(readProperty(classItem, 'academicYearId'), readProperty(classItem, 'academic_year_id'));
+            if (!isPositiveInteger(classId) || seen.has(String(classId))) return;
+            if (String(classLevelId ?? '') !== String(selectedLevelId)) return;
+            if (String(classYearId ?? '') !== String(selectedYearId)) return;
+            seen.add(String(classId));
+
+            const code = firstNonBlank(readProperty(classItem, 'classCode'), readProperty(classItem, 'code'));
+            const name = firstNonBlank(readProperty(classItem, 'className'), readProperty(classItem, 'name'), code, String(classId));
+            const option = new Option(code ? `[${code}] ${name}` : name, String(classId));
+            option.dataset.classCode = code;
+            option.dataset.className = name;
+            option.dataset.levelId = String(classLevelId);
             select.appendChild(option);
         });
+        updateSchoolDayTypeVisibility(view, state);
     }
 
     function populatePreviousLevels(view, state) {
@@ -728,7 +828,11 @@
             '-- Select Previous Level --'
         );
 
-        const levels = [...state.referenceData.levels]
+        const levels = [...(
+            state.referenceData.previousLevels?.length
+                ? state.referenceData.previousLevels
+                : state.referenceData.levels
+        )]
             .sort((first, second) => {
                 const firstOrder = Number(
                     readProperty(first, 'displayOrder') || 0
@@ -2752,13 +2856,11 @@
                 classId: positiveIntegerOrNull(
                     valueOf(view, '#add-studentClass')
                 ),
+                schoolDayType: valueOf(view, '#add-studentSchoolDayType') || 'FULL_DAY',
                 sectionId: positiveIntegerOrNull(
                     valueOf(view, '#add-studentSection')
                 ),
-                rollNo: valueOf(
-                    view,
-                    '#add-studentRollNo'
-                ),
+                rollNo: null,
                 admissionType: valueOf(
                     view,
                     '#add-studentAdmissionType'
@@ -2961,7 +3063,8 @@
 
             const response = await requestPost(
                 '/students/registrations',
-                payload
+                payload,
+                { silent: true }
             );
             const result = unwrapResponseData(response);
 
@@ -4081,13 +4184,18 @@
     }
 
     function validationLabel(field) {
-        return firstNonBlank(
-            field?.dataset?.validationLabel,
-            field?.getAttribute?.('aria-label'),
-            field?.name,
-            field?.id,
-            'This field'
-        );
+        const configured = firstNonBlank(field?.dataset?.validationLabel, field?.getAttribute?.('aria-label'));
+        if (configured) return configured;
+        const raw = firstNonBlank(field?.name, field?.id, 'This field');
+        const readable = String(raw)
+            .replace(/^(add|edit|manage)-student/i, '')
+            .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+            .replace(/[_-]+/g, ' ')
+            .replace(/\\s+/g, ' ')
+            .trim();
+        const key = readable.replace(/\\s+/g, '').replace(/^./, c => c.toLowerCase());
+        const labels = { preferredContact: 'Preferred Contact', feeResponsibility: 'Fee Responsibility', parentsLivingTogether: 'Parents Living Together', parentsTogether: 'Parents Living Together', fatherName: 'Father Name', fatherPhone: 'Father Phone', motherName: 'Mother Name', motherPhone: 'Mother Phone', guardianName: 'Guardian Name', guardianPhone: 'Guardian Phone' };
+        return labels[key] || readable.replace(/^./, c => c.toUpperCase()) || 'This field';
     }
 
     function integerOrNull(value) {
@@ -4164,7 +4272,7 @@
         return apiFunction(endpoint);
     }
 
-    async function requestPost(endpoint, payload) {
+    async function requestPost(endpoint, payload, options = {}) {
         const apiFunction = readProperty(
             window,
             'apiPost'
@@ -4178,7 +4286,8 @@
 
         return apiFunction(
             endpoint,
-            payload
+            payload,
+            options
         );
     }
 
@@ -7203,6 +7312,10 @@
                 'section'
             )
         );
+        setManageText(context.view, '#view-studentSchoolDayType', read(enrollment, 'schoolDayType'), value => {
+            const normalized = String(value || '').trim().toUpperCase();
+            return normalized === 'HALF_DAY' ? 'Half Day' : normalized === 'FULL_DAY' ? 'Full Day' : '-';
+        });
         setManageText(context.view, '#view-studentAdmissionType', read(enrollment, 'admissionType'), enumLabel);
         setManageText(context.view, '#view-studentJoiningDate', read(enrollment, 'joiningDate'), dateLabel);
         setManageText(context.view, '#view-studentRollNo', read(enrollment, 'rollNo'));

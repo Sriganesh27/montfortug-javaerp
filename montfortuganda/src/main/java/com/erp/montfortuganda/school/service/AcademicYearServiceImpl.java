@@ -86,6 +86,10 @@ public class AcademicYearServiceImpl
                 code
         );
 
+        // Creating a year must not implicitly change any existing year.
+        // Use the dedicated make-current action after creation instead.
+        academicYear.setCurrentYear(false);
+
         academicYear.setCreatedBy(
                 context.userId()
         );
@@ -94,48 +98,10 @@ public class AcademicYearServiceImpl
                 context.userId()
         );
 
-        boolean makeCurrent =
-                Boolean.TRUE.equals(
-                        academicYear.getCurrentYear()
-                );
-
-        if (makeCurrent) {
-            academicYearRepository
-                    .findCurrentYearForUpdate(
-                            context.branchId()
-                    );
-
-            academicYear.setCurrentYear(
-                    false
-            );
-        }
-
         ErpAcademicYear saved =
                 academicYearRepository.saveAndFlush(
                         academicYear
                 );
-
-        if (makeCurrent) {
-            academicYearRepository
-                    .clearCurrentYearForOtherRecords(
-                            context.branchId(),
-                            saved.getAcademicYearId(),
-                            context.userId()
-                    );
-
-            saved.setCurrentYear(
-                    true
-            );
-
-            saved.setUpdatedBy(
-                    context.userId()
-            );
-
-            saved =
-                    academicYearRepository.saveAndFlush(
-                            saved
-                    );
-        }
 
         return AcademicYearResponse.fromEntity(
                 saved

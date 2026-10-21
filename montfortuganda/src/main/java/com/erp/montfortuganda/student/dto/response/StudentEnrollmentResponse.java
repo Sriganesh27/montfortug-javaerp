@@ -29,6 +29,8 @@ public record StudentEnrollmentResponse(
 
         String className,
 
+        String schoolDayType,
+
         Long sectionId,
 
         String sectionName,

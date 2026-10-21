@@ -195,7 +195,6 @@ public record StudentParentRequest(
         @NotNull(message = "Fee responsibility is required.")
         FeeResponsibility feeResponsibility,
 
-        @NotNull(message = "Parents-living-together selection is required.")
         Boolean parentsLivingTogether,
 
         // ==========================================

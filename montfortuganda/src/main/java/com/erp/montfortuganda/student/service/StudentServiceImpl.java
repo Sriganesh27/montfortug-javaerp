@@ -153,6 +153,17 @@ public class StudentServiceImpl implements StudentService {
                         request.applicationId()
                 );
 
+        // Validate the effective day type before creating any student records.
+        // An admission-linked student inherits the value already stored on the
+        // application; a manually added student uses the enrollment request.
+        String effectiveSchoolDayType = application != null
+                ? application.getSchoolDayType()
+                : request.enrollment().schoolDayType();
+        validateSchoolDayTypeForClass(
+                request.enrollment().classId(),
+                effectiveSchoolDayType
+        );
+
         Integer joiningClassId =
                 request.personal().joiningClassId() != null
                         ? request.personal().joiningClassId()
@@ -204,6 +215,22 @@ public class StudentServiceImpl implements StudentService {
                         branch,
                         authenticatedUserId
                 );
+
+        // When a student is created from an admission application, carry the
+        // arrangement approved/requested on that application into the initial
+        // academic-year enrollment. Manual student creation keeps the value
+        // supplied by the enrollment request (defaulting to FULL_DAY).
+        if (application != null) {
+            String applicationDayType = application.getSchoolDayType();
+            String normalizedApplicationDayType = applicationDayType == null
+                    || applicationDayType.isBlank()
+                    ? "FULL_DAY"
+                    : applicationDayType.trim().toUpperCase(Locale.ROOT);
+            // Always use the validated application value. If the application
+            // has no value, retain the documented FULL_DAY default rather than
+            // leaving a request-supplied HALF_DAY value on the enrollment.
+            enrollment.setSchoolDayType(normalizedApplicationDayType);
+        }
 
         entityManager.persist(
                 enrollment
@@ -616,18 +643,27 @@ public class StudentServiceImpl implements StudentService {
                 entityManager
                         .createNativeQuery(
                                 """
-                                select distinct school_class.class_id,
-                                                school_class.level_id,
-                                                school_class.class_code,
-                                                school_class.class_name,
-                                                school_class.display_order
+                                select school_class.class_id,
+                                       school_class.academic_year_id,
+                                       school_class.level_id,
+                                       school_class.class_code,
+                                       school_class.class_name,
+                                       school_class.display_order
                                 from erp_classes school_class
                                 join erp_branch_levels branch_level
                                   on branch_level.level_id = school_class.level_id
-                                where branch_level.branch_id = :branchId
+                                 and branch_level.branch_id = school_class.branch_id
+                                join erp_academic_years academic_year
+                                  on academic_year.academic_year_id = school_class.academic_year_id
+                                 and academic_year.branch_id = school_class.branch_id
+                                where school_class.branch_id = :branchId
+                                  and academic_year.active = 1
+                                  and academic_year.status in ('PLANNED', 'ACTIVE')
                                   and school_class.status = 1
-                                order by school_class.display_order asc,
-                                         school_class.class_name asc
+                                order by academic_year.academic_year_id desc,
+                                         school_class.display_order asc,
+                                         school_class.class_name asc,
+                                         school_class.class_id asc
                                 """
                         )
                         .setParameter(
@@ -641,10 +677,11 @@ public class StudentServiceImpl implements StudentService {
                         .map(row ->
                                 new StudentReferenceDataResponse.ClassOption(
                                         referenceInteger(row[0]),
-                                        referenceInteger(row[1]),
-                                        referenceText(row[2]),
+                                        referenceLong(row[1]),
+                                        referenceInteger(row[2]),
                                         referenceText(row[3]),
-                                        referenceInteger(row[4])
+                                        referenceText(row[4]),
+                                        referenceInteger(row[5])
                                 )
                         )
                         .toList();
@@ -1176,6 +1213,51 @@ public class StudentServiceImpl implements StudentService {
     // =====================================================================
     // APPLICATION CONVERSION
     // =====================================================================
+
+    /**
+     * Enforces school-day eligibility on the server for manual Add Student and
+     * admission-linked student creation. The browser is not authoritative.
+     */
+    private void validateSchoolDayTypeForClass(
+            Integer classId,
+            String requestedDayType
+    ) {
+        String dayType = requestedDayType == null || requestedDayType.isBlank()
+                ? "FULL_DAY"
+                : requestedDayType.trim().toUpperCase(Locale.ROOT);
+
+        if (!"FULL_DAY".equals(dayType) && !"HALF_DAY".equals(dayType)) {
+            throw new BadRequestException(
+                    "School day type must be FULL_DAY or HALF_DAY."
+            );
+        }
+
+        if (!"HALF_DAY".equals(dayType)) {
+            return;
+        }
+
+        List<String> levelNames = entityManager.createQuery(
+                        "select sc.level.levelName from SchoolClass sc " +
+                                "where sc.classId = :classId",
+                        String.class
+                )
+                .setParameter("classId", classId)
+                .setMaxResults(1)
+                .getResultList();
+
+        if (levelNames.isEmpty()) {
+            throw new BadRequestException(
+                    "The selected class could not be found."
+            );
+        }
+
+        String levelName = levelNames.get(0);
+        if (levelName == null || !"NURSERY".equalsIgnoreCase(levelName.trim())) {
+            throw new BadRequestException(
+                    "Half Day is available only for Nursery classes."
+            );
+        }
+    }
 
     private ErpApplication resolveApplication(
             Long applicationId

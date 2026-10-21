@@ -74,6 +74,12 @@ public class PublicApplicationReceiptService {
                 copyData(existingResponse.get("data"));
 
         receiptData.put(
+                "school_day_type",
+                application.getSchoolDayType() == null
+                        ? "FULL_DAY"
+                        : application.getSchoolDayType()
+        );
+        receiptData.put(
                 "application_status",
                 enumName(application.getApplicationStatus())
         );

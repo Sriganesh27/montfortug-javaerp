@@ -690,9 +690,10 @@ public class StudentValidationService {
             );
         }
 
-        if (!existsActiveClass(classId)) {
+        if (!existsAvailableClassForAcademicYear(
+                classId, branchId, academicYearId)) {
             throw new ResourceNotFoundException(
-                    "Selected class was not found or is inactive."
+                    "Selected class is inactive, does not belong to this branch, or is not available for the selected academic year."
             );
         }
 
@@ -736,6 +737,37 @@ public class StudentValidationService {
                         )
                         .getSingleResult();
 
+        return count.longValue() > 0;
+    }
+
+    private boolean existsAvailableClassForAcademicYear(
+            Integer classId,
+            Integer branchId,
+            Long academicYearId
+    ) {
+        Number count =
+                (Number) entityManager
+                        .createNativeQuery(
+                                """
+                                select count(*)
+                                from erp_classes class_record
+                                join erp_academic_years introduction_year
+                                  on introduction_year.academic_year_id = class_record.academic_year_id
+                                join erp_academic_years selected_year
+                                  on selected_year.academic_year_id = :academicYearId
+                                where class_record.class_id = :classId
+                                  and class_record.branch_id = :branchId
+                                  and class_record.status = 1
+                                  and introduction_year.branch_id = :branchId
+                                  and selected_year.branch_id = :branchId
+                                  and selected_year.active = 1
+                                  and introduction_year.start_date <= selected_year.start_date
+                                """
+                        )
+                        .setParameter("classId", classId)
+                        .setParameter("branchId", branchId)
+                        .setParameter("academicYearId", academicYearId)
+                        .getSingleResult();
         return count.longValue() > 0;
     }
 

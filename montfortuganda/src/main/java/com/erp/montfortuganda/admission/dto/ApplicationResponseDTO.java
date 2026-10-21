@@ -15,6 +15,7 @@ public class ApplicationResponseDTO {
     // We flatten some fields for the frontend so it doesn't need complex objects
     private String branchName;
     private String className;
+    private String schoolDayType = "FULL_DAY";
 
     private String firstName;
     private String middleName;

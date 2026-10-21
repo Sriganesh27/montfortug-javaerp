@@ -1,0 +1,57 @@
+<div id="ba-classes-view" class="fade-in erp-record-module">
+    <div id="class-table-view">
+        <div class="view-header">
+            <div><h2>Manage Classes</h2><p class="text-muted">Manage classes for your branch.</p></div>
+            <div class="action-btn-group">
+                <button type="button" id="class-refresh-btn" class="btn-secondary"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                <button type="button" id="class-add-btn" class="btn-primary"><i class="bi bi-plus-lg"></i> Add Class</button>
+            </div>
+        </div>
+        <div class="card mb-3 p-3">
+            <form id="class-filter-form" novalidate>
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1"><label for="class-year-filter">Introduction Academic Year</label><select id="class-year-filter" class="detail-input w-100"><option value="">All Academic Years</option></select></div>
+                    <div class="form-group ba-flex-1"><label for="class-level-filter">Level</label><select id="class-level-filter" class="detail-input w-100"><option value="">All Levels</option></select></div>
+                    <div class="form-group ba-flex-1"><label for="class-search">Search Classes</label><input type="search" id="class-search" class="detail-input w-100" maxlength="100" placeholder="Search by code or name..." autocomplete="off"></div>
+                    <div class="form-group ba-flex-1"><label for="class-status-filter">Status</label><select id="class-status-filter" class="detail-input w-100"><option value="">All Statuses</option><option value="1">Active</option><option value="0">Inactive</option></select></div>
+                    <div class="form-group ba-pagination-controls"><button type="submit" class="btn-primary"><i class="bi bi-search"></i> Search</button><button type="button" id="class-reset-btn" class="btn-secondary"><i class="bi bi-x-circle"></i> Reset</button></div>
+                </div>
+            </form>
+        </div>
+        <div class="card"><div class="table-responsive">
+            <table id="class-table" class="data-table"><thead><tr><th>S.No.</th><th>Code</th><th>Class</th><th>Level</th><th>Introduction Academic Year</th><th>Status</th><th class="col-action align-center">Actions</th></tr></thead>
+                <tbody id="class-table-body"></tbody>
+            </table>
+        </div>
+        <div class="ba-pagination-footer"><div class="ba-pagination-controls"><select id="class-page-size" class="detail-input w-auto" aria-label="Rows per page"><option value="5">5</option><option value="10" selected>10</option><option value="25">25</option><option value="50">50</option></select><span id="class-page-info" class="text-muted">Showing page 1 of 1</span></div><div class="ba-pagination-controls"><button type="button" id="class-prev-btn" class="btn-secondary btn-sm" disabled><i class="bi bi-chevron-left"></i> Previous</button><button type="button" id="class-next-btn" class="btn-secondary btn-sm" disabled>Next <i class="bi bi-chevron-right"></i></button></div></div></div>
+    </div>
+
+    <div id="class-form-view" class="fade-in hidden">
+        <div class="view-header"><div><h2 id="class-form-title" class="mb-0"><i class="bi bi-mortarboard me-2"></i>Add Class</h2><p id="class-form-subtitle" class="text-muted mb-0">Add a class for your branch.</p></div><button type="button" id="class-back-btn" class="btn-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back</button></div>
+        <div class="card p-4"><form id="class-form" novalidate><input type="hidden" id="class-id">
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1"><label for="class-year">Introduction Academic Year <span class="text-danger">*</span></label><select id="class-year" class="detail-input w-100" required><option value="">Select Academic Year</option></select></div>
+                    <div class="form-group ba-flex-1"><label for="class-level">Level <span class="text-danger">*</span></label><select id="class-level" class="detail-input w-100" required><option value="">Select Level</option></select></div>
+                </div>
+                <div class="ba-flex-panel"><div class="form-group ba-flex-1"><label for="class-code">Class Code <span class="text-danger">*</span></label><input type="text" id="class-code" class="detail-input w-100" maxlength="255" autocomplete="off" placeholder="e.g. P1" required></div><div class="form-group ba-flex-1"><label for="class-name">Class Name <span class="text-danger">*</span></label><input type="text" id="class-name" class="detail-input w-100" maxlength="255" autocomplete="off" placeholder="e.g. Primary 1" required></div></div>
+                <div class="form-group"><label for="class-status">Status <span class="text-danger">*</span></label><select id="class-status" class="detail-input w-100" required><option value="1">Active</option><option value="0">Inactive</option></select></div>
+                <div id="class-form-error" class="emp-validation-summary hidden" role="alert"><strong>Unable to save class.</strong><p id="class-form-error-text"></p></div>
+                <div class="text-end border-top pt-3"><button type="button" id="class-cancel-btn" class="btn-secondary">Cancel</button><button type="submit" id="class-save-btn" class="btn-primary px-4"><i class="bi bi-check-lg"></i> Save Class</button></div>
+            </form></div>
+    </div>
+
+    <section id="class-details-view" class="fade-in hidden" aria-labelledby="class-details-title">
+        <div class="view-header">
+            <div><h2 id="class-details-title">Class Details</h2><p class="text-muted">Review the complete class record.</p></div>
+            <div class="action-btn-group"><button type="button" id="class-details-back-btn" class="btn-secondary"><i class="bi bi-arrow-left"></i> Back to Classes</button><button type="button" id="class-details-edit-btn" class="btn-primary"><i class="bi bi-pencil"></i> Edit</button></div>
+        </div>
+        <div class="card p-4"><dl class="class-details-grid mb-0">
+            <div class="class-detail-item"><dt>Class Code</dt><dd id="class-detail-code">—</dd></div>
+            <div class="class-detail-item"><dt>Class Name</dt><dd id="class-detail-name">—</dd></div>
+            <div class="class-detail-item"><dt>Level</dt><dd id="class-detail-level">—</dd></div>
+            <div class="class-detail-item"><dt>Introduction Academic Year</dt><dd id="class-detail-year">—</dd></div>
+            <div class="class-detail-item"><dt>Status</dt><dd id="class-detail-status">—</dd></div>
+        </dl></div>
+    </section>
+    <template id="class-row-template"><tr><td class="col-serial font-monospace text-muted"></td><td class="col-code font-medium"></td><td class="col-name text-primary"><strong></strong></td><td class="col-level"></td><td class="col-year"></td><td><span class="col-status status-badge badge"></span></td><td class="col-action align-center"><button type="button" class="btn-secondary btn-sm class-view-btn me-1" title="View" aria-label="View class"><i class="bi bi-eye"></i></button><button type="button" class="btn-primary btn-sm class-edit-btn" title="Edit" aria-label="Edit class"><i class="bi bi-pencil"></i></button></td></tr></template>
+</div>

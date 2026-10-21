@@ -37,6 +37,9 @@ public class ApplicationSummaryDTO {
      */
     private String className;
 
+    /** Saved School Day Type for the application. */
+    private String schoolDayType = "FULL_DAY";
+
     // ---------------------------------------------------------------------
     // Status values displayed in the list
     // ---------------------------------------------------------------------
@@ -183,6 +186,14 @@ public class ApplicationSummaryDTO {
 
     public void setClassName(String className) {
         this.className = className;
+    }
+
+    public String getSchoolDayType() {
+        return schoolDayType;
+    }
+
+    public void setSchoolDayType(String schoolDayType) {
+        this.schoolDayType = schoolDayType;
     }
 
     public String getStatus() {

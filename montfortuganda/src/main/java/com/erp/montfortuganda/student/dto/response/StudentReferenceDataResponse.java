@@ -123,6 +123,8 @@ public record StudentReferenceDataResponse(
 
             Integer classId,
 
+            Long academicYearId,
+
             Integer levelId,
 
             String classCode,

@@ -368,38 +368,84 @@
         <!-- ===================================================== -->
         <!-- ACCOUNT SECURITY                                      -->
         <!-- ===================================================== -->
-        <fieldset class="ba-profile-section">
+        <fieldset class="ba-profile-section ba-profile-account-security">
             <legend class="ba-profile-section-header">
-                <i class="bi bi-shield-lock"></i>
+                <i class="bi bi-shield-lock" aria-hidden="true"></i>
                 Account Security
             </legend>
 
-            <div class="ba-profile-section-body">
-                <div class="ba-profile-security-grid">
-                    <div class="form-group">
-                        <label>Password Reset</label>
-                        <p class="ba-profile-security-description">If you need to reset your account password, submit a request to the Super Admin for review.</p>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="ba-profilePasswordResetBtn">Account Action</label>
-                        <div class="ba-profile-security-action">
-                            <button class="btn-secondary ba-profile-password-reset-btn" id="ba-profilePasswordResetBtn" type="button">
-                                <i class="bi bi-shield-lock"></i> Request Password Reset
-                            </button>
-                            <small class="text-muted">Your current password will never be displayed.</small>
+            <div class="ba-profile-section-body ba-profile-security-body">
+                <section class="ba-security-password-panel" aria-labelledby="ba-profilePasswordResetHeading">
+                    <div class="ba-security-panel-heading ba-security-panel-heading-compact">
+                        <div class="ba-security-heading-copy">
+                            <h3 id="ba-profilePasswordResetHeading">Password Reset</h3>
                         </div>
                     </div>
-                </div>
 
-                <div class="form-group ba-profile-security-status-row">
-                    <label>Password Reset Request Status</label>
-                    <span id="ba-profilePasswordResetStatus" class="detail-text">No request submitted</span>
-                </div>
+                    <div class="ba-security-password-action">
+                        <button class="btn-secondary ba-profile-password-reset-btn"
+                                id="ba-profilePasswordResetBtn" type="button">
+                            <i class="bi bi-shield-lock" aria-hidden="true"></i>
+                            Request Password Reset
+                        </button>
+                        <div class="ba-security-request-status" aria-live="polite">
+                            <span class="ba-security-status-label">Request status</span>
+                            <span id="ba-profilePasswordResetStatus" class="detail-text">No request submitted</span>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="ba-security-subsection" aria-labelledby="ba-profileActiveDevicesHeading">
+                    <h3 class="ba-security-subsection-title" id="ba-profileActiveDevicesHeading">Active Devices</h3>
+                    <div class="table-responsive ba-security-table-wrap">
+                        <table class="data-table ba-security-table">
+                            <thead>
+                            <tr>
+                                <th scope="col">Device</th>
+                                <th scope="col">Browser / OS</th>
+                                <th scope="col">IP Address</th>
+                                <th scope="col">Last Activity</th>
+                                <th scope="col">Session Expiry</th>
+                            </tr>
+                            </thead>
+                            <tbody id="ba-profileActiveDevicesBody">
+                            <tr><td colspan="5" class="text-muted">Loading devices…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="ba-security-subsection ba-security-history" aria-labelledby="ba-profileLoginHistoryHeading">
+                    <div class="ba-security-history-heading">
+                        <h3 class="ba-security-subsection-title" id="ba-profileLoginHistoryHeading">Login History</h3>
+                        <button type="button" id="ba-profileToggleLoginHistoryBtn"
+                                class="btn-secondary ba-security-history-toggle"
+                                aria-expanded="false" aria-controls="ba-profileLoginHistoryContainer">
+                            View History
+                        </button>
+                    </div>
+                    <div class="table-responsive ba-security-table-wrap"
+                         id="ba-profileLoginHistoryContainer" hidden>
+                        <table class="data-table ba-security-table">
+                            <thead>
+                            <tr>
+                                <th scope="col">Login Time</th>
+                                <th scope="col">Device</th>
+                                <th scope="col">Browser</th>
+                                <th scope="col">IP Address</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Logout Time</th>
+                            </tr>
+                            </thead>
+                            <tbody id="ba-profileLoginHistoryBody">
+                            <tr><td colspan="6" class="text-muted">Select View History to load records.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
         </fieldset>
 
-        <!-- ===================================================== -->
         <!-- DOCUMENTS & MEDIA                                       -->
         <!-- ===================================================== -->
         <fieldset class="ba-profile-section">

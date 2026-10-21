@@ -11,7 +11,7 @@
     <link rel="icon" type="image/webp" href="/assets/Images/logo_MBSG_UG_8.webp">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="/css/apply.css?v=18">
+    <link rel="stylesheet" href="/css/apply.css?v=20">
     <link rel="stylesheet" href="/css/global.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
@@ -112,12 +112,17 @@
                     <div class="grid-2 align-items-end">
                         <div class="form-group">
                             <label for="level">Education Level <span class="text-danger">*</span></label>
-                            <select name="level" id="level" class="form-control custom-select" required><option value="" disabled selected>Select Level</option></select>
+                            <select name="level" id="level" class="form-control custom-select" required disabled><option value="" disabled selected>Select Level</option></select>
                         </div>
                         <div class="form-group">
                             <label for="classSelect">Applying For Class <span class="text-danger">*</span></label>
-                            <select id="classSelect" class="form-control custom-select" required><option value="" disabled selected>Select Class</option></select>
+                            <select id="classSelect" class="form-control custom-select" required disabled><option value="" disabled selected>Select Class</option></select>
                         </div>
+                    </div>
+                    <div id="schoolDayTypeGroup" class="school-day-type-group hidden-element" hidden>
+                        <div class="school-day-type-title">School Day Type <span class="text-danger">*</span></div>
+                        <div id="schoolDayTypeOptions" class="school-day-type-options" role="radiogroup" aria-label="School Day Type"></div>
+                        <input type="hidden" id="schoolDayType" name="schoolDayType" value="FULL_DAY" disabled>
                     </div>
 
                     <div class="grid-3 align-items-end">
@@ -458,7 +463,7 @@
 <script src="https://cdn.jsdelivr.net/npm/flatpickr" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-<script src="/js/apply.js?v=16" defer></script>
+<script src="/js/apply.js?v=18" defer></script>
 <script src="/js/global.js"></script>
 </body>
 </html>

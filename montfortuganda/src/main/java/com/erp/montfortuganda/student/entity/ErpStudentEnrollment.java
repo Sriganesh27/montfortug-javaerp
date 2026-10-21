@@ -92,6 +92,13 @@ public class ErpStudentEnrollment {
     @Column(name = "class_id", nullable = false)
     private Integer classId;
 
+    /**
+     * Day arrangement for this specific academic-year enrollment.
+     * The service layer validates whether HALF_DAY is allowed for the class.
+     */
+    @Column(name = "school_day_type", nullable = false, length = 20)
+    private String schoolDayType = "FULL_DAY";
+
     @Column(name = "section_id")
     private Long sectionId;
 

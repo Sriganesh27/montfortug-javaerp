@@ -26,6 +26,12 @@ public class ApplicationCreateDTO {
 
     @NotNull(message = "Class ID is required")
     private Long branchClassId;
+
+    /**
+     * Requested day arrangement. The admission service validates this against
+     * the selected class level; the frontend must not enforce eligibility.
+     */
+    private String schoolDayType = "FULL_DAY";
     /**
      * Primary contact selected by the applicant.
      * Allowed values: FATHER, MOTHER, OTHER.

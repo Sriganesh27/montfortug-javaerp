@@ -316,9 +316,7 @@ public class StudentBulkRequestMapper {
                         "Parents Living Together"
                 );
 
-        if (parentsLivingTogether == null) {
-            parentsLivingTogether = Boolean.FALSE;
-        }
+        // Preserve an unanswered Excel cell as null; do not infer "No".
 
         ContactMapping contact =
                 mapPrimaryContact(
@@ -644,7 +642,8 @@ public class StudentBulkRequestMapper {
                 joiningDate,
                 valueParser.nullableText(
                         row.getRemarks()
-                )
+                ),
+                "FULL_DAY"
         );
     }
 

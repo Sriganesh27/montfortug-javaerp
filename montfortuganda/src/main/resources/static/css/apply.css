@@ -426,3 +426,126 @@ body{
     background: #ef4444;
     color: #ffffff;
 }
+
+/* School Day Type: compact inline choices, scoped to this field only */
+#montfort-portal-wrapper #schoolDayTypeGroup {
+    margin-top: 12px;
+    margin-bottom: 4px;
+}
+
+#montfort-portal-wrapper #schoolDayTypeGroup .school-day-type-title {
+    margin: 0 0 8px;
+    color: #52627b;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+}
+
+#montfort-portal-wrapper #schoolDayTypeGroup .school-day-type-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 18px;
+    margin: 0;
+}
+
+#montfort-portal-wrapper #schoolDayTypeGroup .school-day-type-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    padding: 2px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #253047;
+    cursor: pointer;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+#montfort-portal-wrapper #schoolDayTypeGroup .school-day-type-option:has(input[type="radio"]:checked) {
+    color: #172033;
+}
+
+#montfort-portal-wrapper #schoolDayTypeGroup .school-day-type-option input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    accent-color: #d9ad2b;
+    flex: 0 0 auto;
+}
+
+#montfort-portal-wrapper #schoolDayTypeGroup .school-day-type-option:focus-within {
+    outline: 2px solid rgba(217, 173, 43, 0.35);
+    outline-offset: 3px;
+}
+
+#montfort-portal-wrapper #schoolDayTypeGroup .school-day-type-message {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+#montfort-portal-wrapper .navigation-loading-spinner {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-right: 8px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    vertical-align: -2px;
+    animation: admission-button-spin 0.7s linear infinite;
+}
+
+@keyframes admission-button-spin {
+    to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #montfort-portal-wrapper .navigation-loading-spinner {
+        animation-duration: 1.8s;
+    }
+}
+
+@media (max-width: 576px) {
+    #montfort-portal-wrapper #schoolDayTypeGroup .school-day-type-options {
+        gap: 8px 14px;
+    }
+}
+
+
+/* Admission wizard UI consistency and navigation feedback */
+#montfort-portal-wrapper .form-document-card { max-width: 900px !important; padding: 30px 36px 32px; }
+#montfort-portal-wrapper .stepper-wrapper { margin-bottom: 26px; }
+#montfort-portal-wrapper .form-header-title { margin-bottom: 20px; padding-bottom: 12px; }
+#montfort-portal-wrapper .form-header-title h1 { font-size: 1.7rem; line-height: 1.25; }
+#montfort-portal-wrapper .form-header-title p { font-size: 0.94rem; line-height: 1.5; }
+#montfort-portal-wrapper .grid-2, #montfort-portal-wrapper .grid-3 { gap: 14px 18px; margin-bottom: 14px; }
+#montfort-portal-wrapper .form-group { margin-bottom: 14px; }
+#montfort-portal-wrapper .grid-2 .form-group, #montfort-portal-wrapper .grid-3 .form-group { margin-bottom: 0; }
+#montfort-portal-wrapper .form-group label { font-size: 0.73rem; line-height: 1.35; margin-bottom: 6px; }
+#montfort-portal-wrapper .form-control { height: 46px; font-size: 0.94rem; border-width: 1px !important; }
+#montfort-portal-wrapper .form-actions { margin-top: 26px; padding-top: 18px; gap: 12px; }
+#montfort-portal-wrapper .form-actions button { min-height: 44px; padding: 10px 22px; font-size: 0.92rem; }
+#montfort-portal-wrapper .instruction-box { padding: 20px; }
+#montfort-portal-wrapper .review-grid { padding: 18px; gap: 10px 14px; }
+#montfort-portal-wrapper .success-screen { padding: 24px 16px; }
+#montfort-portal-wrapper .ref-number-box { padding: 18px; margin: 20px auto; }
+#montfort-portal-wrapper button[aria-busy="true"] { opacity: 0.88; cursor: wait; transform: none; }
+#montfort-portal-wrapper .navigation-loading-spinner { display:inline-block; width:14px; height:14px; flex:0 0 14px; border:2px solid currentColor; border-right-color:transparent; border-radius:50%; animation: admission-navigation-spin .65s linear infinite; }
+@keyframes admission-navigation-spin { to { transform:rotate(360deg); } }
+#montfort-portal-wrapper #schoolDayTypeGroup { margin-top: 2px; margin-bottom: 14px; }
+#montfort-portal-wrapper #schoolDayTypeGroup .school-day-type-options { display:flex; flex-wrap:wrap; align-items:center; gap:8px 18px; }
+#montfort-portal-wrapper #schoolDayTypeGroup .school-day-type-option { display:inline-flex; align-items:center; gap:7px; margin:0; padding:2px 0; border:0; border-radius:0; background:transparent; font-size:0.92rem; font-weight:500; cursor:pointer; }
+#montfort-portal-wrapper #schoolDayTypeGroup .school-day-type-option:has(input:checked) { color:#0f172a; background:transparent; border:0; }
+#montfort-portal-wrapper #schoolDayTypeGroup input[type="radio"] { width:16px; height:16px; margin:0; accent-color:#d4af37; }
+@media (max-width: 768px) { #montfort-portal-wrapper .form-document-card { padding:24px 20px 26px; } #montfort-portal-wrapper .stepper-wrapper { margin-bottom:22px; } #montfort-portal-wrapper .form-header-title h1 { font-size:1.45rem; } #montfort-portal-wrapper .form-actions { margin-top:22px; padding-top:16px; } }
+@media (prefers-reduced-motion: reduce) { #montfort-portal-wrapper .navigation-loading-spinner { animation-duration:1.5s; } }
+
+
+/* Real asynchronous loading states for admission dependent controls. */
+#montfort-portal-wrapper select[aria-busy="true"] { cursor: wait; opacity: 0.78; }
+#montfort-portal-wrapper select:disabled { cursor: not-allowed; }
+#montfort-portal-wrapper button[aria-busy="true"] { cursor: wait; }

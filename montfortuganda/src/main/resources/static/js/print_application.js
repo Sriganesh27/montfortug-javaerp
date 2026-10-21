@@ -837,6 +837,14 @@ function renderStudentDetails(
         'level',
         displayField(app.level)
     );
+
+    const schoolDayType = String(
+        app.school_day_type || app.schoolDayType || 'FULL_DAY'
+    ).trim().toUpperCase();
+    setElementText(
+        'school_day_type',
+        schoolDayType === 'HALF_DAY' ? 'Half Day' : 'Full Day'
+    );
 }
 
 function renderPhoto(

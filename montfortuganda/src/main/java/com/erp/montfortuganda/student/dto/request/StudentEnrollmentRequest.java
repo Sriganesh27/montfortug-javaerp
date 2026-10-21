@@ -46,6 +46,39 @@ public record StudentEnrollmentRequest(
                 max = 5000,
                 message = "Enrollment remarks cannot exceed 5000 characters."
         )
-        String remarks
+        String remarks,
+
+        /**
+         * Day arrangement for this academic-year enrollment.
+         * The backend validates whether HALF_DAY is permitted for the class.
+         */
+        String schoolDayType
 ) {
+
+    /**
+     * Backward-compatible constructor for existing Java call sites.
+     * Requests created through older call sites default to FULL_DAY.
+     */
+    public StudentEnrollmentRequest(
+            Long academicYearId,
+            Integer classId,
+            Long sectionId,
+            String rollNo,
+            AdmissionType admissionType,
+            Boolean scholarshipRequired,
+            LocalDate joiningDate,
+            String remarks
+    ) {
+        this(
+                academicYearId,
+                classId,
+                sectionId,
+                rollNo,
+                admissionType,
+                scholarshipRequired,
+                joiningDate,
+                remarks,
+                "FULL_DAY"
+        );
+    }
 }

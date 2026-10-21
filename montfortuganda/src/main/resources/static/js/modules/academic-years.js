@@ -40,6 +40,9 @@
             page: 0,
             size: Number(elements.pageSize?.value || 10),
             editingId: null,
+            viewingRecord: null,
+            returnToDetailsAfterEdit: false,
+            viewOnly: false,
             busy: false,
             confirmationResolver: null,
             previousFocus: null
@@ -67,6 +70,9 @@
         return {
             view,
             tableView: view.querySelector('#academic-year-tableView'),
+            detailsView: view.querySelector('#academic-year-details-view'),
+            detailsBackButton: view.querySelector('#academic-year-details-back-btn'),
+            detailsEditButton: view.querySelector('#academic-year-details-edit-btn'),
             formView: view.querySelector('#academic-year-form-view'),
             tableBody: view.querySelector('#academic-year-table-body'),
             rowTemplate: view.querySelector('#academic-year-row-template'),
@@ -95,6 +101,16 @@
             currentDates: view.querySelector('#academic-year-current-dates'),
 
             form: view.querySelector('#academic-year-form'),
+            viewCode: view.querySelector('#ay-view-code'),
+            viewName: view.querySelector('#ay-view-name'),
+            viewStartDate: view.querySelector('#ay-view-start-date'),
+            viewEndDate: view.querySelector('#ay-view-end-date'),
+            viewAdmissionStartDate: view.querySelector('#ay-view-admission-start-date'),
+            viewAdmissionEndDate: view.querySelector('#ay-view-admission-end-date'),
+            viewStatus: view.querySelector('#ay-view-status'),
+            viewCurrent: view.querySelector('#ay-view-current'),
+            viewActive: view.querySelector('#ay-view-active'),
+            viewDescription: view.querySelector('#ay-view-description'),
             formTitle: view.querySelector('#academic-year-form-title'),
             formSubtitle: view.querySelector('#academic-year-form-subtitle'),
             idInput: view.querySelector('#academic-year-id'),
@@ -126,6 +142,15 @@
     }
 
     function bindEvents(elements, state) {
+        elements.detailsBackButton?.addEventListener('click', () => showTableView(elements));
+        elements.detailsEditButton?.addEventListener('click', () => {
+            if (!state.viewingRecord) return;
+            state.returnToDetailsAfterEdit = true;
+            populateForm(elements, state, state.viewingRecord);
+            setFormMode(elements, state, 'edit');
+            showFormView(elements, true);
+        });
+
         elements.addButton?.addEventListener('click', () => {
             resetForm(elements, state);
             showFormView(elements, false);
@@ -136,10 +161,20 @@
         });
 
         elements.backButton?.addEventListener('click', () => {
+            if (state.returnToDetailsAfterEdit && state.viewingRecord) {
+                state.returnToDetailsAfterEdit = false;
+                showDetailsView(elements, state, state.viewingRecord);
+                return;
+            }
             showTableView(elements);
         });
 
         elements.cancelButton?.addEventListener('click', () => {
+            if (state.returnToDetailsAfterEdit && state.viewingRecord) {
+                state.returnToDetailsAfterEdit = false;
+                showDetailsView(elements, state, state.viewingRecord);
+                return;
+            }
             showTableView(elements);
         });
 
@@ -344,12 +379,29 @@
             );
 
             const editButton = row.querySelector('.academic-year-edit-btn');
+            const viewButton = row.querySelector('.academic-year-view-btn');
             const currentButton = row.querySelector('.academic-year-current-btn');
             const activeButton = row.querySelector('.academic-year-active-btn');
 
-            editButton?.addEventListener('click', () => {
-                populateForm(elements, state, record);
-                showFormView(elements, true);
+            row.setAttribute('tabindex', '0');
+            row.setAttribute('role', 'button');
+            row.setAttribute('aria-label', `View Academic Year ${record.academicYearName || record.academicYearCode || ''}`);
+            row.style.cursor = 'pointer';
+            const openDetails = () => showDetailsView(elements, state, record);
+            row.addEventListener('click', event => {
+                if (event.target.closest('button, a, input, select, textarea')) return;
+                openDetails();
+            });
+            row.addEventListener('keydown', event => {
+                if (event.target !== row) return;
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openDetails();
+                }
+            });
+            viewButton?.addEventListener('click', event => {
+                event.stopPropagation();
+                openDetails();
             });
 
             if (record.currentYear) {
@@ -357,8 +409,7 @@
                     'disabled',
                     'disabled'
                 );
-                currentButton?.setAttribute(
-                    'title',
+                currentButton?.setAttribute('data-tooltip',
                     'This is already the current Academic Year'
                 );
             } else if (!record.active) {
@@ -366,8 +417,7 @@
                     'disabled',
                     'disabled'
                 );
-                currentButton?.setAttribute(
-                    'title',
+                currentButton?.setAttribute('data-tooltip',
                     'Activate this Academic Year before making it current'
                 );
             } else if (
@@ -377,8 +427,7 @@
                     'disabled',
                     'disabled'
                 );
-                currentButton?.setAttribute(
-                    'title',
+                currentButton?.setAttribute('data-tooltip',
                     'A closed Academic Year cannot be made current'
                 );
             } else {
@@ -391,8 +440,7 @@
                 });
             }
 
-            activeButton?.setAttribute(
-                'title',
+            activeButton?.setAttribute('data-tooltip',
                 record.active
                     ? 'Deactivate Academic Year'
                     : 'Activate Academic Year'
@@ -408,6 +456,25 @@
         updatePagination(elements, state);
     }
 
+    function showDetailsView(elements, state, record) {
+        state.viewingRecord = record;
+        const set = (element, value) => { if (element) element.textContent = value || '-'; };
+        set(elements.viewCode, record.academicYearCode);
+        set(elements.viewName, record.academicYearName);
+        set(elements.viewStartDate, formatDate(record.startDate));
+        set(elements.viewEndDate, formatDate(record.endDate));
+        set(elements.viewAdmissionStartDate, formatDate(record.admissionStartDate));
+        set(elements.viewAdmissionEndDate, formatDate(record.admissionEndDate));
+        set(elements.viewStatus, record.status);
+        set(elements.viewCurrent, record.currentYear ? 'Yes' : 'No');
+        set(elements.viewActive, record.active ? 'Active' : 'Inactive');
+        set(elements.viewDescription, record.description);
+        elements.tableView?.classList.add('hidden');
+        elements.formView?.classList.add('hidden');
+        elements.detailsView?.classList.remove('hidden');
+        scrollMainContentToTop();
+    }
+
     function populateForm(elements, state, record) {
         state.editingId = Number(record.academicYearId);
 
@@ -415,10 +482,13 @@
         elements.versionInput.value = String(record.version ?? '');
         elements.codeInput.value = record.academicYearCode || '';
         elements.nameInput.value = record.academicYearName || '';
-        elements.startDateInput.value = record.startDate || '';
-        elements.endDateInput.value = record.endDate || '';
-        elements.admissionStartInput.value = record.admissionStartDate || '';
-        elements.admissionEndInput.value = record.admissionEndDate || '';
+        // These fields are initialized by the shared ERP Flatpickr component
+        // with altInput=true. The original inputs become hidden, so assigning
+        // .value alone does not update the visible DD-MM-YYYY inputs.
+        setCalendarDate(elements.startDateInput, record.startDate);
+        setCalendarDate(elements.endDateInput, record.endDate);
+        setCalendarDate(elements.admissionStartInput, record.admissionStartDate);
+        setCalendarDate(elements.admissionEndInput, record.admissionEndDate);
         elements.statusInput.value = record.status || '';
         elements.activeInput.value = String(Boolean(record.active));
         elements.currentInput.value = String(Boolean(record.currentYear));
@@ -446,8 +516,56 @@
         elements.formSubtitle.textContent =
             'Create an Academic Year for your branch.';
 
+        setFormMode(elements, state, 'create');
         clearFormError(elements);
         syncDateLimits(elements);
+    }
+
+    function setFormMode(elements, state, mode) {
+        const readOnly = mode === 'view';
+        const creating = mode === 'create';
+        state.viewOnly = readOnly;
+
+        elements.form?.querySelectorAll('input:not([type="hidden"]), textarea')
+            .forEach(field => {
+                field.readOnly = readOnly;
+                field.disabled = readOnly;
+            });
+
+        elements.form?.querySelectorAll('select')
+            .forEach(field => {
+                field.disabled = readOnly || field === elements.currentInput;
+            });
+
+        if (creating && elements.currentInput) {
+            elements.currentInput.value = 'false';
+        }
+
+        const currentHelp = document.getElementById(
+            'academic-year-current-help'
+        );
+        if (currentHelp) {
+            currentHelp.hidden = !creating;
+        }
+
+        if (elements.saveButton) {
+            elements.saveButton.hidden = readOnly;
+            elements.saveButton.classList.toggle('hidden', readOnly);
+        }
+        if (elements.cancelButton) {
+            elements.cancelButton.hidden = readOnly;
+            elements.cancelButton.classList.toggle('hidden', readOnly);
+        }
+
+        if (mode === 'view') {
+            elements.formTitle.textContent = 'View Academic Year';
+            elements.formSubtitle.textContent =
+                'Read-only details for this Academic Year.';
+        } else if (mode === 'edit') {
+            elements.formTitle.textContent = 'Edit Academic Year';
+            elements.formSubtitle.textContent =
+                'Update this Academic Year for your branch.';
+        }
     }
 
 
@@ -461,6 +579,10 @@
     }
 
     async function saveAcademicYear(elements, state) {
+        if (state.viewOnly) {
+            return;
+        }
+
         clearFormError(elements);
 
         const validationMessage = validateForm(elements);
@@ -497,8 +619,21 @@
                 )
             );
 
-            showTableView(elements);
+            const returnToDetails = editing && state.returnToDetailsAfterEdit;
+            state.returnToDetailsAfterEdit = false;
             await loadAcademicYears(elements, state);
+            if (returnToDetails) {
+                const updatedRecord = state.allRecords.find(item =>
+                    Number(item.academicYearId) === Number(state.editingId)
+                );
+                if (updatedRecord) {
+                    showDetailsView(elements, state, updatedRecord);
+                } else {
+                    showTableView(elements);
+                }
+            } else {
+                showTableView(elements);
+            }
         } catch (error) {
             const message = readErrorMessage(
                 error,
@@ -685,12 +820,12 @@
         return {
             academicYearCode: elements.codeInput.value.trim(),
             academicYearName: elements.nameInput.value.trim(),
-            startDate: valueOrNull(elements.startDateInput.value),
-            endDate: valueOrNull(elements.endDateInput.value),
-            admissionStartDate: valueOrNull(
+            startDate: dateForApi(elements.startDateInput.value),
+            endDate: dateForApi(elements.endDateInput.value),
+            admissionStartDate: dateForApi(
                 elements.admissionStartInput.value
             ),
-            admissionEndDate: valueOrNull(
+            admissionEndDate: dateForApi(
                 elements.admissionEndInput.value
             ),
             status: elements.statusInput.value,
@@ -734,16 +869,6 @@
             return 'End Date cannot be before Start Date.';
         }
 
-        if (admissionStart && admissionStart < startDate) {
-            elements.admissionStartInput.focus();
-            return 'Admission Start Date must be inside the Academic Year.';
-        }
-
-        if (admissionEnd && admissionEnd > endDate) {
-            elements.admissionEndInput.focus();
-            return 'Admission End Date must be inside the Academic Year.';
-        }
-
         if (
             admissionStart
             && admissionEnd
@@ -769,15 +894,17 @@
             elements.endDateInput.min = startDate;
         }
 
+        // Admission can open before the academic year begins and can close
+        // before the first academic day. Only the admission-window order is
+        // validated; admission dates are not constrained to the academic year.
         if (elements.admissionStartInput) {
-            elements.admissionStartInput.min = startDate;
-            elements.admissionStartInput.max = endDate;
+            elements.admissionStartInput.removeAttribute('min');
+            elements.admissionStartInput.removeAttribute('max');
         }
 
         if (elements.admissionEndInput) {
-            elements.admissionEndInput.min =
-                elements.admissionStartInput?.value || startDate;
-            elements.admissionEndInput.max = endDate;
+            elements.admissionEndInput.removeAttribute('min');
+            elements.admissionEndInput.removeAttribute('max');
         }
     }
 
@@ -801,6 +928,7 @@
     }
 
     function showFormView(elements, editing) {
+        elements.detailsView?.classList.add('hidden');
         elements.tableView?.classList.add('hidden');
         elements.formView?.classList.remove('hidden');
 
@@ -808,20 +936,26 @@
             elements.codeInput?.focus();
         }
 
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
+        scrollMainContentToTop();
     }
 
     function showTableView(elements) {
+        elements.detailsView?.classList.add('hidden');
         elements.formView?.classList.add('hidden');
         elements.tableView?.classList.remove('hidden');
 
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
+        scrollMainContentToTop();
+    }
+
+    function scrollMainContentToTop() {
+        const mainContent = document.getElementById('main-content-area');
+
+        if (mainContent) {
+            mainContent.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function showTableLoading(elements) {
@@ -929,16 +1063,47 @@
     }
 
     function formatDate(value) {
-        if (!value) {
-            return '-';
-        }
-
-        if (window.erpDate) {
-            return window.erpDate.formatDate(value, '-');
-        }
-
-        return String(value);
+        if (!value) return '-';
+        const text = String(value).trim();
+        let match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[3]}-${match[2]}-${match[1]}`;
+        match = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+        if (match) return `${match[1].padStart(2, '0')}-${match[2].padStart(2, '0')}-${match[3]}`;
+        return text;
     }
+
+
+    function setCalendarDate(input, value) {
+        if (!input) return;
+        const isoDate = dateForInput(value);
+
+        if (input._flatpickr) {
+            input._flatpickr.setDate(isoDate || null, false, 'Y-m-d');
+            return;
+        }
+
+        // Fallback if the shared calendar has not initialized this field.
+        input.value = isoDate;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    function dateForInput(value) {
+        if (!value) return '';
+        const text = String(value).trim();
+        let match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+        match = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+        if (match) return `${match[3]}-${match[2].padStart(2, '0')}-${match[1].padStart(2, '0')}`;
+        return '';
+    }
+
+    function dateForApi(value) {
+        if (!value) return null;
+        const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        return match ? `${match[3]}-${match[2]}-${match[1]}` : null;
+    }
+
 
     function normalizeArray(value) {
         if (Array.isArray(value)) {

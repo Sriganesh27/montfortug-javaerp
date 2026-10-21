@@ -19,6 +19,7 @@
     const PROFILE_ENDPOINT = '/branchadmin/profile';
     const PROFILE_MEDIA_ENDPOINT = '/api/branchadmin/profile/files';
     let initializationInProgress = false;
+    let initializationPromise = null;
     let profileLogoRequestUrl = null;
     let profileLogoPreloadPromise = null;
 
@@ -850,6 +851,197 @@
         return null;
     }
 
+    function unwrapArrayResponse(response) {
+        if (Array.isArray(response)) return response;
+        if (Array.isArray(response?.data)) return response.data;
+        if (Array.isArray(response?.content)) return response.content;
+        return null;
+    }
+
+    function formatSecurityDate(value) {
+        if (value === null || value === undefined || value === '') {
+            return '—';
+        }
+
+        // The API returns Java LocalDateTime values as ISO local timestamps.
+        // Format their components directly; do not parse them as browser-local
+        // or UTC Date objects, which can shift the displayed time.
+        const text = String(value).trim();
+        const match = text.match(
+            /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?)?$/
+        );
+
+        if (!match) {
+            return '—';
+        }
+
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        const hour = match[4] === undefined ? null : Number(match[4]);
+        const minute = match[5] === undefined ? null : Number(match[5]);
+        const second = match[6] === undefined ? null : Number(match[6]);
+        const daysInMonth = new Date(Date.UTC(year, month, 0)).getUTCDate();
+
+        if (
+            month < 1 || month > 12 || day < 1 || day > daysInMonth ||
+            (hour !== null && (hour < 0 || hour > 23)) ||
+            (minute !== null && (minute < 0 || minute > 59)) ||
+            (second !== null && (second < 0 || second > 59))
+        ) {
+            return '—';
+        }
+
+        const datePart = `${match[3]}-${match[2]}-${match[1]}`;
+        if (hour === null) {
+            return datePart;
+        }
+
+        const timePart = `${match[4]}:${match[5]}${second === null ? '' : `:${match[6]}`}`;
+        return `${datePart} ${timePart}`;
+    }
+
+    function appendSecurityCell(row, value) {
+        const cell = document.createElement('td');
+        cell.textContent = value === null || value === undefined || value === ''
+            ? '—'
+            : String(value);
+        row.appendChild(cell);
+    }
+
+    function renderSecurityRows(bodyId, rows, columns, emptyMessage) {
+        const body = getElement(bodyId);
+        if (!body) return;
+        body.replaceChildren();
+
+        if (!rows.length) {
+            const row = document.createElement('tr');
+            const cell = document.createElement('td');
+            cell.colSpan = columns;
+            cell.className = 'text-muted';
+            cell.textContent = emptyMessage;
+            row.appendChild(cell);
+            body.appendChild(row);
+            return;
+        }
+
+        rows.forEach(values => {
+            const row = document.createElement('tr');
+            values.forEach(value => appendSecurityCell(row, value));
+            body.appendChild(row);
+        });
+    }
+
+    function ensureAccountSecurityUI() {
+        const root = getElement('ba-branch-profile-view');
+        if (!root) return;
+
+        const devicesBody = getElement('ba-profileActiveDevicesBody');
+        const historyBody = getElement('ba-profileLoginHistoryBody');
+        const historyContainer = getElement('ba-profileLoginHistoryContainer');
+        const historyToggle = getElement('ba-profileToggleLoginHistoryBtn');
+
+        // Account Security structure is defined in the view HTML. Do not
+        // construct or reposition UI elements from JavaScript.
+        if (!devicesBody || !historyBody || !historyContainer || !historyToggle) {
+            console.error('Account Security markup is incomplete.');
+            return;
+        }
+
+        historyContainer.hidden = true;
+        historyToggle.setAttribute('aria-expanded', 'false');
+        historyToggle.innerHTML = '<i class="bi bi-clock-history" aria-hidden="true"></i> View History';
+
+        if (historyToggle.dataset.handlerAttached === 'true') return;
+        historyToggle.dataset.handlerAttached = 'true';
+
+        historyToggle.addEventListener('click', async () => {
+            const expanded = historyToggle.getAttribute('aria-expanded') === 'true';
+            if (expanded) {
+                historyContainer.hidden = true;
+                historyToggle.setAttribute('aria-expanded', 'false');
+                historyToggle.innerHTML = '<i class="bi bi-clock-history" aria-hidden="true"></i> View History';
+                return;
+            }
+
+            historyToggle.disabled = true;
+            historyToggle.innerHTML = '<i class="bi bi-arrow-repeat" aria-hidden="true"></i> Loading…';
+            try {
+                await loadLoginHistory();
+                historyContainer.hidden = false;
+                historyToggle.setAttribute('aria-expanded', 'true');
+                historyToggle.innerHTML = '<i class="bi bi-chevron-up" aria-hidden="true"></i> Hide History';
+            } finally {
+                historyToggle.disabled = false;
+            }
+        });
+    }
+
+    async function loadActiveDevices() {
+        const bodyId = 'ba-profileActiveDevicesBody';
+
+        if (typeof window.apiGet !== 'function') {
+            renderSecurityRows(bodyId, [], 5, 'Unavailable');
+            return;
+        }
+
+        try {
+            const response = await window.apiGet('/auth/security/sessions');
+            const devices = unwrapArrayResponse(response);
+            if (!devices) {
+                throw new Error('Active sessions API returned an invalid response.');
+            }
+
+            renderSecurityRows(bodyId, devices.map(device => [
+                device.deviceName,
+                [device.browser, device.operatingSystem].filter(Boolean).join(' / '),
+                device.ipAddress,
+                formatSecurityDate(device.lastActivityTime),
+                formatSecurityDate(device.expiryTime)
+            ]), 5, 'No active devices');
+        } catch (error) {
+            console.warn('Unable to load active account devices.', error);
+            renderSecurityRows(bodyId, [], 5, 'Unable to load devices');
+        }
+    }
+
+
+    let loginHistoryLoadedBody = null;
+    let loginHistoryRequestInProgress = false;
+
+    async function loadLoginHistory() {
+        const historyBody = getElement('ba-profileLoginHistoryBody');
+        if (!historyBody) return;
+        if (loginHistoryLoadedBody === historyBody || loginHistoryRequestInProgress) return;
+        if (typeof window.apiGet !== 'function') {
+            renderSecurityRows('ba-profileLoginHistoryBody', [], 6, 'Unavailable');
+            return;
+        }
+
+        loginHistoryRequestInProgress = true;
+        try {
+            const response = await window.apiGet('/auth/security/login-history');
+            const history = unwrapArrayResponse(response);
+            if (!history) {
+                throw new Error('Login history API returned an invalid response.');
+            }
+            renderSecurityRows('ba-profileLoginHistoryBody', history.map(entry => [
+                formatSecurityDate(entry.loginTime),
+                entry.deviceName,
+                entry.browser,
+                entry.ipAddress,
+                entry.status,
+                formatSecurityDate(entry.logoutTime)
+            ]), 6, 'No login history');
+            loginHistoryLoadedBody = historyBody;
+        } catch (error) {
+            console.warn('Unable to load account login history.', error);
+            renderSecurityRows('ba-profileLoginHistoryBody', [], 6, 'Unable to load history');
+        } finally {
+            loginHistoryRequestInProgress = false;
+        }
+    }
+
     async function loadProfile() {
         if (typeof window.apiGet !== 'function') {
             throw new Error(
@@ -898,32 +1090,35 @@
         }
     }
 
-    async function initializeBranchProfile() {
-        const root = getElement(
-            'ba-branch-profile-view'
-        );
-
-        if (!root || initializationInProgress) {
-            return;
-        }
+    function initializeBranchProfile() {
+        const root = getElement('ba-branch-profile-view');
+        if (!root) return Promise.resolve();
+        if (initializationPromise) return initializationPromise;
 
         initializationInProgress = true;
         root.setAttribute('aria-busy', 'true');
-
         wireEditControls();
 
-        try {
-            // Begin loading the Branch Profile header logo immediately, in
-            // parallel with fetching the profile data. A logo failure is handled
-            // by the existing placeholder and must not block the page.
-            preloadProfileLogo();
-            await loadProfile();
-        } catch (error) {
-            showProfileLoadError(error);
-        } finally {
-            root.setAttribute('aria-busy', 'false');
-            initializationInProgress = false;
-        }
+        initializationPromise = (async () => {
+            try {
+                preloadProfileLogo();
+                ensureAccountSecurityUI();
+                await Promise.all([
+                    loadProfile(),
+                    // Active Devices is part of view preparation and must finish
+                    // before the global dynamic-view loader reveals the page.
+                    loadActiveDevices()
+                ]);
+            } catch (error) {
+                showProfileLoadError(error);
+            } finally {
+                root.setAttribute('aria-busy', 'false');
+                initializationInProgress = false;
+                initializationPromise = null;
+            }
+        })();
+
+        return initializationPromise;
     }
 
     window.BranchProfileModule = {
@@ -935,9 +1130,8 @@
     };
 
     /*
-     * Compatibility with the existing branchadmin.js initializer.
-     * branchadmin.js already calls initBranchProfile() when the
-     * Branch Profile view is loaded.
+     * Compatibility entry point for existing Branch Admin code that may
+     * initialize the profile directly.
      */
     window.initBranchProfile = initializeBranchProfile;
 
@@ -945,16 +1139,21 @@
      * The router mounts the view dynamically. `viewLoaded` is therefore
      * the appropriate lifecycle event instead of DOMContentLoaded.
      */
-    window.addEventListener(
+    document.addEventListener(
         'viewLoaded',
         event => {
             const detail = event?.detail;
-
             if (
-                detail?.view === 'branch-profile'
-                || detail?.viewName === 'branch-profile'
-            ) {
-                void initializeBranchProfile();
+                detail?.view !== 'branch-profile' &&
+                detail?.viewName !== 'branch-profile'
+            ) return;
+
+            // global.js dispatches this event on document and waits for
+            // promises registered through detail.waitUntil() before reveal.
+            // here before removing its loading state and showing the view.
+            const initialization = initializeBranchProfile();
+            if (typeof detail.waitUntil === 'function') {
+                detail.waitUntil(initialization);
             }
         }
     );

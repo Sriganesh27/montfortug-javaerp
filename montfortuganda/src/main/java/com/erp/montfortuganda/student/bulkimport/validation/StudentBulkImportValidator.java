@@ -1233,6 +1233,13 @@ public class StudentBulkImportValidator
                 StudentExcelHeaders.SCHOLARSHIP,
                 errors
         );
+
+        // An unanswered parent-living-together value is valid and remains null.
+        validateOptionalYesNo(
+                row.getParentsLivingTogether(),
+                StudentExcelHeaders.PARENTS_LIVING_TOGETHER,
+                errors
+        );
     }
 
     private void validateOptionalYesNo(
