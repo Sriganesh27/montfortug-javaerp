@@ -425,6 +425,9 @@ public class StudentMapper {
         enrollment.setAcademicYearId(
                 request.academicYearId()
         );
+        enrollment.setTermId(
+                request.termId()
+        );
         enrollment.setClassId(
                 request.classId()
         );
@@ -1399,6 +1402,7 @@ public class StudentMapper {
                 branchId(enrollment.getBranch()),
                 branchName(enrollment.getBranch()),
                 enrollment.getAcademicYearId(),
+                enrollment.getTermId(),
                 trimToNull(academicYearName),
                 enrollment.getClassId(),
                 trimToNull(className),

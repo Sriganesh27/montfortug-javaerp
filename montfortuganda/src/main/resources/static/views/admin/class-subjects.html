@@ -1,0 +1,157 @@
+<div id="ba-class-subjects-view" class="fade-in erp-record-module">
+    <div id="class-subjects-table-view">
+        <div class="view-header">
+            <div>
+                <h2>Class Subjects</h2>
+                
+            </div>
+            <div class="action-btn-group">
+                <button type="button" id="class-subjects-refresh-btn" class="btn-secondary"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+                <button type="button" id="class-subjects-add-btn" class="btn-primary" disabled><i class="bi bi-plus-lg me-1"></i>Add Configuration</button>
+            </div>
+        </div>
+
+        <div class="card mb-3 p-3">
+            <form id="class-subjects-filter-form" novalidate>
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1">
+                        <label for="class-subjects-year-filter">Academic Year <span class="text-danger">*</span></label>
+                        <select id="class-subjects-year-filter" class="detail-input w-100" required>
+                            <option value="">Loading academic years...</option>
+                        </select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="class-subjects-class-filter">Class</label>
+                        <select id="class-subjects-class-filter" class="detail-input w-100"><option value="">All Classes</option></select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="class-subjects-requirement-filter">Requirement</label>
+                        <select id="class-subjects-requirement-filter" class="detail-input w-100">
+                            <option value="">All Requirements</option>
+                            <option value="COMPULSORY">Compulsory</option>
+                            <option value="OPTIONAL">Optional</option>
+                        </select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="class-subjects-search">Search Configurations</label>
+                        <input type="search" id="class-subjects-search" class="detail-input w-100" maxlength="100" autocomplete="off" placeholder="Subject code or name...">
+                    </div>
+                    <div class="form-group ba-pagination-controls">
+                        <button type="submit" class="btn-primary">Search</button>
+                        <button type="button" id="class-subjects-reset-btn" class="btn-secondary">Reset</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table id="class-subjects-table" class="data-table">
+                    <thead><tr><th>S.No.</th><th>Subject Code</th><th>Subject Name</th><th>Requirement</th><th>Applies To</th><th>Academic Year</th><th class="col-action align-center">Actions</th></tr></thead>
+                    <tbody id="class-subjects-table-body"><tr><td colspan="7" class="text-center text-muted p-4">Loading Class Subject configurations...</td></tr></tbody>
+                </table>
+            </div>
+            <div class="ba-pagination-footer">
+                <div class="ba-pagination-controls">
+                    <select id="class-subjects-page-size" class="detail-input w-auto" aria-label="Rows per page">
+                        <option value="5">5</option><option value="10" selected>10</option><option value="25">25</option><option value="50">50</option>
+                    </select>
+                    <span id="class-subjects-page-info" class="text-muted">No records</span>
+                </div>
+                <div class="ba-pagination-controls">
+                    <button type="button" id="class-subjects-prev-btn" class="btn-secondary btn-sm" disabled>Previous</button>
+                    <button type="button" id="class-subjects-next-btn" class="btn-secondary btn-sm" disabled>Next </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section id="class-subjects-form-view" class="fade-in hidden" aria-labelledby="class-subjects-form-title">
+        <div class="view-header">
+            <div>
+                <h2 id="class-subjects-form-title">Add Class Subject Configuration</h2>
+                <p id="class-subjects-form-subtitle" class="text-muted">Configure a subject requirement for a school level and class range.</p>
+            </div>
+            <button type="button" id="class-subjects-form-back-btn" class="btn-secondary btn-sm">Back</button>
+        </div>
+        <div class="card p-4">
+            <form id="class-subjects-form" novalidate>
+                <input type="hidden" id="class-subjects-record-id">
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1">
+                        <label for="class-subjects-year">Academic Year <span class="text-danger">*</span></label>
+                        <select id="class-subjects-year" class="detail-input w-100" required><option value="">Select Academic Year</option></select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="class-subjects-level">Level <span class="text-danger">*</span></label>
+                        <select id="class-subjects-level" class="detail-input w-100" required><option value="">Select Level</option></select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="class-subjects-subject">Subject <span class="text-danger">*</span></label>
+                        <select id="class-subjects-subject" class="detail-input w-100" required><option value="">Select Subject</option></select>
+                    </div>
+                </div>
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1">
+                        <label for="class-subjects-requirement">Subject Requirement <span class="text-danger">*</span></label>
+                        <select id="class-subjects-requirement" class="detail-input w-100" required>
+                            <option value="COMPULSORY">Compulsory</option><option value="OPTIONAL">Optional</option>
+                        </select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="class-subjects-start-class">Starting Class <span class="text-danger">*</span></label>
+                        <select id="class-subjects-start-class" class="detail-input w-100" required><option value="">Select Starting Class</option></select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="class-subjects-end-class">Ending Class</label>
+                        <select id="class-subjects-end-class" class="detail-input w-100"><option value="">Same as Starting Class</option></select>
+                    </div>
+                </div>
+                
+                <div id="class-subjects-form-error" class="emp-validation-summary hidden" role="alert">
+                    <p id="class-subjects-form-error-text" class="mb-0"></p>
+                </div>
+                <div class="text-end border-top pt-3">
+                    <button type="button" id="class-subjects-cancel-btn" class="btn-secondary">Cancel</button>
+                    <button type="submit" id="class-subjects-save-btn" class="btn-primary px-4">Save Configuration</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section id="class-subjects-details-view" class="fade-in hidden" aria-labelledby="class-subjects-details-title">
+        <div class="view-header">
+            <div><h2 id="class-subjects-details-title">Class Subject Details</h2></div>
+            <div class="action-btn-group">
+                <button type="button" id="class-subjects-details-back-btn" class="btn-secondary">Back to Class Subjects</button>
+                <button type="button" id="class-subjects-details-edit-btn" class="btn-primary">Edit</button>
+                <button type="button" id="class-subjects-details-deactivate-btn" class="btn-secondary">Deactivate</button>
+            </div>
+        </div>
+        <div class="card p-4">
+            <div class="ba-flex-panel">
+                <div class="form-group ba-flex-1"><label>Subject Code</label><div id="class-subjects-detail-code" class="detail-text">—</div></div>
+                <div class="form-group ba-flex-1"><label>Subject Name</label><div id="class-subjects-detail-name" class="detail-text">—</div></div>
+                <div class="form-group ba-flex-1"><label>Requirement</label><div id="class-subjects-detail-requirement" class="detail-text">—</div></div>
+            </div>
+            <div class="ba-flex-panel">
+                <div class="form-group ba-flex-1"><label>Starting Class</label><div id="class-subjects-detail-start-class" class="detail-text">—</div></div>
+                <div class="form-group ba-flex-1"><label>Ending Class</label><div id="class-subjects-detail-end-class" class="detail-text">—</div></div>
+                <div class="form-group ba-flex-1"><label>Academic Year</label><div id="class-subjects-detail-year" class="detail-text">—</div></div>
+            </div>
+            <div class="form-group mb-0"><label>Applies To</label><div id="class-subjects-detail-range" class="detail-text">—</div></div>
+        </div>
+    </section>
+
+    <template id="class-subjects-row-template">
+        <tr>
+            <td class="col-serial font-monospace text-muted"></td><td class="col-code"></td><td class="col-name"><strong></strong></td>
+            <td><span class="col-requirement status-badge badge"></span></td><td class="col-range"></td><td class="col-year"></td>
+            <td class="col-action align-center">
+                <button type="button" class="btn-secondary btn-sm class-subjects-view-btn me-1" title="View" aria-label="View configuration"><i class="bi bi-eye" aria-hidden="true"></i></button>
+                <button type="button" class="btn-primary btn-sm class-subjects-edit-btn me-1" title="Edit" aria-label="Edit configuration"><i class="bi bi-pencil" aria-hidden="true"></i></button>
+                <button type="button" class="btn-secondary btn-sm class-subjects-deactivate-btn" title="Deactivate" aria-label="Deactivate configuration"><i class="bi bi-ban" aria-hidden="true"></i></button>
+            </td>
+        </tr>
+    </template>
+</div>

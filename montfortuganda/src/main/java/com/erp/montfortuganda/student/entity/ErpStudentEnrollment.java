@@ -88,6 +88,13 @@ public class ErpStudentEnrollment {
     @Column(name = "academic_year_id", nullable = false)
     private Long academicYearId;
 
+    /**
+     * Joining academic term for this enrollment. The database column is
+     * nullable to preserve compatibility with existing enrollment records.
+     */
+    @Column(name = "term_id")
+    private Long termId;
+
     @NotNull(message = "Class is required")
     @Column(name = "class_id", nullable = false)
     private Integer classId;

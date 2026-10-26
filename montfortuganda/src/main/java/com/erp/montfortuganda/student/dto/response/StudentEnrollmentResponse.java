@@ -23,6 +23,8 @@ public record StudentEnrollmentResponse(
 
         Long academicYearId,
 
+        Long termId,
+
         String academicYearName,
 
         Integer classId,

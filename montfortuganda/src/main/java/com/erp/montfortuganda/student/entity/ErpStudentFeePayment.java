@@ -10,7 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.DynamicUpdate;
-
+import com.erp.montfortuganda.fees.entity.ErpStudentFeeAssignment;
 import java.io.Serial;
 import java.io.Serializable;
 import java.math.BigDecimal;

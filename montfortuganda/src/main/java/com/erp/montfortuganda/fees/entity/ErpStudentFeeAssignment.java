@@ -1,6 +1,7 @@
-package com.erp.montfortuganda.student.entity;
+package com.erp.montfortuganda.fees.entity;
 
 import com.erp.montfortuganda.school.entity.Branch;
+import com.erp.montfortuganda.student.entity.ErpStudent;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
@@ -112,6 +113,13 @@ public class ErpStudentFeeAssignment implements Serializable {
     @Size(max = 50, message = "Fee type cannot exceed 50 characters")
     @Column(name = "fee_type", nullable = false, length = 50)
     private String feeType;
+
+    /**
+     * Optional link to the configured fee item that generated this assignment.
+     * Nullable to preserve legacy/manual assignments already stored in the database.
+     */
+    @Column(name = "fee_structure_item_id")
+    private Long feeStructureItemId;
 
     @NotNull(message = "Total fee is required")
     @DecimalMin(value = "0.00", message = "Total fee cannot be negative")

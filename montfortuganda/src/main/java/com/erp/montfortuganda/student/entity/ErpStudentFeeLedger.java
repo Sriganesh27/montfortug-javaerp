@@ -1,5 +1,6 @@
 package com.erp.montfortuganda.student.entity;
 
+import com.erp.montfortuganda.fees.entity.ErpStudentFeeAssignment;
 import com.erp.montfortuganda.school.entity.Branch;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;

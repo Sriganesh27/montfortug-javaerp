@@ -153,6 +153,24 @@ public class StudentServiceImpl implements StudentService {
                         request.applicationId()
                 );
 
+        Long effectiveTermId = request.enrollment().termId();
+        if (application != null && application.getJoiningTermId() != null) {
+            Long applicationTermId = application.getJoiningTermId();
+            if (effectiveTermId != null && !effectiveTermId.equals(applicationTermId)) {
+                throw new BadRequestException(
+                        "The enrollment term must match the joining term selected on the admission application."
+                );
+            }
+            effectiveTermId = applicationTermId;
+        }
+
+        // Validate the term before creating any student-related records.
+        validationService.validateEnrollmentTerm(
+                effectiveTermId,
+                request.enrollment().academicYearId(),
+                branch.getBranchId()
+        );
+
         // Validate the effective day type before creating any student records.
         // An admission-linked student inherits the value already stored on the
         // application; a manually added student uses the enrollment request.
@@ -215,6 +233,7 @@ public class StudentServiceImpl implements StudentService {
                         branch,
                         authenticatedUserId
                 );
+        enrollment.setTermId(effectiveTermId);
 
         // When a student is created from an admission application, carry the
         // arrangement approved/requested on that application into the initial

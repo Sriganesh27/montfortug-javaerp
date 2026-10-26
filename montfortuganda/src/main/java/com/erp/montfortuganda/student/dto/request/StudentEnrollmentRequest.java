@@ -34,7 +34,6 @@ public record StudentEnrollmentRequest(
         @NotNull(message = "Admission type is required.")
         AdmissionType admissionType,
 
-
         Boolean scholarshipRequired,
 
         @PastOrPresent(
@@ -52,12 +51,47 @@ public record StudentEnrollmentRequest(
          * Day arrangement for this academic-year enrollment.
          * The backend validates whether HALF_DAY is permitted for the class.
          */
-        String schoolDayType
+        String schoolDayType,
+
+        /**
+         * Optional joining term. When converting an admission application,
+         * the application's validated joining term takes precedence.
+         */
+        Long termId
 ) {
 
     /**
-     * Backward-compatible constructor for existing Java call sites.
-     * Requests created through older call sites default to FULL_DAY.
+     * Backward-compatible constructor for existing call sites that provide
+     * schoolDayType but do not provide termId.
+     */
+    public StudentEnrollmentRequest(
+            Long academicYearId,
+            Integer classId,
+            Long sectionId,
+            String rollNo,
+            AdmissionType admissionType,
+            Boolean scholarshipRequired,
+            LocalDate joiningDate,
+            String remarks,
+            String schoolDayType
+    ) {
+        this(
+                academicYearId,
+                classId,
+                sectionId,
+                rollNo,
+                admissionType,
+                scholarshipRequired,
+                joiningDate,
+                remarks,
+                schoolDayType,
+                null
+        );
+    }
+
+    /**
+     * Backward-compatible constructor for existing call sites that do not
+     * supply either a day type or a term. Older calls default to FULL_DAY.
      */
     public StudentEnrollmentRequest(
             Long academicYearId,
@@ -78,7 +112,8 @@ public record StudentEnrollmentRequest(
                 scholarshipRequired,
                 joiningDate,
                 remarks,
-                "FULL_DAY"
+                "FULL_DAY",
+                null
         );
     }
 }

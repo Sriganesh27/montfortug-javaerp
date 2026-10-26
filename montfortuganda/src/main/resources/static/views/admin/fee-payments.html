@@ -1,0 +1,73 @@
+<div id="ba-fee-payments-view" class="fade-in erp-record-module">
+    <div class="view-header">
+        <div><h2>Student Fee Payments</h2></div>
+        <div class="action-btn-group"><button type="button" id="fee-payments-refresh" class="btn-secondary"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button></div>
+    </div>
+
+    <div class="card p-3 mb-3">
+        <form id="fee-payments-student-form" novalidate>
+            <div class="ba-flex-panel">
+                <div class="form-group ba-flex-1">
+                    <label for="fee-payments-student-id">Student ID <span class="text-danger">*</span></label>
+                    <input id="fee-payments-student-id" class="detail-input w-100" type="number" min="1" step="1" required placeholder="Enter student ID">
+                </div>
+                <div class="form-group d-flex align-items-end"><button type="submit" class="btn-primary">Load Fee Details</button></div>
+            </div>
+            <small class="text-muted">This screen uses the existing student fee-assignment and payment-history APIs. Enter the internal numeric student ID.</small>
+        </form>
+    </div>
+
+    <div id="fee-payments-student-summary" class="card p-3 mb-3" hidden>
+        <h5 id="fee-payments-student-name">Student</h5>
+        <small id="fee-payments-student-meta" class="text-muted"></small>
+    </div>
+
+    <div class="card p-0 mb-3">
+        <div class="p-3"><h5 class="mb-0">Fee Assignments</h5></div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead><tr><th>Fee</th><th>Academic Year</th><th>Term</th><th>Payable</th><th>Paid</th><th>Balance</th><th>Due Date</th><th>Status</th><th class="text-end">Action</th></tr></thead>
+                <tbody id="fee-payments-assignments-body"><tr><td colspan="9" class="text-center py-4 text-muted">Enter a student ID to view fee assignments.</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card p-0">
+        <div class="p-3"><h5 class="mb-0">Payment History</h5></div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead><tr><th>Receipt</th><th>Date</th><th>Fee</th><th>Amount</th><th>Mode</th><th>Reference</th><th>Status</th></tr></thead>
+                <tbody id="fee-payments-history-body"><tr><td colspan="7" class="text-center py-4 text-muted">Enter a student ID to view payment history.</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="fee-payment-record-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Record Fee Payment</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <form id="fee-payment-record-form">
+                <div class="modal-body">
+                    <div class="alert alert-light"><div id="fee-payment-modal-fee-name" class="fw-semibold"></div><div id="fee-payment-modal-balance" class="text-muted"></div></div>
+                    <div class="form-group"><label for="fee-payment-amount">Payment Amount <span class="text-danger">*</span></label><input id="fee-payment-amount" class="detail-input w-100" type="number" min="0.01" step="0.01" required></div>
+                    <div class="form-group mt-3"><label for="fee-payment-mode">Payment Mode <span class="text-danger">*</span></label><select id="fee-payment-mode" class="detail-input w-100" required>
+                        <option value="">Select mode</option>
+                        <option value="CASH">Cash</option>
+                        <option value="CHEQUE">Cheque</option>
+                        <option value="BANK_TRANSFER">Bank transfer</option>
+                        <option value="MOBILE_MONEY">Mobile money</option>
+                        <option value="CREDIT_CARD">Credit card</option>
+                        <option value="DEBIT_CARD">Debit card</option>
+                        <option value="ONLINE">Online</option>
+                        <option value="SCHOLARSHIP">Scholarship</option>
+                        <option value="WAIVER">Waiver</option>
+                    </select></div>
+                    <div class="form-group mt-3"><label for="fee-payment-reference">Transaction Reference</label><input id="fee-payment-reference" class="detail-input w-100" maxlength="150"></div>
+                    <div class="form-group mt-3"><label for="fee-payment-collection-point">Collection Point</label><input id="fee-payment-collection-point" class="detail-input w-100" maxlength="100" placeholder="e.g. School office"></div>
+                    <div class="form-group mt-3"><label for="fee-payment-remarks">Remarks</label><textarea id="fee-payment-remarks" class="detail-input w-100" rows="2"></textarea></div>
+                    <div class="alert alert-warning mt-3 mb-0">Confirm the amount and payment evidence before recording. This action creates a financial record.</div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" id="fee-payment-submit" class="btn-primary">Record Payment</button></div>
+            </form>
+        </div></div>
+    </div>
+</div>

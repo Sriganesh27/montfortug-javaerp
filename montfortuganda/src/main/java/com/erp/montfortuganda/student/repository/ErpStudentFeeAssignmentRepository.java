@@ -1,14 +1,17 @@
 package com.erp.montfortuganda.student.repository;
 
-import com.erp.montfortuganda.student.entity.ErpStudentFeeAssignment;
-import com.erp.montfortuganda.student.entity.ErpStudentFeeAssignment.FeeStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
-
+import com.erp.montfortuganda.fees.entity.ErpStudentFeeAssignment;
+import com.erp.montfortuganda.fees.entity.ErpStudentFeeAssignment.FeeStatus;
+import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
@@ -17,6 +20,24 @@ import java.util.Optional;
 public interface ErpStudentFeeAssignmentRepository
         extends JpaRepository<ErpStudentFeeAssignment, Long>,
         JpaSpecificationExecutor<ErpStudentFeeAssignment> {
+
+    /**
+     * Locks a fee assignment for payment processing and enforces branch ownership.
+     * This prevents concurrent payments from using the same stale outstanding balance.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select assignment
+            from ErpStudentFeeAssignment assignment
+            join fetch assignment.student
+            join fetch assignment.branch
+            where assignment.feeAssignmentId = :feeAssignmentId
+              and assignment.branch.branchId = :branchId
+            """)
+    Optional<ErpStudentFeeAssignment> findForPaymentUpdate(
+            @Param("feeAssignmentId") Long feeAssignmentId,
+            @Param("branchId") Integer branchId
+    );
 
     /**
      * Loads one fee assignment while enforcing branch ownership.
@@ -84,13 +105,45 @@ public interface ErpStudentFeeAssignmentRepository
     );
 
     /**
-     * Checks the database unique combination before inserting.
+     * Checks for a duplicate assignment in the same academic year and term.
      */
     boolean existsByStudent_StudentIdAndAcademicYearIgnoreCaseAndTermIgnoreCaseAndFeeNameIgnoreCase(
             Long studentId,
             String academicYear,
             String term,
             String feeName
+    );
+
+    /**
+     * Same-term duplicate check scoped to the student's branch and active records.
+     */
+    boolean existsByStudent_StudentIdAndBranch_BranchIdAndAcademicYearIgnoreCaseAndTermIgnoreCaseAndFeeNameIgnoreCaseAndActiveTrue(
+            Long studentId,
+            Integer branchId,
+            String academicYear,
+            String term,
+            String feeName
+    );
+
+    /**
+     * Checks whether a per-academic-year fee already exists in any term of that year.
+     */
+    boolean existsByStudent_StudentIdAndBranch_BranchIdAndAcademicYearIgnoreCaseAndFeeNameIgnoreCaseAndFeeTypeIgnoreCaseAndActiveTrue(
+            Long studentId,
+            Integer branchId,
+            String academicYear,
+            String feeName,
+            String feeType
+    );
+
+    /**
+     * Checks whether a one-time or admission fee has already been assigned in this branch.
+     */
+    boolean existsByStudent_StudentIdAndBranch_BranchIdAndFeeNameIgnoreCaseAndFeeTypeIgnoreCaseAndActiveTrue(
+            Long studentId,
+            Integer branchId,
+            String feeName,
+            String feeType
     );
 
     /**

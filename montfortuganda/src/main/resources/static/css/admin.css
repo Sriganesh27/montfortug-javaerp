@@ -12908,3 +12908,222 @@ body.erp-modal-open{
     #ba-classes-view .class-detail-item:nth-last-child(-n + 2) { border-bottom: 1px solid var(--border-color, #e5e7eb); }
     #ba-classes-view .class-detail-item:last-child { border-bottom: 0; }
 }
+
+/*
+ * Montfort Uganda ERP — Fee module scoped styles
+ * Uses the existing global/admin styles for cards, buttons, tables, inputs,
+ * badges, view headers and modal components. All additional rules are scoped
+ * to the Fee Structures / Fee Payments views to avoid affecting other modules.
+ */
+
+#ba-fee-structures-view,
+#ba-fee-payments-view {
+    min-width: 0;
+    width: 100%;
+}
+
+#ba-fee-structures-view [hidden],
+#ba-fee-payments-view [hidden] {
+    display: none !important;
+}
+
+#ba-fee-structures-view .ba-flex-panel,
+#ba-fee-payments-view .ba-flex-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+}
+
+#ba-fee-structures-view .ba-flex-1,
+#ba-fee-payments-view .ba-flex-1 {
+    flex: 1 1 190px;
+    min-width: 0;
+}
+
+#ba-fee-structures-view .form-group,
+#ba-fee-payments-view .form-group {
+    min-width: 0;
+}
+
+#ba-fee-structures-view label,
+#ba-fee-payments-view label {
+    display: block;
+    margin-bottom: 0.4rem;
+}
+
+#ba-fee-structures-view .detail-input,
+#ba-fee-payments-view .detail-input {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+#ba-fee-structures-view textarea.detail-input,
+#ba-fee-payments-view textarea.detail-input {
+    resize: vertical;
+}
+
+#ba-fee-structures-view .view-header,
+#ba-fee-payments-view .view-header {
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+#ba-fee-structures-view .action-btn-group,
+#ba-fee-payments-view .action-btn-group {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+#ba-fee-structures-view .table-responsive,
+#ba-fee-payments-view .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+#ba-fee-structures-view table,
+#ba-fee-payments-view table {
+    width: 100%;
+    margin-bottom: 0;
+    vertical-align: middle;
+}
+
+#ba-fee-structures-view th,
+#ba-fee-structures-view td,
+#ba-fee-payments-view th,
+#ba-fee-payments-view td {
+    vertical-align: middle;
+}
+
+#ba-fee-structures-view td,
+#ba-fee-payments-view td {
+    overflow-wrap: anywhere;
+}
+
+#ba-fee-structures-view .text-nowrap,
+#ba-fee-payments-view .text-nowrap {
+    white-space: nowrap;
+}
+
+#ba-fee-structures-view .badge,
+#ba-fee-payments-view .badge {
+    white-space: nowrap;
+}
+
+#ba-fee-structures-view #fee-structures-items-panel .view-header {
+    align-items: center;
+}
+
+#ba-fee-structures-view #fee-structures-items-panel tfoot th {
+    border-top: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+#ba-fee-structures-view #fee-structures-count,
+#ba-fee-structures-view #fee-structures-page {
+    white-space: nowrap;
+}
+
+#ba-fee-structures-view #fee-structure-item-modal .modal-content,
+#ba-fee-structures-view #fee-structure-assign-modal .modal-content,
+#ba-fee-payments-view #fee-payment-record-modal .modal-content {
+    border-radius: var(--bs-modal-border-radius, 0.5rem);
+}
+
+#ba-fee-structures-view .modal-body,
+#ba-fee-payments-view .modal-body {
+    min-width: 0;
+}
+
+#ba-fee-structures-view .form-check {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+#ba-fee-structures-view .form-check label {
+    display: inline;
+    margin: 0;
+}
+
+#ba-fee-structures-view .form-check-input {
+    flex: 0 0 auto;
+    margin-top: 0;
+}
+
+#ba-fee-payments-view #fee-payments-student-summary {
+    overflow-wrap: anywhere;
+}
+
+#ba-fee-payments-view #fee-payment-modal-balance {
+    margin-top: 0.25rem;
+}
+
+#ba-fee-structures-view button:disabled,
+#ba-fee-payments-view button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+@media (max-width: 767.98px) {
+    #ba-fee-structures-view .view-header,
+    #ba-fee-payments-view .view-header {
+        align-items: flex-start;
+    }
+
+    #ba-fee-structures-view .action-btn-group,
+    #ba-fee-payments-view .action-btn-group {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    #ba-fee-structures-view .action-btn-group button,
+    #ba-fee-payments-view .action-btn-group button {
+        max-width: 100%;
+    }
+
+    #ba-fee-structures-view #fee-structures-list-view > .card,
+    #ba-fee-payments-view > .card {
+        min-width: 0;
+    }
+
+    #ba-fee-structures-view .ba-flex-panel,
+    #ba-fee-payments-view .ba-flex-panel {
+        gap: 0.75rem;
+    }
+
+    #ba-fee-structures-view .ba-flex-1,
+    #ba-fee-payments-view .ba-flex-1 {
+        flex-basis: 100%;
+    }
+
+    #ba-fee-structures-view #fee-structures-count,
+    #ba-fee-structures-view #fee-structures-page {
+        white-space: normal;
+    }
+}
+
+
+/* Fee module modal visibility and spacing safeguards */
+#ba-fee-structures-view .modal:not(.show),
+#ba-fee-payments-view .modal:not(.show) { display: none; }
+#ba-fee-structures-view .modal.show,
+#ba-fee-payments-view .modal.show { display: block; }
+#ba-fee-structures-view .modal-dialog,
+#ba-fee-payments-view .modal-dialog {
+    max-width: min(900px, calc(100vw - 2rem));
+    margin: 1.75rem auto;
+}
+#ba-fee-structures-view .modal-footer,
+#ba-fee-payments-view .modal-footer {
+    display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .5rem;
+}
+#ba-fee-structures-view .modal-footer > *,
+#ba-fee-payments-view .modal-footer > * { margin: 0; }
+@media (max-width: 767.98px) {
+  #ba-fee-structures-view .modal-dialog,
+  #ba-fee-payments-view .modal-dialog { max-width: calc(100vw - 1rem); margin: .5rem auto; }
+}

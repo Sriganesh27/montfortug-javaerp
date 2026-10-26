@@ -3,6 +3,10 @@ package com.erp.montfortuganda.student.repository;
 import com.erp.montfortuganda.student.entity.ErpStudentEnrollment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -21,6 +25,19 @@ public interface ErpStudentEnrollmentRepository
             Long enrollmentId,
             Integer branchId
     );
+
+
+    /** Locks the branch-owned enrollment while its subject selection is replaced. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = {"student", "branch"})
+    @Query("""
+            select enrollment from ErpStudentEnrollment enrollment
+            where enrollment.enrollmentId = :enrollmentId
+              and enrollment.branch.branchId = :branchId
+            """)
+    Optional<ErpStudentEnrollment> findForSubjectSelectionUpdate(
+            @Param("enrollmentId") Long enrollmentId,
+            @Param("branchId") Integer branchId);
 
     /**
      * Finds the student's current enrollment in the authenticated branch.

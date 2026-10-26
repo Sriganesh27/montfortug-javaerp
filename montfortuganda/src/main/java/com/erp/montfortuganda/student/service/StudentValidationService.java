@@ -661,6 +661,54 @@ public class StudentValidationService {
         );
     }
 
+    /**
+     * Validates an optional enrollment term against the selected academic
+     * year and authenticated branch. Terms marked CLOSED or inactive cannot
+     * be selected for a new enrollment.
+     */
+    public void validateEnrollmentTerm(
+            Long termId,
+            Long academicYearId,
+            Integer branchId
+    ) {
+        if (termId == null) {
+            return;
+        }
+
+        if (academicYearId == null || branchId == null) {
+            throw new BadRequestException(
+                    "An academic year and branch are required when selecting a term."
+            );
+        }
+
+        Number count =
+                (Number) entityManager
+                        .createNativeQuery(
+                                """
+                                select count(*)
+                                from erp_academic_terms term_record
+                                join erp_academic_years year_record
+                                  on year_record.academic_year_id = term_record.academic_year_id
+                                where term_record.term_id = :termId
+                                  and term_record.academic_year_id = :academicYearId
+                                  and year_record.branch_id = :branchId
+                                  and year_record.active = 1
+                                  and term_record.active = 1
+                                  and upper(term_record.status) <> 'CLOSED'
+                                """
+                        )
+                        .setParameter("termId", termId)
+                        .setParameter("academicYearId", academicYearId)
+                        .setParameter("branchId", branchId)
+                        .getSingleResult();
+
+        if (count.longValue() == 0) {
+            throw new BadRequestException(
+                    "The selected term is inactive, closed, or does not belong to the selected academic year and branch."
+            );
+        }
+    }
+
     private void validateAcademicPlacement(
             Integer branchId,
             Long academicYearId,

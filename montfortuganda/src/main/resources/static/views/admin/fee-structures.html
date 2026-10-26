@@ -1,0 +1,147 @@
+<div id="ba-fee-structures-view" class="fade-in erp-record-module">
+    <section id="fee-structures-list-view">
+        <div class="view-header">
+            <div><h2>Fee Structures</h2></div>
+            <div class="action-btn-group">
+                <button type="button" id="fee-structures-refresh" class="btn-secondary"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</button>
+                <button type="button" id="fee-structures-add" class="btn-primary"><i class="bi bi-plus-lg me-1"></i>Create Fee Structure</button>
+            </div>
+        </div>
+
+        <div class="card mb-3 p-3">
+            <form id="fee-structures-filter-form" novalidate>
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1">
+                        <label for="fee-structures-filter-year">Academic Year</label>
+                        <select id="fee-structures-filter-year" class="detail-input w-100"><option value="">All academic years</option></select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="fee-structures-filter-term">Term</label>
+                        <select id="fee-structures-filter-term" class="detail-input w-100"><option value="">All terms</option></select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="fee-structures-filter-class">Class</label>
+                        <select id="fee-structures-filter-class" class="detail-input w-100"><option value="">All classes</option></select>
+                    </div>
+                    <div class="form-group ba-flex-1">
+                        <label for="fee-structures-filter-status">Status</label>
+                        <select id="fee-structures-filter-status" class="detail-input w-100">
+                            <option value="">All statuses</option><option value="DRAFT">Draft</option><option value="PUBLISHED">Published</option><option value="ARCHIVED">Archived</option>
+                        </select>
+                    </div>
+                    <div class="form-group d-flex align-items-end">
+                        <button type="submit" class="btn-primary">Apply Filters</button>
+                    </div>
+                    <div class="form-group d-flex align-items-end">
+                        <button type="button" id="fee-structures-reset-filters" class="btn-secondary">Reset</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card p-0">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr>
+                        <th>Academic Year</th><th>Term</th><th>Class</th><th>Version</th><th>Fee Items</th><th>Total</th><th>Status</th><th>Updated</th><th class="text-end">Actions</th>
+                    </tr></thead>
+                    <tbody id="fee-structures-table-body"><tr><td colspan="9" class="text-center py-4">Loading fee structures...</td></tr></tbody>
+                </table>
+            </div>
+            <div class="d-flex justify-content-between align-items-center p-3">
+                <small id="fee-structures-count" class="text-muted">0 records</small>
+                <div class="d-flex gap-2">
+                    <button type="button" id="fee-structures-prev" class="btn-secondary" disabled>Previous</button>
+                    <span id="fee-structures-page" class="align-self-center">Page 1</span>
+                    <button type="button" id="fee-structures-next" class="btn-secondary" disabled>Next</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="fee-structures-editor-view" hidden>
+        <div class="view-header">
+            <div><h2 id="fee-structures-editor-title">Create Fee Structure</h2></div>
+            <div class="action-btn-group">
+                <button type="button" id="fee-structures-editor-back" class="btn-secondary"><i class="bi bi-arrow-left me-1"></i>Back to List</button>
+            </div>
+        </div>
+
+        <div class="card mb-3 p-3">
+            <h5>Structure Details</h5>
+            <div class="ba-flex-panel">
+                <div class="form-group ba-flex-1">
+                    <label for="fee-structures-year">Academic Year <span class="text-danger">*</span></label>
+                    <select id="fee-structures-year" class="detail-input w-100" required></select>
+                </div>
+                <div class="form-group ba-flex-1">
+                    <label for="fee-structures-term">Term <span class="text-danger">*</span></label>
+                    <select id="fee-structures-term" class="detail-input w-100" required></select>
+                </div>
+                <div class="form-group ba-flex-1">
+                    <label for="fee-structures-class">Class <span class="text-danger">*</span></label>
+                    <select id="fee-structures-class" class="detail-input w-100" required></select>
+                </div>
+            </div>
+            <div class="form-group mt-2">
+                <label for="fee-structures-remarks">Remarks</label>
+                <textarea id="fee-structures-remarks" class="detail-input w-100" rows="2" maxlength="500" placeholder="Optional notes for this fee structure"></textarea>
+            </div>
+            <div class="mt-3"><button type="button" id="fee-structures-save-details" class="btn-primary">Continue to Fee Components</button></div>
+            <small id="fee-structures-edit-note" class="text-muted d-block mt-2">Academic year, term and class are fixed after the structure is created.</small>
+        </div>
+
+        <div id="fee-structures-items-panel" class="card p-3" hidden>
+            <div class="view-header">
+                <div><h5>Fee Components</h5><small class="text-muted">Add and review all components before publishing. Published structures are read-only.</small></div>
+                <div class="action-btn-group"><button type="button" id="fee-structures-add-item" class="btn-primary"><i class="bi bi-plus-lg me-1"></i>Add Fee Component</button></div>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead><tr><th>Fee Type</th><th>Fee Name</th><th>Amount</th><th>Frequency</th><th>Due Date</th><th>Required</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+                    <tbody id="fee-structures-items-body"><tr><td colspan="8" class="text-center py-3">No fee components added.</td></tr></tbody>
+                    <tfoot><tr><th colspan="2" class="text-end">Active component total</th><th id="fee-structures-total">0.00</th><th colspan="5"></th></tr></tfoot>
+                </table>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <button type="button" id="fee-structures-assign" class="btn-secondary">Assign to Eligible Students</button>
+                <button type="button" id="fee-structures-publish" class="btn-primary">Publish Structure</button>
+                <button type="button" id="fee-structures-archive" class="btn-secondary">Archive Structure</button>
+            </div>
+            <small id="fee-structures-status-note" class="text-muted d-block mt-2"></small>
+        </div>
+    </section>
+
+    <div class="modal fade" id="fee-structure-item-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" id="fee-structure-item-modal-title">Add Fee Component</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <form id="fee-structure-item-form">
+                <div class="modal-body">
+                    <div class="ba-flex-panel">
+                        <div class="form-group ba-flex-1"><label for="fee-item-type">Fee Type <span class="text-danger">*</span></label><input id="fee-item-type" class="detail-input w-100" maxlength="50" required placeholder="e.g. TUITION"></div>
+                        <div class="form-group ba-flex-1"><label for="fee-item-name">Fee Name <span class="text-danger">*</span></label><input id="fee-item-name" class="detail-input w-100" maxlength="150" required placeholder="e.g. Term Tuition Fee"></div>
+                        <div class="form-group ba-flex-1"><label for="fee-item-amount">Amount <span class="text-danger">*</span></label><input id="fee-item-amount" class="detail-input w-100" type="number" min="0" step="0.01" required></div>
+                    </div>
+                    <div class="ba-flex-panel mt-3">
+                        <div class="form-group ba-flex-1"><label for="fee-item-frequency">Charging Frequency <span class="text-danger">*</span></label><select id="fee-item-frequency" class="detail-input w-100" required><option value="ONE_TIME">One time</option><option value="PER_TERM">Per term</option><option value="PER_ACADEMIC_YEAR">Per academic year</option><option value="PER_ADMISSION">Per admission</option><option value="AS_REQUIRED">As required</option></select></div>
+                        <div class="form-group ba-flex-1"><label for="fee-item-due-date">Due Date</label><input id="fee-item-due-date" class="detail-input w-100" type="date"></div>
+                        <div class="form-group ba-flex-1"><label for="fee-item-order">Display Order</label><input id="fee-item-order" class="detail-input w-100" type="number" min="0" step="1" value="0" required></div>
+                    </div>
+                    <div class="form-check mt-3"><input class="form-check-input" type="checkbox" id="fee-item-mandatory" checked><label class="form-check-label" for="fee-item-mandatory">Mandatory fee</label></div>
+                    <div class="form-group mt-3"><label for="fee-item-remarks">Remarks</label><textarea id="fee-item-remarks" class="detail-input w-100" rows="2" maxlength="500"></textarea></div>
+                </div>
+                <div class="modal-footer"><button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" id="fee-item-save" class="btn-primary">Save Component</button></div>
+            </form>
+        </div></div>
+    </div>
+
+    <div class="modal fade" id="fee-structure-assign-modal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog"><div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title">Assign Fee Structure</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+            <form id="fee-structure-assign-form"><div class="modal-body">
+                <p>Assign this published fee structure to eligible enrolled students. Use internal student IDs from the existing Students module; existing assignments are checked by the backend.</p>
+                <div class="form-group"><label for="fee-assign-student-ids">Student IDs <span class="text-danger">*</span></label><textarea id="fee-assign-student-ids" class="detail-input w-100" rows="3" required placeholder="Example: 101, 102, 103"></textarea><small class="text-muted">Separate IDs with commas or spaces. Do not enter admission numbers here.</small></div>
+            </div><div class="modal-footer"><button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="submit" class="btn-primary">Assign Fees</button></div></form>
+        </div></div>
+    </div>
+</div>
