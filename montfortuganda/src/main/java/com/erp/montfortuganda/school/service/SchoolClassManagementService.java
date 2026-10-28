@@ -51,6 +51,33 @@ public class SchoolClassManagementService {
                 .stream().map(SchoolClassResponse::fromEntity).toList();
     }
 
+    /**
+     * Lists active classes in the authenticated branch that were introduced
+     * on or before the selected academic year. Level filtering is performed
+     * by the repository, not by the frontend.
+     */
+    public List<SchoolClassResponse> listAvailableClasses(Long academicYearId, Integer levelId) {
+        if (academicYearId == null || academicYearId <= 0) {
+            throw new BadRequestException("A valid academic year is required.");
+        }
+
+        Integer branchId = requireBranchId();
+        academicYearRepository
+                .findByAcademicYearIdAndBranchBranchIdAndActiveTrue(academicYearId, branchId)
+                .orElseThrow(() -> new BadRequestException(
+                        "Selected academic year is inactive or does not belong to your branch."));
+
+        if (levelId != null) {
+            requireActiveLevel(levelId);
+        }
+
+        return schoolClassRepository
+                .findAvailableForBranchAndAcademicYear(branchId, academicYearId, levelId, 1)
+                .stream()
+                .map(SchoolClassResponse::fromEntity)
+                .toList();
+    }
+
     public SchoolClassResponse getClass(Integer classId) {
         Integer branchId = requireBranchId();
         return SchoolClassResponse.fromEntity(requireOwnedClass(classId, branchId));

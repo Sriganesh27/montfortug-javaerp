@@ -1,31 +1,8 @@
 package com.erp.montfortuganda.fees.dto;
-
 import com.erp.montfortuganda.fees.entity.ErpFeeStructure.StructureStatus;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
-public record FeeStructureResponse(
-        Long feeStructureId,
-        Integer branchId,
-        Long academicYearId,
-        String academicYearCode,
-        String academicYearName,
-        Integer classId,
-        String classCode,
-        String className,
-        Integer levelId,
-        String levelName,
-        Long termId,
-        String termCode,
-        String termName,
-        Integer versionNo,
-        StructureStatus structureStatus,
-        LocalDateTime publishedAt,
-        String remarks,
-        Long rowVersion,
-        LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        List<FeeStructureItemResponse> items
-) {
-}
+import com.erp.montfortuganda.fees.entity.ErpFeeStructure.ChargingFrequency;
+import java.math.BigDecimal; import java.time.LocalDateTime;
+public record FeeStructureResponse(Long feeStructureId,Integer branchId,Long academicYearId,String academicYearCode,String academicYearName,
+ Integer levelId,String levelName,Integer startClassId,String startClassName,Integer endClassId,String endClassName,
+ String feeName,String feeType,String feeCode,BigDecimal amount,ChargingFrequency chargingFrequency,Integer versionNo,StructureStatus structureStatus,
+ Boolean active,LocalDateTime publishedAt,String remarks,Long rowVersion,LocalDateTime createdAt,LocalDateTime updatedAt) {}

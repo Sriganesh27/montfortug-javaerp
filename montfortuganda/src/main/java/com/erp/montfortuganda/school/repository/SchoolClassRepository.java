@@ -105,4 +105,26 @@ public interface SchoolClassRepository extends JpaRepository<SchoolClass, Intege
             @Param("academicYearId") Long academicYearId,
             @Param("status") Integer status);
 
+    /** Checks whether a level has active classes available in the selected academic year. */
+    @Query("""
+            select case when count(c) > 0 then true else false end
+            from SchoolClass c
+            join c.academicYear introductionYear
+            join ErpAcademicYear selectedYear
+              on selectedYear.academicYearId = :academicYearId
+            where c.branch.branchId = :branchId
+              and c.level.levelId = :levelId
+              and c.level.status = :status
+              and introductionYear.branch.branchId = :branchId
+              and selectedYear.branch.branchId = :branchId
+              and selectedYear.active = true
+              and introductionYear.startDate <= selectedYear.startDate
+              and c.status = :status
+            """)
+    boolean existsAvailableForBranchAndAcademicYearAndLevel(
+            @Param("branchId") Integer branchId,
+            @Param("academicYearId") Long academicYearId,
+            @Param("levelId") Integer levelId,
+            @Param("status") Integer status);
+
 }

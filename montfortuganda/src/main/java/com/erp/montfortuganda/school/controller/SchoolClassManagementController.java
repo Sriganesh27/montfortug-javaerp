@@ -32,6 +32,19 @@ public class SchoolClassManagementController {
         return noStore(ApiResponse.success("Classes fetched successfully.", service.listClasses()));
     }
 
+    /**
+     * Returns active classes introduced in or before the selected academic year,
+     * restricted to the authenticated branch and optional education level.
+     */
+    @GetMapping("/available")
+    public ResponseEntity<ApiResponse<List<SchoolClassResponse>>> listAvailableClasses(
+            @RequestParam @Positive(message = "Academic year ID must be greater than zero.") Long academicYearId,
+            @RequestParam(required = false) @Positive(message = "Level ID must be greater than zero.") Integer levelId) {
+        return noStore(ApiResponse.success(
+                "Available classes fetched successfully.",
+                service.listAvailableClasses(academicYearId, levelId)));
+    }
+
     @GetMapping("/{classId:\\d+}")
     public ResponseEntity<ApiResponse<SchoolClassResponse>> getClass(
             @PathVariable @Positive(message = "Class ID must be greater than zero.") Integer classId) {

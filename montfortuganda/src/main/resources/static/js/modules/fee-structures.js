@@ -1,396 +1,777 @@
-/* global apiGet, apiPost, apiPut, apiPatch, showSuccessMessage, showErrorMessage, showLoader, hideLoader */
+/* global apiGet, apiPost, apiPut, apiDelete, showErrorMessage, showLoader, hideLoader */
 (() => {
     'use strict';
 
-    const ROOT = '#ba-fee-structures-view';
-    const API = Object.freeze({
+    const ROOT_SELECTOR = '#ba-fee-structures-view';
+    const API = {
         structures: '/branchadmin/fees/structures',
-        years: '/academic-years',
-        terms: yearId => `/academic-terms?academicYearId=${encodeURIComponent(yearId)}`,
-        classes: '/classes'
-    });
-    const PAGE_SIZE = 10;
-    let state = { root: null, structures: [], years: [], terms: [], classes: [], page: 1,
-        selected: null, editingItem: null, itemModal: null, assignModal: null, busy: false };
+        independent: '/branchadmin/fees/structures/independent-items',
+        years: '/academic-years?active=true',
+        referenceData: '/students/reference-data',
+        classes: (yearId, levelId) => {
+            const params = new URLSearchParams({ levelId: String(levelId) });
+            if (yearId) params.set('academicYearId', String(yearId));
+            return `/branchadmin/fees/structures/available-classes?${params.toString()}`;
+        }
+    };
+
+    let root;
+    let state;
+    const FEE_TYPES = ['TUITION', 'REGISTRATION', 'ADMISSION', 'EXAMINATION', 'TRANSPORT', 'BOARDING', 'DEVELOPMENT', 'LIBRARY', 'SPORTS', 'UNIFORM', 'OTHER'];
 
     document.addEventListener('viewLoaded', event => {
-        if (String(event.detail?.role || '').toLowerCase().replace(/_/g, '-') !== 'admin' || event.detail?.view !== 'fee-structures') return;
-        const init = initialize();
-        if (typeof event.detail.waitUntil === 'function') event.detail.waitUntil(init);
-        init.catch(error => { console.error('Fee Structures initialization failed.', error); notifyError(error.message || 'Unable to load Fee Structures.'); });
+        if (event.detail?.role !== 'admin' || event.detail?.view !== 'fee-structures') return;
+        const promise = initialize(event.detail.viewElement);
+        if (typeof event.detail.waitUntil === 'function') event.detail.waitUntil(promise);
+        else promise.catch(error => {
+            console.error('Fee Structures initialization failed.', error);
+            notifyError('Fee Structures could not be loaded. Please refresh the page.');
+        });
     });
 
-    async function initialize() {
-        const root = document.querySelector(ROOT);
-        if (!root || root.dataset.initialized === 'true') return;
-        state.root = root;
-        state.itemModal = window.bootstrap?.Modal ? new bootstrap.Modal(root.querySelector('#fee-structure-item-modal')) : null;
-        state.assignModal = window.bootstrap?.Modal ? new bootstrap.Modal(root.querySelector('#fee-structure-assign-modal')) : null;
+    async function initialize(viewElement) {
+        root = viewElement?.querySelector(ROOT_SELECTOR) || document.querySelector(ROOT_SELECTOR);
+        if (!root || root.dataset.initialized === 'true' || root.dataset.initialized === 'initializing') return;
+        root.dataset.initialized = 'initializing';
+        state = { source: 'MANDATORY', page: 0, size: Number(el('#fee-structures-page-size').value) || 10, totalPages: 0, totalElements: 0, requestId: 0, loading: false, saving: false, years: [], levels: [], selectedRecord: null, editingRecord: null, confirmationResolver: null, previousFocus: null, appliedFilters: { source: '', academicYearId: '', levelId: '', classId: '', status: '' } };
         bindEvents();
-        root.dataset.initialized = 'true';
-        // Independent reference lists load concurrently; no serial await waterfall.
-        // Load independent lists together. Terms depend on an academic year,
-        // so they are requested only after the years list has returned.
-        const results = await Promise.allSettled([
+        renderMessage('Loading fees...');
+        setSelectLabel('#fee-structures-filter-year', 'Loading academic years...', true);
+        setSelectLabel('#fee-structures-filter-level', 'Loading levels...', true);
+
+        const [yearsResult, referenceResult] = await Promise.allSettled([
             apiGet(API.years, { silent: true }),
-            apiGet(API.classes, { silent: true }),
-            loadStructures(true)
+            apiGet(API.referenceData, { silent: true })
         ]);
-        state.years = results[0].status === 'fulfilled' ? unwrapList(results[0].value) : [];
-        state.classes = results[1].status === 'fulfilled' ? unwrapList(results[1].value) : [];
-        populateSelects();
-        const filterYear = state.root.querySelector('#fee-structures-filter-year');
-        const editorYear = state.root.querySelector('#fee-structures-year');
-        const initialYearId = filterYear.value || editorYear.value || (state.years[0] ? String(yearId(state.years[0])) : '');
-        const termResult = initialYearId ? await loadTerms(initialYearId) : { ok: true };
-        if (filterYear && !filterYear.value && initialYearId) filterYear.value = initialYearId;
-        if (editorYear && !editorYear.value && initialYearId) editorYear.value = initialYearId;
-        updateTermsFilter(); updateTermsEditor();
-        const failed = results.slice(0, 2).filter(x => x.status === 'rejected');
-        if (failed.length || !termResult.ok) notifyError('Some reference lists could not be loaded. Check the selected academic year and your access, then refresh.');
-        renderTable();
-        if (results[2].status === 'rejected') throw results[2].reason;
+        if (yearsResult.status === 'fulfilled') {
+            state.years = asList(yearsResult.value);
+            fillSelect('#fee-structures-filter-year', state.years, 'All Academic Years', ['academicYearId', 'id'], ['academicYearName', 'yearName', 'name', 'academicYearCode']);
+        } else setSelectError('#fee-structures-filter-year', 'Unable to load academic years');
+
+        if (referenceResult.status === 'fulfilled') {
+            const reference = unwrapObject(referenceResult.value);
+            state.levels = asList(reference.levels || reference.levelOptions || reference.availableLevels);
+            fillSelect('#fee-structures-filter-level', state.levels, 'All Levels', ['levelId', 'id'], ['levelName', 'name', 'levelCode']);
+            fillSelect(root.querySelector('#fee-create-year'), state.years, 'Select Academic Year', ['academicYearId', 'id'], ['academicYearName', 'yearName', 'name', 'academicYearCode']);
+            fillSelect(root.querySelector('#fee-create-level'), state.levels, 'Select Level', ['levelId', 'id'], ['levelName', 'name', 'levelCode']);
+        } else {
+            setSelectError('#fee-structures-filter-level', 'Unable to load levels');
+            showCreateError('Level options could not be loaded. Refresh the page and try again.');
+        }
+        await loadTable();
+        root.dataset.initialized = 'true';
+        if (yearsResult.status === 'rejected' || referenceResult.status === 'rejected') notifyError('Some reference data could not be loaded. Use Refresh to retry.');
     }
 
     function bindEvents() {
-        const $ = selector => state.root.querySelector(selector);
-        $('#fee-structures-refresh').addEventListener('click', () => refreshAll());
-        $('#fee-structures-filter-form').addEventListener('submit', e => { e.preventDefault(); state.page = 1; loadStructures().then(renderTable).catch(report); });
-        $('#fee-structures-reset-filters').addEventListener('click', () => {
-            $('#fee-structures-filter-year').value = ''; $('#fee-structures-filter-term').value = '';
-            $('#fee-structures-filter-class').value = ''; $('#fee-structures-filter-status').value = '';
-            state.page = 1; loadStructures().then(renderTable).catch(report);
+        el('#fee-structures-confirm-submit').addEventListener('click', () => closeConfirmation(true));
+        el('#fee-structures-confirm-cancel').addEventListener('click', () => closeConfirmation(false));
+        el('#fee-structures-confirm-overlay').addEventListener('click', event => {
+            if (event.target === el('#fee-structures-confirm-overlay')) closeConfirmation(false);
         });
-        $('#fee-structures-add').addEventListener('click', () => openCreate());
-        $('#fee-structures-editor-back').addEventListener('click', showList);
-        $('#fee-structures-save-details').addEventListener('click', saveDetails);
-        $('#fee-structures-add-item').addEventListener('click', () => openItemEditor(null));
-        $('#fee-structure-item-form').addEventListener('submit', saveItem);
-        $('#fee-structure-assign-form').addEventListener('submit', assignStructure);
-        $('#fee-structures-publish').addEventListener('click', () => mutateSelected('publish', 'Publish this fee structure? Published structures cannot be edited.'));
-        $('#fee-structures-archive').addEventListener('click', () => mutateSelected('archive', 'Archive this fee structure?'));
-        $('#fee-structures-assign').addEventListener('click', () => {
-            if (!state.selected || state.selected.structureStatus !== 'PUBLISHED') return notifyError('Only published structures can be assigned.');
-            $('#fee-assign-student-ids').value = '';
-            state.assignModal?.show();
-            if (!state.assignModal) $('#fee-structure-assign-modal').hidden = false;
+        el('#fee-structures-confirm-overlay').addEventListener('keydown', event => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeConfirmation(false);
+            }
         });
-        $('#fee-structures-prev').addEventListener('click', () => { if (state.page > 1) { state.page--; renderTable(); } });
-        $('#fee-structures-next').addEventListener('click', () => { if (state.page < pageCount()) { state.page++; renderTable(); } });
-        $('#fee-structures-table-body').addEventListener('click', handleTableAction);
-        $('#fee-structures-filter-year').addEventListener('change', async () => {
-            const yearIdValue = $('#fee-structures-filter-year').value;
-            if (yearIdValue) await loadTerms(yearIdValue);
-            else state.terms = [];
-            updateTermsFilter();
+        el('#fee-structures-create-mandatory').addEventListener('click', () => openCreateForm('MANDATORY'));
+        el('#fee-structures-create-optional').addEventListener('click', () => openCreateForm('OPTIONAL'));
+        el('#fee-structures-form-back').addEventListener('click', handleFormBack);
+        el('#fee-mandatory-view-back').addEventListener('click', closeViewPanel);
+        el('#fee-optional-view-back').addEventListener('click', closeViewPanel);
+        el('#fee-mandatory-view-edit').addEventListener('click', () => { if (state.selectedRecord) void openEditForm(state.selectedRecord, 'MANDATORY'); });
+        el('#fee-mandatory-view-publish').addEventListener('click', () => void runMandatoryWorkflowAction('publish'));
+        el('#fee-mandatory-view-archive').addEventListener('click', () => void runMandatoryWorkflowAction('archive'));
+        el('#fee-optional-view-edit').addEventListener('click', () => { if (state.selectedRecord) void openEditForm(state.selectedRecord, 'OPTIONAL'); });
+        // Cancel/back must preserve the selected record when the form is editing.
+        el('#fee-create-cancel').addEventListener('click', handleFormBack);
+        el('#fee-optional-cancel').addEventListener('click', handleFormBack);
+        el('#fee-structures-create-form').addEventListener('submit', event => void submitCreateForm(event));
+        el('#fee-structures-optional-form').addEventListener('submit', event => void submitCreateForm(event));
+        root.querySelector('#fee-create-year').addEventListener('change', () => { state.source = 'MANDATORY'; void loadCreateClasses(); });
+        root.querySelector('#fee-create-level').addEventListener('change', () => { state.source = 'MANDATORY'; void loadCreateClasses(); });
+        root.querySelector('#fee-create-start-class').addEventListener('change', () => { state.source = 'MANDATORY';
+            const end = el('#fee-create-end-class');
+            end.disabled = !el('#fee-create-start-class').value;
+            if (!el('#fee-create-start-class').value) end.value = '';
         });
-        $('#fee-structures-year').addEventListener('change', async () => {
-            const yearIdValue = $('#fee-structures-year').value;
-            if (yearIdValue) await loadTerms(yearIdValue);
-            else state.terms = [];
-            updateTermsEditor();
+        el('#fee-structures-filter-form').addEventListener('submit', event => { event.preventDefault(); captureAppliedFilters(); state.page = 0; void loadTable(); });
+        el('#fee-structures-refresh').addEventListener('click', () => void refreshAll());
+        el('#fee-structures-reset-filters').addEventListener('click', async () => {
+            el('#fee-structures-filter-source').value = '';
+            el('#fee-structures-filter-year').value = '';
+            el('#fee-structures-filter-level').value = '';
+            el('#fee-structures-filter-class').value = '';
+            el('#fee-structures-filter-status').value = '';
+            captureAppliedFilters();
+            state.page = 0;
+            await loadFilterClasses();
+            await loadTable();
         });
+        // Filter controls stage selections only. The table changes only after Apply Filters.
+        // Year/Level may refresh the linked Class choices, but must not query the table.
+        el('#fee-structures-filter-year').addEventListener('change', async () => {
+            el('#fee-structures-filter-class').value = '';
+            await loadFilterClasses();
+        });
+        el('#fee-structures-filter-level').addEventListener('change', async () => {
+            el('#fee-structures-filter-class').value = '';
+            await loadFilterClasses();
+        });
+        el('#fee-structures-page-size').addEventListener('change', () => { state.size = Number(el('#fee-structures-page-size').value) || 10; state.page = 0; void loadTable(); });
+        el('#fee-structures-prev').addEventListener('click', () => { if (!state.loading && state.page > 0) { state.page--; void loadTable(); } });
+        el('#fee-structures-next').addEventListener('click', () => { if (!state.loading && state.page + 1 < state.totalPages) { state.page++; void loadTable(); } });
+        el('#fee-structures-table-body').addEventListener('click', event => void handleRowAction(event));
+        el('#fee-structures-table-body').addEventListener('change', event => {
+            const toggle = event.target.closest('input[data-action="set-active"]');
+            if (toggle) void handleActiveToggle(toggle);
+        });
+        el('#fee-structures-table-body').addEventListener('keydown', event => {
+            if ((event.key === 'Enter' || event.key === ' ') && event.target.closest('tr[data-fee-row="true"]') && !event.target.closest('button, a, input, select, textarea')) {
+                event.preventDefault(); void openRowView(event.target.closest('tr[data-fee-row="true"]'));
+            }
+        });
+    }
+
+    async function openCreateForm(source) {
+        state.source = source;
+        state.editingRecord = null;
+        el('#fee-structures-list-view').classList.add('hidden');
+        el('#fee-structures-form-view').classList.remove('hidden');
+        el('#fee-structures-form-title').textContent = source === 'MANDATORY' ? 'Create Mandatory Fee' : 'Create Optional Fee';
+        root.querySelector('#fee-structures-create-form').classList.toggle('hidden', source !== 'MANDATORY');
+        el('#fee-structures-optional-form-wrap').classList.toggle('hidden', source !== 'OPTIONAL');
+        resetCreateForm();
+        const mandatorySave = el('#fee-create-save'); if (mandatorySave) mandatorySave.innerHTML = '<i class="bi bi-check-circle"></i> Save Fee';
+        const optionalSave = el('#fee-optional-save'); if (optionalSave) optionalSave.innerHTML = '<i class="bi bi-check-circle"></i> Save Optional Fee';
+        if (source === 'MANDATORY') await loadCreateClasses();
+    }
+
+    function handleFormBack() {
+        // One shared back path for the header Back button and both form Cancel
+        // buttons. Existing records return to their own details panel; new
+        // records return to the list.
+        closeCreateForm();
+    }
+
+    function closeCreateForm() {
+        const wasEditing = Boolean(state?.editingRecord && state?.selectedRecord);
+        const record = wasEditing ? { ...state.selectedRecord } : null;
+        const source = state?.source || 'MANDATORY';
+
+        el('#fee-structures-form-view').classList.add('hidden');
+        clearCreateError();
+
+        if (wasEditing && record) {
+            // Clear edit mode only after preserving the selected record.
+            state.editingRecord = null;
+            showViewPanel(record, source);
+            return;
+        }
+
+        state.editingRecord = null;
+        el('#fee-structures-list-view').classList.remove('hidden');
+        el('#fee-structures-create-mandatory').classList.remove('hidden');
+        el('#fee-structures-create-optional').classList.remove('hidden');
+        el('#fee-structures-refresh').classList.remove('hidden');
+        el('#fee-mandatory-view-panel').classList.add('hidden');
+        el('#fee-optional-view-panel').classList.add('hidden');
+    }
+
+    function resetCreateForm() {
+        const mandatoryForm = el('#fee-structures-create-form');
+        const optionalForm = el('#fee-structures-optional-form');
+        if (mandatoryForm) mandatoryForm.reset();
+        if (optionalForm) optionalForm.reset();
+        clearCreateError();
+        // The two forms are independent. Some page versions may omit fields
+        // that do not apply to the active form, so reset helpers must be null-safe.
+        setSelectLabel('#fee-create-start-class', 'Select Level First', true);
+        setSelectLabel('#fee-create-end-class', 'Same as Start Class', true);
+        if (state) state.editingRecord = null;
+    }
+
+    async function loadCreateClasses() {
+        const year = el('#fee-create-year').value;
+        const level = el('#fee-create-level').value;
+        const start = el('#fee-create-start-class');
+        const end = el('#fee-create-end-class');
+        if (!level) {
+            setSelectLabel(start, 'Select Level First', true);
+            setSelectLabel(end, 'Select Start Class First', true);
+            return;
+        }
+        setSelectLabel(start, 'Loading classes...', true);
+        setSelectLabel(end, 'Select Start Class First', true);
+        try {
+            const result = await apiGet(API.classes(year, level), { silent: true });
+            if (year !== el('#fee-create-year').value || level !== el('#fee-create-level').value) return;
+            const classes = asList(result);
+            fillSelect(start, classes, 'Select Start Class', ['classId', 'id'], ['className', 'name', 'classCode']);
+            fillSelect(end, classes, 'Same as Start Class', ['classId', 'id'], ['className', 'name', 'classCode']);
+            end.disabled = !start.value;
+        } catch (error) {
+            setSelectError(start, 'Unable to load classes');
+            setSelectError(end, 'Unable to load classes');
+            showCreateError(error?.message || 'Unable to load classes for the selected level.');
+        }
+    }
+
+    async function loadFilterClasses() {
+        const year = el('#fee-structures-filter-year').value;
+        const level = el('#fee-structures-filter-level').value;
+        const select = el('#fee-structures-filter-class');
+        if (!level) { setSelectLabel(select, 'All Classes', false); return; }
+        setSelectLabel(select, 'Loading classes...', true);
+        try {
+            const result = await apiGet(API.classes(year, level), { silent: true });
+            if (year !== el('#fee-structures-filter-year').value || level !== el('#fee-structures-filter-level').value) return;
+            fillSelect(select, asList(result), 'All Classes', ['classId', 'id'], ['className', 'name', 'classCode']);
+        } catch (error) { setSelectError(select, 'Unable to load classes'); console.error(error); }
+    }
+
+    async function submitCreateForm(event) {
+        event.preventDefault();
+        if (state.saving) return;
+        clearCreateError();
+        const source = state.source;
+        const name = el('#fee-create-name').value.trim();
+        const code = el('#fee-create-code').value.trim();
+        const type = el('#fee-create-type').value;
+        const amountText = el('#fee-create-amount').value;
+        const frequency = el('#fee-create-frequency').value;
+        if (!type || !name || !code || amountText === '' || !frequency || Number(amountText) < 0 || !Number.isFinite(Number(amountText))) {
+            showCreateError('Complete all required fee fields. Amount must be zero or greater.'); return;
+        }
+        const common = { feeType: type, feeCode: code, feeName: name, amount: Number(amountText), chargingFrequency: frequency, remarks: el('#fee-create-remarks').value.trim() || null };
+        if (source === 'OPTIONAL') common.structureStatus = el('#fee-optional-structure-status').value;
+        let endpoint;
+        let payload;
+        if (source === 'MANDATORY') {
+            const year = el('#fee-create-year').value;
+            const level = el('#fee-create-level').value;
+            const startClass = el('#fee-create-start-class').value;
+            if (!year || !level || !startClass) { showCreateError('Select an academic year, level, and start class for a mandatory fee.'); return; }
+            payload = { ...common, academicYearId: Number(year), levelId: Number(level), startClassId: Number(startClass), endClassId: el('#fee-create-end-class').value ? Number(el('#fee-create-end-class').value) : null };
+            endpoint = state.editingRecord ? `${API.structures}/${encodeURIComponent(state.editingRecord.id)}` : API.structures;
+        } else {
+            payload = common;
+            endpoint = state.editingRecord ? `${API.independent}/${encodeURIComponent(state.editingRecord.id)}` : API.independent;
+        }
+        const button = el('#fee-create-save');
+        state.saving = true; button.disabled = true; button.textContent = 'Saving...';
+        const wasEditing = Boolean(state.editingRecord);
+        try {
+            if (wasEditing) await apiPut(endpoint, payload);
+            else await apiPost(endpoint, payload);
+            state.editingRecord = null;
+            state.selectedRecord = null;
+            closeCreateForm();
+            state.page = 0;
+            await loadTable();
+            notifySuccess(wasEditing ? 'Fee updated successfully.' : (source === 'MANDATORY' ? 'Mandatory fee created successfully.' : 'Optional fee created successfully.'));
+        } catch (error) {
+            showCreateError(error?.message || 'Fee could not be saved.');
+        } finally {
+            state.saving = false; button.disabled = false; button.innerHTML = state.editingRecord ? '<i class="bi bi-check-circle"></i> Save Changes' : (source === 'MANDATORY' ? '<i class="bi bi-check-circle"></i> Save Fee' : '<i class="bi bi-check-circle"></i> Save Optional Fee');
+        }
+    }
+
+    function captureAppliedFilters() {
+        state.appliedFilters = {
+            source: el('#fee-structures-filter-source').value,
+            academicYearId: el('#fee-structures-filter-year').value,
+            levelId: el('#fee-structures-filter-level').value,
+            classId: el('#fee-structures-filter-class').value,
+            status: el('#fee-structures-filter-status').value
+        };
+    }
+
+    async function loadTable() {
+        if (!root || !state) return;
+        const requestId = ++state.requestId;
+        const body = el('#fee-structures-table-body');
+        const hasRows = !!body?.querySelector('tr[data-fee-row="true"]');
+        state.loading = true; setTableBusy(true);
+        // Keep the current rows visible during background refreshes; only show
+        // the initial loading state when there is nothing useful to display.
+        if (!hasRows) renderMessage('Loading fees...');
+        const params = new URLSearchParams();
+        // Pagination, page-size changes, refreshes, and toggle updates reuse
+        // the last explicitly applied filters, never the unsaved form selections.
+        Object.entries(state.appliedFilters || {}).forEach(([key, rawValue]) => {
+            const value = String(rawValue ?? '').trim();
+            if (value) params.set(key, value);
+        });
+        params.set('page', String(state.page)); params.set('size', String(state.size));
+        try {
+            const response = await apiGet(`${API.structures}?${params.toString()}`, { silent: true });
+            if (requestId !== state.requestId) return;
+            const payload = unwrapObject(response);
+            const rows = asList(Array.isArray(payload) ? payload : (payload.items || payload.content || payload.records));
+            state.totalElements = numberOr(payload.totalElements ?? payload.totalCount, rows.length);
+            state.totalPages = numberOr(payload.totalPages, state.totalElements ? Math.ceil(state.totalElements / state.size) : 0);
+            renderRows(rows); updatePagination();
+        } catch (error) {
+            if (requestId !== state.requestId) return;
+            console.error('Fee list request failed.', error);
+            renderMessage('Fees could not be loaded. Use Refresh to try again.');
+            state.totalElements = 0; state.totalPages = 0; updatePagination();
+            notifyError(error?.message || 'Unable to load fees.');
+        } finally {
+            if (requestId === state.requestId) { state.loading = false; setTableBusy(false); }
+        }
+    }
+
+
+    async function handleActiveToggle(toggle) {
+        if (!toggle || toggle.disabled) return;
+        const id = toggle.dataset.id;
+        const source = toggle.dataset.source;
+        const previousActive = toggle.dataset.active === 'true';
+        const nextActive = toggle.checked;
+        if (!id || !source || previousActive === nextActive) return;
+        toggle.disabled = true;
+        try {
+            const endpoint = source === 'MANDATORY'
+                ? `${API.structures}/${encodeURIComponent(id)}/active?active=${nextActive}`
+                : `${API.independent}/${encodeURIComponent(id)}/active?active=${nextActive}`;
+            await apiPost(endpoint, {});
+            toggle.dataset.active = String(nextActive);
+            toggle.setAttribute('aria-label', `${nextActive ? 'Deactivate' : 'Activate'} fee`);
+            toggle.title = nextActive ? 'On — click to deactivate fee' : 'Off — click to activate fee';
+            notifySuccess(nextActive ? 'Fee activated.' : 'Fee deactivated.');
+            await loadTable();
+        } catch (error) {
+            toggle.checked = previousActive;
+            notifyError(error?.message || 'Unable to change the fee activation state.');
+        } finally {
+            toggle.disabled = false;
+        }
+    }
+
+    async function handleRowAction(event) {
+        const switchInput = event.target.closest('input[data-action="set-active"]');
+        if (switchInput) {
+            event.stopPropagation();
+            return;
+        }
+        const button = event.target.closest('button[data-action]');
+        if (button) {
+            event.preventDefault();
+            event.stopPropagation();
+            if (button.disabled) return;
+            const id = button.dataset.id;
+            const action = button.dataset.action;
+            const source = button.dataset.source;
+            if (!id || !action) return;
+            if (action === 'publish' && !await confirmAction({
+                title: 'Publish Fee Structure',
+                message: 'Publish this mandatory fee? Published fees cannot be edited directly.',
+                confirmText: 'Publish'
+            })) return;
+            if (action === 'archive' && !await confirmAction({
+                title: 'Archive Fee Structure',
+                message: 'Archive this mandatory fee? The record and financial history will be retained.',
+                confirmText: 'Archive'
+            })) return;
+            if (action === 'deactivate' && !await confirmAction({
+                title: 'Deactivate Optional Fee',
+                message: 'Deactivate this optional fee? The record will be retained.',
+                confirmText: 'Deactivate'
+            })) return;
+            if (action === 'edit') {
+                try {
+                    const record = await fetchFeeRecord(id, source);
+                    await openEditForm(record, source);
+                } catch (error) {
+                    notifyError(error?.message || 'Unable to open the fee for editing.');
+                }
+                return;
+            }
+            button.disabled = true;
+            try {
+                if (action === 'publish') await apiPost(`${API.structures}/${encodeURIComponent(id)}/publish`, {});
+                else if (action === 'archive') await apiPost(`${API.structures}/${encodeURIComponent(id)}/archive`, {});
+                else if (action === 'deactivate' && source === 'OPTIONAL') await apiDelete(`${API.independent}/${encodeURIComponent(id)}`);
+                else if (action === 'set-active') {
+                    const active = button.dataset.active !== 'true';
+                    const endpoint = source === 'MANDATORY'
+                        ? `${API.structures}/${encodeURIComponent(id)}/active?active=${active}`
+                        : `${API.independent}/${encodeURIComponent(id)}/active?active=${active}`;
+                    await apiPost(endpoint, {});
+                }
+                await loadTable();
+            } catch (error) {
+                notifyError(error?.message || 'The fee action failed.');
+                button.disabled = false;
+            }
+            return;
+        }
+        const row = event.target.closest('tr[data-fee-row="true"]');
+        if (row) await openRowView(row);
+    }
+
+    async function openRowView(row) {
+        if (!row || row.dataset.opening === 'true') return;
+        const id = row.dataset.id;
+        const source = row.dataset.source;
+        if (!id || !source) return;
+
+        row.dataset.opening = 'true';
+        let loaderToken;
+        let loaderStarted = false;
+        try {
+            // Use the ERP's existing global loader. Never insert loading text
+            // into the table row or mutate the fee row while details are fetched.
+            if (typeof window.showLoader === 'function') {
+                loaderToken = window.showLoader('Loading fee details...');
+                loaderStarted = true;
+            }
+            const record = await fetchFeeRecord(id, source);
+            showViewPanel(record, source);
+        } catch (error) {
+            console.error('Unable to open fee details.', error);
+            notifyError(error?.message || 'Unable to load fee details.');
+        } finally {
+            if (loaderStarted && typeof window.hideLoader === 'function') {
+                if (loaderToken !== undefined && loaderToken !== null) window.hideLoader(loaderToken);
+                else window.hideLoader();
+            }
+            delete row.dataset.opening;
+        }
+    }
+
+    async function fetchFeeRecord(id, source) {
+        if (source === 'MANDATORY') {
+            const response = await apiGet(`${API.structures}/${encodeURIComponent(id)}`, { silent: true });
+            const record = unwrapObject(response);
+            return { ...record, id: record.feeStructureId ?? record.id ?? id, feeSource: 'MANDATORY', status: record.structureStatus ?? record.status };
+        }
+        const response = await apiGet(`${API.independent}?activeOnly=false`, { silent: true });
+        const items = asList(response);
+        const item = items.find(row => String(row.feeStructureItemId ?? row.id) === String(id));
+        if (!item) throw new Error('Optional fee was not found. Refresh the list and try again.');
+        return { ...item, id: item.feeStructureItemId ?? item.id ?? id, feeSource: 'OPTIONAL', status: item.structureStatus ?? 'DRAFT' };
+    }
+
+    function showViewPanel(record, source) {
+        const isMandatory = source === 'MANDATORY';
+        state.selectedRecord = { ...record, id: record.id ?? record.feeStructureId ?? record.feeStructureItemId, feeSource: source };
+        const status = String(record.structureStatus ?? record.status ?? 'DRAFT').toUpperCase();
+        const prefix = isMandatory ? '#fee-mandatory-view-' : '#fee-optional-view-';
+        const fields = {
+            [`${prefix}status`]: statusLabel(status),
+            [`${prefix}structure-status`]: statusLabel(record.structureStatus ?? status),
+            [`${prefix}active`]: (record.active === true || record.active === 1 || record.active === '1') ? 'Active' : 'Inactive',
+            [`${prefix}name`]: record.feeName,
+            [`${prefix}type`]: record.feeType,
+            [`${prefix}code`]: record.feeCode,
+            [`${prefix}amount`]: formatAmount(record.amount),
+            [`${prefix}frequency`]: frequencyLabel(record.chargingFrequency),
+            [`${prefix}created`]: formatDateTime(record.createdAt),
+            [`${prefix}updated`]: formatDateTime(record.updatedAt),
+            [`${prefix}remarks`]: record.remarks
+        };
+        if (isMandatory) {
+            fields[`${prefix}year`] = record.academicYearName || record.academicYearCode;
+            fields[`${prefix}level`] = record.levelName;
+            fields[`${prefix}start-class`] = record.startClassName;
+            fields[`${prefix}end-class`] = record.endClassName || record.startClassName;
+            fields[`${prefix}version`] = record.versionNo;
+            fields[`${prefix}published`] = formatDateTime(record.publishedAt);
+        }
+        Object.entries(fields).forEach(([selector, value]) => {
+            const node = el(selector);
+            if (node) node.textContent = value == null || value === '' ? '—' : String(value);
+        });
+        const mandatoryEdit = el('#fee-mandatory-view-edit');
+        const optionalEdit = el('#fee-optional-view-edit');
+        const publishButton = el('#fee-mandatory-view-publish');
+        const archiveButton = el('#fee-mandatory-view-archive');
+        // Workflow actions live in View Details so the list can remain free of an Actions column.
+        mandatoryEdit.hidden = !isMandatory;
+        mandatoryEdit.disabled = isMandatory && status !== 'DRAFT';
+        mandatoryEdit.title = mandatoryEdit.disabled ? 'Only draft mandatory fees can be edited' : 'Edit fee';
+        mandatoryEdit.setAttribute('aria-label', mandatoryEdit.title);
+        publishButton.hidden = !isMandatory || status !== 'DRAFT';
+        archiveButton.hidden = !isMandatory || status === 'ARCHIVED';
+        optionalEdit.hidden = isMandatory;
+        optionalEdit.disabled = false;
+        optionalEdit.title = 'Edit fee';
+        optionalEdit.setAttribute('aria-label', 'Edit fee');
+        el('#fee-structures-list-view').classList.add('hidden');
+        el('#fee-structures-form-view').classList.add('hidden');
+        el('#fee-mandatory-view-panel').classList.toggle('hidden', !isMandatory);
+        el('#fee-optional-view-panel').classList.toggle('hidden', isMandatory);
+        el('#fee-structures-create-mandatory').classList.add('hidden');
+        el('#fee-structures-create-optional').classList.add('hidden');
+        el('#fee-structures-refresh').classList.add('hidden');
+    }
+
+    async function runMandatoryWorkflowAction(action) {
+        const record = state?.selectedRecord;
+        if (!record || record.feeSource !== 'MANDATORY') return;
+        const id = record.id ?? record.feeStructureId;
+        if (!id || !['publish', 'archive'].includes(action)) return;
+        const confirmed = await confirmAction(action === 'publish' ? {
+            title: 'Publish Fee Structure',
+            message: 'Publish this mandatory fee? Published fees cannot be edited directly.',
+            confirmText: 'Publish'
+        } : {
+            title: 'Archive Fee Structure',
+            message: 'Archive this mandatory fee? The record and financial history will be retained.',
+            confirmText: 'Archive'
+        });
+        if (!confirmed) return;
+
+        const button = el(action === 'publish' ? '#fee-mandatory-view-publish' : '#fee-mandatory-view-archive');
+        if (button.disabled) return;
+        button.disabled = true;
+        try {
+            await apiPost(`${API.structures}/${encodeURIComponent(id)}/${action}`, {});
+            const updated = await fetchFeeRecord(id, 'MANDATORY');
+            showViewPanel(updated, 'MANDATORY');
+            await loadTable();
+            notifySuccess(action === 'publish' ? 'Fee published successfully.' : 'Fee archived successfully.');
+        } catch (error) {
+            notifyError(error?.message || `Unable to ${action} this fee.`);
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    function confirmAction(options = {}) {
+        const overlay = el('#fee-structures-confirm-overlay');
+        const dialog = el('#fee-structures-confirm-dialog');
+        const titleNode = el('#fee-structures-confirm-title');
+        const messageNode = el('#fee-structures-confirm-message');
+        const submit = el('#fee-structures-confirm-submit');
+        const cancel = el('#fee-structures-confirm-cancel');
+        if (!overlay || !dialog || !titleNode || !messageNode || !submit || !cancel) {
+            console.error('Fee Structures custom confirmation modal is missing.');
+            notifyError('Confirmation dialog is unavailable. Please refresh the page and try again.');
+            return Promise.resolve(false);
+        }
+        if (state.confirmationResolver) return Promise.resolve(false);
+
+        titleNode.textContent = options.title || 'Confirm Action';
+        messageNode.textContent = options.message || 'Please confirm this action.';
+        submit.textContent = options.confirmText || 'Confirm';
+        cancel.textContent = options.cancelText || 'Cancel';
+        state.previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+        overlay.classList.add('is-visible');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.classList.add('modal-open');
+        window.requestAnimationFrame(() => dialog.focus());
+
+        return new Promise(resolve => {
+            state.confirmationResolver = value => resolve(Boolean(value));
+        });
+    }
+
+    function closeConfirmation(accepted) {
+        if (!state?.confirmationResolver) return;
+        const overlay = el('#fee-structures-confirm-overlay');
+        overlay?.classList.remove('is-visible');
+        overlay?.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        const resolver = state.confirmationResolver;
+        state.confirmationResolver = null;
+        window.setTimeout(() => {
+            if (state.previousFocus?.isConnected) state.previousFocus.focus();
+            state.previousFocus = null;
+            resolver(Boolean(accepted));
+        }, 180);
+    }
+
+    function closeViewPanel() {
+        el('#fee-mandatory-view-panel').classList.add('hidden');
+        el('#fee-optional-view-panel').classList.add('hidden');
+        el('#fee-structures-list-view').classList.remove('hidden');
+        el('#fee-structures-create-mandatory').classList.remove('hidden');
+        el('#fee-structures-create-optional').classList.remove('hidden');
+        el('#fee-structures-refresh').classList.remove('hidden');
+        state.selectedRecord = null;
+    }
+
+    async function openEditForm(record, source) {
+        const status = String(record.structureStatus ?? record.status ?? 'DRAFT').toUpperCase();
+        if (source === 'MANDATORY' && status !== 'DRAFT') {
+            notifyError('Only draft mandatory fees can be edited.');
+            return;
+        }
+        state.source = source;
+        // Hide the view panels and reset the form before assigning edit state.
+        // resetCreateForm() clears editingRecord, so assigning it before that call
+        // would make Back incorrectly return to the list instead of View Details.
+        el('#fee-mandatory-view-panel').classList.add('hidden');
+        el('#fee-optional-view-panel').classList.add('hidden');
+        el('#fee-structures-list-view').classList.add('hidden');
+        el('#fee-structures-form-view').classList.remove('hidden');
+        el('#fee-structures-form-title').textContent = source === 'MANDATORY' ? 'Edit Mandatory Fee' : 'Edit Optional Fee';
+        root.querySelector('#fee-structures-create-form').classList.toggle('hidden', source !== 'MANDATORY');
+        el('#fee-structures-optional-form-wrap').classList.toggle('hidden', source !== 'OPTIONAL');
+        resetCreateForm();
+        state.editingRecord = { ...record, id: record.id ?? record.feeStructureId ?? record.feeStructureItemId };
+        state.selectedRecord = { ...state.editingRecord, feeSource: source };
+        const prefix = source === 'MANDATORY' ? 'fee-create-' : 'fee-optional-';
+        el(`#${prefix}type`).value = record.feeType || '';
+        el(`#${prefix}name`).value = record.feeName || '';
+        el(`#${prefix}code`).value = record.feeCode || '';
+        el(`#${prefix}amount`).value = record.amount ?? '';
+        el(`#${prefix}frequency`).value = record.chargingFrequency || '';
+        const statusSelect = el(source === 'MANDATORY' ? '#fee-create-structure-status' : '#fee-optional-structure-status');
+        if (statusSelect) statusSelect.value = record.structureStatus || 'DRAFT';
+        el(`#${prefix}remarks`).value = record.remarks || '';
+        if (source === 'MANDATORY') {
+            el('#fee-create-year').value = String(record.academicYearId ?? '');
+            el('#fee-create-level').value = String(record.levelId ?? '');
+            await loadCreateClasses();
+            el('#fee-create-start-class').value = String(record.startClassId ?? '');
+            el('#fee-create-end-class').value = String(record.endClassId ?? '');
+            el('#fee-create-end-class').disabled = !el('#fee-create-start-class').value;
+        }
+        const save = el('#fee-create-save');
+        if (save) save.innerHTML = '<i class="bi bi-check-circle"></i> Save Changes';
+        const optionalSave = el('#fee-optional-save');
+        if (optionalSave) optionalSave.innerHTML = '<i class="bi bi-check-circle"></i> Save Changes';
+    }
+
+    function formatDateTime(value) {
+        if (!value) return '—';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+        return new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).format(date).replace(',', '');
     }
 
     async function refreshAll() {
-        if (state.busy) return;
-        state.busy = true;
+        if (state.loading) return;
         try {
-            const results = await Promise.allSettled([
-                apiGet(API.years, { silent: true }),
-                apiGet(API.classes, { silent: true }),
-                loadStructures(true)
-            ]);
-            if (results[0].status === 'fulfilled') state.years = unwrapList(results[0].value);
-            if (results[1].status === 'fulfilled') state.classes = unwrapList(results[1].value);
-            populateSelects();
-            const yearIdValue = state.root.querySelector('#fee-structures-filter-year').value
-                || state.root.querySelector('#fee-structures-year').value
-                || (state.years[0] ? String(yearId(state.years[0])) : '');
-            const termsResult = yearIdValue ? await loadTerms(yearIdValue) : { ok: true };
-            updateTermsFilter(); updateTermsEditor(); renderTable();
-            const error = results.find(x => x.status === 'rejected');
-            if (error) report(error.reason);
-            else if (!termsResult.ok) notifyError('Academic terms could not be loaded for the selected year.');
-            else notifySuccess('Fee Structures refreshed.');
-        } finally { state.busy = false; }
+            const [years, reference] = await Promise.all([apiGet(API.years, { silent: true }), apiGet(API.referenceData, { silent: true })]);
+            state.years = asList(years);
+            const ref = unwrapObject(reference);
+            state.levels = asList(ref.levels || ref.levelOptions || ref.availableLevels);
+            fillSelect('#fee-structures-filter-year', state.years, 'All Academic Years', ['academicYearId', 'id'], ['academicYearName', 'yearName', 'name', 'academicYearCode']);
+            fillSelect('#fee-structures-filter-level', state.levels, 'All Levels', ['levelId', 'id'], ['levelName', 'name', 'levelCode']);
+            fillSelect(root.querySelector('#fee-create-year'), state.years, 'Select Academic Year', ['academicYearId', 'id'], ['academicYearName', 'yearName', 'name', 'academicYearCode']);
+            fillSelect(root.querySelector('#fee-create-level'), state.levels, 'Select Level', ['levelId', 'id'], ['levelName', 'name', 'levelCode']);
+            await loadFilterClasses(); await loadTable();
+        } catch (error) { notifyError(error?.message || 'Unable to refresh fee data.'); }
     }
 
-    async function loadStructures(silent = false) {
-        const $ = selector => state.root.querySelector(selector);
-        const params = new URLSearchParams();
-        const year = $('#fee-structures-filter-year').value, term = $('#fee-structures-filter-term').value;
-        const cls = $('#fee-structures-filter-class').value, status = $('#fee-structures-filter-status').value;
-        if (year) params.set('academicYearId', year);
-        if (term) params.set('termId', term);
-        if (cls) params.set('classId', cls);
-        if (status) params.set('status', status);
-        const result = await apiGet(`${API.structures}${params.size ? '?' + params.toString() : ''}`, { silent: true });
-        state.structures = unwrapList(result);
-        if (!silent) state.page = 1;
-        return state.structures;
+    function renderRows(rows) {
+        const body = el('#fee-structures-table-body'); body.replaceChildren();
+        if (!rows.length) { renderMessage('No fees match the selected filters.'); return; }
+        const fragment = document.createDocumentFragment();
+        rows.forEach(record => {
+            const row = document.createElement('tr');
+            const source = String(record.feeSource || '').toUpperCase();
+            const status = String(record.status || record.structureStatus || '').toUpperCase();
+            const id = record.id ?? record.feeStructureId ?? record.feeStructureItemId;
+            row.dataset.feeRow = 'true';
+            row.dataset.id = String(id ?? '');
+            row.dataset.source = source;
+            row.tabIndex = 0;
+            row.setAttribute('role', 'button');
+            row.setAttribute('aria-label', `View ${source.toLowerCase()} fee ${record.feeName || ''}`.trim());
+            row.title = 'Click to view fee details';
+            row.classList.add('fee-structure-clickable-row');
+            appendBadgeCell(row, source, source === 'MANDATORY' ? 'bg-primary' : 'bg-info');
+            appendCell(row, record.feeName);
+            appendCell(row, record.feeType);
+            appendCell(row, record.feeCode);
+            const isOptional = source === 'OPTIONAL';
+            appendCell(row, isOptional ? 'Branch-wide' : (record.academicYearName || record.academicYearCode));
+            appendCell(row, isOptional ? null : record.levelName);
+            const startClassLabel = record.startClassCode || record.startClassName;
+            const endClassLabel = record.endClassCode || record.endClassName;
+            const classRange = !isOptional && startClassLabel
+                ? `${startClassLabel}${endClassLabel && endClassLabel !== startClassLabel ? ` – ${endClassLabel}` : ''}`
+                : null;
+            appendCell(row, classRange);
+            appendCell(row, frequencyLabel(record.chargingFrequency));
+            appendCell(row, formatAmount(record.amount));
+            appendBadgeCell(row, statusLabel(status), statusClass(status));
+            const isActive = record.active === true || record.active === 1 || record.active === '1';
+            const activeCell = document.createElement('td');
+            activeCell.className = 'text-center align-middle';
+            const switchWrap = document.createElement('div');
+            switchWrap.className = 'fee-active-switch-wrap d-inline-flex align-items-center justify-content-center';
+            const toggle = document.createElement('input');
+            toggle.type = 'checkbox';
+            toggle.className = 'fee-active-toggle';
+            toggle.role = 'switch';
+            toggle.dataset.action = 'set-active';
+            toggle.dataset.id = String(id ?? '');
+            toggle.dataset.source = source;
+            toggle.dataset.active = String(isActive);
+            toggle.checked = isActive;
+            toggle.setAttribute('aria-label', `${isActive ? 'Deactivate' : 'Activate'} ${record.feeName || 'fee'}`);
+            toggle.title = isActive ? 'On — click to deactivate fee' : 'Off — click to activate fee';
+            switchWrap.appendChild(toggle);
+            activeCell.appendChild(switchWrap);
+            row.appendChild(activeCell);
+            fragment.appendChild(row);
+        });
+        body.appendChild(fragment);
     }
 
-    function populateSelects() {
-        const $ = selector => state.root.querySelector(selector);
-        fillSelect($('#fee-structures-filter-year'), state.years, 'All academic years', yearId, yearLabel);
-        fillSelect($('#fee-structures-year'), state.years, 'Select academic year', yearId, yearLabel);
-        fillSelect($('#fee-structures-filter-term'), state.terms, 'All terms', termId, termLabel);
-        fillSelect($('#fee-structures-term'), state.terms, 'Select term', termId, termLabel);
-        fillSelect($('#fee-structures-filter-class'), state.classes, 'All classes', classId, classLabel);
-        fillSelect($('#fee-structures-class'), state.classes, 'Select class', classId, classLabel);
+    function actionButton(action, id, source, tooltip, className, iconClass) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.dataset.action = action;
+        button.dataset.id = String(id);
+        button.dataset.source = source;
+        button.className = `${className} fee-structure-icon-action`;
+        button.title = tooltip;
+        button.setAttribute('aria-label', tooltip);
+        button.setAttribute('data-bs-toggle', 'tooltip');
+        const icon = document.createElement('i');
+        icon.className = iconClass;
+        icon.setAttribute('aria-hidden', 'true');
+        button.appendChild(icon);
+        return button;
     }
 
-    async function loadTerms(academicYearId) {
-        if (!academicYearId) { state.terms = []; return { ok: true }; }
-        try {
-            const result = await apiGet(API.terms(academicYearId), { silent: true });
-            state.terms = unwrapList(result);
-            return { ok: true };
-        } catch (error) {
-            state.terms = [];
-            console.error(`Unable to load academic terms for academic year ${academicYearId}.`, error);
-            return { ok: false, error };
+    function appendBadgeCell(row, label, className) { const td = document.createElement('td'); const badge = document.createElement('span'); badge.className = `badge ${className}`; badge.textContent = label || '—'; td.appendChild(badge); row.appendChild(td); }
+    function appendCell(row, value) { const td = document.createElement('td'); td.textContent = value == null || value === '' ? '—' : String(value); row.appendChild(td); }
+    function updatePagination() {
+        const start = state.totalElements ? state.page * state.size + 1 : 0;
+        const end = Math.min((state.page + 1) * state.size, state.totalElements);
+        el('#fee-structures-page-info').textContent = state.totalElements ? `Showing ${start}–${end} of ${state.totalElements} fees` : 'Showing 0 of 0 fees';
+        el('#fee-structures-prev').disabled = state.loading || state.page <= 0;
+        el('#fee-structures-next').disabled = state.loading || state.page + 1 >= state.totalPages;
+    }
+    function setTableBusy(busy) { ['#fee-structures-refresh', '#fee-structures-apply-filters', '#fee-structures-reset-filters', '#fee-structures-page-size'].forEach(selector => { el(selector).disabled = busy; }); updatePagination(); }
+    function renderMessage(message) { const body = el('#fee-structures-table-body'); body.replaceChildren(); const row = document.createElement('tr'); const cell = document.createElement('td'); cell.colSpan = 11; cell.className = 'text-center py-4 text-muted'; cell.textContent = message; row.appendChild(cell); body.appendChild(row); }
+    function fillSelect(selectorOrSelect, records, placeholder, idKeys, labelKeys) { const select = typeof selectorOrSelect === 'string' ? el(selectorOrSelect) : selectorOrSelect; const previous = select.value; select.replaceChildren(makeOption('', placeholder)); records.forEach(record => { const id = getValue(record, idKeys); if (id != null && id !== '') select.appendChild(makeOption(String(id), String(getValue(record, labelKeys) ?? id))); }); if ([...select.options].some(option => option.value === previous)) select.value = previous; select.disabled = false; }
+    function setSelectLabel(selectorOrSelect, label, disabled) {
+        const select = typeof selectorOrSelect === 'string' ? el(selectorOrSelect) : selectorOrSelect;
+        if (!select || typeof select.replaceChildren !== 'function') return;
+        select.replaceChildren(makeOption('', label));
+        select.disabled = Boolean(disabled);
+    }
+    function setSelectError(selector, label) { setSelectLabel(selector, label, true); }
+    function makeOption(value, label) { const option = document.createElement('option'); option.value = value; option.textContent = label; return option; }
+    function unwrapObject(value) { return value && value.data !== undefined ? value.data || {} : value || {}; }
+    function asList(value) { const data = unwrapObject(value); if (Array.isArray(data)) return data; for (const key of ['items', 'content', 'records']) if (Array.isArray(data[key])) return data[key]; return []; }
+    function getValue(record, keys) { for (const key of keys) if (record?.[key] !== undefined && record[key] !== null && record[key] !== '') return record[key]; return null; }
+    function numberOr(value, fallback) { const number = Number(value); return Number.isFinite(number) && number >= 0 ? number : fallback; }
+    function formatAmount(value) { if (value == null || value === '') return '—'; const amount = Number(value); return Number.isFinite(amount) ? amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : String(value); }
+    function frequencyLabel(value) { return ({ PER_TERM: 'Per Term', PER_ACADEMIC_YEAR: 'Per Academic Year', ONE_TIME: 'One Time', PER_ADMISSION: 'Per Admission', AS_REQUIRED: 'As Required' })[value] || value || '—'; }
+    function statusLabel(value) { return ({ DRAFT: 'Draft', PUBLISHED: 'Published', ARCHIVED: 'Archived', ACTIVE: 'Active', INACTIVE: 'Inactive' })[value] || value || 'Unknown'; }
+    function statusClass(value) { return ({ DRAFT: 'bg-secondary', PUBLISHED: 'bg-success', ARCHIVED: 'bg-dark', ACTIVE: 'bg-success', INACTIVE: 'bg-secondary' })[value] || 'bg-secondary'; }
+    function showCreateError(message) { const box = el('#fee-create-error'); if (!box) return; box.classList.remove('hidden'); el('#fee-create-error-text').textContent = message; }
+    function clearCreateError() { const box = el('#fee-create-error'); if (box) { box.classList.add('hidden'); el('#fee-create-error-text').textContent = ''; } }
+    function notifyError(message) { if (typeof showErrorMessage === 'function') showErrorMessage(message); else console.error(message); }
+    function notifySuccess(message) { if (typeof window.showSuccessMessage === 'function') window.showSuccessMessage(message); else if (typeof window.showToast === 'function') window.showToast(message, 'success'); else console.info(message); }
+    function el(selector) {
+        if (state?.source === 'OPTIONAL') {
+            if (selector === '#fee-structures-create-form') selector = '#fee-structures-optional-form';
+            else if (selector.startsWith('#fee-create-')) selector = selector.replace('#fee-create-', '#fee-optional-');
         }
+        return root.querySelector(selector);
     }
-    function updateTermsFilter() {
-        const yearIdValue = state.root.querySelector('#fee-structures-filter-year').value;
-        const filtered = yearIdValue ? state.terms.filter(t => !termYearId(t) || String(termYearId(t)) === yearIdValue) : state.terms;
-        fillSelect(state.root.querySelector('#fee-structures-filter-term'), filtered, 'All terms', termId, termLabel);
-    }
-    function updateTermsEditor() {
-        const yearIdValue = state.root.querySelector('#fee-structures-year').value;
-        const filtered = yearIdValue ? state.terms.filter(t => !termYearId(t) || String(termYearId(t)) === yearIdValue) : state.terms;
-        const select = state.root.querySelector('#fee-structures-term'), current = select.value;
-        fillSelect(select, filtered, 'Select term', termId, termLabel);
-        if (filtered.some(t => String(termId(t)) === current)) select.value = current;
-    }
-
-    function renderTable() {
-        const $ = selector => state.root.querySelector(selector);
-        const tbody = $('#fee-structures-table-body');
-        const pages = pageCount();
-        if (state.page > pages) state.page = pages;
-        const start = (state.page - 1) * PAGE_SIZE;
-        const visible = state.structures.slice(start, start + PAGE_SIZE);
-        if (!visible.length) tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted">No fee structures found.</td></tr>';
-        else tbody.innerHTML = visible.map(s => {
-            const activeItems = (s.items || []).filter(i => i.active !== false && String(i.status || '').toUpperCase() !== 'INACTIVE');
-            const total = activeItems.reduce((sum, i) => sum + Number(i.amount || 0), 0);
-            return `<tr>
-                <td>${esc(s.academicYearName || s.academicYearCode || '—')}</td>
-                <td>${esc(s.termName || s.termCode || '—')}</td>
-                <td>${esc([s.classCode, s.className].filter(Boolean).join(' — ') || '—')}</td>
-                <td>${esc(s.versionNo ?? '—')}</td><td>${activeItems.length}</td><td>${money(total)}</td>
-                <td><span class="badge ${statusClass(s.structureStatus)}">${esc(s.structureStatus === 'DRAFT' ? 'In Progress' : (s.structureStatus || 'UNKNOWN'))}</span></td>
-                <td>${esc(formatDate(s.updatedAt || s.createdAt))}</td>
-                <td class="text-end text-nowrap"><button class="btn-secondary btn-sm" data-action="open" data-id="${s.feeStructureId}">Open</button></td>
-            </tr>`;
-        }).join('');
-        $('#fee-structures-count').textContent = `${state.structures.length} record${state.structures.length === 1 ? '' : 's'}`;
-        $('#fee-structures-page').textContent = `Page ${state.page} of ${pages}`;
-        $('#fee-structures-prev').disabled = state.page <= 1;
-        $('#fee-structures-next').disabled = state.page >= pages;
-    }
-    function pageCount() { return Math.max(1, Math.ceil(state.structures.length / PAGE_SIZE)); }
-
-    async function handleTableAction(event) {
-        const button = event.target.closest('[data-action="open"]');
-        if (!button) return;
-        const record = state.structures.find(s => String(s.feeStructureId) === button.dataset.id);
-        if (!record) return;
-        try {
-            const response = await apiGet(`${API.structures}/${record.feeStructureId}`, { silent: true });
-            state.selected = unwrap(response);
-            openEditor(state.selected);
-        } catch (error) { report(error); }
-    }
-
-    function openCreate() {
-        state.selected = null;
-        const $ = selector => state.root.querySelector(selector);
-        $('#fee-structures-editor-title').textContent = 'Create Fee Structure';
-        $('#fee-structures-year').disabled = false; $('#fee-structures-term').disabled = false; $('#fee-structures-class').disabled = false;
-        $('#fee-structures-year').value = ''; $('#fee-structures-term').value = ''; $('#fee-structures-class').value = '';
-        $('#fee-structures-remarks').value = ''; $('#fee-structures-save-details').hidden = false;
-        $('#fee-structures-items-panel').hidden = true; $('#fee-structures-edit-note').hidden = true;
-        showEditor();
-    }
-    function openEditor(record) {
-        const $ = selector => state.root.querySelector(selector);
-        $('#fee-structures-editor-title').textContent = `Fee Structure — ${record.classCode || record.className || 'Class'} / ${record.termName || record.termCode || 'Term'}`;
-        $('#fee-structures-year').value = String(record.academicYearId || '');
-        updateTermsEditor(); $('#fee-structures-term').value = String(record.termId || '');
-        $('#fee-structures-class').value = String(record.classId || '');
-        $('#fee-structures-remarks').value = record.remarks || '';
-        const locked = record.structureStatus !== 'DRAFT';
-        $('#fee-structures-year').disabled = true; $('#fee-structures-term').disabled = true; $('#fee-structures-class').disabled = true;
-        $('#fee-structures-save-details').hidden = locked;
-        $('#fee-structures-items-panel').hidden = false;
-        $('#fee-structures-edit-note').hidden = false;
-        $('#fee-structures-add-item').disabled = locked;
-        $('#fee-structures-publish').disabled = locked;
-        $('#fee-structures-archive').disabled = record.structureStatus === 'ARCHIVED';
-        $('#fee-structures-assign').disabled = record.structureStatus !== 'PUBLISHED';
-        $('#fee-structures-status-note').textContent = locked ? 'This structure is not a draft. Its details and components are read-only.' : 'Add the required fee components, review the total, then publish.';
-        renderItems(); showEditor();
-    }
-    function showEditor() { state.root.querySelector('#fee-structures-list-view').hidden = true; state.root.querySelector('#fee-structures-editor-view').hidden = false; }
-    function showList() { state.root.querySelector('#fee-structures-editor-view').hidden = true; state.root.querySelector('#fee-structures-list-view').hidden = false; loadStructures(true).then(renderTable).catch(report); }
-
-    async function saveDetails() {
-        const $ = selector => state.root.querySelector(selector);
-        if (state.busy) return;
-        const academicYearId = $('#fee-structures-year').value, termIdValue = $('#fee-structures-term').value, classIdValue = $('#fee-structures-class').value;
-        if (!academicYearId || !termIdValue || !classIdValue) return notifyError('Select academic year, term and class.');
-        state.busy = true; $('#fee-structures-save-details').disabled = true;
-        try {
-            if (!state.selected) {
-                const result = await apiPost(API.structures, { academicYearId: Number(academicYearId), termId: Number(termIdValue), classId: Number(classIdValue), remarks: $('#fee-structures-remarks').value.trim() });
-                state.selected = unwrap(result);
-                notifySuccess('Fee structure details saved. Continue adding fee components.');
-            } else {
-                const result = await apiPut(`${API.structures}/${state.selected.feeStructureId}`, { remarks: $('#fee-structures-remarks').value.trim() });
-                state.selected = unwrap(result); notifySuccess('Fee structure details updated.');
-            }
-            openEditor(state.selected);
-            await loadStructures(true); renderTable();
-        } catch (error) { report(error); }
-        finally { state.busy = false; $('#fee-structures-save-details').disabled = false; }
-    }
-
-    function openItemEditor(item) {
-        if (!state.selected || state.selected.structureStatus !== 'DRAFT') return notifyError('Only draft structures can be edited.');
-        state.editingItem = item || null;
-        const $ = selector => state.root.querySelector(selector);
-        $('#fee-structure-item-modal-title').textContent = item ? 'Edit Fee Component' : 'Add Fee Component';
-        $('#fee-item-type').value = item?.feeType || ''; $('#fee-item-name').value = item?.feeName || '';
-        $('#fee-item-amount').value = item?.amount ?? ''; $('#fee-item-frequency').value = item?.chargingFrequency || 'ONE_TIME';
-        $('#fee-item-due-date').value = item?.dueDate || ''; $('#fee-item-order').value = item?.displayOrder ?? (state.selected.items || []).length;
-        $('#fee-item-mandatory').checked = item?.mandatory !== false; $('#fee-item-remarks').value = item?.remarks || '';
-        if (state.itemModal) state.itemModal.show(); else $('#fee-structure-item-modal').hidden = false;
-    }
-
-    async function saveItem(event) {
-        event.preventDefault();
-        if (state.busy || !state.selected) return;
-        const $ = selector => state.root.querySelector(selector);
-        const amount = Number($('#fee-item-amount').value);
-        if (!Number.isFinite(amount) || amount < 0) return notifyError('Enter a valid fee amount.');
-        const payload = {
-            feeType: $('#fee-item-type').value.trim(), feeName: $('#fee-item-name').value.trim(), amount,
-            chargingFrequency: $('#fee-item-frequency').value, dueDate: $('#fee-item-due-date').value || null,
-            mandatory: $('#fee-item-mandatory').checked, displayOrder: Number($('#fee-item-order').value || 0),
-            remarks: $('#fee-item-remarks').value.trim() || null
-        };
-        if (!payload.feeType || !payload.feeName) return notifyError('Fee type and fee name are required.');
-        state.busy = true; $('#fee-item-save').disabled = true;
-        try {
-            const base = `${API.structures}/${state.selected.feeStructureId}/items`;
-            const response = state.editingItem
-                ? await apiPut(`${base}/${state.editingItem.feeStructureItemId}`, payload)
-                : await apiPost(base, payload);
-            const saved = unwrap(response);
-            const items = state.selected.items || [];
-            const index = items.findIndex(i => String(i.feeStructureItemId) === String(saved.feeStructureItemId));
-            if (index >= 0) items[index] = saved; else items.push(saved);
-            state.selected.items = items;
-            state.itemModal?.hide();
-            if (!state.itemModal) $('#fee-structure-item-modal').hidden = true;
-            renderItems(); await loadStructures(true); renderTable(); notifySuccess('Fee component saved.');
-        } catch (error) { report(error); }
-        finally { state.busy = false; $('#fee-item-save').disabled = false; }
-    }
-
-    async function deactivateItem(itemId) {
-        if (!window.confirm('Deactivate this fee component? Its record will be retained for audit.')) return;
-        try {
-            const response = await fetch(`/api${API.structures}/${state.selected.feeStructureId}/items/${itemId}`, {
-                method: 'DELETE', credentials: 'include', headers: { 'Content-Type': 'application/json' }
-            });
-            const body = await response.json().catch(() => ({}));
-            if (!response.ok) throw new Error(body.message || `Request failed (${response.status})`);
-            const data = body.data ?? body;
-            const items = state.selected.items || [];
-            const idx = items.findIndex(i => String(i.feeStructureItemId) === String(itemId));
-            if (idx >= 0) items[idx] = data;
-            renderItems(); await loadStructures(true); renderTable(); notifySuccess('Fee component deactivated.');
-        } catch (error) { report(error); }
-    }
-    function renderItems() {
-        const tbody = state.root.querySelector('#fee-structures-items-body');
-        const items = [...(state.selected?.items || [])].sort((a, b) => Number(a.displayOrder || 0) - Number(b.displayOrder || 0));
-        const active = items.filter(i => i.active !== false && String(i.status || '').toUpperCase() !== 'INACTIVE');
-        tbody.innerHTML = items.length ? items.map(i => `<tr>
-            <td>${esc(i.feeType)}</td><td>${esc(i.feeName)}</td><td>${money(i.amount)}</td><td>${esc(i.chargingFrequency)}</td><td>${esc(i.dueDate || '—')}</td>
-            <td>${i.mandatory ? 'Mandatory' : 'Optional'}</td><td>${i.active === false ? '<span class="badge bg-secondary">Inactive</span>' : '<span class="badge bg-success">Active</span>'}</td>
-            <td class="text-end text-nowrap">${state.selected.structureStatus === 'DRAFT' && i.active !== false && String(i.status || '').toUpperCase() !== 'INACTIVE' ? `<button type="button" class="btn-secondary btn-sm" data-item-action="edit" data-id="${i.feeStructureItemId}">Edit</button> <button type="button" class="btn-secondary btn-sm" data-item-action="deactivate" data-id="${i.feeStructureItemId}">Deactivate</button>` : '—'}</td>
-        </tr>`).join('') : '<tr><td colspan="8" class="text-center py-3 text-muted">No fee components added.</td></tr>';
-        state.root.querySelector('#fee-structures-total').textContent = money(active.reduce((sum, i) => sum + Number(i.amount || 0), 0));
-        tbody.onclick = event => {
-            const btn = event.target.closest('[data-item-action]'); if (!btn) return;
-            const item = items.find(i => String(i.feeStructureItemId) === btn.dataset.id); if (!item) return;
-            if (btn.dataset.itemAction === 'edit') openItemEditor(item);
-            if (btn.dataset.itemAction === 'deactivate') deactivateItem(btn.dataset.id);
-        };
-    }
-
-    async function mutateSelected(action, promptText) {
-        if (!state.selected || state.busy) return;
-        if (action === 'publish' && !(state.selected.items || []).some(i => i.active !== false && String(i.status || '').toUpperCase() !== 'INACTIVE')) return notifyError('Add at least one active fee component before publishing.');
-        if (!window.confirm(promptText)) return;
-        state.busy = true;
-        try {
-            const response = await apiPost(`${API.structures}/${state.selected.feeStructureId}/${action}`, {});
-            state.selected = unwrap(response); openEditor(state.selected);
-            await loadStructures(true); renderTable(); notifySuccess(`Fee structure ${action === 'publish' ? 'published' : 'archived'}.`);
-        } catch (error) { report(error); }
-        finally { state.busy = false; }
-    }
-    async function assignStructure(event) {
-        event.preventDefault(); if (!state.selected || state.busy) return;
-        const $ = selector => state.root.querySelector(selector);
-        const studentIds = $('#fee-assign-student-ids').value
-            .split(/[,\s;]+/).map(value => value.trim()).filter(Boolean).map(Number);
-        if (!studentIds.length || studentIds.some(id => !Number.isSafeInteger(id) || id <= 0)) {
-            return notifyError('Enter one or more valid positive student IDs.');
-        }
-        if (new Set(studentIds).size !== studentIds.length) return notifyError('Remove duplicate student IDs.');
-        state.busy = true;
-        try {
-            const response = await apiPost(`${API.structures}/${state.selected.feeStructureId}/assignments`, { studentIds });
-            const data = unwrap(response);
-            state.assignModal?.hide(); if (!state.assignModal) $('#fee-structure-assign-modal').hidden = true;
-            const summary = data && typeof data === 'object' ? Object.entries(data).map(([k,v]) => `${k}: ${v}`).join('\n') : '';
-            window.alert(`Assignment request completed.${summary ? '\n' + summary : ''}`);
-            await loadStructures(true); renderTable();
-        } catch (error) { report(error); }
-        finally { state.busy = false; }
-    }
-
-    function extractList(result, label) {
-        if (result.status === 'rejected') { console.warn(`Unable to load ${label}.`, result.reason); return []; }
-        return unwrapList(result.value);
-    }
-    function unwrapList(result) { const value = unwrap(result); return Array.isArray(value) ? value : (Array.isArray(value?.content) ? value.content : []); }
-    function unwrap(result) { return result && Object.prototype.hasOwnProperty.call(result, 'data') ? result.data : result; }
-    function fillSelect(select, items, placeholder, getId, getLabel) {
-        const current = select.value;
-        select.innerHTML = `<option value="">${esc(placeholder)}</option>` + items.map(item => `<option value="${esc(getId(item))}">${esc(getLabel(item))}</option>`).join('');
-        if (items.some(item => String(getId(item)) === current)) select.value = current;
-    }
-    function yearId(x) { return x.academicYearId ?? x.id ?? ''; }
-    function yearLabel(x) { return x.academicYearName || x.academicYearCode || x.yearName || x.name || String(yearId(x)); }
-    function termId(x) { return x.termId ?? x.academicTermId ?? x.id ?? ''; }
-    function termLabel(x) { return x.termName || x.termCode || x.name || String(termId(x)); }
-    function termYearId(x) { return x.academicYearId ?? x.yearId ?? null; }
-    function classId(x) { return x.classId ?? x.id ?? ''; }
-    function classLabel(x) { return [x.classCode, x.className].filter(Boolean).join(' — ') || x.name || String(classId(x)); }
-    function statusClass(status) { return status === 'PUBLISHED' ? 'bg-success' : status === 'ARCHIVED' ? 'bg-secondary' : 'bg-warning text-dark'; }
-    function money(value) { return Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
-    function formatDate(value) { if (!value) return '—'; const d = new Date(value); return Number.isNaN(d.getTime()) ? String(value) : d.toLocaleDateString(); }
-    function esc(value) { return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-    function notifySuccess(message) { if (typeof showSuccessMessage === 'function') showSuccessMessage(message); else window.alert(message); }
-    function notifyError(message) { if (typeof showErrorMessage === 'function') showErrorMessage(message); else window.alert(message); }
-    function report(error) { console.error(error); notifyError(error?.message || 'The operation could not be completed.'); }
 })();

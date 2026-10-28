@@ -67,6 +67,18 @@ public interface AcademicTermRepository
     @Query("""
             SELECT term
             FROM ErpAcademicTerm term
+            WHERE term.academicYear.branch.branchId = :branchId
+              AND term.active = true
+              AND term.academicYear.active = true
+            ORDER BY term.academicYear.startDate DESC, term.displayOrder ASC
+            """)
+    List<ErpAcademicTerm> findAllActiveByBranch(
+            @Param("branchId") Integer branchId
+    );
+
+    @Query("""
+            SELECT term
+            FROM ErpAcademicTerm term
             WHERE term.termId = :termId
               AND term.academicYear.branch.branchId = :branchId
             """)
