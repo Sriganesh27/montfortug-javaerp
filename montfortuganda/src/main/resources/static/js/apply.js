@@ -54,6 +54,7 @@ let branchList = [];
 /** @type {SchoolClass[]} */
 let classList = [];
 let classFetchSequence = 0;
+let aLevelCombinationFetchSequence = 0;
 let classResponseMetadata = {};
 
 // Helper to safely trigger SweetAlert without ARIA focus-retention violations
@@ -115,17 +116,18 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("subjectsBody").addEventListener("input", calculateSubjectTotal);
     document.getElementById("admission-form").addEventListener("submit", handleFormSubmit);
 
-    // Require an explicit applicant confirmation before enabling final submission.
+    // Final review confirmation: submission is available only after the
+    // applicant explicitly confirms the reviewed application details.
     const applicationConfirmation = document.getElementById("application-confirmation");
     const submitButton = document.getElementById("btn-submit");
     if (applicationConfirmation && submitButton) {
-        const syncSubmitAvailability = () => {
+        const syncSubmitConfirmation = () => {
             const confirmed = applicationConfirmation.checked;
             submitButton.disabled = !confirmed;
             submitButton.setAttribute("aria-disabled", String(!confirmed));
         };
-        applicationConfirmation.addEventListener("change", syncSubmitAvailability);
-        syncSubmitAvailability();
+        applicationConfirmation.addEventListener("change", syncSubmitConfirmation);
+        syncSubmitConfirmation();
     }
 
     document.addEventListener("change", handleFileUploadUI);
@@ -290,13 +292,29 @@ function updatePrimaryContactSelection() {
 
     if (otherSection) otherSection.classList.toggle("hidden-element", !isOther);
 
-    setRequired("fatherContact_display", contactType === "FATHER");
-    setRequired("motherContact_display", contactType === "MOTHER");
+    const isFather = contactType === "FATHER";
+    const isMother = contactType === "MOTHER";
+
+    setRequired("fatherContact_display", isFather);
+    setRequired("motherContact_display", isMother);
     setRequiredByName("guardianName", isOther);
     setRequired("guardianContact_display", isOther);
     setRequiredByName("guardianRelation", isOther);
 
+    // Keep required indicators synchronized with the selected primary contact.
+    toggleRequiredMark("fatherContactRequiredMark", isFather);
+    toggleRequiredMark("motherContactRequiredMark", isMother);
+    toggleRequiredMark("guardianNameRequiredMark", isOther);
+    toggleRequiredMark("guardianContactRequiredMark", isOther);
+    toggleRequiredMark("guardianRelationRequiredMark", isOther);
+
     if (!isOther) clearGuardianFields();
+}
+
+
+function toggleRequiredMark(id, visible) {
+    const mark = document.getElementById(id);
+    if (mark) mark.classList.toggle("hidden-element", !visible);
 }
 
 function setRequired(id, required) {
@@ -763,6 +781,125 @@ function syncSchoolDayTypeField() {
     valueInput.disabled = false;
 }
 
+// A-Level combinations are applicable only to S5 and S6.
+// The public endpoint returns a direct JSON array of active branch combinations.
+function resetALevelCombinationField(message = "Select S5/S6 class first") {
+    const group = document.getElementById("aLevelCombinationGroup");
+    const select = document.getElementById("aLevelCombinationSelect");
+    const note = document.getElementById("aLevelCombinationMessage");
+    if (!group || !select) return;
+
+    aLevelCombinationFetchSequence++;
+    group.classList.add("hidden-element");
+    group.hidden = true;
+    select.required = false;
+    select.disabled = true;
+    select.value = "";
+    setupDefaultOption(select, message);
+    if (note) note.textContent = "";
+    select.classList.remove("error-border");
+}
+
+async function loadALevelCombinations(branchId) {
+    const group = document.getElementById("aLevelCombinationGroup");
+    const select = document.getElementById("aLevelCombinationSelect");
+    const note = document.getElementById("aLevelCombinationMessage");
+    if (!group || !select) return;
+
+    const requestSequence = ++aLevelCombinationFetchSequence;
+    group.hidden = false;
+    group.classList.remove("hidden-element");
+    select.required = true;
+    select.disabled = false;
+    setupDefaultOption(select, "Loading combinations...");
+    if (note) note.textContent = "Choose the subject combination applicable to the student.";
+
+    const validBranchId = Number(branchId);
+    if (!Number.isInteger(validBranchId) || validBranchId <= 0) {
+        setupDefaultOption(select, "Select school branch first");
+        select.disabled = true;
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/public/a-level-combinations?branchId=${encodeURIComponent(validBranchId)}`, {
+            headers: { "Accept": "application/json" },
+            cache: "no-store"
+        });
+        if (!response.ok) throw new Error("Unable to load A-Level combinations.");
+        const result = await response.json();
+        if (requestSequence !== aLevelCombinationFetchSequence) return;
+        if (!Array.isArray(result)) throw new Error("Unexpected A-Level combination response.");
+
+        const combinations = result.filter(item => item
+            && Number.isInteger(Number(item.combinationId))
+            && Number(item.combinationId) > 0
+            && item.active !== false);
+
+        setupDefaultOption(select, combinations.length
+            ? "Select A-Level Combination"
+            : "No combinations available");
+
+        combinations.forEach(item => {
+            // Show the configured course/combination name followed by its
+            // complete subject names. General Paper is intentionally not
+            // treated as the subsidiary subject.
+            const combinationTitle = String(item.combinationName || item.combinationCode
+                || `Combination ${item.combinationId}`).trim();
+
+            const principalSubjects = [
+                item.principalSubject1Name,
+                item.principalSubject2Name,
+                item.principalSubject3Name
+            ].map(value => String(value || "").trim()).filter(Boolean);
+
+            const subsidiarySubject = String(item.subsidiarySubjectName || "").trim();
+            const subjectDetails = [];
+            if (principalSubjects.length) {
+                subjectDetails.push(principalSubjects.join(", "));
+            }
+            if (subsidiarySubject) {
+                subjectDetails.push(`Subsidiary: ${subsidiarySubject}`);
+            }
+
+            const label = subjectDetails.length
+                ? `${combinationTitle} (${subjectDetails.join(" | ")})`
+                : combinationTitle;
+
+            select.appendChild(new Option(label, String(item.combinationId)));
+        });
+
+        select.disabled = false;
+        if (note) {
+            note.textContent = combinations.length
+                ? "Select one active combination. This field is required for S5 and S6."
+                : "No active A-Level combinations are configured for this school yet. Please contact the school office.";
+        }
+    } catch (error) {
+        if (requestSequence !== aLevelCombinationFetchSequence) return;
+        console.error("Unable to load A-Level combinations:", error);
+        setupDefaultOption(select, "Combinations unavailable — retry class selection");
+        select.disabled = false;
+        if (note) note.textContent = "Unable to retrieve combinations. Please change the class and select S5/S6 again, or contact the school office.";
+    }
+}
+
+function isALevelApplicationClass(selectedClass) {
+    const code = String(selectedClass && selectedClass.classCode || "").trim().toUpperCase();
+    const name = String(selectedClass && selectedClass.className || "").trim().toUpperCase();
+    return ["S5", "S6", "SENIOR 5", "SENIOR FIVE", "SENIOR 6", "SENIOR SIX"].includes(code)
+        || ["S5", "S6", "SENIOR 5", "SENIOR FIVE", "SENIOR 6", "SENIOR SIX"].includes(name);
+}
+
+function syncALevelCombinationField(selectedClass) {
+    if (isALevelApplicationClass(selectedClass)) {
+        const branchId = Number(document.getElementById("branchSelect").value);
+        void loadALevelCombinations(branchId);
+    } else {
+        resetALevelCombinationField();
+    }
+}
+
 // DYNAMIC CASCADING LOGIC
 function handleBranchChange() {
     const selectedId = parseInt(this.value, 10);
@@ -780,6 +917,7 @@ function handleBranchChange() {
     setupDefaultOption(levelSelect, branch ? "Select Level" : "Select Branch First");
     setupDefaultOption(classSelect, "Select Level First");
     classList = [];
+    resetALevelCombinationField();
     syncSchoolDayTypeField();
     setupDefaultOption(
         academicYearSelect,
@@ -1072,6 +1210,7 @@ function handleLevelChange() {
     const classSelect = document.getElementById("classSelect");
     setupDefaultOption(classSelect, "Select Class");
     classList = [];
+    resetALevelCombinationField();
     syncSchoolDayTypeField();
     document.getElementById("dynamic-exam-container").textContent = '';
     document.getElementById("dynamic-subjects-container").classList.add("hidden-element");
@@ -1111,6 +1250,7 @@ function handleClassChange() {
     const selectedClassId = Number(this.value);
     const selectedClass = classList.find(c => Number(c.classId) === selectedClassId);
     const code = selectedClass ? selectedClass.classCode : "";
+    syncALevelCombinationField(selectedClass);
 
     const hiddenCode = document.getElementById("hiddenClassCode");
     const hiddenApplied = document.getElementById("hiddenAppliedClass");
@@ -1225,8 +1365,9 @@ function collectSubjectMarks() {
 
 async function handleFormSubmit(e) {
     e.preventDefault();
-    const confirmation = document.getElementById("application-confirmation");
-    if (!confirmation || !confirmation.checked) {
+    const form = e.target;
+    const applicationConfirmation = document.getElementById("application-confirmation");
+    if (applicationConfirmation && !applicationConfirmation.checked) {
         showAlert(
             "Confirmation Required",
             "Please review the application and tick the confirmation checkbox before submitting.",
@@ -1234,8 +1375,6 @@ async function handleFormSubmit(e) {
         );
         return;
     }
-
-    const form = e.target;
     const btnSubmit = document.getElementById("btn-submit");
     const btnText = document.getElementById("btn-submit-text");
     const btnSpinner = document.getElementById("btn-submit-spinner");
@@ -1302,6 +1441,10 @@ async function handleFormSubmit(e) {
                 )
                 : null,
         branchClassId: trueClassId,
+        aLevelCombinationId: isALevelApplicationClass(selectedClassObj)
+            && document.getElementById("aLevelCombinationSelect").value
+                ? Number(document.getElementById("aLevelCombinationSelect").value)
+                : null,
         schoolDayType: String(document.getElementById("level").value || "").trim().toUpperCase() === "NURSERY"
             ? (document.getElementById("schoolDayType").value || "FULL_DAY")
             : "FULL_DAY",
