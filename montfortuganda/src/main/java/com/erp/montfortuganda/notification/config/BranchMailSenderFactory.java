@@ -17,9 +17,9 @@ public class BranchMailSenderFactory {
 
     private static final String DEFAULT_MAIL_HOST = "smtp.gmail.com";
     private static final int DEFAULT_MAIL_PORT = 587;
-    private static final String CONNECTION_TIMEOUT = "10000";
-    private static final String READ_TIMEOUT = "10000";
-    private static final String WRITE_TIMEOUT = "10000";
+    private static final String CONNECTION_TIMEOUT = "30000";
+    private static final String READ_TIMEOUT = "30000";
+    private static final String WRITE_TIMEOUT = "30000";
 
     private final Environment environment;
     private final Map<SenderCacheKey, JavaMailSender> senderCache = new ConcurrentHashMap<>();

@@ -218,6 +218,35 @@ body{
 #montfort-portal-wrapper .btn-primary, #montfort-portal-wrapper .btn-submit { background: linear-gradient(180deg, #1e293b, #0f172a); color: #d4af37; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
 #montfort-portal-wrapper .btn-primary:hover, #montfort-portal-wrapper .btn-submit:hover { background: linear-gradient(180deg, #27364f, #0f172a); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transform: translateY(-2px); }
 #montfort-portal-wrapper .btn-primary:active { transform: translateY(0); }
+
+/* Disabled navigation buttons: visually muted until required fields are valid. */
+#montfort-portal-wrapper .btn-primary:disabled,
+#montfort-portal-wrapper .btn-primary[aria-disabled="true"],
+#montfort-portal-wrapper .btn-submit:disabled,
+#montfort-portal-wrapper .btn-submit[aria-disabled="true"] {
+    background: linear-gradient(180deg, #64748b, #475569) !important;
+    color: #cbd5e1 !important;
+    border-color: #64748b !important;
+    box-shadow: none !important;
+    opacity: 0.72;
+    cursor: not-allowed !important;
+    transform: none !important;
+    pointer-events: none;
+}
+
+#montfort-portal-wrapper .btn-primary:disabled:hover,
+#montfort-portal-wrapper .btn-primary[aria-disabled="true"]:hover,
+#montfort-portal-wrapper .btn-primary:disabled:active,
+#montfort-portal-wrapper .btn-primary[aria-disabled="true"]:active,
+#montfort-portal-wrapper .btn-submit:disabled:hover,
+#montfort-portal-wrapper .btn-submit[aria-disabled="true"]:hover,
+#montfort-portal-wrapper .btn-submit:disabled:active,
+#montfort-portal-wrapper .btn-submit[aria-disabled="true"]:active {
+    background: linear-gradient(180deg, #64748b, #475569) !important;
+    color: #cbd5e1 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
 #montfort-portal-wrapper .btn-outline { background-color: transparent; color: #475569; padding: 10px 22px; border: 2px solid #e2e8f0; }
 #montfort-portal-wrapper .btn-outline:hover { color: #0f172a; border-color: #cbd5e1; background-color: #f8fafc; }
 #montfort-portal-wrapper .btn-text { background: transparent; color: #d4af37; font-weight: 600; padding: 0; box-shadow: none; }

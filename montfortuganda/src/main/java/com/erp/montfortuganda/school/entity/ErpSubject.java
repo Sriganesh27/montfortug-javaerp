@@ -32,7 +32,13 @@ public class ErpSubject implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public enum Status { ACTIVE, INACTIVE }
-    public enum SubjectType { CORE, ELECTIVE, OPTIONAL }
+
+    public enum SubjectType {
+        CORE,
+        ELECTIVE,
+        OPTIONAL,
+        SUBSIDIARY
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

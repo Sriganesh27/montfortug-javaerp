@@ -6,6 +6,10 @@ import com.erp.montfortuganda.admission.entity.ErpApplication;
 import com.erp.montfortuganda.admission.entity.ErpApplicationStatusHistory;
 import com.erp.montfortuganda.admission.entity.ErpApplicationDocument;
 import com.erp.montfortuganda.admission.repository.ErpApplicationRepository;
+import com.erp.montfortuganda.school.entity.ErpALevelCombination;
+import com.erp.montfortuganda.school.repository.ErpALevelCombinationRepository;
+import com.erp.montfortuganda.student.entity.ErpStudentALevelSelection;
+import com.erp.montfortuganda.student.repository.ErpStudentALevelSelectionRepository;
 import com.erp.montfortuganda.school.entity.Branch;
 import com.erp.montfortuganda.school.entity.ErpAcademicYear;
 import com.erp.montfortuganda.school.entity.ErpAcademicTerm;
@@ -44,6 +48,8 @@ public class PublicApplicationService {
     private final AcademicTermRepository academicTermRepository;
     private final SchoolClassRepository classRepository;
     private final LevelRepository levelRepository;
+    private final ErpALevelCombinationRepository aLevelCombinationRepository;
+    private final ErpStudentALevelSelectionRepository aLevelSelectionRepository;
 
     @Value("${erp.storage.location:uploads}")
     private String publicStorageLocation;
@@ -264,6 +270,34 @@ public class PublicApplicationService {
             );
         }
 
+        // A' Level combination selection is required for S5 and S6
+        // applications under the Senior Secondary (A' Level) education level.
+        boolean isSeniorSecondaryLevel = selectedClass.getLevel().getLevelId() != null
+                && selectedClass.getLevel().getLevelId().longValue() == 4L;
+        boolean isS5OrS6Application = isS5OrS6Class(selectedClass);
+        boolean requiresALevelCombination = isSeniorSecondaryLevel
+                && isS5OrS6Application;
+        ErpALevelCombination selectedALevelCombination = null;
+
+        if (requiresALevelCombination) {
+            if (dto.getALevelCombinationId() == null
+                    || dto.getALevelCombinationId() <= 0) {
+                throw new IllegalArgumentException(
+                        "An A' Level combination is required for S5 and S6 applications."
+                );
+            }
+
+            selectedALevelCombination = aLevelCombinationRepository
+                    .findByCombinationIdAndBranch_BranchIdAndActiveTrue(
+                            dto.getALevelCombinationId(), branchId)
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Selected A' Level combination is inactive or does not belong to the selected Branch."));
+        } else if (dto.getALevelCombinationId() != null) {
+            throw new IllegalArgumentException(
+                    "A' Level combination can only be selected for S5 or S6 applications under Senior Secondary."
+            );
+        }
+
         /*
          * Public application number format:
          *
@@ -332,7 +366,7 @@ public class PublicApplicationService {
 
         app.setGuardianName(dto.getGuardianName());
         app.setGuardianMobile(dto.getGuardianMobile());
-        app.setGuardianEmail(dto.getGuardianEmail());
+        app.setGuardianEmail(dto.getGuardianEmail() == null ? "" : dto.getGuardianEmail().trim());
 
         // Map Extended Data Fields
         app.setAddressHouse(dto.getAddressHouse());
@@ -347,14 +381,14 @@ public class PublicApplicationService {
         app.setFatherContact(dto.getFatherContact());
         app.setFatherEducation(dto.getFatherEducation());
         app.setFatherOccupation(dto.getFatherOccupation());
-        app.setFatherEmail(dto.getFatherEmail());
+        app.setFatherEmail(dto.getFatherEmail() == null ? "" : dto.getFatherEmail().trim());
 
         app.setMotherName(dto.getMotherName());
         app.setMotherAge(dto.getMotherAge());
         app.setMotherContact(dto.getMotherContact());
         app.setMotherEducation(dto.getMotherEducation());
         app.setMotherOccupation(dto.getMotherOccupation());
-        app.setMotherEmail(dto.getMotherEmail());
+        app.setMotherEmail(dto.getMotherEmail() == null ? "" : dto.getMotherEmail().trim());
 
         app.setGuardianAge(dto.getGuardianAge());
         app.setGuardianEducation(dto.getGuardianEducation());
@@ -396,13 +430,6 @@ public class PublicApplicationService {
 
         switch (primaryContactType) {
             case "FATHER" -> {
-                if (dto.getFatherEmail() == null
-                        || dto.getFatherEmail().trim().isEmpty()) {
-                    throw new IllegalArgumentException(
-                            "Father email is required when Father is the Primary Contact."
-                    );
-                }
-
                 if (dto.getFatherContact() == null
                         || dto.getFatherContact().trim().isEmpty()) {
                     throw new IllegalArgumentException(
@@ -411,7 +438,7 @@ public class PublicApplicationService {
                 }
 
                 app.setPrimaryContactType("FATHER");
-                app.setPrimaryEmail(dto.getFatherEmail().trim());
+                app.setPrimaryEmail(dto.getFatherEmail() == null ? "" : dto.getFatherEmail().trim());
                 app.setPrimaryMobile(dto.getFatherContact().trim());
 
                 app.setGuardianName("");
@@ -425,13 +452,6 @@ public class PublicApplicationService {
             }
 
             case "MOTHER" -> {
-                if (dto.getMotherEmail() == null
-                        || dto.getMotherEmail().trim().isEmpty()) {
-                    throw new IllegalArgumentException(
-                            "Mother email is required when Mother is the Primary Contact."
-                    );
-                }
-
                 if (dto.getMotherContact() == null
                         || dto.getMotherContact().trim().isEmpty()) {
                     throw new IllegalArgumentException(
@@ -440,7 +460,7 @@ public class PublicApplicationService {
                 }
 
                 app.setPrimaryContactType("MOTHER");
-                app.setPrimaryEmail(dto.getMotherEmail().trim());
+                app.setPrimaryEmail(dto.getMotherEmail() == null ? "" : dto.getMotherEmail().trim());
                 app.setPrimaryMobile(dto.getMotherContact().trim());
 
                 app.setGuardianName("");
@@ -468,13 +488,6 @@ public class PublicApplicationService {
                     );
                 }
 
-                if (dto.getGuardianEmail() == null
-                        || dto.getGuardianEmail().trim().isEmpty()) {
-                    throw new IllegalArgumentException(
-                            "Guardian email is required when Other is the Primary Contact."
-                    );
-                }
-
                 if (dto.getGuardianRelation() == null
                         || dto.getGuardianRelation().trim().isEmpty()) {
                     throw new IllegalArgumentException(
@@ -483,7 +496,7 @@ public class PublicApplicationService {
                 }
 
                 app.setPrimaryContactType("OTHER");
-                app.setPrimaryEmail(dto.getGuardianEmail().trim());
+                app.setPrimaryEmail(dto.getGuardianEmail() == null ? "" : dto.getGuardianEmail().trim());
                 app.setPrimaryMobile(dto.getGuardianMobile().trim());
             }
 
@@ -499,9 +512,45 @@ public class PublicApplicationService {
         history.setRemarks("Application submitted by user");
         app.addHistory(history);
         ErpApplication savedApp = applicationRepository.save(app);
+
+        // Keep the application and its initial A' Level selection in one transaction.
+        if (selectedALevelCombination != null) {
+            ErpStudentALevelSelection selection = new ErpStudentALevelSelection();
+            selection.setApplication(savedApp);
+            selection.setBranch(branch);
+            selection.setAcademicYear(academicYear);
+            selection.setSchoolClass(selectedClass);
+            selection.setCombination(selectedALevelCombination);
+            selection.setStatus(ErpStudentALevelSelection.SelectionStatus.PENDING);
+            selection.setSelectedAt(LocalDateTime.now());
+            aLevelSelectionRepository.save(selection);
+        }
+
         // Fire and forget the background email task
         emailService.sendApplicationReceipt(savedApp);
         return mapToResponseDTO(savedApp);
+    }
+
+    private boolean isS5OrS6Class(SchoolClass schoolClass) {
+        String code = schoolClass.getClassCode() == null
+                ? "" : schoolClass.getClassCode().trim().toUpperCase(Locale.ROOT);
+        String name = schoolClass.getClassName() == null
+                ? "" : schoolClass.getClassName().trim().toUpperCase(Locale.ROOT);
+
+        return isClassIdentifier(code, name, "S5", "SENIOR 5", "SENIOR FIVE")
+                || isClassIdentifier(code, name, "S6", "SENIOR 6", "SENIOR SIX");
+    }
+
+    private boolean isClassIdentifier(
+            String code,
+            String name,
+            String shortCode,
+            String seniorNumber,
+            String seniorWord
+    ) {
+        return shortCode.equals(code) || shortCode.equals(name)
+                || seniorNumber.equals(code) || seniorNumber.equals(name)
+                || seniorWord.equals(code) || seniorWord.equals(name);
     }
 
     @Transactional

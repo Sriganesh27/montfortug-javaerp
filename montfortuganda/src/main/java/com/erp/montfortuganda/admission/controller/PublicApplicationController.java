@@ -7,6 +7,10 @@ import com.erp.montfortuganda.admission.service.PublicApplicationService;
 import com.erp.montfortuganda.scholarship.dto.ScholarshipApplicationFormRequestDTO;
 import com.erp.montfortuganda.scholarship.dto.ScholarshipApplicationFormResponseDTO;
 import com.erp.montfortuganda.scholarship.service.ScholarshipService;
+import com.erp.montfortuganda.school.dto.ErpALevelCombinationResponse;
+import com.erp.montfortuganda.school.entity.ErpALevelCombination;
+import com.erp.montfortuganda.school.entity.ErpSubject;
+import com.erp.montfortuganda.school.service.ErpALevelCombinationService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +27,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class PublicApplicationController {
 
-    // -------------------------------------------------------------------------
-    // ARCHITECTURE FIX: Notice how clean this is now!
-    // ZERO direct database Repositories are injected here.
-    // The Controller only talks to the Service.
-    // -------------------------------------------------------------------------
     private final PublicApplicationService applicationService;
     private final ScholarshipService scholarshipService;
+    private final ErpALevelCombinationService aLevelCombinationService;
 
     @GetMapping("/public/branches")
     public ResponseEntity<Map<String, Object>> getPublicBranches() {
@@ -73,11 +73,7 @@ public class PublicApplicationController {
         }
     }
 
-    /**
-     * Returns only active classes configured for the selected branch and
-     * academic year. The legacy /public/classes endpoint remains available
-     * for previous-school-history fields, which are not branch-specific.
-     */
+    /** Returns active admission classes configured for the selected branch/year. */
     @GetMapping("/public/admission-classes")
     public ResponseEntity<Map<String, Object>> getPublicAdmissionClasses(
             @RequestParam("branchId") Integer branchId,
@@ -95,14 +91,24 @@ public class PublicApplicationController {
         }
     }
 
-    // Public Endpoint: Submission
+    /** Public S5 application-form lookup. Only active combinations for a branch offering A' Level are returned. */
+    @GetMapping("/public/a-level-combinations")
+    public ResponseEntity<List<ErpALevelCombinationResponse>> getPublicALevelCombinations(
+            @RequestParam("branchId") Integer branchId) {
+        List<ErpALevelCombinationResponse> result = aLevelCombinationService
+                .getPublicActiveCombinations(branchId)
+                .stream()
+                .map(this::toALevelCombinationResponse)
+                .toList();
+        return ResponseEntity.ok(result);
+    }
+
     @PostMapping("/public/applications/submit")
     public ResponseEntity<ApplicationResponseDTO> submitApplication(@Valid @RequestBody ApplicationCreateDTO dto) {
         ApplicationResponseDTO response = applicationService.submitApplication(dto);
         return ResponseEntity.ok(response);
     }
 
-    // Public Endpoint: Document Upload
     @PostMapping("/public/applications/{refNumber}/upload")
     public ResponseEntity<Map<String, Object>> uploadApplicationFiles(
             @PathVariable String refNumber,
@@ -121,116 +127,90 @@ public class PublicApplicationController {
         }
     }
 
-    // Public Endpoint: Check Status (Compact for the Status Page)
     @PostMapping("/public/applications/status")
     public ResponseEntity<Map<String, Object>> checkApplicationStatus(
             @RequestParam("ref_number") String refNumber,
             @RequestParam("dob") String dob,
             jakarta.servlet.http.HttpServletRequest request) {
-
-        // 1. Fetch data from Service Layer
         Map<String, Object> response = applicationService.verifyAndGetStatus(refNumber, dob);
-
         if ((Boolean) response.get("success")) {
-            Long appId = (Long) response.remove("internal_id"); // Strip internal ID
-
-            // 2. Session Fixation Protection (Modern Servlet 3.1+ Approach)
+            Long appId = (Long) response.remove("internal_id");
             jakarta.servlet.http.HttpSession session = request.getSession(true);
             request.changeSessionId();
-
-            // 3. Set the secure VerifiedApplicationSession object
             com.erp.montfortuganda.admission.dto.VerifiedApplicationSession verifiedSession =
                     new com.erp.montfortuganda.admission.dto.VerifiedApplicationSession(refNumber, appId, 10);
-
             session.setAttribute("VERIFIED_APPLICATION", verifiedSession);
         }
-
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/public/applications/details")
     public ResponseEntity<Map<String, Object>> getApplicationDetails(jakarta.servlet.http.HttpServletRequest request) {
-
-        // 1. Check Session Authorization
         jakarta.servlet.http.HttpSession session = request.getSession(false);
         if (session == null || session.getAttribute("VERIFIED_APPLICATION") == null) {
             return ResponseEntity.status(403).body(Map.of("success", false, "message", "Session Expired. Please track again."));
         }
-
         com.erp.montfortuganda.admission.dto.VerifiedApplicationSession verifiedSession =
                 (com.erp.montfortuganda.admission.dto.VerifiedApplicationSession) session.getAttribute("VERIFIED_APPLICATION");
-
         if (!verifiedSession.isValid()) {
             session.invalidate();
             return ResponseEntity.status(403).body(Map.of("success", false, "message", "Session Expired. Please track again."));
         }
-
-        // 2. Add Cache-Control Headers to protect PII
         org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
         headers.setCacheControl("no-store, no-cache, must-revalidate, max-age=0");
         headers.setPragma("no-cache");
         headers.setExpires(0);
-
         Map<String, Object> response = applicationService.getApplicationDetails(verifiedSession.getApplicationId());
-
         return ResponseEntity.ok().headers(headers).body(response);
     }
 
-    // Secured Endpoint: Approve/Reject workflows
     @PostMapping("/superadmin/applications/{id}/status")
     @PreAuthorize("hasRole('SUPER_ADMIN') or hasRole('BRANCH_ADMIN')")
     public ResponseEntity<String> updateStatus(
             @PathVariable Long id,
             @RequestParam ErpApplication.ApplicationStatus status,
             @RequestParam(required = false) String remarks) {
-
-        // Use the authenticated user's ID from SecurityContext in production
         Long currentUserId = 1L;
         applicationService.updateApplicationStatus(id, status, currentUserId, remarks);
         return ResponseEntity.ok("Status successfully updated to " + status);
     }
 
     @GetMapping("/public/scholarship/application-form")
-    public ResponseEntity<ScholarshipApplicationFormResponseDTO>
-    getPublicScholarshipApplicationForm(
-            @RequestHeader("X-Scholarship-Access")
-            String publicToken
-    ) {
-        return ResponseEntity.ok(
-                scholarshipService.getApplicationFormForPublicToken(
-                        publicToken
-                )
-        );
+    public ResponseEntity<ScholarshipApplicationFormResponseDTO> getPublicScholarshipApplicationForm(
+            @RequestHeader("X-Scholarship-Access") String publicToken) {
+        return ResponseEntity.ok(scholarshipService.getApplicationFormForPublicToken(publicToken));
     }
 
     @PatchMapping("/public/scholarship/application-form")
-    public ResponseEntity<ScholarshipApplicationFormResponseDTO>
-    savePublicScholarshipApplicationForm(
-            @RequestHeader("X-Scholarship-Access")
-            String publicToken,
-            @RequestBody ScholarshipApplicationFormRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                scholarshipService.saveApplicationFormForPublicToken(
-                        publicToken,
-                        request
-                )
-        );
+    public ResponseEntity<ScholarshipApplicationFormResponseDTO> savePublicScholarshipApplicationForm(
+            @RequestHeader("X-Scholarship-Access") String publicToken,
+            @RequestBody ScholarshipApplicationFormRequestDTO request) {
+        return ResponseEntity.ok(scholarshipService.saveApplicationFormForPublicToken(publicToken, request));
     }
 
     @PostMapping("/public/scholarship/application-form/submit")
-    public ResponseEntity<ScholarshipApplicationFormResponseDTO>
-    submitPublicScholarshipApplicationForm(
-            @RequestHeader("X-Scholarship-Access")
-            String publicToken,
-            @RequestBody ScholarshipApplicationFormRequestDTO request
-    ) {
-        return ResponseEntity.ok(
-                scholarshipService.submitApplicationFormForPublicToken(
-                        publicToken,
-                        request
-                )
-        );
+    public ResponseEntity<ScholarshipApplicationFormResponseDTO> submitPublicScholarshipApplicationForm(
+            @RequestHeader("X-Scholarship-Access") String publicToken,
+            @RequestBody ScholarshipApplicationFormRequestDTO request) {
+        return ResponseEntity.ok(scholarshipService.submitApplicationFormForPublicToken(publicToken, request));
     }
 
+    private ErpALevelCombinationResponse toALevelCombinationResponse(ErpALevelCombination combination) {
+        ErpSubject subject1 = combination.getPrincipalSubject1();
+        ErpSubject subject2 = combination.getPrincipalSubject2();
+        ErpSubject subject3 = combination.getPrincipalSubject3();
+        ErpSubject subsidiary = combination.getSubsidiarySubject();
+        return new ErpALevelCombinationResponse(
+                combination.getCombinationId(),
+                combination.getBranch().getBranchId(),
+                combination.getCombinationCode(),
+                combination.getCombinationName(),
+                subject1.getSubjectId(), subject1.getSubjectCode(), subject1.getSubjectName(),
+                subject2.getSubjectId(), subject2.getSubjectCode(), subject2.getSubjectName(),
+                subject3.getSubjectId(), subject3.getSubjectCode(), subject3.getSubjectName(),
+                subsidiary.getSubjectId(), subsidiary.getSubjectCode(), subsidiary.getSubjectName(),
+                combination.getActive(), combination.getVersion(),
+                combination.getCreatedAt(), combination.getUpdatedAt()
+        );
+    }
 }

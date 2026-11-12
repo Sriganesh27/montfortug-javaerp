@@ -1,0 +1,285 @@
+<div id="ba-course-combinations-view" class="fade-in erp-record-module">
+    <div id="course-combinations-table-view">
+        <div class="view-header">
+            <div><h2>Course Combinations</h2></div>
+            <div class="action-btn-group">
+                <button type="button" id="course-combinations-refresh-btn" class="btn-secondary">
+                    <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                </button>
+                <button type="button" id="course-combinations-add-btn" class="btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i>Add Combination
+                </button>
+            </div>
+        </div>
+
+        <div class="card mb-3 p-3">
+            <form id="course-combinations-filter-form" novalidate>
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1">
+                        <label for="course-combinations-status-filter">Status</label>
+                        <select id="course-combinations-status-filter" class="detail-input w-100">
+                            <option value="">All Status</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group ba-flex-1">
+                        <label for="course-combinations-subsidiary-filter">Subsidiary Subject</label>
+                        <select id="course-combinations-subsidiary-filter" class="detail-input w-100">
+                            <option value="">All Subsidiary Subjects</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group ba-flex-1">
+                        <label for="course-combinations-search">Search</label>
+                        <input type="search"
+                               id="course-combinations-search"
+                               class="detail-input w-100"
+                               maxlength="100"
+                               autocomplete="off"
+                               placeholder="Search combination name or subject...">
+                    </div>
+
+                    <div class="form-group ba-pagination-controls">
+                        <button type="submit" class="btn-primary">Search</button>
+                        <button type="button" id="course-combinations-reset-btn" class="btn-secondary">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="table-responsive">
+                <table id="course-combinations-table" class="data-table">
+                    <thead>
+                    <tr>
+                        <th rowspan="2">Combination</th>
+                        <th colspan="3" class="text-center">Principal Subjects</th>
+                        <th rowspan="2">Subsidiary Subject</th>
+                        <th rowspan="2" class="text-center">Status</th>
+                    </tr>
+                    <tr>
+                        <th class="text-center">PS1</th>
+                        <th class="text-center">PS2</th>
+                        <th class="text-center">PS3</th>
+                    </tr>
+                    </thead>
+                    <tbody id="course-combinations-table-body">
+                    <tr>
+                        <td colspan="6" class="text-center text-muted p-4">
+                            Loading Course Combinations...
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="ba-pagination-footer">
+                <div class="ba-pagination-controls">
+                    <select id="course-combinations-page-size"
+                            class="detail-input w-auto"
+                            aria-label="Rows per page">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    <span id="course-combinations-page-info" class="text-muted">
+                        No records
+                    </span>
+                </div>
+
+                <div class="ba-pagination-controls">
+                    <button type="button"
+                            id="course-combinations-prev-btn"
+                            class="btn-secondary btn-sm"
+                            disabled>Previous</button>
+                    <button type="button"
+                            id="course-combinations-next-btn"
+                            class="btn-secondary btn-sm"
+                            disabled>Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section id="course-combinations-form-view"
+             class="fade-in hidden"
+             aria-labelledby="course-combinations-form-title">
+        <div class="view-header">
+            <div>
+                <h2 id="course-combinations-form-title">Add Course Combination</h2>
+            </div>
+            <button type="button"
+                    id="course-combinations-form-back-btn"
+                    class="btn-secondary btn-sm">Back</button>
+        </div>
+
+        <div class="card p-4">
+            <form id="course-combinations-form" novalidate>
+                <input type="hidden" id="course-combinations-record-id">
+
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1">
+                        <label for="course-combinations-code">
+                            Combination Code <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               id="course-combinations-code"
+                               class="detail-input w-100"
+                               maxlength="30"
+                               required
+                               autocomplete="off">
+                    </div>
+
+                    <div class="form-group ba-flex-1">
+                        <label for="course-combinations-name">
+                            Combination Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               id="course-combinations-name"
+                               class="detail-input w-100"
+                               maxlength="150"
+                               required
+                               autocomplete="off">
+                    </div>
+                </div>
+
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1">
+                        <label for="course-combinations-principal-1">
+                            Principal Subject 1 <span class="text-danger">*</span>
+                        </label>
+                        <select id="course-combinations-principal-1"
+                                class="detail-input w-100" required>
+                            <option value="">Select Subject</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group ba-flex-1">
+                        <label for="course-combinations-principal-2">
+                            Principal Subject 2 <span class="text-danger">*</span>
+                        </label>
+                        <select id="course-combinations-principal-2"
+                                class="detail-input w-100" required>
+                            <option value="">Select Subject</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group ba-flex-1">
+                        <label for="course-combinations-principal-3">
+                            Principal Subject 3 <span class="text-danger">*</span>
+                        </label>
+                        <select id="course-combinations-principal-3"
+                                class="detail-input w-100" required>
+                            <option value="">Select Subject</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="ba-flex-panel">
+                    <div class="form-group ba-flex-1">
+                        <label for="course-combinations-subsidiary">
+                            Subsidiary Subject <span class="text-danger">*</span>
+                        </label>
+                        <select id="course-combinations-subsidiary"
+                                class="detail-input w-100" required>
+                            <option value="">Select Subsidiary Subject</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="course-combinations-form-error"
+                     class="emp-validation-summary hidden"
+                     role="alert">
+                    <p id="course-combinations-form-error-text" class="mb-0"></p>
+                </div>
+
+                <div class="text-end border-top pt-3">
+                    <button type="button"
+                            id="course-combinations-cancel-btn"
+                            class="btn-secondary">Cancel</button>
+                    <button type="submit"
+                            id="course-combinations-save-btn"
+                            class="btn-primary px-4">Save Combination</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <section id="course-combinations-details-view"
+             class="fade-in hidden"
+             aria-labelledby="course-combinations-details-title">
+        <div class="view-header">
+            <div>
+                <h2 id="course-combinations-details-title">Course Combination Details</h2>
+            </div>
+            <div class="action-btn-group">
+                <button type="button"
+                        id="course-combinations-details-back-btn"
+                        class="btn-secondary">Back to Course Combinations</button>
+                <button type="button"
+                        id="course-combinations-details-edit-btn"
+                        class="btn-primary">Edit</button>
+                <button type="button"
+                        id="course-combinations-details-status-btn"
+                        class="btn-secondary">Deactivate</button>
+            </div>
+        </div>
+
+        <div class="card p-4">
+            <div class="ba-flex-panel">
+                <div class="form-group ba-flex-1">
+                    <label>Combination Name</label>
+                    <div id="course-combinations-detail-name" class="detail-text">—</div>
+                </div>
+                <div class="form-group ba-flex-1">
+                    <label>Status</label>
+                    <div id="course-combinations-detail-status" class="detail-text">—</div>
+                </div>
+            </div>
+
+            <div class="ba-flex-panel">
+                <div class="form-group ba-flex-1">
+                    <label>Principal Subject 1</label>
+                    <div id="course-combinations-detail-principal-1" class="detail-text">—</div>
+                </div>
+                <div class="form-group ba-flex-1">
+                    <label>Principal Subject 2</label>
+                    <div id="course-combinations-detail-principal-2" class="detail-text">—</div>
+                </div>
+                <div class="form-group ba-flex-1">
+                    <label>Principal Subject 3</label>
+                    <div id="course-combinations-detail-principal-3" class="detail-text">—</div>
+                </div>
+            </div>
+
+            <div class="form-group mb-0">
+                <label>Subsidiary Subject</label>
+                <div id="course-combinations-detail-subsidiary" class="detail-text">—</div>
+            </div>
+        </div>
+    </section>
+
+    <template id="course-combinations-row-template">
+        <tr>
+            <td class="col-name"><strong></strong></td>
+            <td class="col-principal-1"></td>
+            <td class="col-principal-2"></td>
+            <td class="col-principal-3"></td>
+            <td class="col-subsidiary"></td>
+            <td class="col-status-cell">
+                <div class="form-check form-switch d-flex justify-content-center mb-0">
+                    <input type="checkbox"
+                           class="form-check-input course-combinations-status-toggle"
+                           role="switch"
+                           aria-label="Toggle combination status"
+                           checked>
+                </div>
+            </td>
+        </tr>
+    </template>
+</div>

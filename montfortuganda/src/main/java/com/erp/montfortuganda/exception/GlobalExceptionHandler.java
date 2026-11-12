@@ -13,6 +13,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.context.request.async.AsyncRequestNotUsableException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -331,6 +332,30 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body("Resource not found");
+    }
+
+    /*
+     * A client may close the browser tab, navigate away, or lose the
+     * connection while a file/image response is being streamed.
+     *
+     * The servlet response is no longer usable in this situation. Do not
+     * attempt to write a JSON error body, which can trigger a secondary
+     * HttpMessageNotWritableException when the response has an image content
+     * type such as image/jpeg.
+     *
+     * This handler is intentionally limited to this streaming/client
+     * disconnect exception. All other exceptions retain their existing
+     * handling below.
+     */
+    @ExceptionHandler(AsyncRequestNotUsableException.class)
+    public void handleAsyncRequestNotUsable(
+            AsyncRequestNotUsableException exception
+    ) {
+        logger.debug(
+                "HTTP response is no longer usable; client may have "
+                        + "disconnected during response streaming: {}",
+                exception.getMessage()
+        );
     }
 
     /*

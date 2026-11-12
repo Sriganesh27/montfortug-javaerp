@@ -3,7 +3,7 @@
     'use strict';
 
     const VIEW_NAME = 'class-subjects';
-    const API = Object.freeze({ years: '/academic-years', classes: '/classes', subjects: '/subjects', configurations: '/class-subjects' });
+    const API = Object.freeze({ years: '/academic-years', classes: '/classes', availableClasses: '/classes/available', subjects: '/subjects', configurations: '/class-subjects' });
 
     document.addEventListener('viewLoaded', event => {
         if (event.detail?.role !== 'admin' || event.detail?.view !== VIEW_NAME) return;
@@ -35,7 +35,7 @@
             formBack:q('#class-subjects-form-back-btn'), cancel:q('#class-subjects-cancel-btn'), save:q('#class-subjects-save-btn'), formError:q('#class-subjects-form-error'), formErrorText:q('#class-subjects-form-error-text'),
             detailCode:q('#class-subjects-detail-code'), detailName:q('#class-subjects-detail-name'), detailRequirement:q('#class-subjects-detail-requirement'), detailStart:q('#class-subjects-detail-start-class'), detailEnd:q('#class-subjects-detail-end-class'), detailYear:q('#class-subjects-detail-year'), detailRange:q('#class-subjects-detail-range'), detailBack:q('#class-subjects-details-back-btn'), detailEdit:q('#class-subjects-details-edit-btn'), detailDeactivate:q('#class-subjects-details-deactivate-btn')
         };
-        const state = { years:[], levels:[], classes:[], subjects:[], records:[], filtered:[], page:0, size:Number(el.pageSize.value)||10, defaultYearId:null, viewingRecord:null, busy:false, loadFailed:false, loadRequestId:0 };
+        const state = { years:[], levels:[], classes:[], yearClasses:[], editorClasses:[], availableClassCache:new Map(), editorRequestId:0, subjects:[], records:[], filtered:[], page:0, size:Number(el.pageSize.value)||10, defaultYearId:null, viewingRecord:null, busy:false, loadFailed:false, loadRequestId:0 };
 
         bindEvents();
         let initialLoaderToken = null;
@@ -52,6 +52,7 @@
             const currentYear = state.years.find(year => year.currentYear === true) || state.years[0];
             state.defaultYearId = String(currentYear.academicYearId);
             el.yearFilter.value = state.defaultYearId;
+            await loadYearClasses(el.yearFilter.value);
             fillClassFilter();
             await loadYearConfigurations({ showGlobalLoader: false, showInlineLoading: false });
         } catch (error) {
@@ -67,9 +68,9 @@
         }
 
         function bindEvents() {
-            el.add.addEventListener('click', () => { if (!state.busy && el.yearFilter.value) { populateForm(null); showView('form'); } });
+            el.add.addEventListener('click', () => { if (!state.busy && el.yearFilter.value) { void populateForm(null); showView('form'); } });
             el.refresh.addEventListener('click', () => void refresh());
-            el.yearFilter.addEventListener('change', () => { state.page = 0; fillClassFilter(); void loadYearConfigurations(); });
+            el.yearFilter.addEventListener('change', () => { state.page = 0; void (async () => { await loadYearClasses(el.yearFilter.value); fillClassFilter(); await loadYearConfigurations(); })(); });
             el.classFilter.addEventListener('change', () => { state.page = 0; applyFilters(); });
             el.requirementFilter.addEventListener('change', () => { state.page = 0; applyFilters(); });
             el.filterForm.addEventListener('submit', event => { event.preventDefault(); state.page = 0; applyFilters(); });
@@ -77,8 +78,7 @@
                 const yearChanged = el.yearFilter.value !== state.defaultYearId;
                 el.yearFilter.value = state.defaultYearId || '';
                 el.classFilter.value = ''; el.requirementFilter.value = ''; el.search.value = ''; state.page = 0;
-                fillClassFilter();
-                if (yearChanged) void loadYearConfigurations(); else applyFilters();
+                void (async () => { await loadYearClasses(el.yearFilter.value); fillClassFilter(); if (yearChanged) await loadYearConfigurations(); else applyFilters(); })();
             });
             el.pageSize.addEventListener('change', () => { state.size = Number(el.pageSize.value) || 10; state.page = 0; renderTable(); });
             el.prev.addEventListener('click', () => { if (state.page > 0) { state.page--; renderTable(); } });
@@ -86,11 +86,11 @@
             el.formBack.addEventListener('click', () => showView('table'));
             el.cancel.addEventListener('click', () => showView('table'));
             el.form.addEventListener('submit', event => { event.preventDefault(); void saveRecord(); });
-            el.year.addEventListener('change', () => { fillEditorLevelOptions(); fillEditorClassOptions(); });
-            el.level.addEventListener('change', () => { el.startClass.value = ''; el.endClass.value = ''; fillEditorClassOptions(); });
+            el.year.addEventListener('change', () => { el.editorClasses = []; fillEditorLevelOptions(); void fillEditorClassOptions(); });
+            el.level.addEventListener('change', () => { state.editorClasses = []; el.startClass.value = ''; el.endClass.value = ''; void fillEditorClassOptions(); });
             el.startClass.addEventListener('change', () => { fillEndClassOptions(); });
             el.detailBack.addEventListener('click', () => showView('table'));
-            el.detailEdit.addEventListener('click', () => { if (state.viewingRecord) { populateForm(state.viewingRecord); showView('form'); } });
+            el.detailEdit.addEventListener('click', () => { if (state.viewingRecord) { void populateForm(state.viewingRecord); showView('form'); } });
             el.detailDeactivate.addEventListener('click', () => { if (state.viewingRecord) void deactivateRecord(state.viewingRecord); });
             el.body.addEventListener('click', event => {
                 const button = event.target.closest('button[data-id]');
@@ -100,7 +100,7 @@
                     const record = state.records.find(item => String(item.classSubjectId) === button.dataset.id);
                     if (!record) { notifyError('Configuration details are no longer available. Refresh the list and try again.'); return; }
                     if (button.classList.contains('class-subjects-view-btn')) { viewRecord(record); return; }
-                    if (button.classList.contains('class-subjects-edit-btn')) { populateForm(record); showView('form'); return; }
+                    if (button.classList.contains('class-subjects-edit-btn')) { void populateForm(record); showView('form'); return; }
                     if (button.classList.contains('class-subjects-deactivate-btn')) { void deactivateRecord(record); return; }
                     return;
                 }
@@ -132,6 +132,7 @@
             let loaderToken = null;
             try {
                 if (typeof window.showLoader === 'function') loaderToken = window.showLoader('Refreshing Class Subjects...');
+                state.availableClassCache.clear();
                 await loadReferenceData();
                 if (!state.years.length) {
                     state.records = []; state.filtered = []; el.add.disabled = true;
@@ -141,6 +142,7 @@
                 if (!state.years.some(item => String(item.academicYearId) === String(el.yearFilter.value))) {
                     el.yearFilter.value = String((state.years.find(year => year.currentYear === true) || state.years[0]).academicYearId);
                 }
+                await loadYearClasses(el.yearFilter.value);
                 fillClassFilter();
                 await loadYearConfigurations({ showGlobalLoader: false, showInlineLoading: false });
             } catch (error) {
@@ -172,7 +174,7 @@
                 if (requestId !== state.loadRequestId || yearId !== el.yearFilter.value) return;
                 state.records = asArray(response?.data);
                 state.loadFailed = false; state.page = 0;
-                el.add.disabled = !state.classes.some(item => String(item.academicYearId) === String(yearId)) || !state.subjects.length;
+                el.add.disabled = !state.yearClasses.length || !state.subjects.length;
                 fillClassFilter();
                 applyFilters();
             } catch (error) {
@@ -189,7 +191,7 @@
         function fillClassFilter() {
             const yearId = el.yearFilter.value;
             const selected = el.classFilter.value;
-            const yearClasses = classesForYear(yearId);
+            const yearClasses = state.yearClasses;
             fillOptions(el.classFilter, yearClasses, 'All Classes', item => item.classId, item => `${item.classCode} — ${item.className}`);
             if (yearClasses.some(item => String(item.classId) === selected)) el.classFilter.value = selected;
         }
@@ -199,18 +201,48 @@
             if (selectedLevelId != null) el.level.value = String(selectedLevelId);
         }
 
-        function fillEditorClassOptions(startId = null, endId = null) {
+        async function loadYearClasses(yearId) {
+            if (!yearId) { state.yearClasses = []; return; }
+            const key = `${yearId}|*`;
+            if (state.availableClassCache.has(key)) { state.yearClasses = state.availableClassCache.get(key); return; }
+            const response = await apiGet(`${API.availableClasses}?academicYearId=${encodeURIComponent(yearId)}`);
+            const classes = sortClasses(asArray(response?.data).filter(item => Number(item.status) === 1));
+            state.availableClassCache.set(key, classes);
+            state.yearClasses = classes;
+        }
+
+        async function fillEditorClassOptions(startId = null, endId = null) {
             const yearId = el.year.value;
             const levelId = el.level.value;
-            const availableClasses = classesForYear(yearId, levelId);
-            fillOptions(el.startClass, availableClasses, 'Select Starting Class', item => item.classId, item => `${item.classCode} — ${item.className}`);
-            if (startId != null && availableClasses.some(item => String(item.classId) === String(startId))) el.startClass.value = String(startId);
-            fillEndClassOptions(endId);
+            const requestId = ++state.editorRequestId;
+            el.startClass.replaceChildren(new Option('Loading classes...', ''));
+            el.endClass.replaceChildren(new Option('Select starting class first', ''));
+            if (!yearId || !levelId) { state.editorClasses = []; return; }
+            try {
+                const key = `${yearId}|${levelId}`;
+                let availableClasses = state.availableClassCache.get(key);
+                if (!availableClasses) {
+                    const response = await apiGet(`${API.availableClasses}?academicYearId=${encodeURIComponent(yearId)}&levelId=${encodeURIComponent(levelId)}`);
+                    availableClasses = sortClasses(asArray(response?.data).filter(item => Number(item.status) === 1));
+                    state.availableClassCache.set(key, availableClasses);
+                }
+                if (requestId !== state.editorRequestId || yearId !== el.year.value || levelId !== el.level.value) return;
+                state.editorClasses = availableClasses;
+                fillOptions(el.startClass, availableClasses, 'Select Starting Class', item => item.classId, item => `${item.classCode} — ${item.className}`);
+                if (startId != null && availableClasses.some(item => String(item.classId) === String(startId))) el.startClass.value = String(startId);
+                fillEndClassOptions(endId);
+            } catch (error) {
+                if (requestId !== state.editorRequestId) return;
+                state.editorClasses = [];
+                el.startClass.replaceChildren(new Option('Unable to load classes', ''));
+                el.endClass.replaceChildren(new Option('Select starting class first', ''));
+                showFormError(readError(error, 'Unable to load classes for the selected academic year and level.'));
+            }
         }
 
         function fillEndClassOptions(selectedEndId = null) {
             const startId = el.startClass.value;
-            const orderedClasses = classesForYear(el.year.value, el.level.value);
+            const orderedClasses = state.editorClasses;
             const startIndex = orderedClasses.findIndex(item => String(item.classId) === String(startId));
             const available = startIndex >= 0 ? orderedClasses.slice(startIndex) : [];
             const current = selectedEndId == null ? el.endClass.value : String(selectedEndId);
@@ -219,10 +251,13 @@
         }
 
         function classesForYear(yearId, levelId = null) {
+            const source = levelId == null ? state.yearClasses : state.editorClasses;
+            return source.filter(item => String(item.academicYearId) === String(yearId) && (levelId == null || String(item.levelId) === String(levelId)));
+        }
+
+        function sortClasses(items) {
             const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
-            return state.classes
-                .filter(item => String(item.academicYearId) === String(yearId) && (levelId == null || String(item.levelId) === String(levelId)))
-                .sort((a, b) => collator.compare(String(a.classCode || a.className || ''), String(b.classCode || b.className || '')) || collator.compare(String(a.className || ''), String(b.className || '')));
+            return [...items].sort((a, b) => Number(a.displayOrder ?? 9999) - Number(b.displayOrder ?? 9999) || collator.compare(String(a.classCode || a.className || ''), String(b.classCode || b.className || '')) || collator.compare(String(a.className || ''), String(b.className || '')));
         }
 
         function applyFilters() {
@@ -279,7 +314,7 @@
             showView('details');
         }
 
-        function populateForm(record) {
+        async function populateForm(record) {
             clearFormError();
             el.form.reset();
             el.recordId.value = record ? String(record.classSubjectId) : '';
@@ -294,7 +329,7 @@
             fillEditorLevelOptions(record?.levelId ?? null);
             el.subject.value = record ? String(record.subjectId) : '';
             el.requirement.value = record?.subjectRequirement || 'COMPULSORY';
-            fillEditorClassOptions(record?.startClassId ?? null, record?.endClassId ?? null);
+            await fillEditorClassOptions(record?.startClassId ?? null, record?.endClassId ?? null);
         }
 
         async function saveRecord() {
@@ -308,7 +343,11 @@
             if (!['COMPULSORY','OPTIONAL'].includes(el.requirement.value)) {
                 showFormError('Select whether the subject is compulsory or optional.'); return;
             }
-            const yearClassList = classesForYear(String(yearId), String(levelId));
+            let yearClassList = state.editorClasses;
+            if (String(el.year.value) !== String(yearId) || String(el.level.value) !== String(levelId) || !yearClassList.length) {
+                await fillEditorClassOptions();
+                yearClassList = state.editorClasses;
+            }
             const start = yearClassList.find(item => Number(item.classId) === startClassId);
             const end = selectedEndId == null ? null : yearClassList.find(item => Number(item.classId) === selectedEndId);
             if (!start) { showFormError('The selected Starting Class is not available for this academic year.'); return; }
@@ -392,7 +431,7 @@
             return `${record.levelName || state.levels.find(item => String(item.levelId) === String(record.levelId))?.levelName || 'Level'}: ${start === end ? start : `${start} – ${end}`}`;
         }
         function getRangeClassIds(record) {
-            const ordered = classesForYear(record.academicYearId, record.levelId); const startId = record.startClassId, endId = record.endClassId;
+            const cached = state.availableClassCache.get(`${record.academicYearId}|${record.levelId}`) || []; const ordered = cached.length ? cached : state.classes.filter(item => String(item.levelId) === String(record.levelId)).sort((a,b) => Number(a.displayOrder ?? 9999)-Number(b.displayOrder ?? 9999)); const startId = record.startClassId, endId = record.endClassId;
             if (endId == null) return [startId];
             const start = ordered.findIndex(item => String(item.classId) === String(startId)); const end = ordered.findIndex(item => String(item.classId) === String(endId));
             if (start < 0 || end < start) return [startId, endId];

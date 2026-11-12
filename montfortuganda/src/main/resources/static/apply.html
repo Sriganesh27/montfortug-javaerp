@@ -119,6 +119,18 @@
                             <select id="classSelect" class="form-control custom-select" required disabled><option value="" disabled selected>Select Class</option></select>
                         </div>
                     </div>
+                    <div id="aLevelCombinationGroup" class="form-group hidden-element" hidden>
+                        <label for="aLevelCombinationSelect">A-Level Subject Combination <span class="text-danger">*</span></label>
+                        <select name="aLevelCombinationId"
+                                id="aLevelCombinationSelect"
+                                class="form-control custom-select"
+                                disabled>
+                            <option value="">Select S5/S6 class first</option>
+                        </select>
+                        <small id="aLevelCombinationMessage" class="text-muted-small" aria-live="polite"></small>
+                        <small class="text-muted-small">Note: General Paper is compulsory for all A-Level students.</small>
+                    </div>
+
                     <div id="schoolDayTypeGroup" class="school-day-type-group hidden-element" hidden>
                         <div class="school-day-type-title">School Day Type <span class="text-danger">*</span></div>
                         <div id="schoolDayTypeOptions" class="school-day-type-options" role="radiogroup" aria-label="School Day Type"></div>
@@ -214,11 +226,22 @@
                 <div id="step-4" class="form-step hidden-element">
                     <div class="form-header-title"><h1>Parents & Guardian</h1><p>Contact information for the student's family.</p></div>
 
+                    <h2 class="section-title mt-4">Primary Contact</h2>
+                    <div class="form-group mb-4">
+                        <label>Who should be the primary contact? <span class="text-danger">*</span></label>
+                        <div class="primary-contact-options">
+                            <label class="primary-contact-option"><input type="radio" name="primaryContactType" value="FATHER" required><span>Father</span></label>
+                            <label class="primary-contact-option"><input type="radio" name="primaryContactType" value="MOTHER"><span>Mother</span></label>
+                            <label class="primary-contact-option"><input type="radio" name="primaryContactType" value="OTHER"><span>Other</span></label>
+                        </div>
+                        <small class="form-hint-text">Application updates and receipts will be sent to the selected contact.</small>
+                    </div>
+
                     <h2 class="section-title mt-4">Father's Details</h2>
                     <div class="grid-3 align-items-end">
                         <div class="form-group"><label>Full Name <span class="text-danger">*</span> </label><input type="text" name="fatherName" class="form-control" placeholder="e.g. Michael Doe" required></div>
                         <div class="form-group">
-                            <label>Contact</label>
+                            <label>Contact <span id="fatherContactRequiredMark" class="text-danger hidden-element">*</span></label>
                             <div class="phone-input-container">
                                 <div class="country-code-box">+256</div>
                                 <input type="hidden" name="fatherContact" id="fatherContact_hidden">
@@ -235,7 +258,7 @@
                     <div class="grid-3 align-items-end">
                         <div class="form-group"><label>Full Name <span class="text-danger">*</span></label><input type="text" name="motherName" class="form-control" placeholder="e.g. Sarah Doe" required></div>
                         <div class="form-group">
-                            <label>Contact</label>
+                            <label>Contact <span id="motherContactRequiredMark" class="text-danger hidden-element">*</span></label>
                             <div class="phone-input-container">
                                 <div class="country-code-box">+256</div>
                                 <input type="hidden" name="motherContact" id="motherContact_hidden">
@@ -248,23 +271,12 @@
                         <div class="form-group"><label>Age</label><input type="number" name="motherAge" class="form-control" placeholder="e.g. 42"></div>
                     </div>
 
-                    <h2 class="section-title mt-4">Primary Contact</h2>
-                    <div class="form-group mb-4">
-                        <label>Who should be the primary contact? <span class="text-danger">*</span></label>
-                        <div class="primary-contact-options">
-                            <label class="primary-contact-option"><input type="radio" name="primaryContactType" value="FATHER" required><span>Father</span></label>
-                            <label class="primary-contact-option"><input type="radio" name="primaryContactType" value="MOTHER"><span>Mother</span></label>
-                            <label class="primary-contact-option"><input type="radio" name="primaryContactType" value="OTHER"><span>Other</span></label>
-                        </div>
-                        <small class="form-hint-text">Application updates and receipts will be sent to the selected contact.</small>
-                    </div>
-
                     <div id="otherPrimaryContactSection" class="hidden-element">
                     <h2 class="section-title mt-4">Other Primary Contact / Guardian</h2>
                     <div class="grid-3 align-items-end">
-                        <div class="form-group"><label>Full Name</label><input type="text" name="guardianName" class="form-control" placeholder="e.g. James Smith"></div>
+                        <div class="form-group"><label>Full Name <span id="guardianNameRequiredMark" class="text-danger hidden-element">*</span></label><input type="text" name="guardianName" class="form-control" placeholder="e.g. James Smith"></div>
                         <div class="form-group">
-                            <label>Contact</label>
+                            <label>Contact <span id="guardianContactRequiredMark" class="text-danger hidden-element">*</span></label>
                             <div class="phone-input-container">
                                 <div class="country-code-box">+256</div>
                                 <input type="hidden" name="guardianContact" id="guardianContact_hidden">
@@ -279,7 +291,7 @@
                     </div>
                     <div class="grid-3 align-items-end">
                         <div class="form-group">
-                            <label>Relationship</label>
+                            <label>Relationship <span id="guardianRelationRequiredMark" class="text-danger hidden-element">*</span></label>
                             <select name="guardianRelation" class="form-control custom-select">
                                 <option value="" disabled selected>Select...</option>
                                 <option value="Step-mother">Step-mother</option>

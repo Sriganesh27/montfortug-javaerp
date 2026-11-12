@@ -488,6 +488,33 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         });
 
+        // Course Combinations is available only to branches configured with Senior Secondary (level ID 4).
+        // BranchProfileResponseDTO exposes `levels` (LevelDTO objects), not `levelIds`.
+        const courseCombinationsNav = document.getElementById('course-combinations-sidebar-item');
+        if (courseCombinationsNav) {
+            courseCombinationsNav.classList.add('hidden');
+
+            if (userRole === 'BRANCH_ADMIN' && typeof window.apiGet === 'function') {
+                window.apiGet('/branchadmin/profile').then(response => {
+                    const profile = response?.data || response;
+                    const configuredLevels = Array.isArray(profile?.levels)
+                        ? profile.levels
+                        : [];
+                    const levelIds = [
+                        ...(Array.isArray(profile?.levelIds) ? profile.levelIds : []),
+                        ...configuredLevels.map(level => level?.levelId)
+                    ];
+                    const hasSeniorSecondary = levelIds.some(id => Number(id) === 4);
+
+                    courseCombinationsNav.classList.toggle('hidden', !hasSeniorSecondary);
+                }).catch(error => {
+                    // Keep the item hidden when the authenticated branch profile cannot be verified.
+                    courseCombinationsNav.classList.add('hidden');
+                    console.error('Unable to load branch levels for Course Combinations visibility.', error);
+                });
+            }
+        }
+
         document.getElementById('logoutBtn').addEventListener('click', async function() {
             // 1. Tell the backend to destroy the secure cookie securely
             try {
@@ -580,10 +607,26 @@ document.addEventListener('DOMContentLoaded', async function() {
 
                     // 2. Wait for the old menu to completely close, THEN open the new one!
                     setTimeout(() => {
+                        if (!parentLi) return;
+
                         if (wasCollapsed && !parentLi.classList.contains('open')) {
                             parentLi.classList.add('open');
                         } else {
                             parentLi.classList.toggle('open');
+                        }
+
+                        // Measure the real content height instead of relying on
+                        // an arbitrary max-height (for example, 300px or 1000px).
+                        const dropdown = parentLi.querySelector('.sidebar-dropdown');
+                        if (dropdown) {
+                            if (parentLi.classList.contains('open')) {
+                                dropdown.style.setProperty(
+                                    '--sidebar-dropdown-height',
+                                    `${dropdown.scrollHeight}px`
+                                );
+                            } else {
+                                dropdown.style.setProperty('--sidebar-dropdown-height', '0px');
+                            }
                         }
                     }, animationDelay || (wasCollapsed ? 50 : 0));
                 }

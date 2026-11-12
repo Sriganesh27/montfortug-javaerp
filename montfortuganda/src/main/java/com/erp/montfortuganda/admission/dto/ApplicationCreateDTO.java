@@ -27,6 +27,9 @@ public class ApplicationCreateDTO {
     @NotNull(message = "Class ID is required")
     private Long branchClassId;
 
+    /** Selected A' Level combination. Required for public S5 and S6 applications under Senior Secondary. */
+    private Long aLevelCombinationId;
+
     /**
      * Requested day arrangement. The admission service validates this against
      * the selected class level; the frontend must not enforce eligibility.
@@ -39,7 +42,7 @@ public class ApplicationCreateDTO {
     @NotBlank(message = "Primary Contact Type is required")
     private String primaryContactType;
 
-    @NotBlank(message = "Primary Email is required for notifications")
+    // Optional: notifications are sent only when an email address is provided.
     private String primaryEmail;
 
     @NotBlank(message = "Primary Mobile Number is required for SMS alerts")
