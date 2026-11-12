@@ -414,9 +414,16 @@
 
                     <div id="review-summary-container" class="review-grid"></div>
 
+                    <div class="form-check mt-4" id="application-confirmation-wrap">
+                        <input class="form-check-input" type="checkbox" id="application-confirmation">
+                        <label class="form-check-label" for="application-confirmation">
+                            I have reviewed the application details above and confirm that the information provided is correct.
+                        </label>
+                    </div>
+
                     <div class="form-actions space-between mt-5">
                         <button type="button" class="btn-outline" data-step-target="5"><i class="bi bi-pencil-square"></i> Edit Details</button>
-                        <button type="submit" class="btn-submit" id="btn-submit">
+                        <button type="submit" class="btn-submit" id="btn-submit" disabled aria-disabled="true">
                             <span id="btn-submit-text">Confirm & Submit <i class="bi bi-check2-circle"></i></span>
                             <span id="btn-submit-spinner" class="hidden-element">Submitting... <span class='spinner-border spinner-border-sm'></span></span>
                         </button>

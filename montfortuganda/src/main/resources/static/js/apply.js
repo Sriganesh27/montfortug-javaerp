@@ -54,7 +54,6 @@ let branchList = [];
 /** @type {SchoolClass[]} */
 let classList = [];
 let classFetchSequence = 0;
-let aLevelCombinationFetchSequence = 0;
 let classResponseMetadata = {};
 
 // Helper to safely trigger SweetAlert without ARIA focus-retention violations
@@ -115,6 +114,20 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("subjectsBody").addEventListener("click", handleTableClick);
     document.getElementById("subjectsBody").addEventListener("input", calculateSubjectTotal);
     document.getElementById("admission-form").addEventListener("submit", handleFormSubmit);
+
+    // Require an explicit applicant confirmation before enabling final submission.
+    const applicationConfirmation = document.getElementById("application-confirmation");
+    const submitButton = document.getElementById("btn-submit");
+    if (applicationConfirmation && submitButton) {
+        const syncSubmitAvailability = () => {
+            const confirmed = applicationConfirmation.checked;
+            submitButton.disabled = !confirmed;
+            submitButton.setAttribute("aria-disabled", String(!confirmed));
+        };
+        applicationConfirmation.addEventListener("change", syncSubmitAvailability);
+        syncSubmitAvailability();
+    }
+
     document.addEventListener("change", handleFileUploadUI);
     initialisePrimaryContactSelection();
 
@@ -137,15 +150,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (targetElement.tagName === "BUTTON") e.preventDefault();
         if (!moved) return;
     });
-
-    // Keep Step 2 navigation disabled until every required enrollment field
-    // has a valid value and all branch/level/class data has finished loading.
-    const step2 = document.getElementById("step-2");
-    if (step2) {
-        step2.addEventListener("input", refreshStep2NextButtonState);
-        step2.addEventListener("change", refreshStep2NextButtonState);
-    }
-    refreshStep2NextButtonState();
 });
 // ========================================================
 // EXISTING UTILITIES AND VALIDATION
@@ -286,51 +290,23 @@ function updatePrimaryContactSelection() {
 
     if (otherSection) otherSection.classList.toggle("hidden-element", !isOther);
 
-    const isFather = contactType === "FATHER";
-    const isMother = contactType === "MOTHER";
-
-    setRequired("fatherContact_display", isFather);
-    setRequired("motherContact_display", isMother);
+    setRequired("fatherContact_display", contactType === "FATHER");
+    setRequired("motherContact_display", contactType === "MOTHER");
     setRequiredByName("guardianName", isOther);
     setRequired("guardianContact_display", isOther);
     setRequiredByName("guardianRelation", isOther);
 
-    // Keep required indicators synchronized with the selected primary contact.
-    toggleRequiredMark("fatherContactRequiredMark", isFather);
-    toggleRequiredMark("motherContactRequiredMark", isMother);
-    toggleRequiredMark("guardianNameRequiredMark", isOther);
-    toggleRequiredMark("guardianContactRequiredMark", isOther);
-    toggleRequiredMark("guardianRelationRequiredMark", isOther);
-
-    // Remove stale validation styling from fields that are no longer required.
-    // The newly selected contact is validated normally on the next validation pass.
-    document.querySelectorAll("input[name='primaryContactType']").forEach(choice => {
-        choice.classList.remove("error-border");
-    });
-
     if (!isOther) clearGuardianFields();
-}
-
-
-function toggleRequiredMark(id, visible) {
-    const mark = document.getElementById(id);
-    if (mark) mark.classList.toggle("hidden-element", !visible);
 }
 
 function setRequired(id, required) {
     const input = document.getElementById(id);
-    if (!input) return;
-
-    input.required = required;
-    if (!required) input.classList.remove("error-border");
+    if (input) input.required = required;
 }
 
 function setRequiredByName(name, required) {
     const input = document.querySelector(`[name='${name}']`);
-    if (!input) return;
-
-    input.required = required;
-    if (!required) input.classList.remove("error-border");
+    if (input) input.required = required;
 }
 
 function clearGuardianFields() {
@@ -344,87 +320,6 @@ function clearGuardianFields() {
 function getPrimaryContactType() {
     const selected = document.querySelector("input[name='primaryContactType']:checked");
     return selected ? selected.value : "";
-}
-
-// Step 2 Next button guard. This is a UX safeguard in addition to the
-// existing validateAndGoTo() checks; it does not replace the validation engine.
-function refreshStep2NextButtonState() {
-    const step2 = document.getElementById("step-2");
-    if (!step2) return;
-
-    const nextButton = step2.querySelector('button[data-step-target="3"]');
-    if (!nextButton) return;
-
-    const branchSelect = document.getElementById("branchSelect");
-    const levelSelect = document.getElementById("level");
-    const classSelect = document.getElementById("classSelect");
-    const yearSelect = document.getElementById("academicYear");
-    const termSelect = document.getElementById("joiningTerm");
-    const registrationDate = document.getElementById("dateOfRegistration");
-
-    const branchId = Number(branchSelect && branchSelect.value);
-    const branch = branchList.find(item => Number(item.branchId) === branchId);
-    const selectedLevelName = String(levelSelect && levelSelect.value || "").trim().toUpperCase();
-    const branchLevel = branch && Array.isArray(branch.branchLevels)
-        ? branch.branchLevels.find(item => item.level
-            && String(item.level.levelName || "").trim().toUpperCase() === selectedLevelName)
-        : null;
-    const levelId = branchLevel && branchLevel.level ? Number(branchLevel.level.levelId) : null;
-    const classId = Number(classSelect && classSelect.value);
-    const selectedClass = classList.find(item => Number(item.classId) === classId);
-
-    const academicYearId = Number(yearSelect && yearSelect.value);
-    const academicYear = branch && Array.isArray(branch.academicYears)
-        ? branch.academicYears.find(item => Number(item.academicYearId) === academicYearId)
-        : null;
-    const termId = Number(termSelect && termSelect.value);
-    const validTerm = academicYear && Array.isArray(academicYear.terms)
-        ? academicYear.terms.some(item => Number(item.termId) === termId)
-        : false;
-
-    const loading = Boolean(
-        (branchSelect && branchSelect.getAttribute("aria-busy") === "true")
-        || (classSelect && classSelect.getAttribute("aria-busy") === "true")
-        || (branchSelect && branchSelect.disabled)
-        || (levelSelect && levelSelect.disabled)
-        || (classSelect && classSelect.disabled)
-    );
-
-    let valid = !loading
-        && !!branch
-        && !!selectedLevelName
-        && Number.isInteger(levelId) && levelId > 0
-        && !!selectedClass
-        && Number.isInteger(academicYearId) && academicYearId > 0
-        && !!academicYear
-        && Number.isInteger(termId) && termId > 0
-        && !!validTerm
-        && !!registrationDate && registrationDate.value !== ""
-        && registrationDate.checkValidity();
-
-    // A-Level combination is required only when S5/S6 is selected.
-    if (valid && isALevelApplicationClass(selectedClass)) {
-        const combinationSelect = document.getElementById("aLevelCombinationSelect");
-        valid = !!combinationSelect
-            && !combinationSelect.disabled
-            && !!combinationSelect.value
-            && Array.from(combinationSelect.options).some(option =>
-                option.value === combinationSelect.value && !option.disabled);
-    }
-
-    // Preserve existing Nursery school-day-type rules when the option group is shown.
-    const schoolDayGroup = document.getElementById("schoolDayTypeGroup");
-    if (valid && schoolDayGroup && !schoolDayGroup.hidden) {
-        valid = !!step2.querySelector('input[name="schoolDayTypeChoice"]:checked');
-    }
-
-    nextButton.disabled = !valid;
-    nextButton.setAttribute("aria-disabled", String(!valid));
-    nextButton.title = valid
-        ? "Continue to Student Details"
-        : loading
-            ? "Please wait while school information is loading."
-            : "Complete the required enrollment fields to continue.";
 }
 
 // VALIDATION ENGINE
@@ -457,29 +352,6 @@ function validateAndGoTo(targetStepNumber) {
             input.classList.remove("error-border");
         }
     });
-    // Step 2: Applying For Class must be selected from the classes
-    // returned for the chosen branch and education level. A disabled select
-    // is ignored by native checkValidity(), so validate it explicitly.
-    if (currentStep === 2) {
-        const classSelect = document.getElementById("classSelect");
-        const selectedClassId = Number(classSelect && classSelect.value);
-        const hasValidClass = !!(
-            classSelect
-            && classSelect.value
-            && Number.isInteger(selectedClassId)
-            && selectedClassId > 0
-            && classList.some(item => Number(item.classId) === selectedClassId)
-        );
-
-        if (!hasValidClass) {
-            isValid = false;
-            if (classSelect) {
-                classSelect.classList.add("error-border");
-                if (!firstInvalid) firstInvalid = classSelect;
-            }
-        }
-    }
-
     // Step 4: the selected parent supplies the primary contact details;
     // a separate guardian is required only when "Other" is selected.
     if (currentStep === 4) {
@@ -518,9 +390,6 @@ function goToStep(targetStepNumber) {
     if (targetStep) {
         targetStep.classList.remove("hidden-element");
         targetStep.classList.add("active-step");
-    }
-    if (typeof updateWizardActionButtons === "function") {
-        window.setTimeout(updateWizardActionButtons, 0);
     }
 
     if (targetStepNumber <= 6) {
@@ -747,7 +616,6 @@ async function fetchBranches() {
         throw error;
     } finally {
         branchSelect.removeAttribute("aria-busy");
-        refreshStep2NextButtonState();
     }
 }
 
@@ -759,7 +627,6 @@ async function fetchClasses(branchId, academicYearId, levelId = null) {
     classSelect.disabled = true;
     classSelect.setAttribute("aria-busy", "true");
     setupDefaultOption(classSelect, hasLevel ? "Loading classes…" : "Select Level First");
-    refreshStep2NextButtonState();
 
     if (!Number.isInteger(Number(branchId)) || Number(branchId) <= 0
             || !Number.isInteger(Number(academicYearId)) || Number(academicYearId) <= 0) {
@@ -815,10 +682,7 @@ async function fetchClasses(branchId, academicYearId, levelId = null) {
         classSelect.disabled = true;
         throw error;
     } finally {
-        if (requestSequence === classFetchSequence) {
-            classSelect.removeAttribute("aria-busy");
-            refreshStep2NextButtonState();
-        }
+        if (requestSequence === classFetchSequence) classSelect.removeAttribute("aria-busy");
     }
 }
 
@@ -899,129 +763,6 @@ function syncSchoolDayTypeField() {
     valueInput.disabled = false;
 }
 
-// A-Level combinations are applicable only to S5 and S6.
-// The public endpoint returns a direct JSON array of active branch combinations.
-function resetALevelCombinationField(message = "Select S5/S6 class first") {
-    const group = document.getElementById("aLevelCombinationGroup");
-    const select = document.getElementById("aLevelCombinationSelect");
-    const note = document.getElementById("aLevelCombinationMessage");
-    if (!group || !select) return;
-
-    aLevelCombinationFetchSequence++;
-    group.classList.add("hidden-element");
-    group.hidden = true;
-    select.required = false;
-    select.disabled = true;
-    select.value = "";
-    setupDefaultOption(select, message);
-    if (note) note.textContent = "";
-    select.classList.remove("error-border");
-    refreshStep2NextButtonState();
-}
-
-async function loadALevelCombinations(branchId) {
-    const group = document.getElementById("aLevelCombinationGroup");
-    const select = document.getElementById("aLevelCombinationSelect");
-    const note = document.getElementById("aLevelCombinationMessage");
-    if (!group || !select) return;
-
-    const requestSequence = ++aLevelCombinationFetchSequence;
-    group.hidden = false;
-    group.classList.remove("hidden-element");
-    select.required = true;
-    select.disabled = true;
-    setupDefaultOption(select, "Loading combinations...");
-    refreshStep2NextButtonState();
-    if (note) note.textContent = "Choose the subject combination applicable to the student.";
-
-    const validBranchId = Number(branchId);
-    if (!Number.isInteger(validBranchId) || validBranchId <= 0) {
-        setupDefaultOption(select, "Select school branch first");
-        select.disabled = true;
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/public/a-level-combinations?branchId=${encodeURIComponent(validBranchId)}`, {
-            headers: { "Accept": "application/json" },
-            cache: "no-store"
-        });
-        if (!response.ok) throw new Error("Unable to load A-Level combinations.");
-        const result = await response.json();
-        if (requestSequence !== aLevelCombinationFetchSequence) return;
-        if (!Array.isArray(result)) throw new Error("Unexpected A-Level combination response.");
-
-        const combinations = result.filter(item => item
-            && Number.isInteger(Number(item.combinationId))
-            && Number(item.combinationId) > 0
-            && item.active !== false);
-
-        setupDefaultOption(select, combinations.length
-            ? "Select A-Level Combination"
-            : "No combinations available");
-
-        combinations.forEach(item => {
-            // Show the configured course/combination name followed by its
-            // complete subject names. General Paper is intentionally not
-            // treated as the subsidiary subject.
-            const combinationTitle = String(item.combinationName || item.combinationCode
-                || `Combination ${item.combinationId}`).trim();
-
-            const principalSubjects = [
-                item.principalSubject1Name,
-                item.principalSubject2Name,
-                item.principalSubject3Name
-            ].map(value => String(value || "").trim()).filter(Boolean);
-
-            const subsidiarySubject = String(item.subsidiarySubjectName || "").trim();
-            const subjectDetails = [];
-            if (principalSubjects.length) {
-                subjectDetails.push(principalSubjects.join(", "));
-            }
-            if (subsidiarySubject) {
-                subjectDetails.push(`Subsidiary: ${subsidiarySubject}`);
-            }
-
-            const label = subjectDetails.length
-                ? `${combinationTitle} (${subjectDetails.join(" | ")})`
-                : combinationTitle;
-
-            select.appendChild(new Option(label, String(item.combinationId)));
-        });
-
-        select.disabled = false;
-        refreshStep2NextButtonState();
-        if (note) {
-            note.textContent = combinations.length
-                ? "Select one active combination. This field is required for S5 and S6."
-                : "No active A-Level combinations are configured for this school yet. Please contact the school office.";
-        }
-    } catch (error) {
-        if (requestSequence !== aLevelCombinationFetchSequence) return;
-        console.error("Unable to load A-Level combinations:", error);
-        setupDefaultOption(select, "Combinations unavailable — retry class selection");
-        select.disabled = false;
-        refreshStep2NextButtonState();
-        if (note) note.textContent = "Unable to retrieve combinations. Please change the class and select S5/S6 again, or contact the school office.";
-    }
-}
-
-function isALevelApplicationClass(selectedClass) {
-    const code = String(selectedClass && selectedClass.classCode || "").trim().toUpperCase();
-    const name = String(selectedClass && selectedClass.className || "").trim().toUpperCase();
-    return ["S5", "S6", "SENIOR 5", "SENIOR FIVE", "SENIOR 6", "SENIOR SIX"].includes(code)
-        || ["S5", "S6", "SENIOR 5", "SENIOR FIVE", "SENIOR 6", "SENIOR SIX"].includes(name);
-}
-
-function syncALevelCombinationField(selectedClass) {
-    if (isALevelApplicationClass(selectedClass)) {
-        const branchId = Number(document.getElementById("branchSelect").value);
-        void loadALevelCombinations(branchId);
-    } else {
-        resetALevelCombinationField();
-    }
-}
-
 // DYNAMIC CASCADING LOGIC
 function handleBranchChange() {
     const selectedId = parseInt(this.value, 10);
@@ -1039,7 +780,6 @@ function handleBranchChange() {
     setupDefaultOption(levelSelect, branch ? "Select Level" : "Select Branch First");
     setupDefaultOption(classSelect, "Select Level First");
     classList = [];
-    resetALevelCombinationField();
     syncSchoolDayTypeField();
     setupDefaultOption(
         academicYearSelect,
@@ -1083,7 +823,6 @@ function handleBranchChange() {
         joiningTermSelect,
         branch
     );
-    refreshStep2NextButtonState();
 }
 
 function populateAcademicYears(
@@ -1212,7 +951,6 @@ function handleAcademicYearChange() {
             console.error("Unable to load classes for the selected academic year:", error);
             showAlert("Unable to Load Classes", error.message || "Please try again.", "warning");
         });
-    refreshStep2NextButtonState();
 }
 
 function populateTermsForAcademicYear(
@@ -1311,7 +1049,6 @@ function populateTermsForAcademicYear(
 
     joiningTermSelect.disabled =
         availableTermCount === 1;
-    refreshStep2NextButtonState();
 }
 
 function getSelectedBranch() {
@@ -1335,7 +1072,6 @@ function handleLevelChange() {
     const classSelect = document.getElementById("classSelect");
     setupDefaultOption(classSelect, "Select Class");
     classList = [];
-    resetALevelCombinationField();
     syncSchoolDayTypeField();
     document.getElementById("dynamic-exam-container").textContent = '';
     document.getElementById("dynamic-subjects-container").classList.add("hidden-element");
@@ -1367,18 +1103,14 @@ function handleLevelChange() {
         console.error("Unable to load classes for the selected level:", error);
         setupDefaultOption(classSelect, "Classes unavailable — retry selection");
         syncSchoolDayTypeField();
-        refreshStep2NextButtonState();
     });
-    refreshStep2NextButtonState();
 }
 
 function handleClassChange() {
     syncSchoolDayTypeField();
-    refreshStep2NextButtonState();
     const selectedClassId = Number(this.value);
     const selectedClass = classList.find(c => Number(c.classId) === selectedClassId);
     const code = selectedClass ? selectedClass.classCode : "";
-    syncALevelCombinationField(selectedClass);
 
     const hiddenCode = document.getElementById("hiddenClassCode");
     const hiddenApplied = document.getElementById("hiddenAppliedClass");
@@ -1493,6 +1225,16 @@ function collectSubjectMarks() {
 
 async function handleFormSubmit(e) {
     e.preventDefault();
+    const confirmation = document.getElementById("application-confirmation");
+    if (!confirmation || !confirmation.checked) {
+        showAlert(
+            "Confirmation Required",
+            "Please review the application and tick the confirmation checkbox before submitting.",
+            "warning"
+        );
+        return;
+    }
+
     const form = e.target;
     const btnSubmit = document.getElementById("btn-submit");
     const btnText = document.getElementById("btn-submit-text");
@@ -1524,7 +1266,7 @@ async function handleFormSubmit(e) {
         return;
     }
 
-    if (btnSubmit) { btnSubmit.disabled = true; btnSubmit.dataset.submitting = "true"; }
+    if (btnSubmit) btnSubmit.disabled = true;
     if (btnText) btnText.classList.add("hidden-element");
     if (btnSpinner) btnSpinner.classList.remove("hidden-element");
 
@@ -1560,10 +1302,6 @@ async function handleFormSubmit(e) {
                 )
                 : null,
         branchClassId: trueClassId,
-        aLevelCombinationId: isALevelApplicationClass(selectedClassObj)
-            && document.getElementById("aLevelCombinationSelect").value
-                ? Number(document.getElementById("aLevelCombinationSelect").value)
-                : null,
         schoolDayType: String(document.getElementById("level").value || "").trim().toUpperCase() === "NURSERY"
             ? (document.getElementById("schoolDayType").value || "FULL_DAY")
             : "FULL_DAY",
@@ -1700,154 +1438,17 @@ async function handleFormSubmit(e) {
 
         } else {
             showAlert('Error', String(result.message || result.error || "Submission failed."), 'error');
-            if (btnSubmit) { btnSubmit.disabled = false; delete btnSubmit.dataset.submitting; }
+            if (btnSubmit) btnSubmit.disabled = false;
             if (btnText) btnText.classList.remove("hidden-element");
             if (btnSpinner) btnSpinner.classList.add("hidden-element");
         }
     } catch (error) {
         showAlert('Network Error', 'Please check connection.', 'error');
-        if (btnSubmit) { btnSubmit.disabled = false; delete btnSubmit.dataset.submitting; }
+        if (btnSubmit) btnSubmit.disabled = false;
         if (btnText) btnText.classList.remove("hidden-element");
         if (btnSpinner) btnSpinner.classList.add("hidden-element");
     }
 }
-
-// ========================================================
-// WIZARD ACTION BUTTON STATE (ALL APPLICATION STEPS)
-// Keeps Next/Review/Submit disabled until the existing
-// required fields for that step are complete. This does not
-// replace validateAndGoTo() or change which fields are required.
-// ========================================================
-function getStepRequiredFieldsValidity(stepNumber) {
-    const step = document.getElementById(`step-${stepNumber}`);
-    if (!step) return false;
-
-    const requiredFields = Array.from(step.querySelectorAll('input[required], select[required], textarea[required]'))
-        .filter(field => !field.disabled && field.type !== 'hidden');
-
-    return requiredFields.every(field => field.checkValidity());
-}
-
-function isEnrollmentStepReady() {
-    const branch = document.getElementById('branchSelect');
-    const level = document.getElementById('level');
-    const classSelect = document.getElementById('classSelect');
-    const year = document.getElementById('academicYear');
-    const term = document.getElementById('joiningTerm');
-    const registrationDate = document.getElementById('dateOfRegistration');
-
-    // Do not allow navigation while dependent dropdowns are loading or disabled.
-    const requiredSelects = [branch, level, classSelect, year, term];
-    if (requiredSelects.some(select => !select || select.disabled || select.getAttribute('aria-busy') === 'true' || !select.value)) {
-        return false;
-    }
-
-    const selectedClassId = Number(classSelect.value);
-    const selectedClass = classList.find(item => Number(item.classId) === selectedClassId);
-    if (!selectedClass) return false;
-
-    if (!registrationDate || !registrationDate.value || !registrationDate.checkValidity()) return false;
-
-    // Keep the existing S5/S6 combination requirement.
-    const combinationGroup = document.getElementById('aLevelCombinationGroup');
-    const combinationSelect = document.getElementById('aLevelCombinationSelect');
-    if (isALevelApplicationClass(selectedClass)) {
-        if (!combinationGroup || combinationGroup.hidden || !combinationSelect
-                || combinationSelect.disabled || combinationSelect.getAttribute('aria-busy') === 'true'
-                || !combinationSelect.value || !combinationSelect.checkValidity()) {
-            return false;
-        }
-    }
-
-    return getStepRequiredFieldsValidity(2);
-}
-
-function isFamilyStepReady() {
-    if (!getStepRequiredFieldsValidity(4)) return false;
-    return Boolean(getPrimaryContactType());
-}
-
-function hasIncompleteSubjectRows() {
-    const marks = typeof collectSubjectMarks === 'function' ? collectSubjectMarks() : [];
-    return marks.some(mark => mark.subject === '' || mark.marks === '' || mark.grade === '');
-}
-
-function isStepReady(stepNumber) {
-    switch (stepNumber) {
-        case 1:
-            // The introductory page has no required applicant fields.
-            return true;
-        case 2:
-            return isEnrollmentStepReady();
-        case 3:
-            return getStepRequiredFieldsValidity(3);
-        case 4:
-            return isFamilyStepReady();
-        case 5:
-            // Match the existing final-submit rule for partially completed subject rows.
-            return !hasIncompleteSubjectRows();
-        case 6:
-            return isEnrollmentStepReady()
-                && getStepRequiredFieldsValidity(3)
-                && isFamilyStepReady()
-                && !hasIncompleteSubjectRows();
-        default:
-            return true;
-    }
-}
-
-function updateWizardActionButtons() {
-    document.querySelectorAll('#montfort-portal-wrapper [data-step-target]').forEach(button => {
-        if (!(button instanceof HTMLButtonElement) || button.classList.contains('btn-outline')) return;
-        const sourceStep = button.closest('.form-step');
-        if (!sourceStep) return;
-        const stepNumber = Number(sourceStep.id.replace('step-', ''));
-        if (!Number.isInteger(stepNumber) || stepNumber < 1 || stepNumber > 5) return;
-        button.disabled = !isStepReady(stepNumber);
-        button.setAttribute('aria-disabled', button.disabled ? 'true' : 'false');
-    });
-
-    const submitButton = document.getElementById('btn-submit');
-    if (submitButton && !submitButton.dataset.submitting) {
-        submitButton.disabled = !isStepReady(6);
-        submitButton.setAttribute('aria-disabled', submitButton.disabled ? 'true' : 'false');
-    }
-}
-
-// Re-evaluate button states as applicants type/select and when dynamic
-// dropdowns or academic rows are populated by the existing API logic.
-document.addEventListener('input', updateWizardActionButtons, true);
-document.addEventListener('change', updateWizardActionButtons, true);
-document.addEventListener('click', function (event) {
-    if (event.target.closest('#addSubjectBtn, .btn-remove-file, .btn-icon')) {
-        window.setTimeout(updateWizardActionButtons, 0);
-    }
-}, true);
-
-document.addEventListener('DOMContentLoaded', function () {
-    updateWizardActionButtons();
-
-    // Watch only data controls/containers, not buttons, to avoid observer loops.
-    ['branchSelect', 'level', 'classSelect', 'academicYear', 'joiningTerm', 'aLevelCombinationSelect']
-        .map(id => document.getElementById(id))
-        .filter(Boolean)
-        .forEach(control => {
-            const observer = new MutationObserver(updateWizardActionButtons);
-            observer.observe(control, {
-                attributes: true,
-                attributeFilter: ['disabled', 'aria-busy'],
-                childList: true
-            });
-        });
-
-    ['dynamic-exam-container', 'subjectsBody'].forEach(id => {
-        const container = document.getElementById(id);
-        if (!container) return;
-        const observer = new MutationObserver(updateWizardActionButtons);
-        observer.observe(container, { childList: true, subtree: true });
-    });
-});
-
 // =======================================================
 // CSP-SAFE: ENFORCE +256 PREFIX ON PHONE FIELDS
 // =======================================================
