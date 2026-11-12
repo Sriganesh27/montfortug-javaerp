@@ -76,9 +76,8 @@ public class ErpALevelCombination implements Serializable {
     )
     private Branch branch;
 
-    @NotBlank
     @Size(max = 30)
-    @Column(name = "combination_code", nullable = false, length = 30)
+    @Column(name = "combination_code", nullable = true, length = 30)
     private String combinationCode;
 
     @NotBlank

@@ -872,7 +872,7 @@ async function loadALevelCombinations(branchId) {
         select.disabled = false;
         if (note) {
             note.textContent = combinations.length
-                ? "Select one active combination. This field is required for S5 and S6."
+                ? "Select one active combination."
                 : "No active A-Level combinations are configured for this school yet. Please contact the school office.";
         }
     } catch (error) {

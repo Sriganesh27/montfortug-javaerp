@@ -71,13 +71,13 @@ public class ErpALevelCombinationService {
         UserBranchContext context = requireAuthenticatedBranch();
         requireAlevelOffered(context.branch());
 
-        String code = normalizeCode(combinationCode);
+        String code = normalizeOptionalCode(combinationCode);
         String name = normalizeRequiredText(
                 combinationName,
                 "Combination name"
         );
 
-        if (combinationRepository
+        if (code != null && combinationRepository
                 .existsByBranch_BranchIdAndCombinationCodeIgnoreCase(
                         context.branchId(),
                         code
@@ -149,13 +149,13 @@ public class ErpALevelCombinationService {
                 combinationId, context.branchId()
         );
 
-        String code = normalizeCode(combinationCode);
+        String code = normalizeOptionalCode(combinationCode);
         String name = normalizeRequiredText(
                 combinationName,
                 "Combination name"
         );
 
-        if (combinationRepository
+        if (code != null && combinationRepository
                 .existsByBranch_BranchIdAndCombinationCodeIgnoreCaseAndCombinationIdNot(
                         context.branchId(),
                         code,
@@ -387,27 +387,6 @@ public class ErpALevelCombinationService {
             );
         }
 
-        // Reuse the existing Class Subjects entity directly. This avoids
-        // changing ErpClassSubjectRepository or adding a new repository method.
-        Long configuredCount = entityManager.createQuery(
-                        "select count(cs) from ErpClassSubject cs " +
-                                "where cs.branch.branchId = :branchId " +
-                                "and cs.level.levelId = :levelId " +
-                                "and cs.subject.subjectId = :subjectId " +
-                                "and cs.active = true",
-                        Long.class
-                )
-                .setParameter("branchId", branchId)
-                .setParameter("levelId", A_LEVEL_ID)
-                .setParameter("subjectId", subjectId)
-                .getSingleResult();
-
-        if (configuredCount == null || configuredCount == 0L) {
-            throw new BadRequestException(
-                    label + " must be configured in Senior Secondary Class Subjects."
-            );
-        }
-
         return subject;
     }
 
@@ -482,15 +461,16 @@ public class ErpALevelCombinationService {
                 );
     }
 
-    private String normalizeCode(String value) {
+    /**
+     * Combination code is optional. Blank input is stored as SQL NULL.
+     * Supplied codes remain normalized and unique within the branch.
+     */
+    private String normalizeOptionalCode(String value) {
         if (!StringUtils.hasText(value)) {
-            throw new BadRequestException(
-                    "Combination code is required."
-            );
+            return null;
         }
 
-        String normalized = value.trim()
-                .toUpperCase(Locale.ROOT);
+        String normalized = value.trim().toUpperCase(Locale.ROOT);
 
         if (normalized.length() > 30) {
             throw new BadRequestException(

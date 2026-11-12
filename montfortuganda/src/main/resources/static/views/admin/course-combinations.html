@@ -56,15 +56,12 @@
                 <table id="course-combinations-table" class="data-table">
                     <thead>
                     <tr>
-                        <th rowspan="2">Combination</th>
-                        <th colspan="3" class="text-center">Principal Subjects</th>
-                        <th rowspan="2">Subsidiary Subject</th>
-                        <th rowspan="2" class="text-center">Status</th>
-                    </tr>
-                    <tr>
-                        <th class="text-center">PS1</th>
-                        <th class="text-center">PS2</th>
-                        <th class="text-center">PS3</th>
+                        <th>Combination</th>
+                        <th class="text-center">Principal Subject 1</th>
+                        <th class="text-center">Principal Subject 2</th>
+                        <th class="text-center">Principal Subject 3</th>
+                        <th>Subsidiary Subject</th>
+                        <th class="text-center">Status</th>
                     </tr>
                     </thead>
                     <tbody id="course-combinations-table-body">
@@ -274,7 +271,7 @@
             <td class="col-status-cell">
                 <div class="form-check form-switch d-flex justify-content-center mb-0">
                     <input type="checkbox"
-                           class="form-check-input course-combinations-status-toggle"
+                           class="course-combinations-status-toggle"
                            role="switch"
                            aria-label="Toggle combination status"
                            checked>
@@ -282,4 +279,40 @@
             </td>
         </tr>
     </template>
+
+    <!-- Course Combinations confirmation: reuses the existing ERP admin modal pattern. -->
+    <div id="course-combinations-confirm-overlay"
+         class="employee-confirm-overlay"
+         aria-hidden="true">
+        <section id="course-combinations-confirm-dialog"
+                 class="employee-confirm-dialog"
+                 role="dialog"
+                 aria-modal="true"
+                 aria-labelledby="course-combinations-confirm-title"
+                 aria-describedby="course-combinations-confirm-message"
+                 tabindex="-1">
+            <header class="employee-confirm-header">
+                <span class="employee-confirm-icon" aria-hidden="true">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </span>
+                <h3 id="course-combinations-confirm-title" class="employee-confirm-title">
+                    Confirm Action
+                </h3>
+            </header>
+            <div class="employee-confirm-body">
+                <p id="course-combinations-confirm-message" class="employee-confirm-message">
+                    Please confirm this action.
+                </p>
+            </div>
+            <footer class="employee-confirm-actions">
+                <button type="button" id="course-combinations-confirm-cancel" class="btn-secondary">
+                    Cancel
+                </button>
+                <button type="button" id="course-combinations-confirm-submit" class="btn-primary">
+                    Confirm
+                </button>
+            </footer>
+        </section>
+    </div>
+
 </div>

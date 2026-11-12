@@ -13,7 +13,6 @@ import jakarta.validation.constraints.Size;
  */
 public record ErpALevelCombinationRequest(
 
-        @NotBlank(message = "Combination code is required.")
         @Size(max = 30, message = "Combination code cannot exceed 30 characters.")
         String combinationCode,
 

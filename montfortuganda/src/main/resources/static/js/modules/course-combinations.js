@@ -58,6 +58,7 @@
             refresh: q('#course-combinations-refresh-btn'),
 
             filterForm: q('#course-combinations-filter-form'),
+            searchButton: q('#course-combinations-filter-form button[type="submit"]'),
             reset: q('#course-combinations-reset-btn'),
 
             statusFilter: q('#course-combinations-status-filter'),
@@ -130,7 +131,11 @@
             viewingRecord: null,
             busy: false,
             loadFailed: false,
-            requestId: 0
+            requestId: 0,
+            confirmationResolver: null,
+            previousFocus: null,
+            appliedSearch: '',
+            filterBusy: false
         };
 
         bindEvents();
@@ -187,6 +192,18 @@
 
         function bindEvents() {
 
+            q('#course-combinations-confirm-submit').addEventListener('click', () => closeConfirmation(true));
+            q('#course-combinations-confirm-cancel').addEventListener('click', () => closeConfirmation(false));
+            q('#course-combinations-confirm-overlay').addEventListener('click', event => {
+                if (event.target === q('#course-combinations-confirm-overlay')) closeConfirmation(false);
+            });
+            q('#course-combinations-confirm-overlay').addEventListener('keydown', event => {
+                if (event.key === 'Escape') {
+                    event.preventDefault();
+                    closeConfirmation(false);
+                }
+            });
+
             el.add.addEventListener('click', () => {
 
                 if (state.busy) return;
@@ -200,44 +217,42 @@
             });
 
             el.filterForm.addEventListener('submit', event => {
-
                 event.preventDefault();
+                if (state.filterBusy) return;
 
+                // Commit the text only when the Search button/form is submitted.
+                state.appliedSearch = el.search.value.trim().toLocaleLowerCase();
                 state.page = 0;
-
-                applyFilters();
+                void applyFilters();
             });
 
             el.reset.addEventListener('click', () => {
+                if (state.filterBusy) return;
 
                 el.statusFilter.value = '';
                 el.search.value = '';
+                if (el.subsidiaryFilter) el.subsidiaryFilter.value = '';
 
-                if (el.subsidiaryFilter) {
-                    el.subsidiaryFilter.value = '';
-                }
-
+                state.appliedSearch = '';
                 state.page = 0;
-
-                applyFilters();
+                void applyFilters();
             });
 
             el.statusFilter.addEventListener('change', () => {
-
+                if (state.filterBusy) return;
                 state.page = 0;
-
-                applyFilters();
+                void applyFilters();
             });
 
             el.subsidiaryFilter?.addEventListener('change', () => {
-
+                if (state.filterBusy) return;
                 state.page = 0;
-
-                applyFilters();
+                void applyFilters();
             });
 
             el.pageSize.addEventListener('change', () => {
 
+                if (state.filterBusy) return;
                 state.size = Number(el.pageSize.value) || 10;
                 state.page = 0;
 
@@ -246,7 +261,7 @@
 
             el.prev.addEventListener('click', () => {
 
-                if (state.page > 0) {
+                if (!state.filterBusy && state.page > 0) {
                     state.page--;
                     renderTable();
                 }
@@ -254,7 +269,7 @@
 
             el.next.addEventListener('click', () => {
 
-                if (state.page + 1 < pageCount()) {
+                if (!state.filterBusy && state.page + 1 < pageCount()) {
                     state.page++;
                     renderTable();
                 }
@@ -534,49 +549,62 @@
         // FILTERS
         // ================================================
 
-        function applyFilters() {
+        async function applyFilters() {
+
+            if (state.filterBusy) return;
 
             const status = el.statusFilter.value;
-
-            const search = el.search.value
-                .trim()
-                .toLocaleLowerCase();
-
+            const search = state.appliedSearch;
             const subsidiaryId = el.subsidiaryFilter
                 ? el.subsidiaryFilter.value
                 : '';
 
-            state.filtered = state.records.filter(record => {
+            setFilterBusy(true);
+            showTableLoading('Applying filters...');
 
-                const recordStatus =
-                    record.active === false
-                        ? 'INACTIVE'
-                        : 'ACTIVE';
+            // Keep the existing local filtering logic. The short loading interval
+            // allows the ERP table-loading state to be visible before rows render.
+            await new Promise(resolve => window.setTimeout(resolve, 180));
 
-                const text = `
-                    ${record.combinationCode || ''}
-                    ${record.combinationName || ''}
-                    ${record.principalSubject1Name || ''}
-                    ${record.principalSubject2Name || ''}
-                    ${record.principalSubject3Name || ''}
-                    ${record.subsidiarySubjectName || ''}
-                `.toLocaleLowerCase();
+            try {
+                state.filtered = state.records.filter(record => {
+                    const recordStatus = record.active === false ? 'INACTIVE' : 'ACTIVE';
+                    const text = `
+                        ${record.combinationCode || ''}
+                        ${record.combinationName || ''}
+                        ${record.principalSubject1Name || ''}
+                        ${record.principalSubject2Name || ''}
+                        ${record.principalSubject3Name || ''}
+                        ${record.subsidiarySubjectName || ''}
+                    `.toLocaleLowerCase();
 
-                return (
-                    (!status || recordStatus === status) &&
-                    (!search || text.includes(search)) &&
-                    (
-                        !subsidiaryId ||
-                        String(record.subsidiarySubjectId) === subsidiaryId
-                    )
-                );
-            });
+                    return (
+                        (!status || recordStatus === status) &&
+                        (!search || text.includes(search)) &&
+                        (!subsidiaryId || String(record.subsidiarySubjectId) === subsidiaryId)
+                    );
+                });
 
-            if (state.page >= pageCount()) {
-                state.page = Math.max(pageCount() - 1, 0);
+                if (state.page >= pageCount()) {
+                    state.page = Math.max(pageCount() - 1, 0);
+                }
+
+                renderTable();
+            } finally {
+                setFilterBusy(false);
             }
+        }
 
-            renderTable();
+        function setFilterBusy(busy) {
+            state.filterBusy = Boolean(busy);
+            if (el.searchButton) el.searchButton.disabled = state.filterBusy;
+            if (el.reset) el.reset.disabled = state.filterBusy;
+            if (el.statusFilter) el.statusFilter.disabled = state.filterBusy;
+            if (el.subsidiaryFilter) el.subsidiaryFilter.disabled = state.filterBusy;
+            if (el.search) el.search.disabled = state.filterBusy;
+            if (el.pageSize) el.pageSize.disabled = state.filterBusy;
+            if (el.prev) el.prev.disabled = state.filterBusy || state.page <= 0;
+            if (el.next) el.next.disabled = state.filterBusy || state.page + 1 >= pageCount();
         }
 
         // ================================================
@@ -657,6 +685,10 @@
                     const toggle = row.querySelector(
                         '.course-combinations-status-toggle'
                     );
+
+                    // The checkbox's checked property controls the visual ON/OFF state.
+                    // The template's default attribute must never override the API value.
+                    toggle.checked = active;
 
                     toggle.setAttribute(
                         'aria-checked',
@@ -975,6 +1007,61 @@
         }
 
         // ================================================
+        // CUSTOM CONFIRMATION (existing ERP modal pattern)
+        // ================================================
+
+        function confirmAction(options = {}) {
+            const overlay = q('#course-combinations-confirm-overlay');
+            const dialog = q('#course-combinations-confirm-dialog');
+            const titleNode = q('#course-combinations-confirm-title');
+            const messageNode = q('#course-combinations-confirm-message');
+            const submit = q('#course-combinations-confirm-submit');
+            const cancel = q('#course-combinations-confirm-cancel');
+
+            if (!overlay || !dialog || !titleNode || !messageNode || !submit || !cancel) {
+                console.error('Course Combinations confirmation modal is missing.');
+                notifyError('Confirmation dialog is unavailable. Please refresh the page and try again.');
+                return Promise.resolve(false);
+            }
+            if (state.confirmationResolver) return Promise.resolve(false);
+
+            titleNode.textContent = options.title || 'Confirm Action';
+            messageNode.textContent = options.message || 'Please confirm this action.';
+            submit.textContent = options.confirmText || 'Confirm';
+            cancel.textContent = options.cancelText || 'Cancel';
+            state.previousFocus = document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
+
+            overlay.classList.add('is-visible');
+            overlay.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            window.requestAnimationFrame(() => dialog.focus());
+
+            return new Promise(resolve => {
+                state.confirmationResolver = value => resolve(Boolean(value));
+            });
+        }
+
+        function closeConfirmation(accepted) {
+            if (!state.confirmationResolver) return;
+
+            const overlay = q('#course-combinations-confirm-overlay');
+            overlay?.classList.remove('is-visible');
+            overlay?.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+
+            const resolver = state.confirmationResolver;
+            state.confirmationResolver = null;
+
+            window.setTimeout(() => {
+                if (state.previousFocus?.isConnected) state.previousFocus.focus();
+                state.previousFocus = null;
+                resolver(Boolean(accepted));
+            }, 180);
+        }
+
+        // ================================================
         // STATUS
         // ================================================
 
@@ -984,9 +1071,11 @@
 
             const activate = record.active === false;
 
-            const confirmed = window.confirm(
-                `${activate ? 'Activate' : 'Deactivate'} ${record.combinationName || 'this combination'}?`
-            );
+            const confirmed = await confirmAction({
+                title: `${activate ? 'Activate' : 'Deactivate'} Combination?`,
+                message: `Are you sure you want to ${activate ? 'activate' : 'deactivate'} ${record.combinationName || 'this combination'}?`,
+                confirmText: activate ? 'Activate' : 'Deactivate'
+            });
 
             if (!confirmed) return;
 
